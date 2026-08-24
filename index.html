@@ -81,6 +81,20 @@
           log(`Phaser ${window.Phaser.VERSION || 'loaded'}`);
           status.textContent = 'STARTING VISUAL SLICE…';
           try {
+            if (!window.__WM_GAME_CAPTURE__) {
+              const GameCtor = window.Phaser.Game;
+              window.Phaser.Game = new Proxy(GameCtor, {
+                construct(Target, args, NewTarget) {
+                  const game = Reflect.construct(Target, args, NewTarget === window.Phaser.Game ? Target : NewTarget);
+                  window.__WM_GAME__ = game;
+                  window.Phaser.GAMES = window.Phaser.GAMES || [];
+                  if (!window.Phaser.GAMES.includes(game)) window.Phaser.GAMES.push(game);
+                  return game;
+                }
+              });
+              window.__WM_GAME_CAPTURE__ = true;
+              log('Installed Phaser game capture');
+            }
             const graphicsProto = window.Phaser?.GameObjects?.Graphics?.prototype;
             if (graphicsProto && typeof graphicsProto.quadraticBezierTo !== 'function') {
               graphicsProto.quadraticBezierTo = function (_cx, _cy, x, y) { this.lineTo(x, y); return this; };
