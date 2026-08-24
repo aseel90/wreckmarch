@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#171d26" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>WRECKMARCH — Phase B.1 Visual Polish</title>
+  <title>WRECKMARCH — Phase C Core Loop</title>
   <link rel="stylesheet" href="./style.css?v=4" />
 </head>
 <body>
@@ -125,6 +125,10 @@
             const phaseB1 = await import('./src/phase-b1-polish.js?v=2');
             await phaseB1.applyPhaseB1Polish();
             log('Phase B.1 visual polish active');
+            status.textContent = 'BUILDING CORE LOOP…';
+            const phaseC = await import('./src/phase-c-runtime.js?v=1');
+            await phaseC.applyPhaseC();
+            log('Phase C core loop active');
             status.textContent = 'READY';
           } catch (err) {
             fail(`Game module: ${err?.stack || err}`);
@@ -141,7 +145,7 @@
         document.head.appendChild(script);
       };
 
-      log(`Boot phase-b1-visual-polish ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
+      log(`Boot phase-c-core-loop ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
       loadEngine();
     })();
   </script>
