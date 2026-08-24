@@ -148,16 +148,18 @@ See `GAMEPLAY_REDESIGN_PLAN.md` for the complete approved design.
 - `aeffdf7...` — Visual slice v1: Scrap Runner, Scrap Rat and Fortress.
 - `07541ff...` — Real browser smoke test before Pages deploy.
 - `96c1c07...` — Production art pass: Runner, Rat, Fortress and wasteland.
+- `phase-a-hero-core` — Hero-owned combat core; Chromium smoke test passed before merge.
 
 These are historical milestones, not necessarily the final architecture.
 
-
 ## I. Phase A Implementation Notes
 
-- Hero now spawns alone; the Fortress is not constructed at run start.
+- Hero now spawns alone; the Fortress is not an active gameplay object at run start.
 - Fortress HP, Fortress collision damage, and Fortress-loss fail state are removed from active gameplay.
 - Starting shots originate from the Scrap Runner and target the nearest enemy.
 - Scrap Rats path directly to the Hero.
 - Hero HP is rendered above the character and follows movement.
 - Hits show floating damage, red feedback, screen shake, short knockback, and a 450 ms invulnerability window.
 - Old Fortress upgrade selection is disabled until the new Phase B card system is built.
+- A hidden, non-interactive art-loader compatibility scaffold remains temporarily so the existing SVG production art runtime can initialize; it has no HP, collision, attacks, rendering, or fail state.
+- GitHub Actions Chromium smoke test passed for Phase A before merge.
