@@ -23,10 +23,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
       - name: Vendor Phaser locally
         shell: bash
         run: |
@@ -34,10 +36,59 @@ jobs:
           curl -fsSL --retry 3 --connect-timeout 10 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js \
             || curl -fsSL --retry 3 --connect-timeout 10 https://unpkg.com/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js
           test -s vendor/phaser.min.js
+
+      - name: Browser smoke test
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/wm-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          sleep 1
+
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then
+            echo "No Chromium/Chrome binary found on runner"
+            exit 1
+          fi
+
+          "$CHROME" \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --virtual-time-budget=9000 \
+            --dump-dom \
+            "http://127.0.0.1:4173/?debug=1" \
+            >/tmp/wm-dom.html 2>/tmp/wm-chrome.log
+
+          if ! grep -q '<canvas' /tmp/wm-dom.html; then
+            echo "Browser test failed: Phaser canvas was not created"
+            cat /tmp/wm-chrome.log
+            cat /tmp/wm-dom.html
+            exit 1
+          fi
+
+          if ! grep -q 'Visual slice v1 ready' /tmp/wm-dom.html; then
+            echo "Browser test failed: visual slice did not reach Scene.create()"
+            cat /tmp/wm-chrome.log
+            cat /tmp/wm-dom.html
+            exit 1
+          fi
+
+          if grep -q 'LOAD FAILED' /tmp/wm-dom.html; then
+            echo "Browser test failed: boot loader reported an error"
+            cat /tmp/wm-chrome.log
+            cat /tmp/wm-dom.html
+            exit 1
+          fi
+
+          echo "Wreckmarch browser smoke test passed"
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
