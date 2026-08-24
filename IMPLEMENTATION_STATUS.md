@@ -19,6 +19,7 @@ This file is the persistent implementation log for the project. Update it after 
 - ✅ Mobile portrait browser prototype exists.
 - ✅ GitHub Pages deployment workflow exists.
 - ✅ Debug mode available with `?debug=1`.
+- ✅ Debug console can be collapsed/expanded on mobile.
 - ✅ Browser smoke test exists in GitHub Actions.
 - ✅ Phaser 3.90 runtime is used.
 - ✅ Production-style art runtime pass added for current prototype visuals.
@@ -130,14 +131,19 @@ The following were implemented in the old prototype but are no longer part of th
 
 **PHASE A is implemented. Do not add more enemies yet.**
 
-The next development batch is **PHASE B — Scrap Level Bar + Cards**:
+After the latest mobile review, the roadmap has been reordered so the restrictive arena is fixed before the level-card system.
 
-1. Convert Scrap into the top XP/progress bar.
-2. Add level requirements and overflow handling.
-3. Pause on level-up and show 3 cards.
-4. Add a weighted Hero + Utility upgrade pool.
-5. Keep Fortress cards locked; `CALL THE RIG` remains for Phase D.
-6. After Phase B is stable, move to the large world/camera Phase C.
+The next development batch is **PHASE B — Large World + Camera**:
+
+1. Expand the play world to roughly `2200 × 2200` for the first test.
+2. Remove the visible rounded arena boundary.
+3. Add smooth camera follow and light movement-direction look-ahead.
+4. Spawn enemies outside the current viewport instead of at the visible arena edge.
+5. Spread Wasteland dressing across world coordinates.
+6. Make bullets, pickups, and enemies clean up safely when far from the active camera/player.
+7. Keep the Hero-only combat rules from Phase A unchanged.
+
+After Phase B is stable, **PHASE C — Scrap Level Bar + Cards** will add the top XP bar, levels, overflow Scrap, 3-card choices, and weighted Hero/Utility upgrades.
 
 See `GAMEPLAY_REDESIGN_PLAN.md` for the complete approved design.
 
@@ -148,18 +154,26 @@ See `GAMEPLAY_REDESIGN_PLAN.md` for the complete approved design.
 - `aeffdf7...` — Visual slice v1: Scrap Runner, Scrap Rat and Fortress.
 - `07541ff...` — Real browser smoke test before Pages deploy.
 - `96c1c07...` — Production art pass: Runner, Rat, Fortress and wasteland.
-- `phase-a-hero-core` — Hero-owned combat core; Chromium smoke test passed before merge.
 
 These are historical milestones, not necessarily the final architecture.
 
+
 ## I. Phase A Implementation Notes
 
-- Hero now spawns alone; the Fortress is not an active gameplay object at run start.
+- Hero now spawns alone; the Fortress is not constructed at run start.
 - Fortress HP, Fortress collision damage, and Fortress-loss fail state are removed from active gameplay.
 - Starting shots originate from the Scrap Runner and target the nearest enemy.
 - Scrap Rats path directly to the Hero.
 - Hero HP is rendered above the character and follows movement.
 - Hits show floating damage, red feedback, screen shake, short knockback, and a 450 ms invulnerability window.
 - Old Fortress upgrade selection is disabled until the new Phase B card system is built.
-- A hidden, non-interactive art-loader compatibility scaffold remains temporarily so the existing SVG production art runtime can initialize; it has no HP, collision, attacks, rendering, or fail state.
-- GitHub Actions Chromium smoke test passed for Phase A before merge.
+
+---
+
+## J. Roadmap Correction After Mobile Review
+
+- The large-world/camera work was originally listed after the Scrap/card system.
+- Mobile testing showed the small rounded arena is a more immediate gameplay problem, so the order is now corrected.
+- Current Phase B is Large World + Camera.
+- Scrap/Level/Card progression moves to Phase C.
+- This is a priority reorder only; no approved feature has been removed.

@@ -478,27 +478,29 @@ This allows weighting, unlock rules, synergies and future localization.
 
 **Acceptance:** Player can run alone and survive/fight without any rig present.
 
-### PHASE B — Scrap Level Bar + Cards
+### PHASE B — Large World + Camera
+
+- [ ] Expand world beyond viewport (initial target about `2200 × 2200`).
+- [ ] Smooth camera follow.
+- [ ] Add small camera look-ahead in movement direction.
+- [ ] Remove visible rounded arena border.
+- [ ] Spawn enemies outside camera using a safe spawn ring.
+- [ ] Expand wasteland dressing across world coordinates.
+- [ ] Make pickups/projectiles/enemies safe in world coordinates and clean up far-away objects.
+
+**Acceptance:** Player can move freely for an extended period without feeling trapped on one screen, and enemies enter naturally from outside the viewport.
+
+### PHASE C — Scrap Level Bar + Cards
 
 - [ ] Top Scrap/XP bar.
-- [ ] Level progression.
+- [ ] Level progression and increasing requirements.
+- [ ] Overflow Scrap handling.
 - [ ] 3-card pause screen.
 - [ ] Weighted random pool.
 - [ ] Hero upgrade family.
 - [ ] Utility upgrade family.
 
 **Acceptance:** A 60-second run produces several meaningful build choices.
-
-### PHASE C — Large World
-
-- [ ] Expand world beyond viewport.
-- [ ] Smooth camera follow.
-- [ ] Remove visible rounded arena border.
-- [ ] Spawn enemies outside camera.
-- [ ] Expand wasteland dressing.
-- [ ] World coordinate-safe pickups/projectiles/enemies.
-
-**Acceptance:** Player can move freely for an extended period without feeling trapped on one screen.
 
 ### PHASE D — Fortress as Optional Companion
 
@@ -518,25 +520,23 @@ This allows weighting, unlock rules, synergies and future localization.
 - [ ] More Fortress modules.
 - [ ] Utility choices.
 - [ ] Synergy prerequisites.
-- [ ] First Evolutions.
-- [ ] Card rarity/weight tuning.
+- [ ] First evolution combinations.
 
 ### PHASE F — Enemy Variety
 
-- [ ] Brute.
-- [ ] Shooter.
-- [ ] Exploder.
+- [ ] Scrap Brute.
+- [ ] Scrap Shooter.
+- [ ] Scrap Exploder.
 - [ ] Elite variants.
-- [ ] Telegraph polish.
+- [ ] Mini boss.
 
 ### PHASE G — First Real Run
 
-- [ ] 8–10 minute pacing.
-- [ ] Mini boss.
-- [ ] Boss.
-- [ ] Threat curve.
-- [ ] Audio polish.
-- [ ] Haptics.
+- [ ] 8–12 minute pacing.
+- [ ] First boss.
+- [ ] End/run result screen.
+- [ ] First permanent unlock loop.
+- [ ] Audio pass.
 - [ ] Performance pass.
 
 ---
@@ -556,15 +556,14 @@ This allows weighting, unlock rules, synergies and future localization.
 
 ## 16. Immediate Next Build
 
-The next implementation should execute **PHASE A + the foundation of PHASE B/C** in this order:
+PHASE A is complete. The immediate implementation order is now intentionally **world-first** after mobile review showed the single-screen arena is too restrictive:
 
-1. Remove Fortress at spawn and all Fortress HP logic.
-2. Give hero a reliable starting auto-attack.
-3. Make enemies target hero.
-4. Move hero HP bar above hero.
-5. Convert Scrap into the top level progress bar.
-6. Build the first 3-card upgrade selector.
-7. Expand world and add camera follow.
-8. Add `CALL THE RIG` only after the base loop feels good.
+1. ✅ Remove Fortress at spawn and all Fortress HP logic.
+2. ✅ Give hero a reliable starting auto-attack.
+3. ✅ Make enemies target hero.
+4. ✅ Move hero HP bar above hero.
+5. **PHASE B:** Expand world, remove the arena border, add smooth camera follow/look-ahead, and spawn enemies outside the viewport.
+6. **PHASE C:** Convert Scrap into the top level progress bar and build the first 3-card upgrade selector.
+7. Add `CALL THE RIG` only after the open-world movement + level-up loop both feel good.
 
-Do not add new enemy families before steps 1–7 are playable and tested on mobile.
+Do not add new enemy families before Phase B and Phase C are playable and tested on mobile.
