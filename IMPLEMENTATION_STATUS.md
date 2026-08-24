@@ -39,7 +39,9 @@ This file is the persistent implementation log for the project. Update it after 
 - 🟡 Hero animation is still prototype/vector-runtime quality, not final sprite production quality.
 - 🟡 Rat animation is still prototype quality.
 - 🟡 Fortress animation/visual layering is still early production quality.
-- 🟡 World is currently too small and still feels like a single-screen arena.
+- ✅ World expanded to a `2200 × 2200` roaming space with camera follow.
+- ✅ Starter `Scrap Rivet Gun` is visible in the Hero's hand and projectiles spawn from its muzzle.
+- ✅ Hero movement uses tuned analog speed, acceleration and deceleration instead of instant full-speed movement.
 
 ## C. Systems That Are Now Superseded
 
@@ -98,13 +100,14 @@ The following were implemented in the old prototype but are no longer part of th
 
 ### Large world
 
-- ⬜ Replace single-screen arena with large world coordinates.
-- ⬜ Remove visible rounded arena boundary.
-- ⬜ Smooth camera follow.
-- ⬜ Camera look-ahead.
-- ⬜ Spawn enemies outside viewport.
-- ⬜ Larger Wasteland dressing.
-- ⬜ World-safe pickups / projectile cleanup.
+- ✅ Replace single-screen arena with `2200 × 2200` world coordinates.
+- ✅ Remove visible rounded arena boundary.
+- ✅ Smooth camera follow.
+- ✅ Camera look-ahead.
+- ✅ Spawn enemies outside viewport.
+- ✅ Larger Wasteland dressing with roads, terrain patches, cracks, metal debris and wreck landmarks.
+- ✅ World-safe projectile cleanup.
+- 🟡 Pickup/enemy long-distance recycling is safe enough for current prototype scale; chunk recycling remains later optimization.
 - ⬜ Chunk/recycling system later if needed.
 
 ## E. Enemy Roadmap
@@ -129,21 +132,19 @@ The following were implemented in the old prototype but are no longer part of th
 
 ## G. Current Priority
 
-**PHASE A is implemented. Do not add more enemies yet.**
+**PHASE A and PHASE B are implemented. Do not add more enemy families yet.**
 
-After the latest mobile review, the roadmap has been reordered so the restrictive arena is fixed before the level-card system.
+The next development batch is **PHASE C — Scrap Level Bar + Cards**:
 
-The next development batch is **PHASE B — Large World + Camera**:
+1. Convert collected Scrap into level XP.
+2. Add a top Scrap/XP progress bar and level counter.
+3. Increase Scrap requirement per level and preserve overflow.
+4. Pause combat on level-up.
+5. Present 3 weighted random upgrade cards.
+6. Start with Hero and Utility upgrade families.
+7. Keep Fortress cards locked until `CALL THE RIG` is introduced in the following companion phase.
 
-1. Expand the play world to roughly `2200 × 2200` for the first test.
-2. Remove the visible rounded arena boundary.
-3. Add smooth camera follow and light movement-direction look-ahead.
-4. Spawn enemies outside the current viewport instead of at the visible arena edge.
-5. Spread Wasteland dressing across world coordinates.
-6. Make bullets, pickups, and enemies clean up safely when far from the active camera/player.
-7. Keep the Hero-only combat rules from Phase A unchanged.
-
-After Phase B is stable, **PHASE C — Scrap Level Bar + Cards** will add the top XP bar, levels, overflow Scrap, 3-card choices, and weighted Hero/Utility upgrades.
+Phase B also established a visible, swappable starter weapon interface so future cards can replace/evolve the `Scrap Rivet Gun` without rewriting combat.
 
 See `GAMEPLAY_REDESIGN_PLAN.md` for the complete approved design.
 
@@ -177,3 +178,16 @@ These are historical milestones, not necessarily the final architecture.
 - Current Phase B is Large World + Camera.
 - Scrap/Level/Card progression moves to Phase C.
 - This is a priority reorder only; no approved feature has been removed.
+
+
+## K. Phase B Implementation Notes
+
+- World size is now `2200 × 2200`; the old rounded single-screen arena is gone.
+- Camera smoothly follows the Hero with directional look-ahead.
+- Enemy spawns are generated outside the active camera view and enter from the surrounding world.
+- Wasteland ground now contains broken road bands, terrain variation, cracks, metal fragments, landmark wrecks, barrels and scrap piles.
+- Hero base speed is tuned to `285` world units/second at full input.
+- Touch movement now supports analog intensity instead of jumping instantly to full speed.
+- Acceleration/deceleration smoothing is applied to reduce both sluggishness and twitchiness.
+- `Scrap Rivet Gun` is visible, aims independently, recoils, and bullets originate from its muzzle.
+- Primary weapon state is isolated behind `equipPrimaryWeapon(...)` so future upgrade cards can change weapon stats/appearance.
