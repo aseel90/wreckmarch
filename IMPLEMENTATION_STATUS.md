@@ -9,7 +9,7 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 ## Project / deployment
 
 - ✅ GitHub repository + GitHub Pages deployment.
-- ✅ Mobile portrait browser build.
+- ✅ Mobile landscape browser build (`960 × 540` internal reference, responsive FIT scaling).
 - ✅ Phaser 3.90 runtime with local vendor fallback.
 - ✅ `?debug=1` diagnostics.
 - ✅ Debug panel is collapsible on mobile.
@@ -79,7 +79,8 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 - ✅ `CALL THE RIG` can appear randomly from Level 2 onward.
 - ✅ Fortress is an invulnerable companion, follows/catches up to the Hero and provides support fire after summon.
 - ✅ Fortress-only cards remain locked until summon; initial modules include Rig Overdrive and Twin Cannon.
-- 🟡 Card balance, first-level timing and exact Weapon Rig offsets still require mobile playtest tuning.
+- 🟡 Card balance and first-level timing still require mobile playtest tuning.
+- ❌ Continuous rotating single-arm Weapon Rig is superseded by the Phase C.1 8-direction two-handed pose system.
 - ⬜ Synergies/evolutions remain a later Phase C+ addition after the base card loop is validated.
 
 ## Later roadmap
@@ -94,3 +95,18 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 - ⬜ Utility builds and cross-system synergies.
 
 See `GAMEPLAY_REDESIGN_PLAN.md` for the full approved design and architecture.
+
+## Phase C.1 — Landscape combat UX rebuild
+
+- ✅ Gameplay reference resolution changed from portrait `540 × 960` to landscape `960 × 540`.
+- ✅ Portrait browsers show a rotate-device gate instead of squeezing the game vertically.
+- ✅ HUD is rearranged for horizontal play: title/timer/wave, centered Scrap XP bar, level and Scrap counters.
+- ✅ Starter Rivet Gun now uses 8 discrete two-handed aiming poses rather than continuously rotating the whole arm around the Hero.
+- ✅ Runtime weapon pose switches to the nearest 45° direction; bullets still aim accurately at the target.
+- ✅ Upgrade selection moved to a dedicated `UpgradeScene`, isolating its input from the gameplay joystick.
+- ✅ World-scene input is disabled while cards are open, preventing touch events from leaking into movement.
+- ✅ Three upgrade cards are laid out side-by-side for landscape play.
+- ✅ Every current ability has a dedicated visual icon asset.
+- ✅ Card colors are category-based: Hero/rust orange, Utility/cyan, Fortress/brass-gold.
+- ✅ Keyboard left/right + Enter/Space and 1/2/3 selection hooks are included as a foundation for Smart TV/gamepad navigation.
+- 🟡 The new two-handed pose art remains prototype SVG and should be judged on-device before final sprite/PNG production.
