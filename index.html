@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#171d26" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>WRECKMARCH — Visual Slice V1</title>
+  <title>WRECKMARCH — Hero Core</title>
   <link rel="stylesheet" href="./style.css?v=3" />
 </head>
 <body>
-  <main id="game-shell" aria-label="Wreckmarch visual slice">
+  <main id="game-shell" aria-label="Wreckmarch hero core">
     <div id="boot">
       <strong>WRECKMARCH</strong>
       <span>BUILD • ROLL • SURVIVE</span>
-      <small id="boot-status">LOADING VISUAL SLICE…</small>
+      <small id="boot-status">LOADING HERO CORE…</small>
     </div>
     <div id="game"></div>
     <pre id="debug-panel" aria-live="polite"></pre>
@@ -79,7 +79,7 @@
             return loadEngine(i + 1);
           }
           log(`Phaser ${window.Phaser.VERSION || 'loaded'}`);
-          status.textContent = 'STARTING VISUAL SLICE…';
+          status.textContent = 'STARTING HERO CORE…';
           try {
             if (!window.__WM_GAME_CAPTURE__) {
               const GameCtor = window.Phaser.Game;
@@ -100,10 +100,10 @@
               graphicsProto.quadraticBezierTo = function (_cx, _cy, x, y) { this.lineTo(x, y); return this; };
               log('Applied Phaser Graphics compatibility shim');
             }
-            await import('./src/game.js?v=6');
-            log('Visual slice module imported');
+            await import('./src/game.js?v=8');
+            log('Phase A hero core imported');
             status.textContent = 'APPLYING ART PACK…';
-            const art = await import('./src/art-runtime.js?v=1');
+            const art = await import('./src/art-runtime.js?v=2');
             await art.applyProductionArt();
             log('Production art pack active');
           } catch (err) {
@@ -121,7 +121,7 @@
         document.head.appendChild(script);
       };
 
-      log(`Boot visual-slice-v1 ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
+      log(`Boot phase-a-hero-core ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
       loadEngine();
     })();
   </script>
