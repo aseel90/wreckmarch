@@ -6,17 +6,18 @@
   <meta name="theme-color" content="#171d26" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>WRECKMARCH — Hero Core</title>
-  <link rel="stylesheet" href="./style.css?v=3" />
+  <title>WRECKMARCH — Visual Slice V1</title>
+  <link rel="stylesheet" href="./style.css?v=4" />
 </head>
 <body>
-  <main id="game-shell" aria-label="Wreckmarch hero core">
+  <main id="game-shell" aria-label="Wreckmarch visual slice">
     <div id="boot">
       <strong>WRECKMARCH</strong>
       <span>BUILD • ROLL • SURVIVE</span>
-      <small id="boot-status">LOADING HERO CORE…</small>
+      <small id="boot-status">LOADING VISUAL SLICE…</small>
     </div>
     <div id="game"></div>
+    <button id="debug-toggle" type="button" aria-controls="debug-panel" aria-expanded="true">DEBUG ▼</button>
     <pre id="debug-panel" aria-live="polite"></pre>
   </main>
   <script>
@@ -24,8 +25,18 @@
       const debug = new URLSearchParams(location.search).has('debug');
       window.__WM_DEBUG__ = debug;
       const panel = document.getElementById('debug-panel');
+      const toggle = document.getElementById('debug-toggle');
       const status = document.getElementById('boot-status');
       const lines = [];
+
+      if (debug) {
+        document.body.classList.add('debug-enabled');
+        toggle.addEventListener('click', () => {
+          const collapsed = panel.classList.toggle('collapsed');
+          toggle.textContent = collapsed ? 'DEBUG ▲' : 'DEBUG ▼';
+          toggle.setAttribute('aria-expanded', String(!collapsed));
+        });
+      }
 
       const log = (msg) => {
         const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
@@ -100,7 +111,7 @@
               graphicsProto.quadraticBezierTo = function (_cx, _cy, x, y) { this.lineTo(x, y); return this; };
               log('Applied Phaser Graphics compatibility shim');
             }
-            await import('./src/game.js?v=8');
+            await import('./src/game.js?v=7');
             log('Phase A hero core imported');
             status.textContent = 'APPLYING ART PACK…';
             const art = await import('./src/art-runtime.js?v=2');
