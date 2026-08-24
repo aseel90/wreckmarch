@@ -2,11 +2,33 @@
 
 > **Build. Roll. Survive.**
 
-Wreckmarch is a mobile-first **Survivor Roguelite + Moving Fortress Builder** designed for a Western audience. The game starts with a fragile hero and a tiny scrap vehicle. During each run, the player fights hordes, collects scrap, rescues crew, discovers synergies, and physically transforms the vehicle into a huge rolling fortress.
+Wreckmarch is a mobile-first **Survivor Roguelite + optional Moving Fortress Builder** designed for a Western audience. Each run starts with the Scrap Runner alone. The player fights hordes, collects Scrap, chooses randomized build cards, and may discover **CALL THE RIG**, which summons a mobile Fortress companion that can then evolve into a huge rolling war machine.
 
 The core goal is simple:
 
 **A player should understand the hook from a 3–5 second gameplay clip.**
+
+---
+
+## Current Approved Core Design (2026-08-24)
+
+The original prototype proved movement, combat, Scrap collection, the Scrap Runner, Scrap Rat, and moving Fortress visuals. After mobile testing, the core design was updated to remove the escort-style weakness.
+
+**Approved rules now:**
+
+- Every run starts with **the Hero alone**.
+- The **Hero is the primary combat unit and the only normal HP objective**.
+- Enemies target the Hero, not the Fortress.
+- Scrap fills a **top XP/Level bar**.
+- Filling the bar pauses combat and shows **3 weighted random upgrade cards**.
+- The Fortress is hidden at the start and can appear as the optional **CALL THE RIG** upgrade.
+- Once summoned, the Fortress is an **invulnerable/non-targetable companion**, not an escort objective.
+- Fortress upgrades only enter the card pool after it has been summoned.
+- The single-screen rounded arena will be replaced by a **large scrolling world with smooth camera follow**.
+- Hero HP will be displayed above the Hero instead of using a Fortress HP bar at the top.
+
+Full implementation plan: [`GAMEPLAY_REDESIGN_PLAN.md`](GAMEPLAY_REDESIGN_PLAN.md)  
+Persistent development log: [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md)
 
 ---
 
@@ -16,7 +38,7 @@ Wreckmarch should **not** be a generic Vampire Survivors / Survivor.io clone wit
 
 The differentiator is:
 
-> **A survivor roguelite where your tiny vehicle becomes a gigantic moving fortress during every run.**
+> **A survivor roguelite where you build the hero first, then may summon and evolve a gigantic moving fortress during the run.**
 
 The game should feel immediately satisfying, visually readable, highly replayable, and easy to market organically through short gameplay clips.
 
@@ -61,23 +83,27 @@ Target players:
 The player begins a run with:
 
 - One hero.
-- One weak weapon.
-- One small scrap vehicle.
+- One weak starting weapon.
+- **No Fortress at spawn.**
 
-Enemies attack continuously.
+Enemies attack the Hero continuously and drop **Scrap**. Scrap fills the in-run XP/Level bar. When the bar fills, combat pauses briefly and the player chooses one of three weighted random upgrade cards.
 
-Enemies drop **Scrap**.
-
-Scrap is used during the run to add, upgrade, mutate, and combine fortress modules.
+One possible card is **CALL THE RIG**, which summons the Level 1 Fortress companion. Only after that choice do Fortress-specific upgrades enter the random pool.
 
 Example transformation:
 
 ```text
 START
-Hero + tiny scrap truck
+Hero alone
 
-2 MINUTES
-Truck + turret + armor
+EARLY LEVEL-UP
+Hero weapon / utility choices
+
+OPTIONAL DISCOVERY
+CALL THE RIG → small scrap vehicle
+
+MID RUN
+Rig + turret + armor
 
 5 MINUTES
 Multiple weapons + crew + modules
@@ -97,11 +123,13 @@ Move
 ↓
 Fight hordes
 ↓
-Collect Scrap / XP / temporary resources
+Collect Scrap / XP
 ↓
-Choose meaningful upgrades
+Fill the level bar
 ↓
-Physically expand the moving fortress
+Choose 1 of 3 meaningful upgrade cards
+↓
+Build Hero / Utility / optional Fortress paths
 ↓
 Discover weapon/module synergies
 ↓
@@ -145,7 +173,7 @@ An Endless Mode can be added later for players who want longer sessions.
 
 ## 6. Moving Fortress System
 
-The moving fortress is the central visual and mechanical identity of Wreckmarch.
+The moving Fortress remains one of Wreckmarch's strongest visual identities, but it is now an **optional companion build path**, not an escort objective. It is hidden at run start, has no normal HP/fail state, and becomes available through the `CALL THE RIG` upgrade card.
 
 Possible modules:
 
@@ -541,129 +569,46 @@ The browser build should always be easy to test from a phone.
 
 ---
 
-## 22. First Prototype Scope
+## 22. Current Core Implementation Priority
 
-Do **not** build the full game immediately.
+The first prototype already proved touch movement, basic combat, Scrap collection, the Scrap Runner, Scrap Rat, Fortress visuals, browser deployment, debug mode, and smoke testing.
 
-The first prototype exists to prove the game feel and the fortress hook.
+The next milestone is a **core redesign**, not more content.
 
-### Prototype must include only
+### Required next build
 
-- 1 playable hero.
-- Responsive mobile movement.
-- 1 tiny moving fortress vehicle.
-- 1 basic weapon.
-- 3 enemy types maximum.
-- Scrap drops.
-- A simple fortress upgrade that becomes visually attached to the vehicle.
-- 1 elite or mini-boss.
-- Basic hit effects.
-- Basic particles.
-- Basic sound hooks.
-- Camera / screen feedback.
-- Mobile portrait layout.
+- Start with Hero only.
+- Remove Fortress HP and Fortress fail state.
+- Enemies target Hero only.
+- Hero has a compact HP bar above the character.
+- Hero owns the starting auto-attack.
+- Scrap becomes the top XP/Level progress bar.
+- Filling the bar opens 3 weighted random upgrade cards.
+- Expand the world beyond one viewport and add smooth camera follow.
+- Add `CALL THE RIG` only after the Hero-only loop feels good.
 
-### Prototype success test
+### Success test
 
-Within the first **30–60 seconds**, the game should already feel like a real game rather than a technology demo.
+Within the first 60 seconds:
 
-Before adding large amounts of content, confirm:
+1. Movement and dodging feel good on mobile.
+2. The player clearly understands that the Hero is the survival objective.
+3. Several Scrap pickups produce at least one satisfying level-up choice.
+4. The world feels larger than the phone screen.
+5. No escort frustration exists.
+6. If `CALL THE RIG` appears and is chosen, the Fortress feels like a reward.
 
-1. Movement feels excellent.
-2. Shooting / impact feels satisfying.
-3. Enemy density feels exciting.
-4. Building the fortress feels visually rewarding.
-5. The game remains smooth on mobile.
-6. A short gameplay clip already communicates the hook.
-
-Only after this is proven should production expand.
+For the complete phased plan, use [`GAMEPLAY_REDESIGN_PLAN.md`](GAMEPLAY_REDESIGN_PLAN.md).
 
 ---
 
-## 23. Early Production Expansion
+## 23. Development Tracking
 
-After the prototype proves the core loop:
+All future development batches must update [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md). That file is the source of truth for:
 
-### Phase 1 — Core Feel
-- Hero movement.
-- Basic combat.
-- Vehicle movement.
-- Horde spawning.
-- Scrap collection.
-- First fortress upgrades.
+- What is actually implemented.
+- What is prototype-quality.
+- What has been superseded.
+- What the next priority is.
 
-### Phase 2 — Build System
-- More modules.
-- Upgrade choices.
-- Weapon evolutions.
-- Synergies.
-
-### Phase 3 — Run Variety
-- Routes.
-- Elites.
-- Bosses.
-- Rescue events.
-- Environmental variation.
-
-### Phase 4 — Meta Progression
-- Unlockable heroes.
-- Crew collection.
-- Maps.
-- Challenges.
-- Secrets.
-
-### Phase 5 — Polish
-- Animation pass.
-- Sound pass.
-- Haptics.
-- UI polish.
-- Performance optimization.
-- Mobile-device testing.
-
-### Phase 6 — Android
-- Capacitor / wrapper integration.
-- Android input and lifecycle testing.
-- Save reliability.
-- Store-ready build.
-
----
-
-## 24. Non-Negotiable Design Principles
-
-1. **Different, not cloned.**
-2. **Fun before content volume.**
-3. **Visual power growth every run.**
-4. **Choices must matter.**
-5. **Build diversity over one meta.**
-6. **Characters change gameplay.**
-7. **No dead time during runs.**
-8. **Mobile performance is a feature.**
-9. **Game feel is more important than raw graphical complexity.**
-10. **The last stable build must always be recoverable.**
-11. **Organic marketability must be considered during feature design.**
-12. **Do not add systems merely because competitor games have them.**
-
----
-
-## 25. Current Working Identity
-
-**Game:** WRECKMARCH  
-**Genre:** Survivor Roguelite / Bullet Heaven + Moving Fortress Builder  
-**Tagline:** **Build. Roll. Survive.**  
-**Platform focus:** Android / Mobile  
-**Primary orientation:** Portrait  
-**Engine/framework direction:** Phaser.js  
-**Budget philosophy:** Zero additional production spend whenever reasonably possible  
-**Market focus:** Western mobile audience
-
----
-
-## 26. Immediate Next Step
-
-The next development action should be to build a **small, highly polished playable vertical slice**, not menus, stores, or large progression systems.
-
-The first milestone is successful only when the following moment feels great:
-
-> **The player moves around a tiny scrap vehicle, destroys a horde, collects scrap, attaches the first weapon/module to the vehicle, and immediately feels the fortress becoming stronger.**
-
-That moment is the foundation of Wreckmarch.
+This prevents future developers or AI agents from accidentally rebuilding old discarded systems.
