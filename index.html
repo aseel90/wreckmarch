@@ -7,8 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>WRECKMARCH — Prototype</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="./style.css?v=2" />
+  <link rel="stylesheet" href="./style.css?v=3" />
 </head>
 <body>
   <main id="game-shell" aria-label="Wreckmarch prototype">
@@ -50,34 +49,49 @@
       window.addEventListener('unhandledrejection', e => fail(`Promise: ${e.reason?.message || e.reason || 'unknown'}`));
 
       const sources = [
+        './vendor/phaser.min.js?v=3.90.0',
         'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js',
         'https://unpkg.com/phaser@3.90.0/dist/phaser.min.js'
       ];
 
       const loadEngine = (i = 0) => {
-        if (i >= sources.length) return fail('Could not load Phaser from either CDN.');
+        if (i >= sources.length) return fail('Could not load Phaser from local bundle or CDNs.');
         status.textContent = `LOADING ENGINE ${i + 1}/${sources.length}…`;
         log(`Loading Phaser: ${sources[i]}`);
         const script = document.createElement('script');
         script.src = sources[i];
         script.async = true;
+        let finished = false;
+        const timer = setTimeout(() => {
+          if (finished) return;
+          finished = true;
+          log(`Engine source ${i + 1} timed out`);
+          script.remove();
+          loadEngine(i + 1);
+        }, 8000);
         script.onload = async () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timer);
           if (!window.Phaser) {
-            log(`CDN ${i + 1} loaded without Phaser global`);
+            log(`Source ${i + 1} loaded without Phaser global`);
             script.remove();
             return loadEngine(i + 1);
           }
           log(`Phaser ${window.Phaser.VERSION || 'loaded'}`);
           status.textContent = 'STARTING RUN…';
           try {
-            await import('./src/game.js?v=2');
+            await import('./src/game.js?v=3');
             log('Game module imported');
           } catch (err) {
             fail(`Game module: ${err?.stack || err}`);
           }
         };
         script.onerror = () => {
-          log(`CDN ${i + 1} failed`);
+          if (finished) return;
+          finished = true;
+          clearTimeout(timer);
+          log(`Engine source ${i + 1} failed`);
           script.remove();
           loadEngine(i + 1);
         };
