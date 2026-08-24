@@ -84,6 +84,13 @@ jobs:
             exit 1
           fi
 
+          if ! grep -q 'Phase C active: weapon rig + scaled combat + swept hitboxes + Scrap cards + optional Rig' /tmp/wm-dom.html; then
+            echo "Browser test failed: Phase C core loop was not applied"
+            cat /tmp/wm-chrome.log
+            cat /tmp/wm-dom.html
+            exit 1
+          fi
+
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
             cat /tmp/wm-chrome.log
@@ -91,7 +98,7 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch production-art browser smoke test passed"
+          echo "Wreckmarch Phase C browser smoke test passed"
 
       - name: Comment browser diagnostics
         if: failure() && github.event_name == 'pull_request'
