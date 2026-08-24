@@ -110,3 +110,18 @@ See `GAMEPLAY_REDESIGN_PLAN.md` for the full approved design and architecture.
 - ✅ Card colors are category-based: Hero/rust orange, Utility/cyan, Fortress/brass-gold.
 - ✅ Keyboard left/right + Enter/Space and 1/2/3 selection hooks are included as a foundation for Smart TV/gamepad navigation.
 - 🟡 The new two-handed pose art remains prototype SVG and should be judged on-device before final sprite/PNG production.
+
+---
+
+## L. Phase C.2 — Responsive Visual Foundation
+
+- ✅ Browser viewport is now adaptive instead of forcing a boxed 16:9 canvas.
+- ✅ Camera zoom is pulled back slightly for more battlefield visibility.
+- ✅ HUD reflows to live landscape width and uses less vertical space.
+- ✅ Rivet Gun uses a new dimensional 8-direction two-hand pose atlas with broad up/down silhouettes.
+- ✅ Muzzle offsets are pose-specific so projectiles originate from the illustrated barrel.
+- ✅ Upgrade cards use large illustrated ability art instead of thin symbolic icons.
+- ✅ Upgrade card sizing adapts to the live landscape viewport.
+- ✅ Browser smoke test now gates Phase C.2.
+
+Next polish target: validate real iOS Safari framing, tune player/enemy density at the new camera zoom, and replace any remaining prototype props that clash with the upgraded visual language.
