@@ -70,7 +70,7 @@ jobs:
             exit 1
           fi
 
-          if grep -q 'LOAD FAILED' /tmp/wm-dom.html; then
+          if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
             cat /tmp/wm-chrome.log
             cat /tmp/wm-dom.html
