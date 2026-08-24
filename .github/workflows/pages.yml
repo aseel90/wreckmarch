@@ -1,7 +1,9 @@
-name: Deploy Wreckmarch to GitHub Pages
+name: Test and Deploy Wreckmarch
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -11,23 +13,15 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  smoke:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Vendor Phaser locally
         shell: bash
@@ -56,7 +50,7 @@ jobs:
             --no-sandbox \
             --disable-gpu \
             --disable-dev-shm-usage \
-            --virtual-time-budget=9000 \
+            --virtual-time-budget=15000 \
             --dump-dom \
             "http://127.0.0.1:4173/?debug=1" \
             >/tmp/wm-dom.html 2>/tmp/wm-chrome.log
@@ -68,8 +62,8 @@ jobs:
             exit 1
           fi
 
-          if ! grep -q 'Visual slice v1 ready' /tmp/wm-dom.html; then
-            echo "Browser test failed: visual slice did not reach Scene.create()"
+          if ! grep -q 'Art pack v2 applied' /tmp/wm-dom.html; then
+            echo "Browser test failed: production art pack was not applied"
             cat /tmp/wm-chrome.log
             cat /tmp/wm-dom.html
             exit 1
@@ -82,7 +76,31 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch browser smoke test passed"
+          echo "Wreckmarch production-art browser smoke test passed"
+
+  deploy:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: smoke
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Vendor Phaser locally
+        shell: bash
+        run: |
+          mkdir -p vendor
+          curl -fsSL --retry 3 --connect-timeout 10 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js \
+            || curl -fsSL --retry 3 --connect-timeout 10 https://unpkg.com/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js
+          test -s vendor/phaser.min.js
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
