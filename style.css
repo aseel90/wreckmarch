@@ -15,8 +15,25 @@ body { touch-action: none; overscroll-behavior: none; user-select: none; -webkit
   overflow: hidden;
   background: radial-gradient(circle at 50% 10%, rgba(230,159,65,.1), transparent 44%), #090d13;
 }
-#game { width: 100%; height: 100%; position: relative; }
-#game canvas { display: block; width: 100% !important; height: 100% !important; object-fit: contain; }
+#game {
+  width: 100%; height: 100%; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+#game canvas {
+  display: block;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
+body.browser-fit-mode #game { padding: 4px; }
+body.browser-fit-mode #game canvas {
+  width: min(100vw, calc(100dvh * 16 / 9)) !important;
+  height: min(100dvh, calc(100vw * 9 / 16)) !important;
+}
 #boot {
   position: fixed; z-index: 10020; inset: 0; display: grid; place-content: center; text-align: center;
   pointer-events: none; letter-spacing: .16em; font-weight: 900;
@@ -66,8 +83,8 @@ body.boot-error #boot { background: #0c1017; }
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
-body.browser-fullscreen-capable #fullscreen-toggle { display: block; }
-body.debug-enabled.browser-fullscreen-capable #debug-toggle { bottom: calc(54px + env(safe-area-inset-bottom, 0px)); }
+body.browser-shell #fullscreen-toggle { display: block; }
+body.debug-enabled.browser-shell #debug-toggle { bottom: calc(54px + env(safe-area-inset-bottom, 0px)); }
 body.is-fullscreen #fullscreen-toggle { opacity: .72; }
 #debug-toggle {
   display: none;
