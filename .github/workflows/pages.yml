@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
   pages: write
   id-token: write
 
@@ -77,6 +78,24 @@ jobs:
           fi
 
           echo "Wreckmarch production-art browser smoke test passed"
+
+      - name: Comment browser diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import html, re
+          dom = Path('/tmp/wm-dom.html').read_text(errors='ignore') if Path('/tmp/wm-dom.html').exists() else ''
+          chrome = Path('/tmp/wm-chrome.log').read_text(errors='ignore') if Path('/tmp/wm-chrome.log').exists() else ''
+          m = re.search(r'<pre id="debug-panel"[^>]*>(.*?)</pre>', dom, re.S)
+          debug = html.unescape(re.sub('<[^>]+>', '', m.group(1))).strip() if m else 'debug panel not found'
+          body = '### Browser smoke diagnostic\n\n```text\n' + debug[-5000:] + '\n```\n\nChrome tail:\n```text\n' + chrome[-2500:] + '\n```\n'
+          Path('/tmp/wm-diagnostic.md').write_text(body)
+          PY
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-diagnostic.md
 
   deploy:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
