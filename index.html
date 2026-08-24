@@ -86,8 +86,12 @@
               graphicsProto.quadraticBezierTo = function (_cx, _cy, x, y) { this.lineTo(x, y); return this; };
               log('Applied Phaser Graphics compatibility shim');
             }
-            await import('./src/game.js?v=5');
+            await import('./src/game.js?v=6');
             log('Visual slice module imported');
+            status.textContent = 'APPLYING ART PACK…';
+            const art = await import('./src/art-runtime.js?v=1');
+            await art.applyProductionArt();
+            log('Production art pack active');
           } catch (err) {
             fail(`Game module: ${err?.stack || err}`);
           }
