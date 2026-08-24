@@ -8,14 +8,85 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>WRECKMARCH — Prototype</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css?v=2" />
 </head>
 <body>
   <main id="game-shell" aria-label="Wreckmarch prototype">
-    <div id="boot">WRECKMARCH<br><span>BUILD • ROLL • SURVIVE</span></div>
+    <div id="boot">
+      <strong>WRECKMARCH</strong>
+      <span>BUILD • ROLL • SURVIVE</span>
+      <small id="boot-status">LOADING ENGINE…</small>
+    </div>
     <div id="game"></div>
+    <pre id="debug-panel" aria-live="polite"></pre>
   </main>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/game.js"></script>
+  <script>
+    (() => {
+      const debug = new URLSearchParams(location.search).has('debug');
+      window.__WM_DEBUG__ = debug;
+      const panel = document.getElementById('debug-panel');
+      const status = document.getElementById('boot-status');
+      const lines = [];
+
+      const log = (msg) => {
+        const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        lines.push(line);
+        if (debug) {
+          panel.textContent = lines.slice(-18).join('\n');
+          panel.classList.add('show');
+        }
+        console.log('[WRECKMARCH]', msg);
+      };
+
+      const fail = (msg) => {
+        log('ERROR: ' + msg);
+        status.textContent = 'LOAD FAILED — OPEN ?debug=1';
+        status.classList.add('error');
+        document.body.classList.add('boot-error');
+      };
+
+      window.__WM_LOG__ = log;
+      window.addEventListener('error', e => fail(`${e.message || 'Script error'} @ ${e.filename || 'unknown'}:${e.lineno || 0}`));
+      window.addEventListener('unhandledrejection', e => fail(`Promise: ${e.reason?.message || e.reason || 'unknown'}`));
+
+      const sources = [
+        'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js',
+        'https://unpkg.com/phaser@3.90.0/dist/phaser.min.js'
+      ];
+
+      const loadEngine = (i = 0) => {
+        if (i >= sources.length) return fail('Could not load Phaser from either CDN.');
+        status.textContent = `LOADING ENGINE ${i + 1}/${sources.length}…`;
+        log(`Loading Phaser: ${sources[i]}`);
+        const script = document.createElement('script');
+        script.src = sources[i];
+        script.async = true;
+        script.onload = async () => {
+          if (!window.Phaser) {
+            log(`CDN ${i + 1} loaded without Phaser global`);
+            script.remove();
+            return loadEngine(i + 1);
+          }
+          log(`Phaser ${window.Phaser.VERSION || 'loaded'}`);
+          status.textContent = 'STARTING RUN…';
+          try {
+            await import('./src/game.js?v=2');
+            log('Game module imported');
+          } catch (err) {
+            fail(`Game module: ${err?.stack || err}`);
+          }
+        };
+        script.onerror = () => {
+          log(`CDN ${i + 1} failed`);
+          script.remove();
+          loadEngine(i + 1);
+        };
+        document.head.appendChild(script);
+      };
+
+      log(`Boot ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
+      loadEngine();
+    })();
+  </script>
 </body>
 </html>
