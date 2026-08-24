@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="120" viewBox="0 0 1280 120">
+<defs>
+  <linearGradient id="gunMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#748890"/><stop offset=".42" stop-color="#415158"/><stop offset="1" stop-color="#232d31"/></linearGradient>
+</defs>
+<g transform="translate(0,0)">
+      <ellipse cx="80" cy="86" rx="42" ry="10" fill="#000" opacity=".20"/>
+      <ellipse cx="64" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/><ellipse cx="96" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/>
+      <path d="M 64 61 Q 74.5 66.0 85.0 65.0" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M 96 61 Q 101.5 61.0 107.0 55.0" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <circle cx="85.0" cy="65.0" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/><circle cx="107.0" cy="55.0" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/>
+      <polygon points="64.0,49.0 123.0,47.0 136.0,53.0 136.0,67.0 122.0,73.0 64.0,71.0" fill="url(#gunMetal)" stroke="#161b20" stroke-width="4" stroke-linejoin="round"/>
+      <polygon points="74.0,54.0 116.0,53.0 124.0,57.0 124.0,63.0 116.0,67.0 74.0,66.0" fill="#3a4b52" opacity=".88"/>
+      <line x1="78.0" y1="53.0" x2="116.0" y2="52.0" stroke="#8cecf4" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+      <circle cx="104.0" cy="60.0" r="7.5" fill="#17363d" stroke="#5ad8e8" stroke-width="3"/>
+      <circle cx="104.0" cy="60.0" r="3" fill="#a4fbff"/>
+      <rect x="102.0" y="43.0" width="8" height="6" rx="2" fill="#d98446" transform="rotate(0 106.0 46.0)"/>
+      <circle cx="59.0" cy="60.0" r="5" fill="#a0643d" stroke="#261a17" stroke-width="2"/>
+      <circle cx="141.0" cy="60.0" r="6" fill="#151a1e" stroke="#d98446" stroke-width="3"/>
+      <circle cx="141.0" cy="60.0" r="2" fill="#ffd08c" opacity=".85"/>
+    </g><g transform="translate(160,0)">
+      <ellipse cx="80" cy="86" rx="42" ry="10" fill="#000" opacity=".20"/>
+      <ellipse cx="64" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/><ellipse cx="96" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/>
+      <path d="M 64 61 Q 69.9 64.7 80.0 64.2" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M 96 61 Q 97.2 69.0 102.6 72.7" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <circle cx="80.0" cy="64.2" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/><circle cx="102.6" cy="72.7" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/>
+      <polygon points="76.5,38.1 119.6,78.4 124.5,91.8 114.6,101.7 100.5,96.1 60.9,53.6" fill="url(#gunMetal)" stroke="#161b20" stroke-width="4" stroke-linejoin="round"/>
+      <polygon points="80.0,48.7 110.4,77.7 113.2,86.2 109.0,90.4 100.5,87.6 71.5,57.2" fill="#3a4b52" opacity=".88"/>
+      <line x1="83.5" y1="50.8" x2="111.1" y2="77.0" stroke="#8cecf4" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+      <circle cx="97.0" cy="74.1" r="7.5" fill="#17363d" stroke="#5ad8e8" stroke-width="3"/>
+      <circle cx="97.0" cy="74.1" r="3" fill="#a4fbff"/>
+      <rect x="104.3" y="62.7" width="8" height="6" rx="2" fill="#d98446" transform="rotate(45 108.3 65.7)"/>
+      <circle cx="65.2" cy="42.3" r="5" fill="#a0643d" stroke="#261a17" stroke-width="2"/>
+      <circle cx="123.1" cy="100.3" r="6" fill="#151a1e" stroke="#d98446" stroke-width="3"/>
+      <circle cx="123.1" cy="100.3" r="2" fill="#ffd08c" opacity=".85"/>
+    </g><g transform="translate(320,0)">
+      <ellipse cx="80" cy="86" rx="42" ry="10" fill="#000" opacity=".20"/>
+      <ellipse cx="64" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/><ellipse cx="96" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/>
+      <path d="M 64 61 Q 66.5 61.0 75.0 61.0" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M 96 61 Q 87.5 72.0 85.0 83.0" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <circle cx="75.0" cy="61.0" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/><circle cx="85.0" cy="83.0" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/>
+      <polygon points="91.0,40.0 93.0,99.0 87.0,112.0 73.0,112.0 67.0,98.0 69.0,40.0" fill="url(#gunMetal)" stroke="#161b20" stroke-width="4" stroke-linejoin="round"/>
+      <polygon points="86.0,50.0 87.0,92.0 83.0,100.0 77.0,100.0 73.0,92.0 74.0,50.0" fill="#3a4b52" opacity=".88"/>
+      <line x1="87.0" y1="54.0" x2="88.0" y2="92.0" stroke="#8cecf4" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+      <circle cx="80.0" cy="80.0" r="7.5" fill="#17363d" stroke="#5ad8e8" stroke-width="3"/>
+      <circle cx="80.0" cy="80.0" r="3" fill="#a4fbff"/>
+      <rect x="90.0" y="79.0" width="8" height="6" rx="2" fill="#d98446" transform="rotate(90 94.0 82.0)"/>
+      <circle cx="80.0" cy="35.0" r="5" fill="#a0643d" stroke="#261a17" stroke-width="2"/>
+      <circle cx="80.0" cy="117.0" r="6" fill="#151a1e" stroke="#d98446" stroke-width="3"/>
+      <circle cx="80.0" cy="117.0" r="2" fill="#ffd08c" opacity=".85"/>
+    </g><g transform="translate(480,0)">
+      <ellipse cx="80" cy="86" rx="42" ry="10" fill="#000" opacity=".20"/>
+      <ellipse cx="64" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/><ellipse cx="96" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/>
+      <path d="M 64 61 Q 62.1 68.3 64.4 79.8" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M 96 61 Q 82.3 57.0 72.9 57.2" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <circle cx="64.4" cy="79.8" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/><circle cx="72.9" cy="57.2" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/>
+      <polygon points="99.1,53.6 58.8,96.8 45.4,101.7 35.5,91.8 41.1,77.7 83.5,38.1" fill="url(#gunMetal)" stroke="#161b20" stroke-width="4" stroke-linejoin="round"/>
+      <polygon points="88.5,57.2 59.5,87.6 51.0,90.4 46.8,86.2 49.6,77.7 80.0,48.7" fill="#3a4b52" opacity=".88"/>
+      <line x1="86.4" y1="60.7" x2="60.2" y2="88.3" stroke="#8cecf4" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+      <circle cx="63.0" cy="74.1" r="7.5" fill="#17363d" stroke="#5ad8e8" stroke-width="3"/>
+      <circle cx="63.0" cy="74.1" r="3" fill="#a4fbff"/>
+      <rect x="67.5" y="82.5" width="8" height="6" rx="2" fill="#d98446" transform="rotate(135 71.5 85.5)"/>
+      <circle cx="94.8" cy="42.3" r="5" fill="#a0643d" stroke="#261a17" stroke-width="2"/>
+      <circle cx="36.9" cy="100.3" r="6" fill="#151a1e" stroke="#d98446" stroke-width="3"/>
+      <circle cx="36.9" cy="100.3" r="2" fill="#ffd08c" opacity=".85"/>
+    </g><g transform="translate(640,0)">
+      <ellipse cx="80" cy="86" rx="42" ry="10" fill="#000" opacity=".20"/>
+      <ellipse cx="64" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/><ellipse cx="96" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/>
+      <path d="M 64 61 Q 58.5 60.0 53.0 65.0" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M 96 61 Q 85.5 55.0 75.0 55.0" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <circle cx="53.0" cy="65.0" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/><circle cx="75.0" cy="55.0" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/>
+      <polygon points="96.0,71.0 37.0,73.0 24.0,67.0 24.0,53.0 38.0,47.0 96.0,49.0" fill="url(#gunMetal)" stroke="#161b20" stroke-width="4" stroke-linejoin="round"/>
+      <polygon points="86.0,66.0 44.0,67.0 36.0,63.0 36.0,57.0 44.0,53.0 86.0,54.0" fill="#3a4b52" opacity=".88"/>
+      <line x1="82.0" y1="67.0" x2="44.0" y2="68.0" stroke="#8cecf4" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+      <circle cx="56.0" cy="60.0" r="7.5" fill="#17363d" stroke="#5ad8e8" stroke-width="3"/>
+      <circle cx="56.0" cy="60.0" r="3" fill="#a4fbff"/>
+      <rect x="50.0" y="71.0" width="8" height="6" rx="2" fill="#d98446" transform="rotate(180 54.0 74.0)"/>
+      <circle cx="101.0" cy="60.0" r="5" fill="#a0643d" stroke="#261a17" stroke-width="2"/>
+      <circle cx="19.0" cy="60.0" r="6" fill="#151a1e" stroke="#d98446" stroke-width="3"/>
+      <circle cx="19.0" cy="60.0" r="2" fill="#ffd08c" opacity=".85"/>
+    </g><g transform="translate(800,0)">
+      <ellipse cx="80" cy="86" rx="42" ry="10" fill="#000" opacity=".20"/>
+      <ellipse cx="64" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/><ellipse cx="96" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/>
+      <path d="M 64 61 Q 62.8 52.0 57.4 47.3" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M 96 61 Q 90.1 56.3 80.0 55.8" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <circle cx="57.4" cy="47.3" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/><circle cx="80.0" cy="55.8" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/>
+      <polygon points="83.5,81.9 40.4,41.6 35.5,28.2 45.4,18.3 59.5,23.9 99.1,66.4" fill="url(#gunMetal)" stroke="#161b20" stroke-width="4" stroke-linejoin="round"/>
+      <polygon points="80.0,71.3 49.6,42.3 46.8,33.8 51.0,29.6 59.5,32.4 88.5,62.8" fill="#3a4b52" opacity=".88"/>
+      <line x1="76.5" y1="69.2" x2="48.9" y2="43.0" stroke="#8cecf4" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+      <circle cx="63.0" cy="45.9" r="7.5" fill="#17363d" stroke="#5ad8e8" stroke-width="3"/>
+      <circle cx="63.0" cy="45.9" r="3" fill="#a4fbff"/>
+      <rect x="47.7" y="51.3" width="8" height="6" rx="2" fill="#d98446" transform="rotate(225 51.7 54.3)"/>
+      <circle cx="94.8" cy="77.7" r="5" fill="#a0643d" stroke="#261a17" stroke-width="2"/>
+      <circle cx="36.9" cy="19.7" r="6" fill="#151a1e" stroke="#d98446" stroke-width="3"/>
+      <circle cx="36.9" cy="19.7" r="2" fill="#ffd08c" opacity=".85"/>
+    </g><g transform="translate(960,0)">
+      <ellipse cx="80" cy="86" rx="42" ry="10" fill="#000" opacity=".20"/>
+      <ellipse cx="64" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/><ellipse cx="96" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/>
+      <path d="M 64 61 Q 72.5 49.0 75.0 37.0" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M 96 61 Q 93.5 60.0 85.0 59.0" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <circle cx="75.0" cy="37.0" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/><circle cx="85.0" cy="59.0" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/>
+      <polygon points="69.0,80.0 67.0,21.0 73.0,8.0 87.0,8.0 93.0,22.0 91.0,80.0" fill="url(#gunMetal)" stroke="#161b20" stroke-width="4" stroke-linejoin="round"/>
+      <polygon points="74.0,70.0 73.0,28.0 77.0,20.0 83.0,20.0 87.0,28.0 86.0,70.0" fill="#3a4b52" opacity=".88"/>
+      <line x1="73.0" y1="66.0" x2="72.0" y2="28.0" stroke="#8cecf4" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+      <circle cx="80.0" cy="40.0" r="7.5" fill="#17363d" stroke="#5ad8e8" stroke-width="3"/>
+      <circle cx="80.0" cy="40.0" r="3" fill="#a4fbff"/>
+      <rect x="62.0" y="35.0" width="8" height="6" rx="2" fill="#d98446" transform="rotate(270 66.0 38.0)"/>
+      <circle cx="80.0" cy="85.0" r="5" fill="#a0643d" stroke="#261a17" stroke-width="2"/>
+      <circle cx="80.0" cy="3.0" r="6" fill="#151a1e" stroke="#d98446" stroke-width="3"/>
+      <circle cx="80.0" cy="3.0" r="2" fill="#ffd08c" opacity=".85"/>
+    </g><g transform="translate(1120,0)">
+      <ellipse cx="80" cy="86" rx="42" ry="10" fill="#000" opacity=".20"/>
+      <ellipse cx="64" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/><ellipse cx="96" cy="60" rx="10" ry="8" fill="#8b5f3f" stroke="#261b17" stroke-width="3"/>
+      <path d="M 64 61 Q 77.7 64.0 87.1 62.8" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M 96 61 Q 97.9 52.7 95.6 40.2" stroke="#9b704d" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <circle cx="87.1" cy="62.8" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/><circle cx="95.6" cy="40.2" r="7" fill="#252a2f" stroke="#121518" stroke-width="3"/>
+      <polygon points="60.9,66.4 101.2,23.2 114.6,18.3 124.5,28.2 118.9,42.3 76.5,81.9" fill="url(#gunMetal)" stroke="#161b20" stroke-width="4" stroke-linejoin="round"/>
+      <polygon points="71.5,62.8 100.5,32.4 109.0,29.6 113.2,33.8 110.4,42.3 80.0,71.3" fill="#3a4b52" opacity=".88"/>
+      <line x1="73.6" y1="59.3" x2="99.8" y2="31.7" stroke="#8cecf4" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+      <circle cx="97.0" cy="45.9" r="7.5" fill="#17363d" stroke="#5ad8e8" stroke-width="3"/>
+      <circle cx="97.0" cy="45.9" r="3" fill="#a4fbff"/>
+      <rect x="84.5" y="31.5" width="8" height="6" rx="2" fill="#d98446" transform="rotate(315 88.5 34.5)"/>
+      <circle cx="65.2" cy="77.7" r="5" fill="#a0643d" stroke="#261a17" stroke-width="2"/>
+      <circle cx="123.1" cy="19.7" r="6" fill="#151a1e" stroke="#d98446" stroke-width="3"/>
+      <circle cx="123.1" cy="19.7" r="2" fill="#ffd08c" opacity=".85"/>
+    </g>
+</svg>
