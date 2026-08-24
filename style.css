@@ -46,6 +46,29 @@ body.boot-error #boot { background: #0c1017; }
 #rotate-device .rotate-icon { font-size: 64px; color: #57d7e5; line-height: 1; transform: rotate(-35deg); }
 #rotate-device strong { font: 900 22px/1.1 ui-sans-serif, system-ui; }
 #rotate-device span { max-width: 320px; color: #93a0aa; font-size: 13px; letter-spacing: .03em; }
+
+#fullscreen-toggle {
+  display: none;
+  position: fixed;
+  z-index: 10001;
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  min-width: 112px;
+  border: 1px solid rgba(242,209,155,.5);
+  border-radius: 11px;
+  padding: 9px 12px;
+  background: rgba(8,12,17,.9);
+  color: #f2d19b;
+  box-shadow: 0 6px 20px rgba(0,0,0,.28);
+  font: 800 10px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: .08em;
+  touch-action: manipulation;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+body.browser-fullscreen-capable #fullscreen-toggle { display: block; }
+body.debug-enabled.browser-fullscreen-capable #debug-toggle { bottom: calc(54px + env(safe-area-inset-bottom, 0px)); }
+body.is-fullscreen #fullscreen-toggle { opacity: .72; }
 #debug-toggle {
   display: none;
   position: fixed;
@@ -87,7 +110,7 @@ body.debug-enabled:not(:has(#debug-panel.collapsed)) #debug-toggle { bottom: cal
 @media (orientation: portrait) {
   #rotate-device { display: grid; }
   #game { visibility: hidden; }
-  #debug-toggle, #debug-panel { visibility: hidden !important; }
+  #fullscreen-toggle, #debug-toggle, #debug-panel { visibility: hidden !important; }
 }
 @media (orientation: landscape) {
   #rotate-device { display: none; }
