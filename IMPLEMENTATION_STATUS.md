@@ -33,7 +33,7 @@ This file is the persistent implementation log for the project. Update it after 
 - ✅ Hit flash / particles / recoil / screen feedback exist.
 - ✅ Scrap Rat basic enemy exists.
 - ✅ Scrap Runner visual concept is represented in-game.
-- ✅ Fortress visual concept is represented in-game.
+- ❌ Fortress is no longer present at run start; its art remains available for the later optional companion summon.
 - ✅ Wasteland visual dressing exists in prototype form.
 - 🟡 Hero animation is still prototype/vector-runtime quality, not final sprite production quality.
 - 🟡 Rat animation is still prototype quality.
@@ -55,12 +55,12 @@ The following were implemented in the old prototype but are no longer part of th
 
 ### Hero-centered combat
 
-- ⬜ Start run with Hero only.
-- ⬜ Hero becomes primary starting damage source.
-- ⬜ Enemies target Hero instead of Fortress.
-- ⬜ Floating Hero HP bar above player.
-- ⬜ Local damage numbers / stronger hit feedback.
-- ⬜ Short hero invulnerability window after taking damage.
+- ✅ Start run with Hero only.
+- ✅ Hero becomes primary starting damage source with auto-fire.
+- ✅ Enemies target Hero only.
+- ✅ Floating Hero HP bar above player.
+- ✅ Local damage numbers / stronger hit feedback.
+- ✅ 450 ms hero invulnerability window after taking damage, with short knockback.
 
 ### Scrap / Level progression
 
@@ -128,18 +128,16 @@ The following were implemented in the old prototype but are no longer part of th
 
 ## G. Current Priority
 
-**Do not add more enemies yet.**
+**PHASE A is implemented. Do not add more enemies yet.**
 
-The next development batch must focus on:
+The next development batch is **PHASE B — Scrap Level Bar + Cards**:
 
-1. Hero-only run start.
-2. Remove Fortress HP/fail state.
-3. Hero auto-attack and hero-targeting enemies.
-4. Hero HP bar above player.
-5. Scrap XP bar and level-up system.
-6. Three-card upgrade selector.
-7. Large world + smooth camera.
-8. Only then add optional `CALL THE RIG` companion summon.
+1. Convert Scrap into the top XP/progress bar.
+2. Add level requirements and overflow handling.
+3. Pause on level-up and show 3 cards.
+4. Add a weighted Hero + Utility upgrade pool.
+5. Keep Fortress cards locked; `CALL THE RIG` remains for Phase D.
+6. After Phase B is stable, move to the large world/camera Phase C.
 
 See `GAMEPLAY_REDESIGN_PLAN.md` for the complete approved design.
 
@@ -150,5 +148,18 @@ See `GAMEPLAY_REDESIGN_PLAN.md` for the complete approved design.
 - `aeffdf7...` — Visual slice v1: Scrap Runner, Scrap Rat and Fortress.
 - `07541ff...` — Real browser smoke test before Pages deploy.
 - `96c1c07...` — Production art pass: Runner, Rat, Fortress and wasteland.
+- `phase-a-hero-core` — Hero-owned combat core; Chromium smoke test passed before merge.
 
 These are historical milestones, not necessarily the final architecture.
+
+## I. Phase A Implementation Notes
+
+- Hero now spawns alone; the Fortress is not an active gameplay object at run start.
+- Fortress HP, Fortress collision damage, and Fortress-loss fail state are removed from active gameplay.
+- Starting shots originate from the Scrap Runner and target the nearest enemy.
+- Scrap Rats path directly to the Hero.
+- Hero HP is rendered above the character and follows movement.
+- Hits show floating damage, red feedback, screen shake, short knockback, and a 450 ms invulnerability window.
+- Old Fortress upgrade selection is disabled until the new Phase B card system is built.
+- A hidden, non-interactive art-loader compatibility scaffold remains temporarily so the existing SVG production art runtime can initialize; it has no HP, collision, attacks, rendering, or fail state.
+- GitHub Actions Chromium smoke test passed for Phase A before merge.
