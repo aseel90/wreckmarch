@@ -98,6 +98,13 @@ jobs:
             exit 1
           fi
 
+          if ! grep -q 'Phase C.2 active: adaptive viewport + dimensional weapon poses + illustrated upgrade cards' /tmp/wm-dom.html; then
+            echo "Browser test failed: Phase C.2 visual foundation was not applied"
+            cat /tmp/wm-chrome.log
+            cat /tmp/wm-dom.html
+            exit 1
+          fi
+
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
             cat /tmp/wm-chrome.log
@@ -105,7 +112,7 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch Phase C.1 landscape browser smoke test passed"
+          echo "Wreckmarch Phase C.2 responsive visual browser smoke test passed"
 
       - name: Comment browser diagnostics
         if: failure() && github.event_name == 'pull_request'

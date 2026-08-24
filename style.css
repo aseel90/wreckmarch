@@ -22,18 +22,15 @@ body { touch-action: none; overscroll-behavior: none; user-select: none; -webkit
 }
 #game canvas {
   display: block;
-  width: auto !important;
-  height: auto !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  aspect-ratio: 16 / 9;
-  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
 }
-body.browser-fit-mode #game { padding: 4px; }
-body.browser-fit-mode #game canvas {
-  width: min(100vw, calc(100dvh * 16 / 9)) !important;
-  height: min(100dvh, calc(100vw * 9 / 16)) !important;
-}
+/* Phase C.2 resizes the Phaser game itself to the live browser viewport ratio,
+   so Safari no longer needs a boxed 16:9 fallback. */
+body.browser-fit-mode #game { padding: 0; }
+body.browser-fit-mode #game canvas { width: 100% !important; height: 100% !important; }
 #boot {
   position: fixed; z-index: 10020; inset: 0; display: grid; place-content: center; text-align: center;
   pointer-events: none; letter-spacing: .16em; font-weight: 900;
