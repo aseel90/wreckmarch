@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>WRECKMARCH — Landscape Combat UX</title>
-  <link rel="stylesheet" href="./style.css?v=6" />
+  <link rel="stylesheet" href="./style.css?v=7" />
 </head>
 <body>
   <main id="game-shell" aria-label="Wreckmarch visual slice">
@@ -18,6 +18,7 @@
     </div>
     <div id="game"></div>
     <div id="rotate-device" aria-live="polite"><div class="rotate-icon">↻</div><strong>ROTATE TO LANDSCAPE</strong><span>WRECKMARCH is built for horizontal play.</span></div>
+    <button id="fullscreen-toggle" type="button" aria-label="Enter fullscreen">⛶ FULLSCREEN</button>
     <button id="debug-toggle" type="button" aria-controls="debug-panel" aria-expanded="true">DEBUG ▼</button>
     <pre id="debug-panel" aria-live="polite"></pre>
   </main>
@@ -27,8 +28,36 @@
       window.__WM_DEBUG__ = debug;
       const panel = document.getElementById('debug-panel');
       const toggle = document.getElementById('debug-toggle');
+      const fullscreenToggle = document.getElementById('fullscreen-toggle');
       const status = document.getElementById('boot-status');
       const lines = [];
+
+      const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone === true || window.__WM_NATIVE_APP__ === true;
+      const fullscreenTarget = document.getElementById('game-shell');
+      const requestFullscreen = () => fullscreenTarget.requestFullscreen?.({ navigationUI: 'hide' }) || fullscreenTarget.webkitRequestFullscreen?.();
+      const exitFullscreen = () => document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+      const getFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+
+      if (!standalone && (fullscreenTarget.requestFullscreen || fullscreenTarget.webkitRequestFullscreen)) {
+        document.body.classList.add('browser-fullscreen-capable');
+        fullscreenToggle.addEventListener('click', async () => {
+          try {
+            if (getFullscreenElement()) await exitFullscreen();
+            else await requestFullscreen();
+          } catch (err) {
+            console.warn('[WRECKMARCH] Fullscreen request failed', err);
+          }
+        });
+        const syncFullscreenButton = () => {
+          const active = !!getFullscreenElement();
+          document.body.classList.toggle('is-fullscreen', active);
+          fullscreenToggle.textContent = active ? '↙ EXIT' : '⛶ FULLSCREEN';
+          fullscreenToggle.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+        };
+        document.addEventListener('fullscreenchange', syncFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', syncFullscreenButton);
+        syncFullscreenButton();
+      }
 
       if (debug) {
         document.body.classList.add('debug-enabled');
