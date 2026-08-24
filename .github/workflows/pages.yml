@@ -91,6 +91,13 @@ jobs:
             exit 1
           fi
 
+          if ! grep -q 'Phase C.1 active: landscape HUD + 8-way two-hand aim + UpgradeScene cards' /tmp/wm-dom.html; then
+            echo "Browser test failed: Phase C.1 landscape UX was not applied"
+            cat /tmp/wm-chrome.log
+            cat /tmp/wm-dom.html
+            exit 1
+          fi
+
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
             cat /tmp/wm-chrome.log
@@ -98,7 +105,7 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch Phase C browser smoke test passed"
+          echo "Wreckmarch Phase C.1 landscape browser smoke test passed"
 
       - name: Comment browser diagnostics
         if: failure() && github.event_name == 'pull_request'
