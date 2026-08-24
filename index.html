@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#171d26" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>WRECKMARCH — Visual Slice V1</title>
+  <title>WRECKMARCH — Phase B Large World</title>
   <link rel="stylesheet" href="./style.css?v=4" />
 </head>
 <body>
@@ -117,6 +117,11 @@
             const art = await import('./src/art-runtime.js?v=2');
             await art.applyProductionArt();
             log('Production art pack active');
+            status.textContent = 'EXPANDING WORLD…';
+            const phaseB = await import('./src/phase-b-runtime.js?v=1');
+            await phaseB.applyPhaseB();
+            log('Phase B large world active');
+            status.textContent = 'READY';
           } catch (err) {
             fail(`Game module: ${err?.stack || err}`);
           }
@@ -132,7 +137,7 @@
         document.head.appendChild(script);
       };
 
-      log(`Boot phase-a-hero-core ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
+      log(`Boot phase-b-large-world ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
       loadEngine();
     })();
   </script>

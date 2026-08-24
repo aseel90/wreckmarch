@@ -70,6 +70,13 @@ jobs:
             exit 1
           fi
 
+          if ! grep -q 'Phase B applied: 2200x2200 world + tuned movement + visible Rivet Gun' /tmp/wm-dom.html; then
+            echo "Browser test failed: Phase B large-world runtime was not applied"
+            cat /tmp/wm-chrome.log
+            cat /tmp/wm-dom.html
+            exit 1
+          fi
+
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
             cat /tmp/wm-chrome.log
