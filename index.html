@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>WRECKMARCH — Landscape Combat UX</title>
-  <link rel="stylesheet" href="./style.css?v=7" />
+  <link rel="stylesheet" href="./style.css?v=8" />
 </head>
 <body>
   <main id="game-shell" aria-label="Wreckmarch visual slice">
@@ -37,25 +37,44 @@
       const requestFullscreen = () => fullscreenTarget.requestFullscreen?.({ navigationUI: 'hide' }) || fullscreenTarget.webkitRequestFullscreen?.();
       const exitFullscreen = () => document.exitFullscreen?.() || document.webkitExitFullscreen?.();
       const getFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+      const nativeFullscreenSupported = !!(fullscreenTarget.requestFullscreen || fullscreenTarget.webkitRequestFullscreen);
 
-      if (!standalone && (fullscreenTarget.requestFullscreen || fullscreenTarget.webkitRequestFullscreen)) {
-        document.body.classList.add('browser-fullscreen-capable');
+      if (!standalone) {
+        document.body.classList.add('browser-shell');
+        if (nativeFullscreenSupported) document.body.classList.add('browser-fullscreen-capable');
+
         fullscreenToggle.addEventListener('click', async () => {
           try {
-            if (getFullscreenElement()) await exitFullscreen();
-            else await requestFullscreen();
+            if (nativeFullscreenSupported) {
+              if (getFullscreenElement()) await exitFullscreen();
+              else {
+                await requestFullscreen();
+                try { await screen.orientation?.lock?.('landscape'); } catch (_) {}
+              }
+            } else {
+              // iPhone / iPad Safari may not expose element Fullscreen API.
+              // Keep a browser-only fit mode so the 16:9 canvas never stretches.
+              document.body.classList.toggle('browser-fit-mode');
+              window.scrollTo?.(0, 0);
+            }
           } catch (err) {
-            console.warn('[WRECKMARCH] Fullscreen request failed', err);
+            document.body.classList.toggle('browser-fit-mode');
+            window.scrollTo?.(0, 0);
+            console.warn('[WRECKMARCH] Fullscreen request failed; using fit mode', err);
           }
+          syncFullscreenButton();
         });
+
         const syncFullscreenButton = () => {
           const active = !!getFullscreenElement();
+          const fit = document.body.classList.contains('browser-fit-mode');
           document.body.classList.toggle('is-fullscreen', active);
-          fullscreenToggle.textContent = active ? '↙ EXIT' : '⛶ FULLSCREEN';
-          fullscreenToggle.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+          fullscreenToggle.textContent = active || fit ? '↙ EXIT' : (nativeFullscreenSupported ? '⛶ FULLSCREEN' : '⛶ FIT SCREEN');
+          fullscreenToggle.setAttribute('aria-label', active || fit ? 'Exit fullscreen view' : 'Enter fullscreen view');
         };
         document.addEventListener('fullscreenchange', syncFullscreenButton);
         document.addEventListener('webkitfullscreenchange', syncFullscreenButton);
+        window.addEventListener('resize', () => requestAnimationFrame(syncFullscreenButton));
         syncFullscreenButton();
       }
 
