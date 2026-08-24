@@ -1,22 +1,24 @@
 :root {
-  background: #0c1017;
+  background: #090d13;
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 * { box-sizing: border-box; }
-html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0c1017; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #090d13; }
 body { touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
 #game-shell {
-  width: 100%;
+  width: 100vw;
   height: 100dvh;
+  position: relative;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at 50% 12%, rgba(230,159,65,.12), transparent 42%), #0c1017;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 10%, rgba(230,159,65,.1), transparent 44%), #090d13;
 }
-#game { width: 100%; height: 100%; max-width: 760px; position: relative; }
+#game { width: 100%; height: 100%; position: relative; }
 #game canvas { display: block; width: 100% !important; height: 100% !important; object-fit: contain; }
 #boot {
-  position: fixed; z-index: 10; inset: 0; display: grid; place-content: center; text-align: center;
+  position: fixed; z-index: 10020; inset: 0; display: grid; place-content: center; text-align: center;
   pointer-events: none; letter-spacing: .16em; font-weight: 900;
   font-size: clamp(26px, 7vw, 48px); color: #f2d19b; background: #0c1017;
   transition: opacity .35s ease, visibility 0s linear .35s;
@@ -27,12 +29,29 @@ body { touch-action: none; overscroll-behavior: none; user-select: none; -webkit
 #boot small.error { color: #e77b62; }
 body.ready #boot { opacity: 0; visibility: hidden; }
 body.boot-error #boot { background: #0c1017; }
+#rotate-device {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  background: radial-gradient(circle at 50% 40%, #17232a, #090d13 70%);
+  color: #f2d19b;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 28px;
+  letter-spacing: .08em;
+}
+#rotate-device .rotate-icon { font-size: 64px; color: #57d7e5; line-height: 1; transform: rotate(-35deg); }
+#rotate-device strong { font: 900 22px/1.1 ui-sans-serif, system-ui; }
+#rotate-device span { max-width: 320px; color: #93a0aa; font-size: 13px; letter-spacing: .03em; }
 #debug-toggle {
   display: none;
   position: fixed;
   z-index: 10000;
-  right: 10px;
-  bottom: calc(42vh + 8px + env(safe-area-inset-bottom, 0px));
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   border: 1px solid rgba(143,240,164,.38);
   border-radius: 10px;
   padding: 7px 10px;
@@ -51,10 +70,10 @@ body.debug-enabled #debug-toggle { display: block; }
   right: 0;
   bottom: 0;
   margin: 0;
-  max-height: 42vh;
+  max-height: 55vh;
   overflow: auto;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0));
-  background: rgba(0,0,0,.9);
+  background: rgba(0,0,0,.92);
   color: #8ff0a4;
   border-top: 1px solid rgba(143,240,164,.35);
   font: 11px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -63,15 +82,14 @@ body.debug-enabled #debug-toggle { display: block; }
   transition: max-height .18s ease, opacity .18s ease, padding .18s ease;
 }
 #debug-panel.show { display: block; }
-#debug-panel.collapsed {
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  border-top-color: transparent;
-  opacity: 0;
-  overflow: hidden;
+#debug-panel.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; border-top-color: transparent; opacity: 0; overflow: hidden; }
+body.debug-enabled:not(:has(#debug-panel.collapsed)) #debug-toggle { bottom: calc(55vh + 8px + env(safe-area-inset-bottom, 0px)); }
+@media (orientation: portrait) {
+  #rotate-device { display: grid; }
+  #game { visibility: hidden; }
+  #debug-toggle, #debug-panel { visibility: hidden !important; }
 }
-body.debug-enabled:has(#debug-panel.collapsed) #debug-toggle {
-  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+@media (orientation: landscape) {
+  #rotate-device { display: none; }
+  #game { visibility: visible; }
 }
-@media (orientation: landscape) and (max-height: 600px) { #game { max-width: 100%; } }
