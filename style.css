@@ -27,6 +27,22 @@ body { touch-action: none; overscroll-behavior: none; user-select: none; -webkit
 #boot small.error { color: #e77b62; }
 body.ready #boot { opacity: 0; visibility: hidden; }
 body.boot-error #boot { background: #0c1017; }
+#debug-toggle {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  right: 10px;
+  bottom: calc(42vh + 8px + env(safe-area-inset-bottom, 0px));
+  border: 1px solid rgba(143,240,164,.38);
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: rgba(0,0,0,.88);
+  color: #8ff0a4;
+  font: 700 10px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: .08em;
+  touch-action: manipulation;
+}
+body.debug-enabled #debug-toggle { display: block; }
 #debug-panel {
   display: none;
   position: fixed;
@@ -43,7 +59,19 @@ body.boot-error #boot { background: #0c1017; }
   border-top: 1px solid rgba(143,240,164,.35);
   font: 11px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   white-space: pre-wrap;
-  pointer-events: none;
+  pointer-events: auto;
+  transition: max-height .18s ease, opacity .18s ease, padding .18s ease;
 }
 #debug-panel.show { display: block; }
+#debug-panel.collapsed {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-top-color: transparent;
+  opacity: 0;
+  overflow: hidden;
+}
+body.debug-enabled:has(#debug-panel.collapsed) #debug-toggle {
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+}
 @media (orientation: landscape) and (max-height: 600px) { #game { max-width: 100%; } }
