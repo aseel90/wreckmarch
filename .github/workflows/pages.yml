@@ -1,8 +1,8 @@
-name: Deploy prototype to GitHub Pages
+name: Deploy Wreckmarch to GitHub Pages
 
 on:
   push:
-    branches: [develop]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
