@@ -81,7 +81,12 @@
           log(`Phaser ${window.Phaser.VERSION || 'loaded'}`);
           status.textContent = 'STARTING RUN…';
           try {
-            await import('./src/game.js?v=3');
+            const graphicsProto = window.Phaser?.GameObjects?.Graphics?.prototype;
+            if (graphicsProto && typeof graphicsProto.quadraticBezierTo !== 'function') {
+              graphicsProto.quadraticBezierTo = function (_cx, _cy, x, y) { this.lineTo(x, y); return this; };
+              log('Applied Phaser Graphics compatibility shim');
+            }
+            await import('./src/game.js?v=4');
             log('Game module imported');
           } catch (err) {
             fail(`Game module: ${err?.stack || err}`);
