@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#171d26" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>WRECKMARCH — Prototype</title>
+  <title>WRECKMARCH — Visual Slice V1</title>
   <link rel="stylesheet" href="./style.css?v=3" />
 </head>
 <body>
-  <main id="game-shell" aria-label="Wreckmarch prototype">
+  <main id="game-shell" aria-label="Wreckmarch visual slice">
     <div id="boot">
       <strong>WRECKMARCH</strong>
       <span>BUILD • ROLL • SURVIVE</span>
-      <small id="boot-status">LOADING ENGINE…</small>
+      <small id="boot-status">LOADING VISUAL SLICE…</small>
     </div>
     <div id="game"></div>
     <pre id="debug-panel" aria-live="polite"></pre>
@@ -79,15 +79,15 @@
             return loadEngine(i + 1);
           }
           log(`Phaser ${window.Phaser.VERSION || 'loaded'}`);
-          status.textContent = 'STARTING RUN…';
+          status.textContent = 'STARTING VISUAL SLICE…';
           try {
             const graphicsProto = window.Phaser?.GameObjects?.Graphics?.prototype;
             if (graphicsProto && typeof graphicsProto.quadraticBezierTo !== 'function') {
               graphicsProto.quadraticBezierTo = function (_cx, _cy, x, y) { this.lineTo(x, y); return this; };
               log('Applied Phaser Graphics compatibility shim');
             }
-            await import('./src/game.js?v=4');
-            log('Game module imported');
+            await import('./src/game.js?v=5');
+            log('Visual slice module imported');
           } catch (err) {
             fail(`Game module: ${err?.stack || err}`);
           }
@@ -103,7 +103,7 @@
         document.head.appendChild(script);
       };
 
-      log(`Boot ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
+      log(`Boot visual-slice-v1 ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
       loadEngine();
     })();
   </script>
