@@ -18,8 +18,32 @@ body { touch-action: none; overscroll-behavior: none; user-select: none; -webkit
 #boot {
   position: fixed; z-index: 10; inset: 0; display: grid; place-content: center; text-align: center;
   pointer-events: none; letter-spacing: .16em; font-weight: 900;
-  font-size: clamp(26px, 7vw, 48px); color: #f2d19b; background: #0c1017; transition: opacity .35s ease;
+  font-size: clamp(26px, 7vw, 48px); color: #f2d19b; background: #0c1017;
+  transition: opacity .35s ease, visibility 0s linear .35s;
 }
+#boot strong { display: block; }
 #boot span { margin-top: .65rem; font-size: .28em; letter-spacing: .24em; color: #9aa7b5; }
-body.ready #boot { opacity: 0; }
+#boot small { margin-top: 1.4rem; font-size: 10px; letter-spacing: .18em; color: #6f7a86; }
+#boot small.error { color: #e77b62; }
+body.ready #boot { opacity: 0; visibility: hidden; }
+body.boot-error #boot { background: #0c1017; }
+#debug-panel {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  max-height: 42vh;
+  overflow: auto;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0));
+  background: rgba(0,0,0,.9);
+  color: #8ff0a4;
+  border-top: 1px solid rgba(143,240,164,.35);
+  font: 11px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: pre-wrap;
+  pointer-events: none;
+}
+#debug-panel.show { display: block; }
 @media (orientation: landscape) and (max-height: 600px) { #game { max-width: 100%; } }
