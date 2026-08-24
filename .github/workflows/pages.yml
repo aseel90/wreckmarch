@@ -77,6 +77,13 @@ jobs:
             exit 1
           fi
 
+          if ! grep -q 'Phase B.1 polish active: hand-anchored Rivet Gun + asset-based wasteland' /tmp/wm-dom.html; then
+            echo "Browser test failed: Phase B.1 visual polish was not applied"
+            cat /tmp/wm-chrome.log
+            cat /tmp/wm-dom.html
+            exit 1
+          fi
+
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
             cat /tmp/wm-chrome.log
