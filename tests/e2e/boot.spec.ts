@@ -103,7 +103,7 @@ test('boots the current game, routes movement through InputManager, and keeps as
     production: true,
     version: 'production-v1',
     animation: 'scrap-rat-run',
-    hitRadius: 25
+    hitRadius: 24
   });
   expect(scrapRatVisual!.scale).toBeGreaterThan(.65);
 
