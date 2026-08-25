@@ -86,6 +86,7 @@ test('boots the current game, routes movement through InputManager, and keeps as
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
     scene.fireDelay = 999999;
+    scene.bullets?.clear?.(true, true);
     scene.enemies.clear(true, true);
     scene.spawnEnemy(false);
     const enemy = scene.enemies.getChildren().find((object: any) => object?.active);
@@ -94,30 +95,46 @@ test('boots the current game, routes movement through InputManager, and keeps as
       production: enemy.__scrapRatVisual,
       version: enemy.__scrapRatVisualVersion,
       animation: enemy.anims?.currentAnim?.key,
+      runFrames: scene.anims.get('scrap-rat-run')?.frames?.length || 0,
       hitRadius: enemy.hitRadius,
-      scale: Math.abs(enemy.scaleX || 0),
-      frame: Number(enemy.frame?.name)
+      scaleX: Math.abs(enemy.scaleX || 0),
+      scaleY: Math.abs(enemy.scaleY || 0)
     } : null;
   });
   expect(scrapRatVisual).not.toBeNull();
   expect(scrapRatVisual).toMatchObject({
-    texture: 'scrap-rat-sheet',
     production: true,
-    version: 'production-v2',
+    version: 'production-v3',
     animation: 'scrap-rat-run',
-    hitRadius: 24,
-    frame: 2
+    runFrames: 4,
+    hitRadius: 24
   });
-  expect(scrapRatVisual!.scale).toBeGreaterThan(.65);
+  expect(scrapRatVisual!.texture).toMatch(/^scrap-rat-run-stable-[0-3]$/);
+  expect(scrapRatVisual!.scaleX).toBeGreaterThan(.65);
+  expect(Math.abs(scrapRatVisual!.scaleX - scrapRatVisual!.scaleY)).toBeLessThan(.001);
 
-  await page.waitForTimeout(450);
-  const stableRunFrame = await page.evaluate(() => {
+  const groundedRunCycle = await page.evaluate(async () => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
-    const enemy = scene.enemies.getChildren().find((object: any) => object?.active);
-    return enemy ? Number(enemy.frame?.name) : null;
+    const enemy = scene.enemies.getChildren().find((object: any) => object?.active) as any;
+    const observed: string[] = [];
+    for (let i = 0; i < 8; i += 1) {
+      observed.push(String(enemy?.texture?.key || ''));
+      await new Promise(resolve => setTimeout(resolve, 70));
+    }
+    return {
+      observed,
+      animation: enemy?.anims?.currentAnim?.key,
+      alpha: enemy?.alpha,
+      scaleX: Math.abs(enemy?.scaleX || 0),
+      scaleY: Math.abs(enemy?.scaleY || 0)
+    };
   });
-  expect(stableRunFrame).toBe(2);
+  expect(new Set(groundedRunCycle.observed).size).toBeGreaterThanOrEqual(3);
+  expect(groundedRunCycle.observed.every(key => /^scrap-rat-run-stable-[0-3]$/.test(key))).toBe(true);
+  expect(groundedRunCycle.animation).toBe('scrap-rat-run');
+  expect(groundedRunCycle.alpha).toBe(1);
+  expect(Math.abs(groundedRunCycle.scaleX - groundedRunCycle.scaleY)).toBeLessThan(.001);
 
   const beforeX = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;

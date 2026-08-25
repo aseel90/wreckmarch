@@ -4,13 +4,21 @@ import {
   SCRAP_RAT_SHEET_DATA_URI
 } from './scrap-rat-asset.js?v=1';
 
+const STABLE_RUN_TEXTURES = Object.freeze([
+  'scrap-rat-run-stable-0',
+  'scrap-rat-run-stable-1',
+  'scrap-rat-run-stable-2',
+  'scrap-rat-run-stable-3'
+]);
+
 export const SCRAP_RAT_VISUAL = Object.freeze({
   texture: 'scrap-rat-sheet',
+  stableRunTextures: STABLE_RUN_TEXTURES,
   frameSize: SCRAP_RAT_FRAME_SIZE,
   frameCount: SCRAP_RAT_FRAME_COUNT,
   frames: Object.freeze({
     idle: Object.freeze([0, 1]),
-    run: Object.freeze([2]),
+    run: Object.freeze([2, 3, 4, 5]),
     hit: Object.freeze([6, 7]),
     death: Object.freeze([8, 9, 10, 11])
   }),
@@ -50,7 +58,61 @@ function loadSheet(scene) {
   });
 }
 
-function replaceAnimation(scene, key, frames, frameRate, repeat) {
+const clampByte = value => Math.max(0, Math.min(255, Math.round(value)));
+
+function normalizeRunPalette(canvasTexture) {
+  const context = canvasTexture.getContext();
+  const imageData = context.getImageData(0, 0, SCRAP_RAT_FRAME_SIZE, SCRAP_RAT_FRAME_SIZE);
+  const pixels = imageData.data;
+  let count = 0;
+  let sum = 0;
+  let sumSquares = 0;
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (pixels[i + 3] <= 32) continue;
+    const luma = .2126 * pixels[i] + .7152 * pixels[i + 1] + .0722 * pixels[i + 2];
+    count += 1;
+    sum += luma;
+    sumSquares += luma * luma;
+  }
+
+  if (!count) return;
+  const mean = sum / count;
+  const variance = Math.max(1, sumSquares / count - mean * mean);
+  const deviation = Math.sqrt(variance);
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (pixels[i + 3] <= 32) continue;
+    const red = pixels[i];
+    const green = pixels[i + 1];
+    const blue = pixels[i + 2];
+    const luma = .2126 * red + .7152 * green + .0722 * blue;
+    const max = Math.max(red, green, blue);
+    const min = Math.min(red, green, blue);
+    const saturation = max > 0 ? (max - min) / max : 0;
+    const tone = Math.max(38, Math.min(205, 110 + ((luma - mean) / deviation) * 30));
+    const accent = Math.max(0, Math.min(.22, (saturation - .18) * .32));
+    pixels[i] = clampByte(tone * (1 - accent) + 190 * accent);
+    pixels[i + 1] = clampByte(tone * .99 * (1 - accent) + 142 * accent);
+    pixels[i + 2] = clampByte(tone * (1 - accent) + 174 * accent);
+  }
+
+  context.putImageData(imageData, 0, 0);
+  canvasTexture.refresh();
+}
+
+function installStableRunTextures(scene) {
+  SCRAP_RAT_VISUAL.frames.run.forEach((sourceFrame, index) => {
+    const key = STABLE_RUN_TEXTURES[index];
+    if (scene.textures.exists(key)) return;
+    const texture = scene.textures.createCanvas(key, SCRAP_RAT_FRAME_SIZE, SCRAP_RAT_FRAME_SIZE);
+    if (!texture) throw new Error(`Could not create ${key}`);
+    texture.drawFrame(SCRAP_RAT_VISUAL.texture, sourceFrame, 0, 0);
+    normalizeRunPalette(texture);
+  });
+}
+
+function replaceSheetAnimation(scene, key, frames, frameRate, repeat) {
   if (scene.anims.exists(key)) scene.anims.remove(key);
   scene.anims.create({
     key,
@@ -60,37 +122,37 @@ function replaceAnimation(scene, key, frames, frameRate, repeat) {
   });
 }
 
-function installAnimations(scene) {
-  replaceAnimation(scene, SCRAP_RAT_VISUAL.animations.idle, SCRAP_RAT_VISUAL.frames.idle, 3, -1);
-  replaceAnimation(scene, SCRAP_RAT_VISUAL.animations.run, SCRAP_RAT_VISUAL.frames.run, 12, -1);
-  replaceAnimation(scene, SCRAP_RAT_VISUAL.animations.hit, SCRAP_RAT_VISUAL.frames.hit, 16, 0);
-  replaceAnimation(scene, SCRAP_RAT_VISUAL.animations.death, SCRAP_RAT_VISUAL.frames.death, 10, 0);
-  // Legacy gameplay still asks for rat-run during spawn. Make that key point at the production art too.
-  replaceAnimation(scene, 'rat-run', SCRAP_RAT_VISUAL.frames.run, 12, -1);
+function replaceTextureAnimation(scene, key, textureKeys, frameRate, repeat) {
+  if (scene.anims.exists(key)) scene.anims.remove(key);
+  scene.anims.create({
+    key,
+    frames: textureKeys.map(textureKey => ({ key: textureKey })),
+    frameRate,
+    repeat
+  });
 }
 
-function installStrideMotion(enemy, baseScale) {
-  enemy.__scrapRatStrideTween?.stop?.();
-  enemy.__scrapRatStrideTween = enemy.scene?.tweens?.add({
-    targets: enemy,
-    scaleY: baseScale * .95,
-    duration: 120,
-    yoyo: true,
-    repeat: -1,
-    ease: 'Sine.InOut'
-  });
+function installAnimations(scene) {
+  replaceSheetAnimation(scene, SCRAP_RAT_VISUAL.animations.idle, SCRAP_RAT_VISUAL.frames.idle, 3, -1);
+  replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.run, STABLE_RUN_TEXTURES, 11, -1);
+  replaceSheetAnimation(scene, SCRAP_RAT_VISUAL.animations.hit, SCRAP_RAT_VISUAL.frames.hit, 16, 0);
+  replaceSheetAnimation(scene, SCRAP_RAT_VISUAL.animations.death, SCRAP_RAT_VISUAL.frames.death, 10, 0);
+  // Legacy gameplay still asks for rat-run during spawn. Keep it mapped to the grounded production cycle.
+  replaceTextureAnimation(scene, 'rat-run', STABLE_RUN_TEXTURES, 11, -1);
 }
 
 export function tuneScrapRatVisual(enemy) {
   if (!enemy?.active) return enemy;
   const elite = Boolean(enemy.elite);
+  enemy.__scrapRatStrideTween?.stop?.();
+  enemy.__scrapRatStrideTween = null;
   enemy.stop?.();
-  enemy.setTexture(SCRAP_RAT_VISUAL.texture, SCRAP_RAT_VISUAL.frames.run[0]);
-  const baseScale = elite ? SCRAP_RAT_VISUAL.scale.elite : SCRAP_RAT_VISUAL.scale.normal;
-  enemy.setOrigin(.5, .58).setScale(baseScale);
-  installStrideMotion(enemy, baseScale);
+  enemy.clearTint?.();
+  enemy.setAlpha?.(1);
+  enemy.setTexture(STABLE_RUN_TEXTURES[0]);
+  enemy.setOrigin(.5, .58).setScale(elite ? SCRAP_RAT_VISUAL.scale.elite : SCRAP_RAT_VISUAL.scale.normal);
   enemy.__scrapRatVisual = true;
-  enemy.__scrapRatVisualVersion = 'production-v2';
+  enemy.__scrapRatVisualVersion = 'production-v3';
   enemy.play(SCRAP_RAT_VISUAL.animations.run, true);
   return enemy;
 }
@@ -164,6 +226,7 @@ function installHitAndDeathVisuals(scene) {
 
 export async function installScrapRatVisuals(scene) {
   await loadSheet(scene);
+  installStableRunTextures(scene);
   installAnimations(scene);
   scene.enemies.children.iterate(tuneScrapRatVisual);
   installSpawnVisuals(scene);
@@ -171,6 +234,6 @@ export async function installScrapRatVisuals(scene) {
   scene.__scrapRatVisualReady = true;
   window.__WM_SCRAP_RAT_VISUAL__ = true;
   document.documentElement.dataset.wreckmarchScrapRatVisual = 'production';
-  window.__WM_LOG__?.('Production Scrap Rat active: stable run frame + hit/death sprite set');
+  window.__WM_LOG__?.('Production Scrap Rat active: grounded 4-pose stable-palette scuttle cycle');
   return true;
 }
