@@ -19,7 +19,9 @@ body { touch-action: none; overscroll-behavior: none; user-select: none; -webkit
   width: 100%; height: 100%; position: relative;
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
+  opacity: 0; pointer-events: none;
 }
+body.visual-ready #game { opacity: 1; pointer-events: auto; }
 #game canvas {
   display: block;
   width: 100% !important;
@@ -41,7 +43,7 @@ body.browser-fit-mode #game canvas { width: 100% !important; height: 100% !impor
 #boot span { margin-top: .65rem; font-size: .28em; letter-spacing: .24em; color: #9aa7b5; }
 #boot small { margin-top: 1.4rem; font-size: 10px; letter-spacing: .18em; color: #6f7a86; }
 #boot small.error { color: #e77b62; }
-body.ready #boot { opacity: 0; visibility: hidden; }
+body.visual-ready #boot { opacity: 0; visibility: hidden; }
 body.boot-error #boot { background: #0c1017; }
 #rotate-device {
   display: none;
