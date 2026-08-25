@@ -1,7 +1,4 @@
 /* WRECKMARCH — Phase B.1 polish: hand-anchored weapon + asset-based wasteland */
-const WORLD_W = 2200;
-const WORLD_H = 2200;
-const TAU = Math.PI * 2;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function getScene(timeoutMs = 9000) {
@@ -17,8 +14,6 @@ async function getScene(timeoutMs = 9000) {
 
 function loadPolishAssets(scene) {
   const assets = [
-    ['b1-ground-a', './assets/wasteland/ground-a.svg'],
-    ['b1-ground-b', './assets/wasteland/ground-b.svg'],
     ['b1-wreck-a', './assets/wasteland/wreck-a.svg'],
     ['b1-wreck-b', './assets/wasteland/wreck-b.svg'],
     ['b1-rivet-gun', './assets/weapons/rivet-gun.svg']
@@ -49,39 +44,9 @@ function clearOldWorldArt(scene) {
     scene.hint, scene.joyBase, scene.joyKnob, scene.weaponSprite
   ]);
   [...scene.children.list].forEach(obj => {
-    if (!obj || keep.has(obj) || !obj.visible) return;
+    if (!obj || keep.has(obj) || !obj.visible || obj.__terrainSystemObject) return;
     if ((obj.depth ?? 0) <= 3) obj.destroy();
   });
-}
-
-function addGroundDetails(scene) {
-  const cols = Math.ceil(WORLD_W / 500) + 1;
-  const rows = Math.ceil(WORLD_H / 500) + 1;
-  for (let gy = 0; gy < rows; gy++) {
-    for (let gx = 0; gx < cols; gx++) {
-      const key = (gx + gy) % 2 ? 'b1-ground-a' : 'b1-ground-b';
-      const tile = scene.add.image(gx * 500 + 250, gy * 500 + 250, key)
-        .setDepth(-5).setAlpha(.9).setScale(1.06)
-        .setRotation(((gx * 3 + gy * 5) % 4) * Math.PI / 2);
-      if ((gx + gy) % 3 === 0) tile.setFlipX(true);
-      if ((gx * 2 + gy) % 4 === 0) tile.setFlipY(true);
-    }
-  }
-}
-
-function addRoads(scene) {
-  const roads = scene.add.graphics().setDepth(-4);
-  roads.lineStyle(170, 0x2b3034, .92);
-  roads.beginPath();
-  roads.moveTo(80, 1710); roads.lineTo(420, 1510); roads.lineTo(760, 1560); roads.lineTo(1130, 1608); roads.lineTo(1500, 1480); roads.lineTo(1800, 1325); roads.lineTo(2140, 1245); roads.strokePath();
-  roads.lineStyle(150, 0x2c3135, .9);
-  roads.beginPath();
-  roads.moveTo(120, 470); roads.lineTo(440, 610); roads.lineTo(760, 560); roads.lineTo(1040, 520); roads.lineTo(1320, 660); roads.lineTo(1600, 805); roads.lineTo(2050, 790); roads.strokePath();
-  roads.lineStyle(4, 0x665c4e, .38);
-  roads.beginPath();
-  roads.moveTo(82, 1710); roads.lineTo(420, 1510); roads.lineTo(760, 1560); roads.lineTo(1130, 1608); roads.lineTo(1500, 1480); roads.lineTo(1800, 1325); roads.lineTo(2140, 1245); roads.strokePath();
-  roads.beginPath();
-  roads.moveTo(120, 470); roads.lineTo(440, 610); roads.lineTo(760, 560); roads.lineTo(1040, 520); roads.lineTo(1320, 660); roads.lineTo(1600, 805); roads.lineTo(2050, 790); roads.strokePath();
 }
 
 function addWorldProps(scene) {
@@ -104,9 +69,7 @@ function addWorldProps(scene) {
 
 function rebuildWasteland(scene) {
   clearOldWorldArt(scene);
-  scene.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, 0x251f1b, 1).setDepth(-6);
-  addGroundDetails(scene);
-  addRoads(scene);
+  // TerrainSystem remains untouched; B.1 only installs its higher fidelity props.
   addWorldProps(scene);
 }
 

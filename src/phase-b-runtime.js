@@ -39,7 +39,7 @@ function clearOldArena(scene) {
     scene.hint, scene.joyBase, scene.joyKnob, scene.cart, scene.cartCore
   ]);
   [...scene.children.list].forEach(obj => {
-    if (!obj || keep.has(obj) || !obj.visible) return;
+    if (!obj || keep.has(obj) || !obj.visible || obj.__terrainSystemObject) return;
     if ((obj.depth ?? 0) <= 3) obj.destroy();
   });
 }
@@ -59,54 +59,8 @@ function addWreck(scene, x, y, rot = 0) {
 function buildExpandedWasteland(scene) {
   clearOldArena(scene);
 
-  const bg = scene.add.graphics().setDepth(-5);
-  bg.fillStyle(0x29231e).fillRect(0, 0, WORLD_W, WORLD_H);
-
-  if (scene.textures.exists('art-wasteland')) {
-    const texture = scene.add.tileSprite(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, 'art-wasteland')
-      .setDepth(-4).setAlpha(.24).setTint(0xe8c49a);
-    texture.setBlendMode(Phaser.BlendModes.MULTIPLY);
-  }
-
-  const roads = scene.add.graphics().setDepth(-3);
-  roads.fillStyle(0x292e32, .94);
-  roads.fillRoundedRect(110, 270, 1980, 340, 96);
-  roads.fillRoundedRect(620, 110, 365, 1980, 96);
-  roads.lineStyle(4, 0x51493e, .55);
-  roads.strokeRoundedRect(110, 270, 1980, 340, 96);
-  roads.strokeRoundedRect(620, 110, 365, 1980, 96);
-
-  const terrain = scene.add.graphics().setDepth(-2);
-  for (let i = 0; i < 130; i++) {
-    const x = Phaser.Math.Between(45, WORLD_W - 45);
-    const y = Phaser.Math.Between(45, WORLD_H - 45);
-    const w = Phaser.Math.Between(38, 175);
-    const h = Phaser.Math.Between(18, 84);
-    const c = Phaser.Math.RND.pick([0x3a3027, 0x46382b, 0x252a2d, 0x5a4330, 0x394044]);
-    terrain.fillStyle(c, Phaser.Math.FloatBetween(.16, .42)).fillEllipse(x, y, w, h);
-  }
-
-  terrain.lineStyle(3, 0x16191b, .3);
-  for (let i = 0; i < 58; i++) {
-    const x = Phaser.Math.Between(80, WORLD_W - 80);
-    const y = Phaser.Math.Between(80, WORLD_H - 80);
-    const len = Phaser.Math.Between(38, 100);
-    const a = Phaser.Math.FloatBetween(0, TAU);
-    terrain.beginPath();
-    terrain.moveTo(x, y);
-    terrain.lineTo(x + Math.cos(a) * len * .42, y + Math.sin(a) * len * .42);
-    terrain.lineTo(x + Math.cos(a + .22) * len, y + Math.sin(a + .22) * len);
-    terrain.strokePath();
-  }
-
-  for (let i = 0; i < 120; i++) {
-    const x = Phaser.Math.Between(35, WORLD_W - 35);
-    const y = Phaser.Math.Between(35, WORLD_H - 35);
-    const c = Phaser.Math.RND.pick([0x7b5b3e, 0x576064, 0x9a6840, 0x34393b]);
-    scene.add.rectangle(x, y, Phaser.Math.Between(5, 20), Phaser.Math.Between(2, 7), c, Phaser.Math.FloatBetween(.25, .58))
-      .setDepth(-1).setRotation(Phaser.Math.FloatBetween(0, TAU));
-  }
-
+  // TerrainSystem owns all ground and road rendering. Phase B now contributes
+  // only temporary world props that later art phases may replace.
   addWreck(scene, 330, 790, -.18);
   addWreck(scene, 1550, 470, .11);
   addWreck(scene, 1780, 1520, -.28);
