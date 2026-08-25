@@ -23,10 +23,10 @@ function clearLegacyTerrain(s){
 
 function buildRoadSegment(s,a,b,width,name,index){
   const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx),x=(a.x+b.x)/2,y=(a.y+b.y)/2;
-  const shoulder=s.add.rectangle(x,y,len+34,width+36,0x4a3528,.98).setDepth(-18).setRotation(ang).setName(`${name}-shoulder-${index}`);
-  const asphalt=s.add.tileSprite(x,y,len+18,width,'c4-road').setDepth(-16).setRotation(ang).setName(`${name}-asphalt-${index}`).setAlpha(1);
+  const shoulder=s.add.rectangle(x,y,len+34,width+36,0x4a3528,.98).setDepth(0.6).setRotation(ang).setName(`${name}-shoulder-${index}`);
+  const asphalt=s.add.tileSprite(x,y,len+18,width,'c4-road').setDepth(0.9).setRotation(ang).setName(`${name}-asphalt-${index}`).setAlpha(1);
   asphalt.setTileScale(Math.max(1,width/112));asphalt.tilePositionX=(index*37)%256;asphalt.__e1Road=true;asphalt.__e1RoadWidth=width;
-  const center=s.add.rectangle(x,y,len+10,3,0xc5b27e,.22).setDepth(-15).setRotation(ang).setName(`${name}-center-${index}`);
+  const center=s.add.rectangle(x,y,len+10,3,0xc5b27e,.22).setDepth(1.05).setRotation(ang).setName(`${name}-center-${index}`);
   return [shoulder,asphalt,center];
 }
 
@@ -37,12 +37,45 @@ function buildRoad(s,pts,width,name){
   return out;
 }
 
+function suppressLegacyWorldLayer(s){
+  let hidden=0;
+  for(const o of s.children.list){
+    if(!o||o.__e1Road||String(o?.name||'').startsWith('e1-'))continue;
+    if(o.type==='Graphics' && Number(o.depth)===0){o.setVisible(false);o.__e1SuppressedLegacy=true;hidden++;continue;}
+    if(['Rectangle','Ellipse'].includes(o.type) && Number(o.depth)===0 && (o.displayWidth||0)<=22 && (o.displayHeight||0)<=12){o.setVisible(false);o.__e1SuppressedLegacy=true;hidden++;}
+  }
+  s.__e1SuppressedLegacyCount=hidden;
+  return hidden;
+}
+
+function roadSnapshot(s,label){
+  const roads=(s.__e1RoadSegments||[]).filter(o=>o?.active!==false), visible=roads.filter(o=>o.visible&&o.alpha>.9);
+  const hero=s.hero, nearest=hero&&roads.length?roads.reduce((a,b)=>Phaser.Math.Distance.Between(hero.x,hero.y,b.x,b.y)<Phaser.Math.Distance.Between(hero.x,hero.y,a.x,a.y)?b:a,roads[0]):null;
+  const legacyVisible=s.children.list.filter(o=>o?.visible&&o.__e1SuppressedLegacy).length;
+  const info={label,roads:roads.length,visible:visible.length,legacyVisible,nearest:nearest?Math.round(Phaser.Math.Distance.Between(hero.x,hero.y,nearest.x,nearest.y)):null,roadDepth:nearest?.depth??null,groundDepth:s.__e1Terrain?.find(o=>o?.name==='e1-ground-base')?.depth??null};
+  window.__WM_E1_ROAD_WATCH__=info;
+  window.__WM_LOG__?.(`ROAD WATCH ${label}: roads=${info.roads} visible=${info.visible} nearest=${info.nearest}px roadDepth=${info.roadDepth} groundDepth=${info.groundDepth} legacyVisible=${info.legacyVisible}`);
+  return info;
+}
+
+function installRoadWatch(s){
+  if(s.__e1RoadWatchInstalled)return;s.__e1RoadWatchInstalled=true;
+  const marks=[0,500,1000,2000,3000,5000,8000,12000];
+  marks.forEach(ms=>setTimeout(()=>{if(s?.sys?.isActive?.())roadSnapshot(s,ms===0?'0s':`${ms/1000}s`)},ms));
+  const guard=()=>{
+    suppressLegacyWorldLayer(s);
+    s.__e1Terrain?.forEach(o=>{if(o?.active!==false)o.setVisible(true)});
+  };
+  s.events?.on?.('wake',guard);s.events?.on?.('resume',guard);
+}
+
 function buildWorld(s){
   const removed=clearLegacyTerrain(s);
+  const suppressed=suppressLegacyWorldLayer(s);
   s.__e1Terrain=[];s.__e1RoadSegments=[];
-  const base=s.add.tileSprite(WORLD_W/2,WORLD_H/2,WORLD_W,WORLD_H,'c4-ground').setDepth(-20).setName('e1-ground-base');
+  const base=s.add.tileSprite(WORLD_W/2,WORLD_H/2,WORLD_W,WORLD_H,'c4-ground').setDepth(0.2).setName('e1-ground-base');
   base.setTileScale(1.0);s.__e1Terrain.push(base);
-  const wash=s.add.tileSprite(WORLD_W/2,WORLD_H/2,WORLD_W,WORLD_H,'c4-ground').setDepth(-19).setName('e1-ground-wash').setAlpha(.10).setTint(0xb78963);
+  const wash=s.add.tileSprite(WORLD_W/2,WORLD_H/2,WORLD_W,WORLD_H,'c4-ground').setDepth(0.3).setName('e1-ground-wash').setAlpha(.10).setTint(0xb78963);
   wash.tilePositionX=77;wash.tilePositionY=41;s.__e1Terrain.push(wash);
   const routes=[
     {w:210,p:[[-180,1100],[280,1040],[650,1120],[960,1080],[1100,1100],[1420,1030],[1810,1120],[2380,1060]]},
@@ -51,19 +84,18 @@ function buildWorld(s){
     {w:170,p:[[-160,1780],[380,1640],[790,1700],[1190,1600],[1580,1480],[1930,1560],[2360,1660]]}
   ];
   routes.forEach((r,i)=>{const segs=buildRoad(s,r.p,r.w,`e1-road-${i}`);s.__e1Terrain.push(...segs);s.__e1RoadSegments.push(...segs.filter(o=>o.__e1Road))});
-  // visible roadside grime / tyre marks, kept above road but below gameplay
-  for(let i=0;i<34;i++){const d=s.add.ellipse(Phaser.Math.Between(80,2120),Phaser.Math.Between(90,2110),Phaser.Math.Between(26,92),Phaser.Math.Between(9,28),0x15110e,Phaser.Math.FloatBetween(.035,.075)).setDepth(-14).setRotation(Phaser.Math.FloatBetween(0,Math.PI));s.__e1Terrain.push(d)}
-  s.__e1RemovedLegacyTerrain=removed;s.__e1RoadNetwork=true;
+  for(let i=0;i<34;i++){const d=s.add.ellipse(Phaser.Math.Between(80,2120),Phaser.Math.Between(90,2110),Phaser.Math.Between(26,92),Phaser.Math.Between(9,28),0x15110e,Phaser.Math.FloatBetween(.035,.075)).setDepth(1.15).setRotation(Phaser.Math.FloatBetween(0,Math.PI));s.__e1Terrain.push(d)}
+  s.__e1RemovedLegacyTerrain=removed;s.__e1SuppressedLegacyCount=suppressed;s.__e1RoadNetwork=true;installRoadWatch(s);
 }
 
 function selfTest(s){
   if(new URLSearchParams(location.search).get('autotest')!=='1')return;
   const roads=s.__e1RoadSegments||[],near=roads.filter(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<220);
   const legacyCover=s.children.list.some(o=>isLegacyTerrain(o)&&!String(o?.name||'').startsWith('e1-'));
-  const centerRoad=near.find(o=>o.visible&&o.alpha>.95&&o.depth===-16&&o.displayHeight>=180);
-  const checks={roadSegments:roads.length>180,roadAtSpawn:!!centerRoad,noLegacyCover:!legacyCover,groundBelowRoad:!!s.children.list.find(o=>o?.name==='e1-ground-base'&&o.depth===-20),roadAboveGround:!!centerRoad&&centerRoad.depth>-20};
+  const centerRoad=near.find(o=>o.visible&&o.alpha>.95&&o.depth===0.9&&o.displayHeight>=180);
+  const checks={roadSegments:roads.length>180,roadAtSpawn:!!centerRoad,noLegacyCover:!legacyCover,groundBelowRoad:!!s.children.list.find(o=>o?.name==='e1-ground-base'&&o.depth===0.2),roadAboveGround:!!centerRoad&&centerRoad.depth>0.2};
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');
   window.__WM_E1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchE1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`E1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase E.1 self-test failed: '+detail)
 }
 
-export async function applyPhaseE1(){const s=await getScene();buildWorld(s);window.__WM_PHASE_E1__=true;document.documentElement.dataset.wreckmarchPhaseE1='active';window.__WM_LOG__?.(`Phase E.1 active: clean world renderer + visible asphalt at spawn (removed ${s.__e1RemovedLegacyTerrain||0} legacy terrain objects)`);selfTest(s);return true}
+export async function applyPhaseE1(){const s=await getScene();buildWorld(s);window.__WM_PHASE_E1__=true;document.documentElement.dataset.wreckmarchPhaseE1='active';window.__WM_LOG__?.(`Phase E.1b active: persistent asphalt layer (removed ${s.__e1RemovedLegacyTerrain||0}, suppressed ${s.__e1SuppressedLegacyCount||0} legacy world objects)`);selfTest(s);return true}
