@@ -20,8 +20,7 @@ export const SCRAP_RAT_VISUAL = Object.freeze({
     hit: 'scrap-rat-hit',
     death: 'scrap-rat-death'
   }),
-  scale: Object.freeze({ normal: .69, elite: .84 }),
-  hitRadius: Object.freeze({ normal: 25, elite: 30 })
+  scale: Object.freeze({ normal: .69, elite: .84 })
 });
 
 function loadSheet(scene) {
@@ -76,13 +75,8 @@ export function tuneScrapRatVisual(enemy) {
   enemy.stop?.();
   enemy.setTexture(SCRAP_RAT_VISUAL.texture, SCRAP_RAT_VISUAL.frames.run[0]);
   enemy.setOrigin(.5, .58).setScale(elite ? SCRAP_RAT_VISUAL.scale.elite : SCRAP_RAT_VISUAL.scale.normal);
-  enemy.hitRadius = elite ? SCRAP_RAT_VISUAL.hitRadius.elite : SCRAP_RAT_VISUAL.hitRadius.normal;
   enemy.__scrapRatVisual = true;
   enemy.__scrapRatVisualVersion = 'production-v1';
-  if (enemy.body) {
-    enemy.body.setCircle(31, 38, 56);
-    enemy.body.updateFromGameObject?.();
-  }
   enemy.play(SCRAP_RAT_VISUAL.animations.run, true);
   return enemy;
 }
