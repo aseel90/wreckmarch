@@ -45,35 +45,6 @@ function installRunnerAndMechanicalArm(s){
   s.updateWeaponPose();s.__d1MechanicalArm=true;s.__d1AnimatedRunner=true;
 }
 
-function clearOldTerrain(s){
-  s.__c4Terrain?.forEach?.(o=>o?.destroy?.());s.__c5Terrain?.forEach?.(o=>o?.destroy?.());s.__c5RoadSegments?.forEach?.(o=>o?.destroy?.());s.__d1Terrain?.forEach?.(o=>o?.destroy?.());
-  for(const o of [...s.children.list])if(o?.name?.startsWith?.('c4-road')||o?.name?.startsWith?.('c5-road')||o?.name?.startsWith?.('d1-road')||['c4-ground-base','c4-ground-wash','c5-ground-base','c5-ground-variation','d1-ground-base'].includes(o?.name))o.destroy();
-}
-function roadSpline(s,pts,name,width){
-  const curve=new Phaser.Curves.Spline(pts.map(([x,y])=>new Phaser.Math.Vector2(x,y))),p=curve.getSpacedPoints(56),out=[];
-  for(let i=0;i<p.length-1;i++){
-    const a=p[i],b=p[i+1],dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx),x=(a.x+b.x)/2,y=(a.y+b.y)/2;
-    const shoulder=s.add.rectangle(x,y,len+22,width+42,0x503a2c,.94).setDepth(-9).setRotation(ang).setName(`${name}-shoulder`);
-    const road=s.add.tileSprite(x,y,len+10,width,'c4-road').setDepth(-8).setRotation(ang).setName(name).setAlpha(1);
-    road.__d1Road=true;road.__d1RoadWidth=width;road.setTileScale(Math.max(1,width/112));road.tilePositionX=(i*31)%256;out.push(shoulder,road);
-  }
-  return out;
-}
-function installWorld(s){
-  clearOldTerrain(s);s.__d1Terrain=[];s.__d1RoadSegments=[];
-  const base=s.add.tileSprite(WORLD_W/2,WORLD_H/2,WORLD_W,WORLD_H,'c4-ground').setDepth(-11).setName('d1-ground-base');base.setTileScale(1.05);s.__d1Terrain.push(base);
-  const routes=[
-    {w:206,p:[[-140,1100],[300,1060],[650,1125],[930,1080],[1100,1100],[1430,1040],[1810,1120],[2340,1070]]},
-    {w:188,p:[[1100,-140],[1050,280],[1120,610],[1070,880],[1100,1100],[1040,1440],[1110,1810],[1060,2340]]},
-    {w:168,p:[[-140,470],[320,520],[720,475],[1110,570],[1580,510],[2340,610]]},
-    {w:168,p:[[-140,1810],[360,1690],[740,1750],[1120,1650],[1580,1510],[1950,1580],[2340,1660]]},
-    {w:148,p:[[140,2200],[390,1840],[620,1510],[820,1310],[1100,1100],[1390,850],[1640,620],[1930,300],[2130,0]]}
-  ];
-  routes.forEach((r,i)=>{const segs=roadSpline(s,r.p,`d1-road-${i}`,r.w);s.__d1RoadSegments.push(...segs.filter(o=>o.__d1Road===true));s.__d1Terrain.push(...segs)});
-  for(let i=0;i<38;i++){const d=s.add.ellipse(Phaser.Math.Between(60,2140),Phaser.Math.Between(70,2130),Phaser.Math.Between(30,100),Phaser.Math.Between(10,30),0x130f0d,Phaser.Math.FloatBetween(.035,.075)).setDepth(-7).setRotation(Phaser.Math.FloatBetween(0,Math.PI));s.__d1Terrain.push(d)}
-  s.__d1RoadNetwork=true;
-}
-
 function hideLegacyWrecks(s){for(const o of s.children.list){const f=String(o?.frame?.name||'');if(['b1-wreck-a','b1-wreck-b'].includes(o?.texture?.key)||f.startsWith('wreck_'))o.setVisible(false)}}
 function addWreck(s,kind,x,y,rot,flip){const frame=WRECK_FRAMES[kind],p=VEHICLE_PROFILE[kind],im=s.add.image(x,y,'c3-atlas',frame).setDepth(3).setRotation(rot).setFlipX(flip).setAlpha(.98).setName(`d1-wreck-${kind}`);fit(im,p.w,p.h);const sh=s.add.ellipse(x,y+p.h*.22,p.w*.76,p.h*.22,0,0.25).setDepth(2).setRotation(rot);im.__vehicleKind=kind;s.__d1Wrecks.push(im,sh);return im}
 function installVehicleScale(s){
@@ -93,10 +64,10 @@ function installPremiumCards(s){
 }
 
 function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='1')return;
-  const runFrames=s.anims.get('d1-hero-run')?.frames?.length||0,allCardFrames=CARD_IDS.every(id=>ensureFrame(s,CARD_FRAME(id))),roads=s.__d1RoadSegments||[],near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
+  const runFrames=s.anims.get('d1-hero-run')?.frames?.length||0,allCardFrames=CARD_IDS.every(id=>ensureFrame(s,CARD_FRAME(id))),roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
   const probe=s.add.image(-9999,-9999,'c3-atlas',CARD_FRAME('overclock'));fit(probe,190,140);
-  const checks={animatedLegs:runFrames===2&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allCardFrames&&probe.frame?.name===CARD_FRAME('overclock')&&probe.displayWidth>130,roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&(o.__d1RoadWidth||0)>=145),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth};probe.destroy();
+  const checks={animatedLegs:runFrames===2&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allCardFrames&&probe.frame?.name===CARD_FRAME('overclock')&&probe.displayWidth>130,roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth};probe.destroy();
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_D1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchD1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`D1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase D.1 self-test failed: '+detail)
 }
 
-export async function applyPhaseD1(){const s=await getScene();installRunnerAndMechanicalArm(s);installWorld(s);installVehicleScale(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: animated Runner + integrated mechanical arm + premium PNG card art + visible asphalt + real vehicle scale');selfTest(s);return true}
+export async function applyPhaseD1(){const s=await getScene();installRunnerAndMechanicalArm(s);installVehicleScale(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: animated Runner + integrated mechanical arm + premium PNG card art + visible asphalt + real vehicle scale');selfTest(s);return true}
