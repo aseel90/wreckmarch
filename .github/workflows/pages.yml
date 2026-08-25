@@ -53,57 +53,28 @@ jobs:
             --disable-dev-shm-usage \
             --virtual-time-budget=15000 \
             --dump-dom \
-            "http://127.0.0.1:4173/?debug=1" \
+            "http://127.0.0.1:4173/?debug=1&autotest=1" \
             >/tmp/wm-dom.html 2>/tmp/wm-chrome.log
 
-          if ! grep -q '<canvas' /tmp/wm-dom.html; then
-            echo "Browser test failed: Phaser canvas was not created"
-            cat /tmp/wm-chrome.log
-            cat /tmp/wm-dom.html
-            exit 1
-          fi
+          check_log () {
+            if ! grep -q "$1" /tmp/wm-dom.html; then
+              echo "Browser test failed: $2"
+              cat /tmp/wm-chrome.log
+              cat /tmp/wm-dom.html
+              exit 1
+            fi
+          }
 
-          if ! grep -q 'Art pack v2 applied' /tmp/wm-dom.html; then
-            echo "Browser test failed: production art pack was not applied"
-            cat /tmp/wm-chrome.log
-            cat /tmp/wm-dom.html
-            exit 1
-          fi
-
-          if ! grep -q 'Phase B applied: 2200x2200 world + tuned movement + visible Rivet Gun' /tmp/wm-dom.html; then
-            echo "Browser test failed: Phase B large-world runtime was not applied"
-            cat /tmp/wm-chrome.log
-            cat /tmp/wm-dom.html
-            exit 1
-          fi
-
-          if ! grep -q 'Phase B.1 polish active: hand-anchored Rivet Gun + asset-based wasteland' /tmp/wm-dom.html; then
-            echo "Browser test failed: Phase B.1 visual polish was not applied"
-            cat /tmp/wm-chrome.log
-            cat /tmp/wm-dom.html
-            exit 1
-          fi
-
-          if ! grep -q 'Phase C active: weapon rig + scaled combat + swept hitboxes + Scrap cards + optional Rig' /tmp/wm-dom.html; then
-            echo "Browser test failed: Phase C core loop was not applied"
-            cat /tmp/wm-chrome.log
-            cat /tmp/wm-dom.html
-            exit 1
-          fi
-
-          if ! grep -q 'Phase C.1 active: landscape HUD + 8-way two-hand aim + UpgradeScene cards' /tmp/wm-dom.html; then
-            echo "Browser test failed: Phase C.1 landscape UX was not applied"
-            cat /tmp/wm-chrome.log
-            cat /tmp/wm-dom.html
-            exit 1
-          fi
-
-          if ! grep -q 'Phase C.2 active: adaptive viewport + dimensional weapon poses + illustrated upgrade cards' /tmp/wm-dom.html; then
-            echo "Browser test failed: Phase C.2 visual foundation was not applied"
-            cat /tmp/wm-chrome.log
-            cat /tmp/wm-dom.html
-            exit 1
-          fi
+          check_log '<canvas' 'Phaser canvas was not created'
+          check_log 'Art pack v2 applied' 'production art pack was not applied'
+          check_log 'Phase B applied: 2200x2200 world + tuned movement + visible Rivet Gun' 'Phase B large-world runtime was not applied'
+          check_log 'Phase B.1 polish active: hand-anchored Rivet Gun + asset-based wasteland' 'Phase B.1 visual polish was not applied'
+          check_log 'Phase C active: weapon rig + scaled combat + swept hitboxes + Scrap cards + optional Rig' 'Phase C core loop was not applied'
+          check_log 'Phase C.1 active: landscape HUD + 8-way two-hand aim + UpgradeScene cards' 'Phase C.1 landscape UX was not applied'
+          check_log 'Phase C.2 active: adaptive viewport + dimensional weapon poses + illustrated upgrade cards' 'Phase C.2 responsive visual foundation was not applied'
+          check_log 'Phase C.3 active: exclusive PNG art + smooth Rig motion + rotating wheels + crowd separation' 'Phase C.3 art/motion polish was not applied'
+          check_log 'C3 browser self-test PASSED: atlas=ok weapon=ok rigParts=ok cards=ok wrecks=ok crowd=ok rigMotion=ok wheels=ok' 'Phase C.3 behavior self-test did not pass'
+          check_log 'data-wreckmarch-c3-self-test="passed"' 'Phase C.3 DOM self-test flag missing'
 
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
@@ -112,7 +83,7 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch Phase C.2 responsive visual browser smoke test passed"
+          echo "Wreckmarch Phase C.3 exclusive-art + motion browser smoke test passed"
 
       - name: Comment browser diagnostics
         if: failure() && github.event_name == 'pull_request'
@@ -142,12 +113,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
-
       - name: Vendor Phaser locally
         shell: bash
         run: |
@@ -155,12 +124,10 @@ jobs:
           curl -fsSL --retry 3 --connect-timeout 10 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js \
             || curl -fsSL --retry 3 --connect-timeout 10 https://unpkg.com/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js
           test -s vendor/phaser.min.js
-
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
-
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
