@@ -78,6 +78,9 @@ jobs:
           check_log 'Phase C.3.1 visual frame fix active: real atlas frames + full-size weapon/rig/card art' 'Phase C.3.1 frame fix was not applied'
           check_log 'C3.1 visual browser test PASSED: frame=ok gun=ok rig=ok wheels=ok cardArt=ok cards=ok' 'Phase C.3.1 rendered-size self-test did not pass'
           check_log 'data-wreckmarch-c31-self-test="passed"' 'Phase C.3.1 DOM self-test flag missing'
+          check_log 'Phase C.4 active: permanent weapon sockets + spring Rig follow + PNG terrain roads' 'Phase C.4 sockets/Rig/terrain runtime was not applied'
+          check_log 'C4 browser self-test PASSED: sockets=ok noThirdHand=ok ground=ok roads=ok noAngularRoadGraphics=ok rigSpring=ok wheels=ok' 'Phase C.4 rendered behavior test did not pass'
+          check_log 'data-wreckmarch-c4-self-test="passed"' 'Phase C.4 DOM self-test flag missing'
 
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
@@ -86,7 +89,7 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch Phase C.3.1 browser-rendered visual size test passed"
+          echo "Wreckmarch Phase C.4 browser-rendered weapon/Rig/terrain test passed"
 
       - name: Comment browser diagnostics
         if: failure() && github.event_name == 'pull_request'
