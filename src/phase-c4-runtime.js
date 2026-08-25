@@ -1,5 +1,6 @@
 /* WRECKMARCH Phase C.4 — permanent weapon sockets + spring Rig follow + PNG terrain */
 import { C4_GROUND, C4_ROAD } from './c4-assets.js?v=1';
+import { buildTerrainLayer } from './world/terrain-system.js?v=1';
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const WORLD_W = 2200, WORLD_H = 2200;
@@ -92,6 +93,15 @@ function clearAngularRoads(s){
     else if(o?.texture?.key==='b1-ground-a'||o?.texture?.key==='b1-ground-b') o.setVisible(false);
   }
 }
+
+function restoreSharedTerrain(s){
+  const activeBase=s.children.list.find(o=>o?.name==='e0-ground-base'&&o?.active!==false);
+  const activeRoads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false);
+  if(activeBase&&activeRoads.length>180)return;
+  const built=buildTerrainLayer(s,{owner:'e0',terrainStore:'__e0FastTerrain',roadStore:'__e0FastRoadSegments',roadMarker:'__e0Road',groundDepth:.2,shoulderDepth:.8,roadDepth:.9,centerDepth:.95,samples:64,tileOffsetStep:37});
+  s.__e0FastRoadCount=built.roads.length;
+}
+
 function addRoadSpline(s,points,name){
   const curve=new Phaser.Curves.Spline(points);
   const pts=curve.getSpacedPoints(34);
@@ -169,11 +179,11 @@ function updateDebug(s){const g=s.__c4Debug;if(!g)return;g.clear();g.lineStyle(2
 function installLoop(s){const old=(s.sys?.sceneUpdate||s.update).bind(s);const up=function(t,d){const rig=!!this.rigSummoned;if(rig)this.rigSummoned=false;old(t,d);if(rig)this.rigSummoned=true;this.updateWeaponPose?.();if(!this.gameOver&&!this.upgradeOpen) rigSpringMove(this,t,d);updateDebug(this);};s.update=up;if(s.sys)s.sys.sceneUpdate=up;}
 function selfTest(s){
   if(new URLSearchParams(location.search).get('autotest')!=='1')return;
-  const terrainRoads=s.__e0FastRoadSegments||[];
+  const terrainRoads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false);
   const checks={sockets:!!(s.weaponSocketProfile&&s.__c4Grip&&s.__c4Muzzle),noThirdHand:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB].every(o=>!o||o.visible===false),ground:s.textures.exists('c4-ground')&&!!s.children.list.find(o=>o?.name==='e0-ground-base'),roads:s.textures.exists('c4-road')&&terrainRoads.length>180,sharedTerrain:s.__terrainSystemState?.owner==='e0',noAngularRoadGraphics:!s.children.list.some(o=>o?.type==='Graphics'&&(o.depth??0)<=-2)};
   const save={r:s.rigSummoned,v:s.cart.visible,x:s.cart.x,y:s.cart.y,state:s.__c4RigState,mx:s.move?.x||0,my:s.move?.y||0};let smooth=false,wheels=false,approach=false;
   try{s.rigSummoned=true;s.cart.setVisible(true);s.__c4RigState={pos:new Phaser.Math.Vector2(s.hero.x-360,s.hero.y+140),vel:new Phaser.Math.Vector2(),dir:new Phaser.Math.Vector2(1,0),goal:new Phaser.Math.Vector2(),travel:0,dustAt:0,lane:1};s.cart.setPosition(s.__c4RigState.pos.x,s.__c4RigState.pos.y);s.move?.set?.(1,0);const startDist=Phaser.Math.Distance.Between(s.cart.x,s.cart.y,s.hero.x,s.hero.y),steps=[];let lastX=s.cart.x,lastY=s.cart.y;for(let i=0;i<45;i++){rigSpringMove(s,1000+i*16,16);steps.push(Math.hypot(s.cart.x-lastX,s.cart.y-lastY));lastX=s.cart.x;lastY=s.cart.y}const endDist=Phaser.Math.Distance.Between(s.cart.x,s.cart.y,s.hero.x,s.hero.y);approach=endDist<startDist;smooth=Math.max(...steps)<8&&steps[4]<steps[20]+.2;wheels=s.cartWheels?.some(w=>Math.abs(w.rotation)>.05);}finally{s.rigSummoned=save.r;s.cart.setVisible(save.v).setPosition(save.x,save.y);s.__c4RigState=save.state;s.move?.set?.(save.mx,save.my);}
   checks.rigSpring=smooth&&approach;checks.wheels=wheels;const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_C4_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchC4SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`C4 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase C.4 self-test failed: '+detail);
 }
 
-export async function applyPhaseC4(){const s=await getScene();await Promise.all([addDataTexture(s,'c4-ground',C4_GROUND),addDataTexture(s,'c4-road',C4_ROAD)]);clearAngularRoads(s);installWeaponSockets(s);debugVisuals(s);installLoop(s);window.__WM_PHASE_C4__=true;document.documentElement.dataset.wreckmarchPhaseC4='active';window.__WM_LOG__?.('Phase C.4 active: permanent weapon sockets + spring Rig follow + PNG terrain roads');selfTest(s);return true;}
+export async function applyPhaseC4(){const s=await getScene();await Promise.all([addDataTexture(s,'c4-ground',C4_GROUND),addDataTexture(s,'c4-road',C4_ROAD)]);clearAngularRoads(s);restoreSharedTerrain(s);installWeaponSockets(s);debugVisuals(s);installLoop(s);window.__WM_PHASE_C4__=true;document.documentElement.dataset.wreckmarchPhaseC4='active';window.__WM_LOG__?.('Phase C.4 active: permanent weapon sockets + spring Rig follow + PNG terrain roads');selfTest(s);return true;}
