@@ -15,6 +15,19 @@ test('boots the current game, routes movement through InputManager, and keeps as
     { timeout: 20_000 }
   ).toBe('passed');
 
+  const terrainOwnership = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    return {
+      owner: scene.__terrainSystemState?.owner,
+      activeBootstrapRoads: scene.children.list.filter((object: any) => object?.__e0Road && object?.active !== false).length,
+      finalRoads: (scene.__e1RoadSegments || []).filter((object: any) => object?.active !== false).length
+    };
+  });
+  expect(terrainOwnership.owner).toBe('e1');
+  expect(terrainOwnership.activeBootstrapRoads).toBe(0);
+  expect(terrainOwnership.finalRoads).toBeGreaterThan(180);
+
   await expect.poll(
     () => page.evaluate(() => {
       const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;

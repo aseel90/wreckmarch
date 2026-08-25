@@ -11,7 +11,7 @@ describe('F0 production foundation', () => {
 
   it('keeps the fast terrain and final road cleanup in the legacy boot chain', async () => {
     const html = await read('index.html');
-    expect(html).toContain("./src/phase-e0-fast-terrain.js?v=1");
-    expect(html).toContain("./src/phase-e1-runtime.js?v=2");
+    expect(html).toContain("./src/phase-e0-fast-terrain.js?v=2");
+    expect(html).toContain("./src/phase-e1-runtime.js?v=3");
   });
 });
