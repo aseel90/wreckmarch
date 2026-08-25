@@ -142,3 +142,16 @@ See `GAMEPLAY_REDESIGN_PLAN.md` for the full approved design and architecture.
 - ✅ Browser gate decodes the atlas and tests directional weapon dimensions, Rig parts, card/wreck art, crowd-control installation, Rig travel and real wheel rotation before merge.
 
 Validation target: PR Chromium smoke test must pass all Phase C.3 checks before merge.
+
+---
+
+## N. Phase C.3.1 — Atlas Frame / Visual Scale Hotfix
+
+- ✅ Root visual bug identified: C3 used `setCrop()` on the full atlas and then `setDisplaySize()`, so Phaser scaled against the whole atlas frame; weapon, Rig pieces and upgrade illustrations therefore rendered as tiny/flat fragments.
+- ✅ Exclusive atlas regions are now registered as real named Phaser texture frames before use.
+- ✅ Rivet Gun switches between real 8-direction named frames and renders at intended readable size.
+- ✅ Rig chassis, turret, shadow and four perspective wheel frames render at their intended scale; wheel motion from Phase C.3 is preserved.
+- ✅ Upgrade illustrations use real framed art instead of a tiny crop inside the full atlas.
+- ✅ Cache version for Phase C.3 was bumped so Safari/Chrome cannot silently reuse the broken cached module.
+- ✅ Chromium browser test now checks actual rendered frame names and display dimensions for the gun, Rig, wheels and a card-art probe, not just object existence.
+- ✅ The strengthened rendered-size Chromium test passed before merge.
