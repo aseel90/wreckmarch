@@ -13,3 +13,5 @@ Scope: terrain only. Player, weapons, cards and vehicles are intentionally untou
 - Road segment exists within 220 world units of spawn center.
 - No legacy terrain layer remains above the E1 asphalt.
 - E1 ground depth is below E1 road depth.
+
+Status: runtime added; pending loader wiring and Chromium validation.
