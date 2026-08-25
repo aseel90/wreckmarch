@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.vite/
+coverage/
+playwright-report/
+test-results/
+
+# Editors / OS
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Capacitor / Android generated artifacts
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/

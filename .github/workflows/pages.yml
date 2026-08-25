@@ -18,6 +18,62 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+          run_install: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee /tmp/wm-f0-install.log
+      - name: Typecheck, unit tests and static build
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm check 2>&1 | tee /tmp/wm-f0-check.log
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee /tmp/wm-f0-playwright-install.log
+      - name: E0/E1 browser persistence test
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test:e2e 2>&1 | tee /tmp/wm-f0-e2e.log
+      - name: Comment foundation diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          sections = []
+          for title, path in [
+              ('pnpm install', '/tmp/wm-f0-install.log'),
+              ('typecheck / unit / build', '/tmp/wm-f0-check.log'),
+              ('Playwright install', '/tmp/wm-f0-playwright-install.log'),
+              ('Playwright E2E', '/tmp/wm-f0-e2e.log'),
+          ]:
+              p = Path(path)
+              if p.exists():
+                  sections.append(f'### {title}\n```text\n{p.read_text(errors="ignore")[-6000:]}\n```')
+          Path('/tmp/wm-f0-diagnostic.md').write_text('## F0 foundation diagnostic\n\n' + '\n\n'.join(sections))
+          PY
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-f0-diagnostic.md
+
   smoke:
     runs-on: ubuntu-latest
     steps:
@@ -87,6 +143,13 @@ jobs:
           check_log 'Phase D.1 active: animated Runner + integrated mechanical arm + premium PNG card art + visible asphalt + real vehicle scale' 'Phase D.1 world/player rebuild was not applied'
           check_log 'D1 browser self-test PASSED: animatedLegs=ok mechanicalArm=ok noHandSprites=ok premiumCards=ok roadsVisible=ok vehicleScale=ok' 'Phase D.1 browser visual/behavior self-test did not pass'
           check_log 'data-wreckmarch-d1-self-test="passed"' 'Phase D.1 DOM self-test flag missing'
+          check_log 'data-wreckmarch-phase-e0="active"' 'Phase E.0 fast terrain bootstrap flag missing'
+          check_log 'FAST TERRAIN ready in' 'Phase E.0 fast terrain did not report readiness'
+          check_log 'Phase E.1b active: persistent asphalt layer' 'Phase E.1 final asphalt layer was not applied'
+          check_log 'E1 browser self-test PASSED: roadSegments=ok roadAtSpawn=ok noLegacyCover=ok groundBelowRoad=ok roadAboveGround=ok' 'Phase E.1 browser road test did not pass'
+          check_log 'data-wreckmarch-e1-self-test="passed"' 'Phase E.1 DOM self-test flag missing'
+          check_log 'E1 persistence test PASSED at 12s' 'Phase E.1 asphalt did not remain valid for 12 seconds'
+          check_log 'data-wreckmarch-e1-persistence="passed"' 'Phase E.1 persistence DOM flag missing'
 
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
@@ -95,7 +158,7 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch Phase D.1 world/player/mechanical-arm test passed"
+          echo "Wreckmarch E1c production-baseline browser test passed"
 
       - name: Comment browser diagnostics
         if: failure() && github.event_name == 'pull_request'
@@ -117,7 +180,7 @@ jobs:
 
   deploy:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    needs: smoke
+    needs: [foundation, smoke]
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
