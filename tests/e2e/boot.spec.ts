@@ -12,7 +12,10 @@ test('boots the current game, routes movement through InputManager, and keeps as
           e1: Boolean((window as any).__WM_PHASE_E1__),
           visualReady: document.documentElement.dataset.wreckmarchVisualReady,
           heroTexture: scene?.hero?.texture?.key,
-          terrainOwner: scene?.__terrainSystemState?.owner
+          terrainOwner: scene?.__terrainSystemState?.owner,
+          characterId: scene?.characterId,
+          characterReady: scene?.__characterSystemReady,
+          characterAnimation: scene?.hero?.anims?.currentAnim?.key
         };
       }
       return originalAdd.apply(this, tokens);
@@ -46,7 +49,10 @@ test('boots the current game, routes movement through InputManager, and keeps as
     e1: true,
     visualReady: 'current',
     heroTexture: 'art-hero-idle-0',
-    terrainOwner: 'e1'
+    terrainOwner: 'e1',
+    characterId: 'runner',
+    characterReady: true,
+    characterAnimation: 'character-runner-idle'
   });
 
   const terrainOwnership = await page.evaluate(() => {
@@ -80,7 +86,24 @@ test('boots the current game, routes movement through InputManager, and keeps as
   });
 
   await page.keyboard.down('ArrowRight');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(180);
+  const liveCharacterState = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    return {
+      id: scene.characterId,
+      maxHp: scene.heroMaxHp,
+      speed: scene.heroSpeed,
+      animation: scene.hero.anims.currentAnim?.key
+    };
+  });
+  expect(liveCharacterState).toEqual({
+    id: 'runner',
+    maxHp: 100,
+    speed: 255,
+    animation: 'character-runner-run'
+  });
+  await page.waitForTimeout(120);
   await page.keyboard.up('ArrowRight');
 
   const afterX = await page.evaluate(() => {
