@@ -155,3 +155,15 @@ Validation target: PR Chromium smoke test must pass all Phase C.3 checks before 
 - ✅ Cache version for Phase C.3 was bumped so Safari/Chrome cannot silently reuse the broken cached module.
 - ✅ Chromium browser test now checks actual rendered frame names and display dimensions for the gun, Rig, wheels and a card-art probe, not just object existence.
 - ✅ The strengthened rendered-size Chromium test passed before merge.
+
+---
+
+## O. Phase C.4 — Permanent weapon sockets + spring Rig + PNG terrain
+
+- ✅ Removed the old generated C3 arm/hand overlays from normal gameplay so the Hero cannot visually gain a third hand.
+- ✅ Added a permanent 8-direction weapon socket contract: each weapon pose owns its frame, grip origin, Hero socket, muzzle point, size and layer depth. Future weapons must register the same profile instead of rotating free arm sprites.
+- ✅ Replaced direct Rig chasing with a critically-damped spring formation target behind the Hero; acceleration, catch-up and arrival slowdown are smoothed.
+- ✅ Rig wheel rotation is tied to travelled distance; suspension, turret lag and dust scale from actual vehicle motion.
+- ✅ Replaced old polygon/angular road Graphics with repeatable PNG wasteland ground plus PNG road strips placed along smooth spline curves.
+- ✅ Debug mode shows weapon grip socket, muzzle socket and Rig follow target.
+- ✅ Chromium browser validation passed: sockets, no-third-hand state, PNG ground, curved roads, removal of angular road Graphics, spring Rig motion and wheel rotation.
