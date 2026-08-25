@@ -84,6 +84,9 @@ jobs:
           check_log 'Phase C.5 active: aim-facing hero body + 2x vector upgrade art + visible road network' 'Phase C.5 body/card/terrain runtime was not applied'
           check_log 'C5 browser self-test PASSED: bodyAim=ok noThirdHand=ok cardArtVectorHD=ok roadNetwork=ok roadsVisible=ok groundVisible=ok' 'Phase C.5 browser visual/behavior self-test did not pass'
           check_log 'data-wreckmarch-c5-self-test="passed"' 'Phase C.5 DOM self-test flag missing'
+          check_log 'Phase D.1 active: animated Runner + integrated mechanical arm + premium PNG card art + visible asphalt + real vehicle scale' 'Phase D.1 world/player rebuild was not applied'
+          check_log 'D1 browser self-test PASSED: animatedLegs=ok mechanicalArm=ok noHandSprites=ok premiumCards=ok roadsVisible=ok vehicleScale=ok' 'Phase D.1 browser visual/behavior self-test did not pass'
+          check_log 'data-wreckmarch-d1-self-test="passed"' 'Phase D.1 DOM self-test flag missing'
 
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
@@ -92,7 +95,7 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch Phase C.5 browser-rendered body/card/terrain test passed"
+          echo "Wreckmarch Phase D.1 world/player/mechanical-arm test passed"
 
       - name: Comment browser diagnostics
         if: failure() && github.event_name == 'pull_request'
