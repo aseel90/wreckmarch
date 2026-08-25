@@ -7,226 +7,37 @@ import { C3_ATLAS_6 } from './c3-atlas-6.js?v=4';
 import { C3_ATLAS_7 } from './c3-atlas-7.js?v=4';
 import { C3_ATLAS_8 } from './c3-atlas-8.js?v=4';
 
-const C3_ATLAS = C3_ATLAS_1 + C3_ATLAS_2 + C3_ATLAS_3 + C3_ATLAS_4 + C3_ATLAS_5 + C3_ATLAS_6 + C3_ATLAS_7 + C3_ATLAS_8;
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const ATLAS_URI='data:image/png;base64,'+[C3_ATLAS_1,C3_ATLAS_2,C3_ATLAS_3,C3_ATLAS_4,C3_ATLAS_5,C3_ATLAS_6,C3_ATLAS_7,C3_ATLAS_8].join('');
+const POSES=['gun_e.png','gun_se.png','gun_s.png','gun_sw.png','gun_w.png','gun_nw.png','gun_n.png','gun_ne.png'];
+const COLORS={HERO:0xd98446,UTILITY:0x4fc8d8,FORTRESS:0xd4ad62,EVOLUTION:0x9d6be8};
+const FRAMES={"wreck_c.png":{"x":2,"y":2,"w":107,"h":95},"wreck_d.png":{"x":111,"y":2,"w":112,"h":95},"wreck_b.png":{"x":226,"y":2,"w":120,"h":88},"wreck_a.png":{"x":348,"y":2,"w":120,"h":81},"gun_se.png":{"x":2,"y":99,"w":72,"h":80},"gun_s.png":{"x":76,"y":99,"w":38,"h":80},"gun_n.png":{"x":115,"y":99,"w":36,"h":80},"gun_sw.png":{"x":152,"y":99,"w":74,"h":80},"rig_body.png":{"x":228,"y":99,"w":140,"h":76},"gun_nw.png":{"x":370,"y":99,"w":80,"h":76},"gun_ne.png":{"x":2,"y":181,"w":80,"h":76},"rig_turret.png":{"x":84,"y":181,"w":85,"h":74},"icon_call-rig.png":{"x":171,"y":181,"w":87,"h":68},"icon_twin-cannon.png":{"x":260,"y":181,"w":88,"h":68},"icon_overclock.png":{"x":350,"y":181,"w":84,"h":68},"icon_long-barrel.png":{"x":2,"y":258,"w":87,"h":68},"icon_heavy-rivets.png":{"x":91,"y":258,"w":80,"h":68},"icon_rig-overdrive.png":{"x":173,"y":258,"w":87,"h":68},"icon_twin-riveter.png":{"x":262,"y":258,"w":88,"h":68},"icon_armor-plate.png":{"x":352,"y":258,"w":76,"h":68},"icon_scrap-magnet.png":{"x":2,"y":328,"w":90,"h":67},"icon_fleet-feet.png":{"x":94,"y":328,"w":90,"h":64},"rig_wheel_side.png":{"x":186,"y":328,"w":43,"h":48},"rig_wheel.png":{"x":231,"y":328,"w":48,"h":47},"gun_w.png":{"x":281,"y":328,"w":80,"h":45},"rig_dust_big.png":{"x":363,"y":328,"w":90,"h":45},"rig_dust_med.png":{"x":2,"y":397,"w":66,"h":45},"gun_e.png":{"x":70,"y":397,"w":80,"h":42},"rig_shadow.png":{"x":152,"y":397,"w":90,"h":32}};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
-const FRAMES = {
-  'wreck_c.png': { x: 2, y: 2, w: 107, h: 95 },
-  'wreck_d.png': { x: 111, y: 2, w: 112, h: 95 },
-  'wreck_b.png': { x: 226, y: 2, w: 120, h: 88 },
-  'wreck_a.png': { x: 348, y: 2, w: 120, h: 81 },
-  'gun_se.png': { x: 2, y: 99, w: 72, h: 80 },
-  'gun_s.png': { x: 76, y: 99, w: 38, h: 80 },
-  'gun_n.png': { x: 115, y: 99, w: 36, h: 80 },
-  'gun_sw.png': { x: 152, y: 99, w: 74, h: 80 },
-  'rig_body.png': { x: 228, y: 99, w: 140, h: 76 },
-  'gun_nw.png': { x: 370, y: 99, w: 80, h: 76 },
-  'gun_ne.png': { x: 2, y: 181, w: 80, h: 76 },
-  'rig_turret.png': { x: 84, y: 181, w: 85, h: 74 },
-  'icon_call-rig.png': { x: 171, y: 181, w: 87, h: 68 },
-  'icon_twin-cannon.png': { x: 260, y: 181, w: 88, h: 68 },
-  'icon_overclock.png': { x: 350, y: 181, w: 84, h: 68 },
-  'icon_long-barrel.png': { x: 2, y: 258, w: 87, h: 68 },
-  'icon_heavy-rivets.png': { x: 91, y: 258, w: 80, h: 68 },
-  'icon_rig-overdrive.png': { x: 173, y: 258, w: 87, h: 68 },
-  'icon_twin-riveter.png': { x: 262, y: 258, w: 88, h: 68 },
-  'icon_armor-plate.png': { x: 352, y: 258, w: 76, h: 68 },
-  'icon_scrap-magnet.png': { x: 2, y: 328, w: 90, h: 67 },
-  'icon_fleet-feet.png': { x: 94, y: 328, w: 90, h: 64 },
-  'rig_wheel_side.png': { x: 186, y: 328, w: 43, h: 48 },
-  'rig_wheel.png': { x: 231, y: 328, w: 48, h: 47 },
-  'gun_w.png': { x: 281, y: 328, w: 80, h: 45 },
-  'rig_dust_big.png': { x: 363, y: 328, w: 90, h: 45 },
-  'rig_dust_med.png': { x: 2, y: 397, w: 66, h: 45 },
-  'gun_e.png': { x: 70, y: 397, w: 80, h: 42 },
-  'rig_shadow.png': { x: 152, y: 397, w: 90, h: 32 }
-};
+async function gameScene(){const t=performance.now();while(performance.now()-t<9000){const g=Phaser.GAMES?.find(Boolean)||Phaser.GAMES?.[0],s=g?.scene?.getScene?.('Wreckmarch');if(s?.sys?.isActive?.()&&s.hero&&s.primaryWeapon&&s.upgradeLevels)return s;await wait(60)}throw Error('Phase C.3: Wreckmarch scene timeout')}
+function loadAtlas(s){if(s.textures.exists('c3-atlas'))return Promise.resolve();return new Promise((ok,bad)=>{const im=new Image();im.onload=()=>{try{s.textures.addImage('c3-atlas',im);ok()}catch(e){bad(e)}};im.onerror=()=>bad(Error('Phase C.3 atlas decode failed'));im.src=ATLAS_URI})}
+function art(img,name,mw,mh){const f=FRAMES[name];if(!f)throw Error('Missing C3 frame '+name);img.setTexture('c3-atlas').setCrop(f.x,f.y,f.w,f.h);if(mw||mh){const z=Math.min((mw||1e9)/f.w,(mh||1e9)/f.h);img.setDisplaySize(f.w*z,f.h*z)}return img}
+function part(s,name,w,h){return art(s.add.image(0,0,'c3-atlas'),name,w,h)}
+function pose(a){return Math.round(Phaser.Math.Angle.Normalize(a)/(Math.PI/4))%8}
+function limb(r,x,y,hx,hy){const dx=hx-x,dy=hy-y;r.setPosition(x,y).setDisplaySize(Math.max(2,Math.hypot(dx,dy)),7).setRotation(Math.atan2(dy,dx))}
 
-async function getScene(timeoutMs = 10000) {
-  const start = performance.now();
-  while (performance.now() - start < timeoutMs) {
-    const game = window.Phaser?.GAMES?.find(Boolean) || window.Phaser?.GAMES?.[0];
-    const scene = game?.scene?.getScene?.('Wreckmarch');
-    if (scene?.sys?.isActive?.() && scene.hero) return scene;
-    await wait(50);
-  }
-  throw new Error('Timed out waiting for Wreckmarch scene for Phase C.3');
-}
+function weapon(s){s.aimPose?.setVisible?.(false);s.weaponRig?.setVisible?.(false);s.weaponArm?.setVisible?.(false);s.weaponSprite?.setVisible?.(false);
+ s.weaponV3ArmA=s.add.rectangle(0,0,18,7,0x6d4b35).setStrokeStyle(2,0x201814).setOrigin(0,.5);s.weaponV3ArmB=s.add.rectangle(0,0,18,7,0x6d4b35).setStrokeStyle(2,0x201814).setOrigin(0,.5);s.weaponV3HandA=s.add.ellipse(0,0,10,9,0x8a6040).setStrokeStyle(2,0x241915);s.weaponV3HandB=s.add.ellipse(0,0,10,9,0x8a6040).setStrokeStyle(2,0x241915);s.weaponV3Gun=art(s.add.image(0,0,'c3-atlas'),'gun_e.png',98,98);s.weaponSprite=s.weaponV3Gun;s.currentAimPose=-1;s.weaponV3Recoil=0;
+ s.updateWeaponPose=function(){const q=pose(this.weaponAim),a=q*Math.PI/4,u=new Phaser.Math.Vector2(Math.cos(a),Math.sin(a)),p=new Phaser.Math.Vector2(-u.y,u.x),r=this.weaponV3Recoil||0;if(q!==this.currentAimPose){this.currentAimPose=q;art(this.weaponV3Gun,POSES[q],98,98)}this.weaponV3Gun.setPosition(this.hero.x+u.x*(28-r*4),this.hero.y+8+u.y*(21-r*3));const rx=this.hero.x+u.x*13+p.x*5,ry=this.hero.y+10+u.y*11+p.y*5,fx=this.hero.x+u.x*33-p.x*3,fy=this.hero.y+9+u.y*27-p.y*3;limb(this.weaponV3ArmA,this.hero.x+p.x*10,this.hero.y+7+p.y*4,rx,ry);limb(this.weaponV3ArmB,this.hero.x-p.x*9,this.hero.y+8-p.y*4,fx,fy);this.weaponV3HandA.setPosition(rx,ry);this.weaponV3HandB.setPosition(fx,fy);const d=q>=5&&q<=7?17:27;[this.weaponV3ArmA,this.weaponV3ArmB,this.weaponV3Gun,this.weaponV3HandA,this.weaponV3HandB].forEach((o,i)=>o.setDepth(d+i));this.visualAimAngle=a;this.weaponV3Recoil*=.72};
+ s.getWeaponMuzzle=function(spread=0){const a=(this.currentAimPose>=0?this.currentAimPose*Math.PI/4:this.weaponAim)+spread;return new Phaser.Math.Vector2(this.hero.x+Math.cos(a)*72,this.hero.y+8+Math.sin(a)*72)};
+ s.autoFire=function(t){const target=this.findNearestEnemy(this.hero.x,this.hero.y,this.primaryWeapon.range);if(target)this.weaponAim=Phaser.Math.Angle.RotateTo(this.weaponAim,Phaser.Math.Angle.Between(this.hero.x,this.hero.y+5,target.x,target.y),.30);else if(this.move.lengthSq()>.05)this.weaponAim=Phaser.Math.Angle.RotateTo(this.weaponAim,Math.atan2(this.move.y,this.move.x),.20);this.updateWeaponPose();if(!target||t<this.lastShot+this.primaryWeapon.fireDelay)return;this.lastShot=t;const n=Math.max(1,this.twinShots||1),sp=n===1?[0]:n===2?[-.055,.055]:[-.085,0,.085];let mp;sp.forEach((x,i)=>{const shot=this.fireHeroBullet(this.weaponAim+x,n>1?.9:1);if(i===Math.floor(sp.length/2)||!mp)mp=shot.muzzle});this.weaponV3Recoil=1;const fl=this.add.image(mp.x,mp.y,'flash').setDepth(34).setRotation(this.visualAimAngle).setScale(.56);this.tweens.add({targets:fl,alpha:0,scale:.1,duration:80,onComplete:()=>fl.destroy()});this.playTone?.(165,.045,'square',.019,-34)};s.updateWeaponPose()}
 
-async function installAtlas(scene) {
-  if (scene.textures.exists('c3-atlas')) return;
-  const img = new Image();
-  img.decoding = 'async';
-  img.src = `data:image/png;base64,${C3_ATLAS}`;
-  await img.decode();
-  scene.textures.addImage('c3-atlas', img);
-}
+function rigArt(s){if(!s.cart)return;s.cart.list?.forEach(x=>x?.setVisible?.(false));const sh=part(s,'rig_shadow.png',184,54).setPosition(0,28).setAlpha(.5),ws=[-58,-20,20,58].map(x=>part(s,'rig_wheel.png',35,35).setPosition(x,29)),b=part(s,'rig_body.png',184,100).setPosition(0,-5),t=part(s,'rig_turret.png',80,70).setPosition(24,-31).setOrigin(.5,.58);s.cart.add([sh,...ws,b,t]);s.cartShadow=sh;s.cartWheels=ws;s.cartBody=b;s.turrets=[t];s.__c3Turret=t;s.__c3RigBaseBodyY=-5;s.__c3RigBaseTurretY=-31;s.__c3WheelSpin=0;s.__c3RigDustAt=0}
+function toward(a,b,d){return Math.abs(b-a)<=d?b:a+Math.sign(b-a)*d}
+function dust(s,d,v){if(!Number.isFinite(d.x)||!Number.isFinite(d.y))return;const n=v>190?'rig_dust_big.png':'rig_dust_med.png',x=s.cart.x-d.x*70+Phaser.Math.Between(-7,7),y=s.cart.y-d.y*48+30+Phaser.Math.Between(-4,4),o=part(s,n,v>190?82:62,46).setPosition(x,y).setDepth(8).setAlpha(.42),sx=o.scaleX,sy=o.scaleY;o.setRotation(Math.atan2(d.y,d.x)+Math.PI);s.tweens.add({targets:o,x:x-d.x*28,y:y-d.y*18-4,alpha:0,scaleX:sx*1.45,scaleY:sy*1.45,duration:380,ease:'Quad.Out',onComplete:()=>o.destroy()})}
+function rigMove(s,time,delta){if(!s.rigSummoned||!s.cart?.visible)return;const dt=Math.min(.05,Math.max(.001,delta/1000));if(!s.__c3RigPos){s.__c3RigPos=new Phaser.Math.Vector2(s.cart.x,s.cart.y);s.__c3RigVel=new Phaser.Math.Vector2();s.__c3RigTrailDir=new Phaser.Math.Vector2(-1,.2).normalize()}if(s.move?.lengthSq?.()>.05){const w=s.move.clone().normalize();s.__c3RigTrailDir.lerp(w,1-Math.exp(-5.2*dt)).normalize()}const tr=s.__c3RigTrailDir,side=new Phaser.Math.Vector2(-tr.y,tr.x),goal=new Phaser.Math.Vector2(s.hero.x-tr.x*150+side.x*34,s.hero.y-tr.y*130+side.y*34+18),to=goal.clone().subtract(s.__c3RigPos),dist=to.length(),max=dist>430?305:dist>260?245:215,arr=Math.min(max,Math.max(0,(dist-42)*1.65)),dv=dist>1?to.scale(arr/dist):new Phaser.Math.Vector2(),acc=(dist>330?560:390)*dt;s.__c3RigVel.x=toward(s.__c3RigVel.x,dv.x,acc);s.__c3RigVel.y=toward(s.__c3RigVel.y,dv.y,acc);if(dist<58)s.__c3RigVel.scale(Math.pow(.07,dt));s.__c3RigPos.add(s.__c3RigVel.clone().scale(dt));s.cart.setPosition(s.__c3RigPos.x,s.__c3RigPos.y);const speed=s.__c3RigVel.length(),f=Phaser.Math.Clamp(speed/230,0,1);s.cart.rotation=Phaser.Math.Linear(s.cart.rotation,Phaser.Math.Clamp(s.__c3RigVel.x/230*.035,-.035,.035),1-Math.exp(-6*dt));s.__c3WheelSpin+=speed*dt/15;s.cartWheels?.forEach(w=>w.setRotation(s.__c3WheelSpin));const bob=Math.sin(time*.012)*1.15*f;if(s.cartBody)s.cartBody.y=s.__c3RigBaseBodyY+bob;if(s.__c3Turret)s.__c3Turret.y=s.__c3RigBaseTurretY+bob*.55;if(speed>75&&time>s.__c3RigDustAt+(speed>185?115:165)){s.__c3RigDustAt=time;dust(s,s.__c3RigVel.clone().normalize(),speed)}const target=s.findNearestEnemy(s.cart.x,s.cart.y,560);if(!target||!s.__c3Turret)return;const wa=Phaser.Math.Angle.Between(s.cart.x+18,s.cart.y-24,target.x,target.y),native=-.79,local=wa-s.cart.rotation-native;s.__c3Turret.rotation=Phaser.Math.Angle.RotateTo(s.__c3Turret.rotation,local,2.45*dt);const aimed=s.__c3Turret.rotation+s.cart.rotation+native;if(Math.abs(Phaser.Math.Angle.Wrap(wa-aimed))>.30||time<s.lastRigShot+s.rigFireDelay)return;s.lastRigShot=time;(s.rigShots>1?[-.055,.055]:[0]).forEach(sp=>{const a=wa+sp,x=s.cart.x+18+Math.cos(a)*60,y=s.cart.y-24+Math.sin(a)*60,b=s.bullets.create(x,y,'bullet').setDepth(30).setScale(.66).setTint(0x66dce9);b.setCircle(8,2,2);b.damage=s.primaryWeapon.damage*s.rigDamageScale;b.life=1100;b.prevX=x;b.prevY=y;b.setVelocity(Math.cos(a)*680,Math.sin(a)*680);const fl=s.add.image(x,y,'flash').setDepth(31).setRotation(a).setScale(.42);s.tweens.add({targets:fl,alpha:0,scale:.08,duration:70,onComplete:()=>fl.destroy()})});s.playTone?.(118,.035,'square',.012,-22)}
 
-function crop(image, frameName) {
-  const f = FRAMES[frameName];
-  image.setCrop(f.x, f.y, f.w, f.h);
-  return image;
-}
+function crowd(s){const spawn=s.spawnEnemy.bind(s);s.__c3CrowdControl=true;s.spawnEnemy=function(elite=false){const wave=Math.floor((this.runTime||0)/15)+1,cap=44+Math.min(15,wave*3);if(this.enemies.countActive(true)>=cap)return;const before=new Set(this.enemies.getChildren());spawn(elite);this.enemies.children.iterate(e=>{if(e?.active&&!before.has(e)&&e.__c3SwarmBias==null)e.__c3SwarmBias=Phaser.Math.FloatBetween(-1,1)})}}
+function separate(s){const a=s.enemies.getChildren().filter(e=>e?.active&&e.body?.enable);if(a.length<2)return;const size=52,g=new Map();a.forEach((e,i)=>{const k=`${Math.floor(e.x/size)},${Math.floor(e.y/size)}`;(g.get(k)||g.set(k,[]).get(k)).push(i);if(e.__c3SwarmBias==null)e.__c3SwarmBias=Phaser.Math.FloatBetween(-1,1);const x=Phaser.Math.Angle.Between(e.x,e.y,s.hero.x,s.hero.y);e.body.velocity.x+=Math.cos(x+Math.PI/2)*e.__c3SwarmBias*15;e.body.velocity.y+=Math.sin(x+Math.PI/2)*e.__c3SwarmBias*15});a.forEach((p,i)=>{const cx=Math.floor(p.x/size),cy=Math.floor(p.y/size);for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++)for(const j of g.get(`${cx+ox},${cy+oy}`)||[]){if(j<=i)continue;const q=a[j];let dx=p.x-q.x,dy=p.y-q.y,d2=dx*dx+dy*dy,min=p.elite||q.elite?42:35;if(d2>=min*min)continue;if(d2<.01){dx=.5;dy=-.5;d2=.5}const d=Math.sqrt(d2),k=(1-d/min)*88,nx=dx/d,ny=dy/d;p.body.velocity.x+=nx*k;p.body.velocity.y+=ny*k;q.body.velocity.x-=nx*k;q.body.velocity.y-=ny*k}});a.forEach(e=>{const m=(e.speed||110)*1.18,v=e.body.velocity,l=Math.hypot(v.x,v.y);if(l>m){v.x=v.x/l*m;v.y=v.y/l*m}})}
+function wrecks(s){const old=s.children.list.filter(o=>['b1-wreck-a','b1-wreck-b'].includes(o?.texture?.key)),names=['wreck_a.png','wreck_b.png','wreck_c.png','wreck_d.png'];old.forEach((o,i)=>{o.setVisible(false);const n=names[i%4],f=FRAMES[n],w=148+(i%3)*12;art(s.add.image(o.x,o.y,'c3-atlas'),n,w,w*f.h/f.w).setDepth(3).setAlpha(.96).setRotation((i%2?1:-1)*.035)})}
 
-function pickNearestAimFrame(angle) {
-  const a = Phaser.Math.Angle.Normalize(angle);
-  const index = Math.round(a / (Math.PI / 4)) % 8;
-  return ['gun_e.png','gun_se.png','gun_s.png','gun_sw.png','gun_w.png','gun_nw.png','gun_n.png','gun_ne.png'][index];
-}
-
-function installExclusiveWeapon(scene) {
-  scene.weaponV2Container?.setVisible?.(false);
-  scene.weaponV3ArmA?.destroy?.();
-  scene.weaponV3ArmB?.destroy?.();
-  scene.weaponV3HandA?.destroy?.();
-  scene.weaponV3HandB?.destroy?.();
-  scene.weaponV3Gun?.destroy?.();
-
-  scene.weaponV3ArmA = scene.add.rectangle(scene.hero.x, scene.hero.y, 28, 8, 0x8a6548, 1)
-    .setOrigin(0, .5).setStrokeStyle(2, 0x1a1716, 1).setDepth(26);
-  scene.weaponV3ArmB = scene.add.rectangle(scene.hero.x, scene.hero.y, 28, 8, 0x8a6548, 1)
-    .setOrigin(0, .5).setStrokeStyle(2, 0x1a1716, 1).setDepth(27);
-  scene.weaponV3HandA = scene.add.circle(scene.hero.x, scene.hero.y, 5, 0xd99b6c, 1)
-    .setStrokeStyle(2, 0x241714, 1).setDepth(30);
-  scene.weaponV3HandB = scene.add.circle(scene.hero.x, scene.hero.y, 5, 0xd99b6c, 1)
-    .setStrokeStyle(2, 0x241714, 1).setDepth(30);
-  scene.weaponV3Gun = crop(scene.add.image(scene.hero.x, scene.hero.y, 'c3-atlas'), 'gun_e.png')
-    .setDepth(29).setDisplaySize(74, 74);
-  scene.weaponV3Recoil = 0;
-  scene.currentAimFrame = '';
-
-  scene.updateWeaponPose = function() {
-    const frameName = pickNearestAimFrame(this.weaponAim);
-    if (frameName !== this.currentAimFrame) {
-      this.currentAimFrame = frameName;
-      crop(this.weaponV3Gun, frameName);
-    }
-    const discrete = Math.round(Phaser.Math.Angle.Normalize(this.weaponAim) / (Math.PI / 4)) * (Math.PI / 4);
-    const dir = new Phaser.Math.Vector2(Math.cos(discrete), Math.sin(discrete));
-    const perp = new Phaser.Math.Vector2(-dir.y, dir.x);
-    const recoil = this.weaponV3Recoil || 0;
-
-    const shoulderA = new Phaser.Math.Vector2(this.hero.x + perp.x * 8, this.hero.y + 7 + perp.y * 3);
-    const shoulderB = new Phaser.Math.Vector2(this.hero.x - perp.x * 7, this.hero.y + 7 - perp.y * 3);
-    const gripA = new Phaser.Math.Vector2(this.hero.x + dir.x * (18 - recoil * 4) + perp.x * 4, this.hero.y + 10 + dir.y * (15 - recoil * 4) + perp.y * 4);
-    const gripB = new Phaser.Math.Vector2(this.hero.x + dir.x * (34 - recoil * 5) - perp.x * 2, this.hero.y + 9 + dir.y * (26 - recoil * 4) - perp.y * 2);
-    const center = new Phaser.Math.Vector2(this.hero.x + dir.x * (30 - recoil * 5), this.hero.y + 8 + dir.y * (23 - recoil * 4));
-
-    const arm = (r, s, e) => {
-      const dx=e.x-s.x, dy=e.y-s.y;
-      r.setPosition(s.x,s.y).setDisplaySize(Math.max(2,Math.hypot(dx,dy)),8).setRotation(Math.atan2(dy,dx));
-    };
-    arm(this.weaponV3ArmA, shoulderA, gripA); arm(this.weaponV3ArmB, shoulderB, gripB);
-    this.weaponV3HandA.setPosition(gripA.x, gripA.y); this.weaponV3HandB.setPosition(gripB.x, gripB.y);
-    this.weaponV3Gun.setPosition(center.x, center.y).setDisplaySize(74,74);
-
-    const behind = discrete > Math.PI && discrete < Math.PI * 2;
-    this.weaponV3ArmA.setDepth(behind?17:27); this.weaponV3ArmB.setDepth(behind?18:28);
-    this.weaponV3Gun.setDepth(behind?19:29); this.weaponV3HandA.setDepth(behind?20:30); this.weaponV3HandB.setDepth(behind?20:30);
-    this.visualAimAngle = discrete;
-    this.weaponV3Recoil *= .72;
-  };
-
-  scene.getWeaponMuzzle = function(spread = 0) {
-    const a = (this.visualAimAngle ?? this.weaponAim) + spread;
-    return new Phaser.Math.Vector2(this.hero.x + Math.cos(a) * 59, this.hero.y + 8 + Math.sin(a) * 52);
-  };
-
-  scene.updateWeaponPose();
-}
-
-function installRigVisual(scene) {
-  const originalSpawn = scene.spawnRig.bind(scene);
-  scene.spawnRig = function() {
-    if (this.rigSummoned) return;
-    originalSpawn();
-    this.rigSprite?.setVisible?.(false);
-    this.rig?.setVisible?.(false);
-    this.cartContainer?.setVisible?.(true);
-    this.cartContainer?.setDepth?.(17);
-    this.cartShadow?.destroy?.(); this.cartBody?.destroy?.(); this.cartWheels?.forEach(w=>w?.destroy?.()); this.cartWheels=[];
-
-    this.cartShadow = crop(this.add.image(0, 26, 'c3-atlas'),'rig_shadow.png').setDisplaySize(186,54).setAlpha(.44);
-    this.cartBody = crop(this.add.image(0, -2, 'c3-atlas'),'rig_body.png').setDisplaySize(180,98);
-    this.cartWheels = [-53,-18,20,55].map((x,i)=>crop(this.add.image(x, 30, 'c3-atlas'),'rig_wheel.png').setDisplaySize(37,37));
-    this.__c3Turret = crop(this.add.image(25,-31,'c3-atlas'),'rig_turret.png').setDisplaySize(82,72);
-    this.cartContainer.removeAll(true);
-    this.cartContainer.add([this.cartShadow,...this.cartWheels,this.cartBody,this.__c3Turret]);
-    this.cartContainer.setPosition(this.hero.x-125,this.hero.y+75);
-    this.__c3RigVel = new Phaser.Math.Vector2();
-    this.__c3RigFacing = 0;
-    this.__c3RigWheelSpin = 0;
-    this.__c3RigDustClock = 0;
-    this.__c3RigTargetDistance = 126;
-    this.__c3RigActualMaxSpeed = 330;
-    this.__c3RigAcceleration = 720;
-    this.__c3RigDeceleration = 840;
-  };
-}
-
-function installRigMotion(scene) {
-  const oldUpdate = scene.update.bind(scene);
-  scene.update = function(time, delta) {
-    oldUpdate(time, delta);
-    if (!this.rigSummoned || !this.cartContainer || !this.__c3RigVel) return;
-    const dt = Math.min(.04, delta / 1000);
-    const hv = this.heroVelocity || new Phaser.Math.Vector2();
-    let heading = hv.lengthSq() > 80 ? hv.clone().normalize() : new Phaser.Math.Vector2(Math.cos(this.__c3RigFacing||0),Math.sin(this.__c3RigFacing||0));
-    const desired = new Phaser.Math.Vector2(this.hero.x - heading.x * this.__c3RigTargetDistance, this.hero.y - heading.y * this.__c3RigTargetDistance + 30);
-    const to = desired.subtract(new Phaser.Math.Vector2(this.cartContainer.x,this.cartContainer.y));
-    const d = to.length();
-    const dir = d > 2 ? to.normalize() : new Phaser.Math.Vector2();
-    const desiredSpeed = Phaser.Math.Clamp((d - 24) * 2.1, 0, this.__c3RigActualMaxSpeed);
-    const wanted = dir.scale(desiredSpeed);
-    const diff = wanted.clone().subtract(this.__c3RigVel);
-    const accel = desiredSpeed > this.__c3RigVel.length() ? this.__c3RigAcceleration : this.__c3RigDeceleration;
-    if (diff.length() > accel*dt) diff.setLength(accel*dt);
-    this.__c3RigVel.add(diff);
-    if (d < 30) this.__c3RigVel.scale(Math.pow(.1,dt));
-    this.cartContainer.x += this.__c3RigVel.x*dt; this.cartContainer.y += this.__c3RigVel.y*dt;
-    const speed=this.__c3RigVel.length();
-    if(speed>6){const target=Math.atan2(this.__c3RigVel.y,this.__c3RigVel.x);this.__c3RigFacing=Phaser.Math.Angle.RotateTo(this.__c3RigFacing,target,2.5*dt)}
-    this.__c3RigWheelSpin += speed*dt*.095;
-    this.cartWheels.forEach((w,i)=>{w.rotation=this.__c3RigWheelSpin*(i<2?1:-1)});
-    const suspension=Math.sin(time*.008)*Math.min(2.2,speed/100);
-    this.cartBody.y=-2+suspension; this.__c3Turret.y=-31+suspension*.55;
-    if(speed>90){this.__c3RigDustClock-=delta;if(this.__c3RigDustClock<=0){this.__c3RigDustClock=Phaser.Math.Between(100,170);const dust=crop(this.add.image(this.cartContainer.x-45,this.cartContainer.y+32,'c3-atlas'),speed>190?'rig_dust_big.png':'rig_dust_med.png').setDepth(13).setDisplaySize(speed>190?75:54,38).setAlpha(.56);dust.setRotation(Phaser.Math.FloatBetween(-.14,.14));this.tweens.add({targets:dust,alpha:0,scaleX:1.3,scaleY:1.3,duration:500,onComplete:()=>dust.destroy()})}}
-    const target=this.findNearestEnemy?.(this.cartContainer.x,this.cartContainer.y,700);if(target){const desiredA=Phaser.Math.Angle.Between(this.cartContainer.x+24,this.cartContainer.y-30,target.x,target.y);this.__c3Turret.rotation=Phaser.Math.Angle.RotateTo(this.__c3Turret.rotation,desiredA,.04)}
-  };
-}
-
-function installCrowdSeparation(scene) {
-  scene.__c3EnemyCap = 62;
-  const originalSpawnWave = scene.spawnWave?.bind(scene);
-  if (originalSpawnWave) scene.spawnWave = function() {
-    const alive = this.enemies?.countActive?.(true) || 0;
-    if (alive >= this.__c3EnemyCap) return;
-    originalSpawnWave();
-    let excess=(this.enemies?.countActive?.(true)||0)-this.__c3EnemyCap;if(excess>0){for(const e of this.enemies.getChildren()){if(excess--<=0)break;if(e.active)e.destroy()}}
-  };
-  const previousUpdateEnemies=scene.updateEnemies?.bind(scene);
-  if(previousUpdateEnemies)scene.updateEnemies=function(time,delta){previousUpdateEnemies(time,delta);const list=this.enemies.getChildren().filter(e=>e.active);const cell=68,bins=new Map();for(const e of list){const k=`${Math.floor(e.x/cell)},${Math.floor(e.y/cell)}`;if(!bins.has(k))bins.set(k,[]);bins.get(k).push(e)}for(const group of bins.values()){for(let i=0;i<group.length;i++)for(let j=i+1;j<group.length;j++){const a=group[i],b=group[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;if(d2>1&&d2<1600){const d=Math.sqrt(d2),push=(40-d)*.035;a.x+=dx/d*push;a.y+=dy/d*push;b.x-=dx/d*push;b.y-=dy/d*push}}}};
-}
-
-function installCardArt(scene) {
-  const up=scene.game.scene.getScene('UpgradeSceneV3'); if(!up)return;
-  const oldCard=up.card.bind(up);
-  up.card=function(x,y,w,h,u,i){oldCard(x,y,w,h,u,i);const card=this.cards[this.cards.length-1];if(!card)return;card.a?.destroy?.();const f=`icon_${u.id}.png`,art=crop(this.add.image(0,-h*.16,'c3-atlas'),f).setDisplaySize(Math.min(w*.7,165),Math.min(h*.38,135));card.g.addAt(art,5);card.a=art};
-}
-
-function installWreckArt(scene) {
-  const frames=['wreck_a.png','wreck_b.png','wreck_c.png','wreck_d.png'];
-  [[370,610,-.2],[1610,500,.16],[1710,1540,-.18],[520,1750,.22]].forEach(([x,y,r],i)=>{const f=frames[i%frames.length],p=crop(scene.add.image(x,y,'c3-atlas'),f).setDepth(3).setRotation(r);p.setDisplaySize(i%2?145:132,i%2?105:100)});
-}
-
-export async function applyPhaseC3(){
-  const scene=await getScene(); await installAtlas(scene); installExclusiveWeapon(scene); installRigVisual(scene); installRigMotion(scene); installCrowdSeparation(scene); installCardArt(scene); installWreckArt(scene);
-  scene.cameras.main.setZoom(Math.min(scene.cameras.main.zoom,.86));
-  window.__WM_PHASE_C3__=true;document.documentElement.dataset.wreckmarchC3='active';window.__WM_LOG__?.('Phase C.3 active: exclusive PNG art + smooth Rig motion + rotating wheels + crowd separation');
-  if(new URLSearchParams(location.search).get('autotest')==='1'){
-    const checks={atlas:scene.textures.exists('c3-atlas'),weapon:!!scene.weaponV3Gun&&scene.weaponV3Gun.displayWidth>60&&!!scene.weaponV3ArmA&&!!scene.weaponV3ArmB,rigParts:false,cards:!!scene.game.scene.getScene('UpgradeSceneV3')?.card,wrecks:scene.children.list.some(o=>o.texture?.key==='c3-atlas'&&o.depth===3),crowd:scene.__c3EnemyCap===62,rigMotion:false,wheels:false};
-    if(!scene.rigSummoned)scene.spawnRig();checks.rigParts=!!scene.cartBody&&scene.cartWheels?.length===4&&!!scene.__c3Turret&&!!scene.cartShadow;
-    const beforeX=scene.cartContainer.x,beforeY=scene.cartContainer.y,beforeR=scene.cartWheels?.[0]?.rotation||0;scene.__c3RigVel.set(160,25);for(let i=0;i<10;i++)scene.update(performance.now()+i*16,16);checks.rigMotion=Math.hypot(scene.cartContainer.x-beforeX,scene.cartContainer.y-beforeY)>2;checks.wheels=Math.abs((scene.cartWheels?.[0]?.rotation||0)-beforeR)>.01;
-    const ok=Object.values(checks).every(Boolean);window.__WM_C3_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchC3SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`C3 browser self-test ${ok?'PASSED':'FAILED'}: `+Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' '));if(!ok)throw new Error('Phase C.3 browser self-test failed');
-  }
-}
+class UpgradeSceneV3 extends Phaser.Scene{constructor(){super('UpgradeSceneV3')}init(d){this.p=d||{};this.selectedIndex=0;this.locked=false;this.cards=[]}create(){const {gameScene,choices=[],level=1}=this.p;this.gameScene=gameScene;this.choices=choices;const W=this.scale.width,H=this.scale.height;this.add.rectangle(W/2,H/2,W,H,0x05080c,.93);this.add.text(W/2,22,`LEVEL ${level}`,{fontFamily:'Arial Black, Arial',fontSize:'12px',color:'#58d4e3'}).setOrigin(.5);this.add.text(W/2,49,'CHOOSE YOUR UPGRADE',{fontFamily:'Arial Black, Arial',fontSize:'23px',color:'#f0d09b'}).setOrigin(.5);this.add.text(W/2,72,'BUILD THE RUN  •  CHANGE THE MACHINE',{fontFamily:'Arial Black, Arial',fontSize:'8px',color:'#75828d'}).setOrigin(.5);const m=Phaser.Math.Clamp(W*.05,30,54),gap=Phaser.Math.Clamp(W*.018,12,22),cw=Math.min(300,(W-m*2-gap*2)/3),ch=Math.min(364,H-112),start=(W-(cw*3+gap*2))/2+cw/2;choices.forEach((u,i)=>this.card(start+i*(cw+gap),H*.59,cw,ch,u,i));this.refresh();this.input.keyboard?.on('keydown-LEFT',()=>this.move(-1));this.input.keyboard?.on('keydown-RIGHT',()=>this.move(1));this.input.keyboard?.on('keydown-ENTER',()=>this.choose(this.selectedIndex));this.input.keyboard?.on('keydown-ONE',()=>this.choose(0));this.input.keyboard?.on('keydown-TWO',()=>this.choose(1));this.input.keyboard?.on('keydown-THREE',()=>this.choose(2))}card(x,y,w,h,u,i){const c=COLORS[u.category]||COLORS.HERO,g=this.add.container(x,y),sh=this.add.rectangle(7,10,w,h,0,.4),bg=this.add.rectangle(0,0,w,h,0x151b22,.99).setStrokeStyle(2,c,.8),strip=this.add.rectangle(0,-h/2+7,w,14,c,.95);const cat=this.add.text(-w/2+18,-h/2+28,u.category,{fontFamily:'Arial Black, Arial',fontSize:'10px',color:Phaser.Display.Color.IntegerToColor(c).rgba}).setOrigin(0,.5),ay=-h*.18;const ab=this.add.rectangle(0,ay,w-28,Math.min(145,h*.4),0x0b1015,.9).setStrokeStyle(1.5,c,.35),a=art(this.add.image(0,ay,'c3-atlas'),`icon_${u.id}.png`,w-48,Math.min(128,h*.35)),title=this.add.text(0,h*.075,u.title,{fontFamily:'Arial Black, Arial',fontSize:`${Math.max(14,Math.min(19,w/14))}px`,color:'#f4f5f6',align:'center',wordWrap:{width:w-32}}).setOrigin(.5),desc=this.add.text(0,h*.20,u.desc,{fontFamily:'Arial',fontSize:'12px',color:'#b7c0c8',align:'center',wordWrap:{width:w-42},lineSpacing:2}).setOrigin(.5,0),lv=this.gameScene?.upgradeLevels?.[u.id]||0,foot=this.add.text(0,h/2-24,lv?`CURRENT  LV ${lv}`:'NEW UPGRADE',{fontFamily:'Arial Black, Arial',fontSize:'9px',color:'#788590'}).setOrigin(.5),hit=this.add.zone(0,0,w,h).setInteractive({useHandCursor:true});hit.on('pointerover',()=>{this.selectedIndex=i;this.refresh()});hit.on('pointerdown',(_p,_x,_y,e)=>{e?.stopPropagation?.();this.choose(i)});g.add([sh,bg,strip,cat,ab,a,title,desc,foot,hit]);this.cards.push({g,bg,strip,a,c})}move(d){if(!this.choices.length||this.locked)return;this.selectedIndex=(this.selectedIndex+d+this.choices.length)%this.choices.length;this.refresh()}refresh(){this.cards.forEach((x,i)=>{const on=i===this.selectedIndex;x.g.setScale(on?1.025:1);x.bg.setStrokeStyle(on?4:2,x.c,on?1:.72);x.strip.setAlpha(on?1:.82);x.a.setAlpha(on?1:.9)})}choose(i){if(this.locked||!this.choices[i])return;this.locked=true;this.choices[i].apply();this.cameras.main.flash(75,75,198,215,false);this.time.delayedCall(80,()=>this.gameScene?.closeUpgradeCards?.())}}
+function cards(s){if(!s.game.scene.getScene('UpgradeSceneV3'))s.game.scene.add('UpgradeSceneV3',UpgradeSceneV3,false);const open=s.openUpgradeCards.bind(s),close=s.closeUpgradeCards.bind(s);s.openUpgradeCards=function(){if(this.upgradeOpen||this.gameOver)return;const p=this.scene,L=p.launch.bind(p),B=p.bringToTop.bind(p);p.launch=(k,d)=>L(k==='UpgradeSceneV2'||k==='UpgradeScene'?'UpgradeSceneV3':k,d);p.bringToTop=k=>B(k==='UpgradeSceneV2'||k==='UpgradeScene'?'UpgradeSceneV3':k);try{open()}finally{p.launch=L;p.bringToTop=B}};s.closeUpgradeCards=function(){this.scene.stop('UpgradeSceneV3');close()}}
+function view(s){const tune=()=>{s.cameras.main.setZoom(.87);const W=s.scale.width,sh=s.children.list.find(o=>o?.name==='c2-hud-shade');sh?.setDisplaySize?.(W,62)?.setPosition?.(W/2,31);s.titleText?.setPosition?.(18,8)?.setFontSize?.(18);s.timerText?.setPosition?.(W-18,9)?.setFontSize?.(14);s.waveText?.setPosition?.(W/2,9)?.setFontSize?.(10);if(s.xpBg)s.xpBg.y=44;if(s.xpFill)s.xpFill.y=44;if(s.levelText)s.levelText.y=43;if(s.scrapText)s.scrapText.y=42};tune();s.__c3Resize=()=>requestAnimationFrame(tune);window.addEventListener('resize',s.__c3Resize,{passive:true});window.visualViewport?.addEventListener?.('resize',s.__c3Resize,{passive:true});s.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>{window.removeEventListener('resize',s.__c3Resize);window.visualViewport?.removeEventListener?.('resize',s.__c3Resize)})}
+function loop(s){const old=(s.sys?.sceneUpdate||s.update).bind(s),up=function(t,d){const r=!!this.rigSummoned;if(r)this.rigSummoned=false;old(t,d);if(r)this.rigSummoned=true;this.updateWeaponPose?.();if(this.gameOver||this.upgradeOpen)return;separate(this);rigMove(this,t,d)};s.update=up;if(s.sys)s.sys.sceneUpdate=up}
+function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='1')return;const c={atlas:s.textures.exists('c3-atlas'),weapon:!!(s.weaponV3Gun&&s.weaponV3HandA&&FRAMES['gun_e.png'].w>FRAMES['gun_e.png'].h&&FRAMES['gun_n.png'].h>FRAMES['gun_n.png'].w),rigParts:!!(s.cartBody&&s.__c3Turret&&s.cartWheels?.length===4),cards:!!(s.game.scene.getScene('UpgradeSceneV3')&&FRAMES['icon_heavy-rivets.png']&&FRAMES['icon_call-rig.png']),wrecks:!!(FRAMES['wreck_a.png']&&FRAMES['wreck_d.png']),crowd:s.__c3CrowdControl===true};const save={r:!!s.rigSummoned,v:!!s.cart?.visible,x:s.cart?.x,y:s.cart?.y,p:s.__c3RigPos,vel:s.__c3RigVel,tr:s.__c3RigTrailDir,spin:s.__c3WheelSpin||0,mx:s.move?.x||0,my:s.move?.y||0};let moved=false,spun=false;try{s.rigSummoned=true;s.cart.setVisible(true);s.__c3RigPos=new Phaser.Math.Vector2(s.hero.x-260,s.hero.y+115);s.__c3RigVel=new Phaser.Math.Vector2();s.__c3RigTrailDir=new Phaser.Math.Vector2(1,0);s.__c3WheelSpin=0;s.cart.setPosition(s.__c3RigPos.x,s.__c3RigPos.y);s.move?.set?.(1,0);const x=s.cart.x,y=s.cart.y;for(let i=0;i<18;i++)rigMove(s,1000+i*16,16);moved=Math.hypot(s.cart.x-x,s.cart.y-y)>1;spun=Math.abs(s.__c3WheelSpin)>.01&&s.cartWheels.some(w=>Math.abs(w.rotation)>.01)}finally{s.rigSummoned=save.r;s.cart.setVisible(save.v);s.cart.setPosition(save.x,save.y);s.move?.set?.(save.mx,save.my);s.__c3RigPos=save.r?save.p:null;s.__c3RigVel=save.r?save.vel:null;s.__c3RigTrailDir=save.r?save.tr:null;s.__c3WheelSpin=save.r?save.spin:0;if(!save.r)s.cartWheels?.forEach(w=>w.setRotation(0))}c.rigMotion=moved;c.wheels=spun;const ok=Object.values(c).every(Boolean),detail=Object.entries(c).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_C3_SELF_TEST__={ok,...c};document.documentElement.dataset.wreckmarchC3SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`C3 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase C.3 browser self-test failed: '+detail)}
+export async function applyPhaseC3(){const s=await gameScene();await loadAtlas(s);wrecks(s);weapon(s);rigArt(s);crowd(s);cards(s);view(s);loop(s);window.__WM_PHASE_C3__=true;document.documentElement.dataset.wreckmarchPhaseC3='active';window.__WM_LOG__?.('Phase C.3 active: exclusive PNG art + smooth Rig motion + rotating wheels + crowd separation');selfTest(s);return true}
