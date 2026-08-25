@@ -75,6 +75,9 @@ jobs:
           check_log 'Phase C.3 active: exclusive PNG art + smooth Rig motion + rotating wheels + crowd separation' 'Phase C.3 art/motion polish was not applied'
           check_log 'C3 browser self-test PASSED: atlas=ok weapon=ok rigParts=ok cards=ok wrecks=ok crowd=ok rigMotion=ok wheels=ok' 'Phase C.3 behavior self-test did not pass'
           check_log 'data-wreckmarch-c3-self-test="passed"' 'Phase C.3 DOM self-test flag missing'
+          check_log 'Phase C.3.1 visual frame fix active: real atlas frames + full-size weapon/rig/card art' 'Phase C.3.1 frame fix was not applied'
+          check_log 'C3.1 visual browser test PASSED: frame=ok gun=ok rig=ok wheels=ok cardArt=ok cards=ok' 'Phase C.3.1 rendered-size self-test did not pass'
+          check_log 'data-wreckmarch-c31-self-test="passed"' 'Phase C.3.1 DOM self-test flag missing'
 
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
@@ -83,7 +86,7 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch Phase C.3 exclusive-art + motion browser smoke test passed"
+          echo "Wreckmarch Phase C.3.1 browser-rendered visual size test passed"
 
       - name: Comment browser diagnostics
         if: failure() && github.event_name == 'pull_request'
