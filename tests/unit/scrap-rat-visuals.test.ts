@@ -14,20 +14,23 @@ describe('production Scrap Rat visuals', () => {
     expect(chunks.reduce((sum, chunk) => sum + chunk.length, 0)).toBeGreaterThan(90_000);
   });
 
-  it('defines production idle, run, hit and death frame groups', () => {
+  it('uses four distinct run poses while reserving hit and death frames for combat', () => {
     const visuals = read('src/enemies/scrap-rat-visuals.js');
     expect(visuals).toContain('idle: Object.freeze([0, 1])');
-    expect(visuals).toContain('run: Object.freeze([2])');
+    expect(visuals).toContain('run: Object.freeze([2, 3, 4, 5])');
     expect(visuals).toContain('hit: Object.freeze([6, 7])');
     expect(visuals).toContain('death: Object.freeze([8, 9, 10, 11])');
-    expect(visuals).toContain("__scrapRatVisualVersion = 'production-v2'");
+    expect(visuals).toContain("__scrapRatVisualVersion = 'production-v3'");
   });
 
-  it('keeps normal running on one stable art frame and uses procedural stride motion', () => {
+  it('normalizes the four run poses into stable runtime textures instead of the floating one-frame workaround', () => {
     const visuals = read('src/enemies/scrap-rat-visuals.js');
-    expect(visuals).toContain('run: Object.freeze([2])');
-    expect(visuals).toContain('function installStrideMotion');
-    expect(visuals).toContain('scaleY: baseScale * .95');
+    expect(visuals).toContain('function normalizeRunPalette');
+    expect(visuals).toContain('function installStableRunTextures');
+    expect(visuals).toContain("'scrap-rat-run-stable-0'");
+    expect(visuals).toContain('replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.run, STABLE_RUN_TEXTURES, 11, -1)');
+    expect(visuals).not.toContain('function installStrideMotion');
+    expect(visuals).not.toContain('scaleY: baseScale * .95');
   });
 
   it('retires the old rat SVG renderer and keeps the production wrapper outermost', () => {
@@ -35,16 +38,17 @@ describe('production Scrap Rat visuals', () => {
     const visuals = read('src/enemies/scrap-rat-visuals.js');
     expect(art).not.toContain('function ratSvg');
     expect(art).not.toContain("'art-rat-run-0'");
+    expect(art).toContain("./enemies/scrap-rat-visuals.js?v=3");
     expect(art).toContain('await installScrapRatVisuals(scene)');
     expect(visuals).toContain('__scrapRatVisualWrapper');
   });
 
-  it('reapplies production Rat visuals after the final legacy runtime phase', () => {
+  it('reapplies grounded production Rat visuals after the final legacy runtime phase', () => {
     const html = read('index.html');
-    const art = html.indexOf('./src/art-runtime.js?v=3');
+    const art = html.indexOf('./src/art-runtime.js?v=4');
     const phaseC = html.indexOf('await phaseC.applyPhaseC()');
     const phaseE1 = html.indexOf('await phaseE1.applyPhaseE1()');
-    const lock = html.indexOf('Production Scrap Rat locked after final runtime');
+    const lock = html.indexOf("./src/enemies/scrap-rat-visuals.js?v=3");
     expect(art).toBeGreaterThan(-1);
     expect(phaseC).toBeGreaterThan(art);
     expect(phaseE1).toBeGreaterThan(phaseC);
