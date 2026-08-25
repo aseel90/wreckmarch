@@ -10,4 +10,4 @@
 - Browser self-test validates animated legs, integrated arm, absence of hand overlays, premium card frames, visible road at spawn, and vehicle scale.
 
 ## Validation gate
-The branch must pass the Chromium smoke test before merge to main.
+The branch must pass the Chromium smoke test before merge to main. The test is required to assert: animatedLegs, mechanicalArm, noHandSprites, premiumCards, roadsVisible, and vehicleScale.
