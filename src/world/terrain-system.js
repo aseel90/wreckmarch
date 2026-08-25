@@ -163,6 +163,12 @@ export function buildTerrainLayer(scene, options = {}) {
     terrain.push(debris);
   }
 
+  terrain.forEach(object => {
+    if (!object) return;
+    object.__terrainSystemObject = true;
+    object.__terrainSystemOwner = config.owner;
+  });
+
   scene.__terrainSystemState = {
     owner: config.owner,
     terrainCount: terrain.length,
