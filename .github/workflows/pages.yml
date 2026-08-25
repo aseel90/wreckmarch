@@ -81,6 +81,9 @@ jobs:
           check_log 'Phase C.4 active: permanent weapon sockets + spring Rig follow + PNG terrain roads' 'Phase C.4 sockets/Rig/terrain runtime was not applied'
           check_log 'C4 browser self-test PASSED: sockets=ok noThirdHand=ok ground=ok roads=ok noAngularRoadGraphics=ok rigSpring=ok wheels=ok' 'Phase C.4 rendered behavior test did not pass'
           check_log 'data-wreckmarch-c4-self-test="passed"' 'Phase C.4 DOM self-test flag missing'
+          check_log 'Phase C.5 active: aim-facing hero body + 2x vector upgrade art + visible road network' 'Phase C.5 body/card/terrain runtime was not applied'
+          check_log 'C5 browser self-test PASSED: bodyAim=ok noThirdHand=ok cardArtVectorHD=ok roadNetwork=ok roadsVisible=ok groundVisible=ok' 'Phase C.5 browser visual/behavior self-test did not pass'
+          check_log 'data-wreckmarch-c5-self-test="passed"' 'Phase C.5 DOM self-test flag missing'
 
           if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: boot loader reported an error"
@@ -89,7 +92,7 @@ jobs:
             exit 1
           fi
 
-          echo "Wreckmarch Phase C.4 browser-rendered weapon/Rig/terrain test passed"
+          echo "Wreckmarch Phase C.5 browser-rendered body/card/terrain test passed"
 
       - name: Comment browser diagnostics
         if: failure() && github.event_name == 'pull_request'
