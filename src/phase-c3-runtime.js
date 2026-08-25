@@ -1,11 +1,11 @@
-import { C3_ATLAS_1 } from './c3-atlas-1.js?v=3';
-import { C3_ATLAS_2 } from './c3-atlas-2.js?v=3';
-import { C3_ATLAS_3 } from './c3-atlas-3.js?v=3';
-import { C3_ATLAS_4 } from './c3-atlas-4.js?v=3';
-import { C3_ATLAS_5 } from './c3-atlas-5.js?v=3';
-import { C3_ATLAS_6 } from './c3-atlas-6.js?v=3';
-import { C3_ATLAS_7 } from './c3-atlas-7.js?v=3';
-import { C3_ATLAS_8 } from './c3-atlas-8.js?v=3';
+import { C3_ATLAS_1 } from './c3-atlas-1.js?v=4';
+import { C3_ATLAS_2 } from './c3-atlas-2.js?v=4';
+import { C3_ATLAS_3 } from './c3-atlas-3.js?v=4';
+import { C3_ATLAS_4 } from './c3-atlas-4.js?v=4';
+import { C3_ATLAS_5 } from './c3-atlas-5.js?v=4';
+import { C3_ATLAS_6 } from './c3-atlas-6.js?v=4';
+import { C3_ATLAS_7 } from './c3-atlas-7.js?v=4';
+import { C3_ATLAS_8 } from './c3-atlas-8.js?v=4';
 
 const ATLAS_URI='data:image/png;base64,'+[C3_ATLAS_1,C3_ATLAS_2,C3_ATLAS_3,C3_ATLAS_4,C3_ATLAS_5,C3_ATLAS_6,C3_ATLAS_7,C3_ATLAS_8].join('');
 const POSES=['gun_e.png','gun_se.png','gun_s.png','gun_sw.png','gun_w.png','gun_nw.png','gun_n.png','gun_ne.png'];
