@@ -23,6 +23,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+          run_install: false
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -31,22 +36,22 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          npm install --no-audit --no-fund 2>&1 | tee /tmp/wm-f0-install.log
+          pnpm install --no-frozen-lockfile 2>&1 | tee /tmp/wm-f0-install.log
       - name: Typecheck, unit tests and static build
         shell: bash
         run: |
           set -o pipefail
-          npm run check 2>&1 | tee /tmp/wm-f0-check.log
+          pnpm check 2>&1 | tee /tmp/wm-f0-check.log
       - name: Install Playwright Chromium
         shell: bash
         run: |
           set -o pipefail
-          npx playwright install --with-deps chromium 2>&1 | tee /tmp/wm-f0-playwright-install.log
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee /tmp/wm-f0-playwright-install.log
       - name: E0/E1 browser persistence test
         shell: bash
         run: |
           set -o pipefail
-          npm run test:e2e 2>&1 | tee /tmp/wm-f0-e2e.log
+          pnpm test:e2e 2>&1 | tee /tmp/wm-f0-e2e.log
       - name: Comment foundation diagnostics
         if: failure() && github.event_name == 'pull_request'
         env:
@@ -57,7 +62,7 @@ jobs:
           from pathlib import Path
           sections = []
           for title, path in [
-              ('npm install', '/tmp/wm-f0-install.log'),
+              ('pnpm install', '/tmp/wm-f0-install.log'),
               ('typecheck / unit / build', '/tmp/wm-f0-check.log'),
               ('Playwright install', '/tmp/wm-f0-playwright-install.log'),
               ('Playwright E2E', '/tmp/wm-f0-e2e.log'),
