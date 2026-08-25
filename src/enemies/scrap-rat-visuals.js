@@ -88,10 +88,10 @@ export function tuneScrapRatVisual(enemy) {
 }
 
 function installSpawnVisuals(scene) {
-  if (scene.__scrapRatSpawnVisualsInstalled) return;
-  scene.__scrapRatSpawnVisualsInstalled = true;
-  const baseSpawn = scene.spawnEnemy.bind(scene);
-  scene.spawnEnemy = function(elite = false) {
+  const currentSpawn = scene.spawnEnemy;
+  if (currentSpawn?.__scrapRatVisualWrapper === true) return;
+  const baseSpawn = currentSpawn.bind(scene);
+  const wrappedSpawn = function(elite = false) {
     const before = new Set(this.enemies.getChildren());
     const result = baseSpawn(elite);
     this.enemies.children.iterate(enemy => {
@@ -99,6 +99,8 @@ function installSpawnVisuals(scene) {
     });
     return result;
   };
+  wrappedSpawn.__scrapRatVisualWrapper = true;
+  scene.spawnEnemy = wrappedSpawn;
 }
 
 function spawnDeathVisual(scene, enemy, state) {
