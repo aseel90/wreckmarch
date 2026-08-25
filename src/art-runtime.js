@@ -1,3 +1,5 @@
+import { installScrapRatVisuals } from './enemies/scrap-rat-visuals.js?v=1';
+
 // WRECKMARCH production art runtime v2 — detailed SVG assets rendered as Phaser textures.
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -41,18 +43,6 @@ function heroSvg(step = 0) {
   </g></svg>`;
 }
 
-function ratSvg(step = 0) {
-  const stride = step ? 6 : -6;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 82">${defs}<ellipse cx="57" cy="72" rx="38" ry="5" fill="#000" opacity=".2"/>
-  <g stroke="#231b18" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M25 48C11 51 5 40 9 30 13 20 3 16 2 9" fill="none" stroke="#5d4538" stroke-width="6"/>
-    <ellipse cx="${39+stride}" cy="65" rx="14" ry="6" fill="#33251f"/><ellipse cx="${70-stride}" cy="65" rx="14" ry="6" fill="#33251f"/>
-    <path d="M25 36Q39 22 67 27 86 29 91 45 89 60 65 64L37 60Q21 53 25 36Z" fill="#725844"/><path d="M27 42Q42 34 60 35L62 57Q40 60 28 51Z" fill="#4a3931" stroke="none"/>
-    <path d="M36 30L55 24 60 39 41 43Z" fill="url(#metal)"/><path d="M55 29L72 24 79 38 62 44Z" fill="#485155"/><circle cx="44" cy="32" r="2" fill="#cf7d3d" stroke="none"/><circle cx="68" cy="31" r="2" fill="#cf7d3d" stroke="none"/>
-    <path d="M82 34Q100 33 108 45L99 57 82 55Q76 46 82 34Z" fill="#80634c"/><path d="M90 35L91 21 101 33M79 33L78 21 89 31" fill="#5b4436"/><circle cx="97" cy="43" r="5" fill="#ff4b3c" stroke="none"/><circle cx="98" cy="42" r="1.6" fill="#ffd19c" stroke="none"/><path d="M105 49L111 52 105 56" fill="#efe0c6"/>
-  </g></svg>`;
-}
-
 const fortressSvg = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 112">${defs}<g stroke="#211a18" stroke-width="4" stroke-linejoin="round"><ellipse cx="88" cy="99" rx="78" ry="8" fill="#000" opacity=".18" stroke="none"/><path d="M12 65L27 42 75 36 101 48 152 48 168 70 161 88 18 88Z" fill="url(#leather)"/><path d="M22 68H160L158 90H18Z" fill="#3a3028"/><path d="M32 40L36 17H72L83 46Z" fill="#72523a"/><rect x="40" y="23" width="28" height="18" rx="3" fill="#252c30"/><rect x="44" y="26" width="20" height="12" rx="2" fill="#48cddd"/><path d="M87 49L98 25H136L151 49Z" fill="url(#metal)"/><rect x="105" y="30" width="25" height="13" rx="3" fill="#173640"/><rect x="109" y="32" width="17" height="9" rx="2" fill="#4ad4e4"/><path d="M143 48L169 38 176 51 160 63M26 71L14 76 8 68 17 58" fill="#536065"/><rect x="79" y="63" width="33" height="17" rx="4" fill="#31251f"/><path d="M82 66H108" stroke="#bf7a41" stroke-width="3"/><circle cx="26" cy="70" r="4" fill="#ffc45a"/><circle cx="152" cy="66" r="5" fill="#ffb950"/><g fill="#d18a48" stroke="none"><circle cx="34" cy="80" r="2"/><circle cx="54" cy="80" r="2"/><circle cx="75" cy="80" r="2"/><circle cx="99" cy="80" r="2"/><circle cx="122" cy="80" r="2"/><circle cx="145" cy="80" r="2"/></g><path d="M75 36L74 3"/><path d="M76 5L104 11 77 23Z" fill="#a93a2e"/><path d="M142 47L147 15" stroke="#3b4143" stroke-width="9"/><path d="M143 13H152" stroke="#171b1c" stroke-width="7"/><rect x="25" y="48" width="28" height="17" rx="3" fill="#5a3c2c"/><path d="M29 52L48 61M48 52L29 61" stroke="#b27b48" stroke-width="2"/><path d="M117 51L138 49 143 65 120 67Z" fill="#556064"/><circle cx="69" cy="49" r="3" fill="#47d9e8" stroke="none"/></g></svg>`;
 const turretSvg = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 86 56">${defs}<g stroke="#211a18" stroke-width="3" stroke-linejoin="round"><ellipse cx="27" cy="34" rx="23" ry="18" fill="#242b2f"/><ellipse cx="27" cy="31" rx="17" ry="14" fill="url(#metal)"/><circle cx="24" cy="27" r="4" fill="#4fd8e7"/><path d="M27 25L70 24Q78 25 79 31L71 37 28 36Z" fill="url(#metal)"/><rect x="67" y="24" width="14" height="13" rx="3" fill="url(#copper)"/><rect x="78" y="27" width="8" height="7" rx="2" fill="#171b1d"/></g></svg>`;
 const wheelSvg = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#101315" stroke="#201817" stroke-width="3"/><circle cx="20" cy="20" r="12" fill="#3b4347" stroke="#88613f" stroke-width="2"/><circle cx="20" cy="20" r="5" fill="#b16f39"/><path d="M20 9V31M9 20H31M12 12L28 28M28 12L12 28" stroke="#697276" stroke-width="2"/></svg>`;
@@ -75,7 +65,6 @@ function loadSvgPack(scene) {
   const files = {
     'art-hero-idle-0': heroSvg(0), 'art-hero-idle-1': heroSvg(0),
     'art-hero-run-0': heroSvg(-1), 'art-hero-run-1': heroSvg(1),
-    'art-rat-run-0': ratSvg(0), 'art-rat-run-1': ratSvg(1),
     'art-fortress-body': fortressSvg(), 'art-turret': turretSvg(), 'art-wheel': wheelSvg(),
     'art-wasteland': wastelandSvg(), 'art-scrap-pile': scrapPileSvg(), 'art-barrel': barrelSvg()
   };
@@ -102,10 +91,9 @@ function loadSvgPack(scene) {
 }
 
 function rebuildAnimations(scene) {
-  ['hero-run', 'hero-idle', 'rat-run'].forEach(key => scene.anims.exists(key) && scene.anims.remove(key));
+  ['hero-run', 'hero-idle'].forEach(key => scene.anims.exists(key) && scene.anims.remove(key));
   scene.anims.create({ key: 'hero-run', frames: [{key:'art-hero-run-0'},{key:'art-hero-run-1'}], frameRate: 9, repeat: -1 });
   scene.anims.create({ key: 'hero-idle', frames: [{key:'art-hero-idle-0'},{key:'art-hero-idle-1'}], frameRate: 2, repeat: -1 });
-  scene.anims.create({ key: 'rat-run', frames: [{key:'art-rat-run-0'},{key:'art-rat-run-1'}], frameRate: 10, repeat: -1 });
 }
 
 function applyHero(scene) {
@@ -118,24 +106,6 @@ function applyHero(scene) {
     originalMove(time);
     const moving = this.move.lengthSq() > .05;
     this.heroShadow.setPosition(this.hero.x, this.hero.y + 50).setScale(moving ? 1.12 : 1.04, moving ? .82 : .9);
-  };
-}
-
-function applyRats(scene) {
-  scene.enemies.children.iterate(enemy => {
-    if (!enemy?.active) return;
-    enemy.setTexture('art-rat-run-0').setScale(enemy.elite ? 1 : .8);
-    enemy.body?.setCircle?.(22, 34, 29); enemy.play('rat-run', true);
-  });
-  const originalSpawn = scene.spawnEnemy.bind(scene);
-  scene.spawnEnemy = function(elite = false) {
-    const before = new Set(this.enemies.getChildren());
-    originalSpawn(elite);
-    this.enemies.children.iterate(enemy => {
-      if (!enemy?.active || before.has(enemy)) return;
-      enemy.setTexture('art-rat-run-0').setScale(enemy.elite ? 1 : .8);
-      enemy.body?.setCircle?.(22, 34, 29); enemy.play('rat-run', true);
-    });
   };
 }
 
@@ -174,9 +144,9 @@ function enrichWorld(scene) {
 }
 
 export async function applyProductionArt() {
-  const scene=await getScene(); await loadSvgPack(scene); rebuildAnimations(scene); applyHero(scene); applyRats(scene); applyFortress(scene); enrichWorld(scene);
+  const scene=await getScene(); await loadSvgPack(scene); rebuildAnimations(scene); await installScrapRatVisuals(scene); applyHero(scene); applyFortress(scene); enrichWorld(scene);
   scene.cart.setPosition(scene.hero.x,Math.max(170,scene.hero.y-105));
   window.__WM_ART_V2__=true; document.documentElement.dataset.wreckmarchArt='v2';
-  window.__WM_LOG__?.('Art pack v2 applied: Runner + Rat + Fortress + wasteland');
+  window.__WM_LOG__?.('Art pack v2 applied: Runner + production Scrap Rat + Fortress + wasteland');
   return true;
 }
