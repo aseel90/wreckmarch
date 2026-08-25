@@ -11,11 +11,7 @@
 </head>
 <body>
   <main id="game-shell" aria-label="Wreckmarch visual slice">
-    <div id="boot">
-      <strong>WRECKMARCH</strong>
-      <span>BUILD • ROLL • SURVIVE</span>
-      <small id="boot-status">LOADING VISUAL SLICE…</small>
-    </div>
+    <div id="boot"><strong>WRECKMARCH</strong><span>BUILD • ROLL • SURVIVE</span><small id="boot-status">LOADING VISUAL SLICE…</small></div>
     <div id="game"></div>
     <div id="rotate-device" aria-live="polite"><div class="rotate-icon">↻</div><strong>ROTATE TO LANDSCAPE</strong><span>WRECKMARCH is built for horizontal play.</span></div>
     <button id="fullscreen-toggle" type="button" aria-label="Enter fullscreen">⛶ FULLSCREEN</button>
@@ -24,184 +20,21 @@
   </main>
   <script>
     (() => {
-      const debug = new URLSearchParams(location.search).has('debug');
-      window.__WM_DEBUG__ = debug;
-      const panel = document.getElementById('debug-panel');
-      const toggle = document.getElementById('debug-toggle');
-      const fullscreenToggle = document.getElementById('fullscreen-toggle');
-      const status = document.getElementById('boot-status');
-      const lines = [];
-
-      const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone === true || window.__WM_NATIVE_APP__ === true;
-      const fullscreenTarget = document.getElementById('game-shell');
-      const requestFullscreen = () => fullscreenTarget.requestFullscreen?.({ navigationUI: 'hide' }) || fullscreenTarget.webkitRequestFullscreen?.();
-      const exitFullscreen = () => document.exitFullscreen?.() || document.webkitExitFullscreen?.();
-      const getFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
-      const nativeFullscreenSupported = !!(fullscreenTarget.requestFullscreen || fullscreenTarget.webkitRequestFullscreen);
-
-      if (!standalone) {
-        document.body.classList.add('browser-shell');
-        if (nativeFullscreenSupported) document.body.classList.add('browser-fullscreen-capable');
-
-        fullscreenToggle.addEventListener('click', async () => {
-          try {
-            if (nativeFullscreenSupported) {
-              if (getFullscreenElement()) await exitFullscreen();
-              else {
-                await requestFullscreen();
-                try { await screen.orientation?.lock?.('landscape'); } catch (_) {}
-              }
-            } else {
-              document.body.classList.toggle('browser-fit-mode');
-              window.scrollTo?.(0, 0);
-            }
-          } catch (err) {
-            document.body.classList.toggle('browser-fit-mode');
-            window.scrollTo?.(0, 0);
-            console.warn('[WRECKMARCH] Fullscreen request failed; using fit mode', err);
-          }
-          syncFullscreenButton();
-        });
-
-        const syncFullscreenButton = () => {
-          const active = !!getFullscreenElement();
-          const fit = document.body.classList.contains('browser-fit-mode');
-          document.body.classList.toggle('is-fullscreen', active);
-          fullscreenToggle.textContent = active || fit ? '↙ EXIT' : (nativeFullscreenSupported ? '⛶ FULLSCREEN' : '⛶ FIT SCREEN');
-          fullscreenToggle.setAttribute('aria-label', active || fit ? 'Exit fullscreen view' : 'Enter fullscreen view');
-        };
-        document.addEventListener('fullscreenchange', syncFullscreenButton);
-        document.addEventListener('webkitfullscreenchange', syncFullscreenButton);
-        window.addEventListener('resize', () => requestAnimationFrame(syncFullscreenButton));
-        syncFullscreenButton();
-      }
-
-      if (debug) {
-        document.body.classList.add('debug-enabled');
-        toggle.addEventListener('click', () => {
-          const collapsed = panel.classList.toggle('collapsed');
-          toggle.textContent = collapsed ? 'DEBUG ▲' : 'DEBUG ▼';
-          toggle.setAttribute('aria-expanded', String(!collapsed));
-        });
-      }
-
-      const log = (msg) => {
-        const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
-        lines.push(line);
-        if (debug) {
-          panel.textContent = lines.slice(-18).join('\n');
-          panel.classList.add('show');
-        }
-        console.log('[WRECKMARCH]', msg);
-      };
-
-      const fail = (msg) => {
-        log('ERROR: ' + msg);
-        status.textContent = 'LOAD FAILED — OPEN ?debug=1';
-        status.classList.add('error');
-        document.body.classList.add('boot-error');
-      };
-
-      window.__WM_LOG__ = log;
-      window.addEventListener('error', e => fail(`${e.message || 'Script error'} @ ${e.filename || 'unknown'}:${e.lineno || 0}`));
-      window.addEventListener('unhandledrejection', e => fail(`Promise: ${e.reason?.message || e.reason || 'unknown'}`));
-
-      const sources = [
-        './vendor/phaser.min.js?v=3.90.0',
-        'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js',
-        'https://unpkg.com/phaser@3.90.0/dist/phaser.min.js'
-      ];
-
-      const loadEngine = (i = 0) => {
-        if (i >= sources.length) return fail('Could not load Phaser from local bundle or CDNs.');
-        status.textContent = `LOADING ENGINE ${i + 1}/${sources.length}…`;
-        log(`Loading Phaser: ${sources[i]}`);
-        const script = document.createElement('script');
-        script.src = sources[i];
-        script.async = true;
-        let finished = false;
-        const timer = setTimeout(() => {
-          if (finished) return;
-          finished = true;
-          log(`Engine source ${i + 1} timed out`);
-          script.remove();
-          loadEngine(i + 1);
-        }, 8000);
-        script.onload = async () => {
-          if (finished) return;
-          finished = true;
-          clearTimeout(timer);
-          if (!window.Phaser) {
-            log(`Source ${i + 1} loaded without Phaser global`);
-            script.remove();
-            return loadEngine(i + 1);
-          }
-          log(`Phaser ${window.Phaser.VERSION || 'loaded'}`);
-          status.textContent = 'STARTING HERO CORE…';
-          try {
-            if (!window.__WM_GAME_CAPTURE__) {
-              const GameCtor = window.Phaser.Game;
-              window.Phaser.Game = new Proxy(GameCtor, {
-                construct(Target, args, NewTarget) {
-                  const game = Reflect.construct(Target, args, NewTarget === window.Phaser.Game ? Target : NewTarget);
-                  window.__WM_GAME__ = game;
-                  window.Phaser.GAMES = window.Phaser.GAMES || [];
-                  if (!window.Phaser.GAMES.includes(game)) window.Phaser.GAMES.push(game);
-                  return game;
-                }
-              });
-              window.__WM_GAME_CAPTURE__ = true;
-              log('Installed Phaser game capture');
-            }
-            const graphicsProto = window.Phaser?.GameObjects?.Graphics?.prototype;
-            if (graphicsProto && typeof graphicsProto.quadraticBezierTo !== 'function') {
-              graphicsProto.quadraticBezierTo = function (_cx, _cy, x, y) { this.lineTo(x, y); return this; };
-              log('Applied Phaser Graphics compatibility shim');
-            }
-            await import('./src/game.js?v=7');
-            log('Phase A hero core imported');
-            status.textContent = 'APPLYING ART PACK…';
-            const art = await import('./src/art-runtime.js?v=2');
-            await art.applyProductionArt();
-            log('Production art pack active');
-            status.textContent = 'EXPANDING WORLD…';
-            const phaseB = await import('./src/phase-b-runtime.js?v=1');
-            await phaseB.applyPhaseB();
-            log('Phase B large world active');
-            status.textContent = 'POLISHING WEAPON + WORLD…';
-            const phaseB1 = await import('./src/phase-b1-polish.js?v=2');
-            await phaseB1.applyPhaseB1Polish();
-            log('Phase B.1 visual polish active');
-            status.textContent = 'BUILDING CORE LOOP…';
-            const phaseC = await import('./src/phase-c-runtime.js?v=2');
-            await phaseC.applyPhaseC();
-            log('Phase C core loop active');
-            status.textContent = 'REBUILDING LANDSCAPE UX…';
-            const phaseC1 = await import('./src/phase-c1-runtime.js?v=1');
-            await phaseC1.applyPhaseC1();
-            log('Phase C.1 landscape UX active');
-            status.textContent = 'APPLYING VISUAL FOUNDATION…';
-            const phaseC2 = await import('./src/phase-c2-runtime.js?v=1');
-            await phaseC2.applyPhaseC2();
-            log('Phase C.2 responsive visual foundation active');
-            status.textContent = 'READY';
-          } catch (err) {
-            fail(`Game module: ${err?.stack || err}`);
-          }
-        };
-        script.onerror = () => {
-          if (finished) return;
-          finished = true;
-          clearTimeout(timer);
-          log(`Engine source ${i + 1} failed`);
-          script.remove();
-          loadEngine(i + 1);
-        };
-        document.head.appendChild(script);
-      };
-
-      log(`Boot phase-c2-responsive-visuals ${debug ? 'DEBUG' : 'NORMAL'} • ${navigator.userAgent}`);
-      loadEngine();
+      const debug = new URLSearchParams(location.search).has('debug'); window.__WM_DEBUG__ = debug;
+      const panel=document.getElementById('debug-panel'),toggle=document.getElementById('debug-toggle'),fullscreenToggle=document.getElementById('fullscreen-toggle'),status=document.getElementById('boot-status'),lines=[];
+      const standalone=window.matchMedia?.('(display-mode: standalone)')?.matches||window.navigator.standalone===true||window.__WM_NATIVE_APP__===true,fullscreenTarget=document.getElementById('game-shell');
+      const requestFullscreen=()=>fullscreenTarget.requestFullscreen?.({navigationUI:'hide'})||fullscreenTarget.webkitRequestFullscreen?.(),exitFullscreen=()=>document.exitFullscreen?.()||document.webkitExitFullscreen?.(),getFullscreenElement=()=>document.fullscreenElement||document.webkitFullscreenElement||null,nativeFullscreenSupported=!!(fullscreenTarget.requestFullscreen||fullscreenTarget.webkitRequestFullscreen);
+      if(!standalone){document.body.classList.add('browser-shell');if(nativeFullscreenSupported)document.body.classList.add('browser-fullscreen-capable');const sync=()=>{const active=!!getFullscreenElement(),fit=document.body.classList.contains('browser-fit-mode');document.body.classList.toggle('is-fullscreen',active);fullscreenToggle.textContent=active||fit?'↙ EXIT':(nativeFullscreenSupported?'⛶ FULLSCREEN':'⛶ FIT SCREEN');fullscreenToggle.setAttribute('aria-label',active||fit?'Exit fullscreen view':'Enter fullscreen view')};fullscreenToggle.addEventListener('click',async()=>{try{if(nativeFullscreenSupported){if(getFullscreenElement())await exitFullscreen();else{await requestFullscreen();try{await screen.orientation?.lock?.('landscape')}catch(_){}}}else{document.body.classList.toggle('browser-fit-mode');window.scrollTo?.(0,0)}}catch(err){document.body.classList.toggle('browser-fit-mode');window.scrollTo?.(0,0);console.warn('[WRECKMARCH] Fullscreen request failed; using fit mode',err)}sync()});document.addEventListener('fullscreenchange',sync);document.addEventListener('webkitfullscreenchange',sync);window.addEventListener('resize',()=>requestAnimationFrame(sync));sync()}
+      if(debug){document.body.classList.add('debug-enabled');toggle.addEventListener('click',()=>{const c=panel.classList.toggle('collapsed');toggle.textContent=c?'DEBUG ▲':'DEBUG ▼';toggle.setAttribute('aria-expanded',String(!c))})}
+      const log=msg=>{const line=`[${new Date().toLocaleTimeString()}] ${msg}`;lines.push(line);if(debug){panel.textContent=lines.slice(-18).join('\n');panel.classList.add('show')}console.log('[WRECKMARCH]',msg)};
+      const fail=msg=>{log('ERROR: '+msg);status.textContent='LOAD FAILED — OPEN ?debug=1';status.classList.add('error');document.body.classList.add('boot-error')};
+      window.__WM_LOG__=log;window.addEventListener('error',e=>fail(`${e.message||'Script error'} @ ${e.filename||'unknown'}:${e.lineno||0}`));window.addEventListener('unhandledrejection',e=>fail(`Promise: ${e.reason?.message||e.reason||'unknown'}`));
+      const sources=['./vendor/phaser.min.js?v=3.90.0','https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js','https://unpkg.com/phaser@3.90.0/dist/phaser.min.js'];
+      const loadEngine=(i=0)=>{if(i>=sources.length)return fail('Could not load Phaser from local bundle or CDNs.');status.textContent=`LOADING ENGINE ${i+1}/${sources.length}…`;log(`Loading Phaser: ${sources[i]}`);const script=document.createElement('script');script.src=sources[i];script.async=true;let finished=false;const timer=setTimeout(()=>{if(finished)return;finished=true;log(`Engine source ${i+1} timed out`);script.remove();loadEngine(i+1)},8000);
+        script.onload=async()=>{if(finished)return;finished=true;clearTimeout(timer);if(!window.Phaser){log(`Source ${i+1} loaded without Phaser global`);script.remove();return loadEngine(i+1)}log(`Phaser ${window.Phaser.VERSION||'loaded'}`);status.textContent='STARTING HERO CORE…';try{if(!window.__WM_GAME_CAPTURE__){const GameCtor=window.Phaser.Game;window.Phaser.Game=new Proxy(GameCtor,{construct(Target,args,NewTarget){const game=Reflect.construct(Target,args,NewTarget===window.Phaser.Game?Target:NewTarget);window.__WM_GAME__=game;window.Phaser.GAMES=window.Phaser.GAMES||[];if(!window.Phaser.GAMES.includes(game))window.Phaser.GAMES.push(game);return game}});window.__WM_GAME_CAPTURE__=true;log('Installed Phaser game capture')}const graphicsProto=window.Phaser?.GameObjects?.Graphics?.prototype;if(graphicsProto&&typeof graphicsProto.quadraticBezierTo!=='function'){graphicsProto.quadraticBezierTo=function(_cx,_cy,x,y){this.lineTo(x,y);return this};log('Applied Phaser Graphics compatibility shim')}
+          await import('./src/game.js?v=7');log('Phase A hero core imported');status.textContent='APPLYING ART PACK…';const art=await import('./src/art-runtime.js?v=2');await art.applyProductionArt();log('Production art pack active');status.textContent='EXPANDING WORLD…';const phaseB=await import('./src/phase-b-runtime.js?v=1');await phaseB.applyPhaseB();log('Phase B large world active');status.textContent='POLISHING WEAPON + WORLD…';const phaseB1=await import('./src/phase-b1-polish.js?v=2');await phaseB1.applyPhaseB1Polish();log('Phase B.1 visual polish active');status.textContent='BUILDING CORE LOOP…';const phaseC=await import('./src/phase-c-runtime.js?v=2');await phaseC.applyPhaseC();log('Phase C core loop active');status.textContent='REBUILDING LANDSCAPE UX…';const phaseC1=await import('./src/phase-c1-runtime.js?v=1');await phaseC1.applyPhaseC1();log('Phase C.1 landscape UX active');status.textContent='APPLYING VISUAL FOUNDATION…';const phaseC2=await import('./src/phase-c2-runtime.js?v=1');await phaseC2.applyPhaseC2();log('Phase C.2 responsive visual foundation active');status.textContent='APPLYING EXCLUSIVE ART + MOTION POLISH…';const phaseC3=await import('./src/phase-c3-runtime.js?v=3');await phaseC3.applyPhaseC3();log('Phase C.3 exclusive art and motion polish active');status.textContent='READY'}catch(err){fail(`Game module: ${err?.stack||err}`)}};
+        script.onerror=()=>{if(finished)return;finished=true;clearTimeout(timer);log(`Engine source ${i+1} failed`);script.remove();loadEngine(i+1)};document.head.appendChild(script)};
+      log(`Boot phase-c3-exclusive-polish ${debug?'DEBUG':'NORMAL'} • ${navigator.userAgent}`);loadEngine();
     })();
   </script>
 </body>
