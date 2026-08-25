@@ -3,19 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.34.5",
   "engines": {
     "node": ">=22.12.0 <23"
   },
   "scripts": {
     "prepare:vendor": "node scripts/prepare-vendor.mjs",
-    "dev": "npm run prepare:vendor && vite --host 0.0.0.0",
-    "build": "npm run prepare:vendor && node scripts/build-static.mjs",
+    "dev": "node scripts/prepare-vendor.mjs && vite --host 0.0.0.0",
+    "build": "node scripts/prepare-vendor.mjs && node scripts/build-static.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "test": "npm run test:unit",
+    "test": "vitest run",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm run test:unit && npm run build"
+    "check": "tsc --noEmit && vitest run && node scripts/prepare-vendor.mjs && node scripts/build-static.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"
