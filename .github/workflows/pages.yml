@@ -28,13 +28,46 @@ jobs:
         with:
           node-version: '22'
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        shell: bash
+        run: |
+          set -o pipefail
+          npm install --no-audit --no-fund 2>&1 | tee /tmp/wm-f0-install.log
       - name: Typecheck, unit tests and static build
-        run: npm run check
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run check 2>&1 | tee /tmp/wm-f0-check.log
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        shell: bash
+        run: |
+          set -o pipefail
+          npx playwright install --with-deps chromium 2>&1 | tee /tmp/wm-f0-playwright-install.log
       - name: E0/E1 browser persistence test
-        run: npm run test:e2e
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:e2e 2>&1 | tee /tmp/wm-f0-e2e.log
+      - name: Comment foundation diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          sections = []
+          for title, path in [
+              ('npm install', '/tmp/wm-f0-install.log'),
+              ('typecheck / unit / build', '/tmp/wm-f0-check.log'),
+              ('Playwright install', '/tmp/wm-f0-playwright-install.log'),
+              ('Playwright E2E', '/tmp/wm-f0-e2e.log'),
+          ]:
+              p = Path(path)
+              if p.exists():
+                  sections.append(f'### {title}\n```text\n{p.read_text(errors="ignore")[-6000:]}\n```')
+          Path('/tmp/wm-f0-diagnostic.md').write_text('## F0 foundation diagnostic\n\n' + '\n\n'.join(sections))
+          PY
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-f0-diagnostic.md
 
   smoke:
     runs-on: ubuntu-latest
