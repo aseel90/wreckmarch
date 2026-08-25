@@ -1,0 +1,106 @@
+/* WRECKMARCH F0 — stable playable-character boundary */
+import { getCharacterDefinition } from './character-registry.js';
+
+export class CharacterSystem {
+  constructor(scene, characterId = 'runner') {
+    this.scene = scene;
+    this.select(characterId);
+  }
+
+  select(characterId) {
+    const definition = getCharacterDefinition(characterId);
+    this.characterId = definition.id;
+    this.definition = definition;
+    this.scene.characterId = definition.id;
+    this.scene.characterDefinition = definition;
+    return definition;
+  }
+
+  applyGameplayDefaults({ resetHealth = false } = {}) {
+    const { scene, definition } = this;
+    scene.heroMaxHp = definition.stats.maxHp;
+    scene.heroSpeed = definition.stats.moveSpeed;
+    if (resetHealth || !Number.isFinite(scene.heroHp)) scene.heroHp = definition.stats.maxHp;
+    if (scene.hero?.body?.setCircle) {
+      const p = definition.physics;
+      scene.hero.body.setCircle(p.radius, p.offsetX, p.offsetY);
+    }
+    return definition;
+  }
+
+  createHero(x, y) {
+    const { scene, definition } = this;
+    const bootstrap = definition.bootstrap;
+    scene.heroShadow = scene.add.ellipse(x, y + 38, 52, 17, 0x000000, .28).setDepth(20);
+    scene.hero = scene.physics.add.sprite(x, y, bootstrap.texture).setDepth(bootstrap.depth).setScale(bootstrap.scale);
+    scene.hero.play(bootstrap.animation);
+    scene.hero.setCollideWorldBounds(true);
+    this.applyGameplayDefaults({ resetHealth: true });
+    scene.heroKnockback = new Phaser.Math.Vector2();
+    scene.move = new Phaser.Math.Vector2();
+    return scene.hero;
+  }
+
+  installProductionVisuals() {
+    const { scene, definition } = this;
+    const { idle, run } = definition.animations;
+    for (const animation of [idle, run]) {
+      if (scene.anims.exists(animation.key)) scene.anims.remove(animation.key);
+      scene.anims.create({
+        key: animation.key,
+        frames: animation.frames.map(key => ({ key })),
+        frameRate: animation.frameRate,
+        repeat: -1
+      });
+    }
+    const render = definition.render;
+    scene.hero.stop()
+      .setTexture(render.idleTexture)
+      .setOrigin(render.originX, render.originY)
+      .setScale(render.scale)
+      .setFlipX(false)
+      .play(idle.key, true);
+    this.applyGameplayDefaults();
+    scene.__characterSystemReady = true;
+    return definition;
+  }
+
+  updateLocomotionVisuals() {
+    const { scene, definition } = this;
+    const hero = scene.hero;
+    if (!hero || !scene.move) return;
+    const motion = definition.locomotion;
+    const moving = scene.move.lengthSq() > motion.movingThresholdSq;
+    const key = moving ? definition.animations.run.key : definition.animations.idle.key;
+    if (hero.anims.currentAnim?.key !== key) hero.play(key, true);
+    if (moving) {
+      hero.anims.timeScale = Phaser.Math.Clamp(
+        (scene.heroSpeed || definition.stats.moveSpeed) / motion.animationBaseSpeed,
+        motion.minTimeScale,
+        motion.maxTimeScale
+      );
+      hero.setFlipX(scene.move.x < -motion.flipThreshold);
+      hero.setRotation(Phaser.Math.Linear(
+        hero.rotation || 0,
+        Phaser.Math.Clamp(scene.move.x, -1, 1) * motion.leanRadians,
+        motion.leanLerp
+      ));
+    } else {
+      hero.setRotation(Phaser.Math.Linear(hero.rotation || 0, 0, motion.settleLerp));
+    }
+  }
+
+  getWeaponSocket(aimIndex) {
+    const weapon = this.definition.weapon;
+    const leftFacing = aimIndex >= weapon.leftFacingMinIndex && aimIndex <= weapon.leftFacingMaxIndex;
+    return {
+      x: this.scene.hero.x + (leftFacing ? -weapon.socketOffsetX : weapon.socketOffsetX),
+      y: this.scene.hero.y + weapon.socketOffsetY
+    };
+  }
+
+  getMuzzleReach(aimIndex) {
+    const weapon = this.definition.weapon;
+    return aimIndex % 2 ? weapon.muzzleReachDiagonal : weapon.muzzleReachStraight;
+  }
+}
