@@ -9,6 +9,6 @@ describe('legacy terrain phase ownership', () => {
     const apply = source.slice(source.indexOf('export async function applyPhaseC4'));
     expect(apply).not.toContain('buildTerrain(s)');
     expect(apply).toContain('clearAngularRoads(s)');
-    expect(source).toContain("sharedTerrain:s.__terrainSystemState?.owner==='e0'");
+    expect(source).toContain("checks.sharedTerrain=s.__terrainSystemState?.owner==='e0'");
   });
 });
