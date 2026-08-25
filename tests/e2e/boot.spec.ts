@@ -1,6 +1,24 @@
 import { expect, test } from '@playwright/test';
 
 test('boots the current game, routes movement through InputManager, and keeps asphalt persistent', async ({ page }) => {
+  await page.addInitScript(() => {
+    const originalAdd = DOMTokenList.prototype.add;
+    DOMTokenList.prototype.add = function (...tokens: string[]) {
+      if (tokens.includes('visual-ready')) {
+        const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+        const scene = game?.scene?.getScene?.('Wreckmarch');
+        (window as typeof window & { __WM_VISUAL_READY_SNAPSHOT__?: any }).__WM_VISUAL_READY_SNAPSHOT__ = {
+          d1: Boolean((window as any).__WM_PHASE_D1__),
+          e1: Boolean((window as any).__WM_PHASE_E1__),
+          visualReady: document.documentElement.dataset.wreckmarchVisualReady,
+          heroTexture: scene?.hero?.texture?.key,
+          terrainOwner: scene?.__terrainSystemState?.owner
+        };
+      }
+      return originalAdd.apply(this, tokens);
+    };
+  });
+
   await page.goto('/?debug=1&autotest=1');
 
   await expect(page.locator('canvas')).toBeVisible({ timeout: 20_000 });
@@ -14,6 +32,22 @@ test('boots the current game, routes movement through InputManager, and keeps as
     () => page.evaluate(() => document.documentElement.dataset.wreckmarchE1SelfTest),
     { timeout: 20_000 }
   ).toBe('passed');
+
+  await expect.poll(
+    () => page.evaluate(() => document.body.classList.contains('visual-ready')),
+    { timeout: 20_000 }
+  ).toBe(true);
+
+  const visualReadySnapshot = await page.evaluate(() =>
+    (window as typeof window & { __WM_VISUAL_READY_SNAPSHOT__?: any }).__WM_VISUAL_READY_SNAPSHOT__
+  );
+  expect(visualReadySnapshot).toMatchObject({
+    d1: true,
+    e1: true,
+    visualReady: 'current',
+    heroTexture: 'art-hero-idle-0',
+    terrainOwner: 'e1'
+  });
 
   const terrainOwnership = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
