@@ -32,13 +32,15 @@ describe('production Scrap Rat visuals', () => {
     expect(visuals).toContain('__scrapRatVisualWrapper');
   });
 
-  it('reapplies production Rat visuals after Phase C in the boot chain', () => {
+  it('reapplies production Rat visuals after the final legacy runtime phase', () => {
     const html = read('index.html');
     const art = html.indexOf('./src/art-runtime.js?v=3');
     const phaseC = html.indexOf('await phaseC.applyPhaseC()');
-    const lock = html.indexOf('Production Scrap Rat locked after Phase C');
+    const phaseE1 = html.indexOf('await phaseE1.applyPhaseE1()');
+    const lock = html.indexOf('Production Scrap Rat locked after final runtime');
     expect(art).toBeGreaterThan(-1);
     expect(phaseC).toBeGreaterThan(art);
-    expect(lock).toBeGreaterThan(phaseC);
+    expect(phaseE1).toBeGreaterThan(phaseC);
+    expect(lock).toBeGreaterThan(phaseE1);
   });
 });
