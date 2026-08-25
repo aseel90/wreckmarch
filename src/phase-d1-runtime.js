@@ -1,4 +1,5 @@
 /* WRECKMARCH Phase D.1 — animated runner + integrated mechanical arm + premium PNG cards + real roads + vehicle scale */
+import { CharacterSystem } from './characters/character-system.js?v=1';
 const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const COLORS={HERO:0xd98446,UTILITY:0x4fc8d8,FORTRESS:0xd4ad62,EVOLUTION:0x9d6be8};
@@ -14,33 +15,27 @@ function aimIndex(a){return Math.round(Phaser.Math.Angle.Normalize(a)/(Math.PI/4
 function ensureFrame(s,name){const tex=s.textures.get('c3-atlas');if(tex?.has?.(name))return true;return false}
 
 function installRunnerAndMechanicalArm(s){
-  if(s.anims.exists('d1-hero-run'))s.anims.remove('d1-hero-run');
-  if(s.anims.exists('d1-hero-idle'))s.anims.remove('d1-hero-idle');
-  s.anims.create({key:'d1-hero-run',frames:[{key:'art-hero-run-0'},{key:'art-hero-run-1'}],frameRate:10,repeat:-1});
-  s.anims.create({key:'d1-hero-idle',frames:[{key:'art-hero-idle-0'},{key:'art-hero-idle-1'}],frameRate:2,repeat:-1});
-  s.hero.stop().setTexture('art-hero-idle-0').setOrigin(.5,.52).setScale(.78).setFlipX(false).play('d1-hero-idle',true);
+  const character=s.characterSystem||(s.characterSystem=new CharacterSystem(s,s.characterId||'runner'));
+  character.installProductionVisuals();
   [s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig,s.aimPose].forEach(o=>o?.setVisible?.(false));
   if(!s.__d1ArmJoint){s.__d1ArmJoint=s.add.circle(0,0,9,0x303a3f,1).setStrokeStyle(3,0x58d7e4,.8).setDepth(30)}
   const arm=s.weaponV3Gun;s.weaponModule=arm;arm.setVisible(true).clearTint?.();s.__d1Pose=-1;s.__d1Socket=new Phaser.Math.Vector2();s.__d1Muzzle=new Phaser.Math.Vector2();
   s.updateWeaponPose=function(){
     const q=aimIndex(this.weaponAim),a=q*Math.PI/4,u=new Phaser.Math.Vector2(Math.cos(a),Math.sin(a));
     if(q!==this.__d1Pose){this.__d1Pose=q;arm.setTexture('c3-atlas',GUN_FRAMES[q]).setCrop();fit(arm,q%2?94:102,q%2?92:84);arm.setOrigin(q===4||q===3||q===5?.82:.18,.52)}
-    const leftFacing=q>=3&&q<=5,side=leftFacing?-1:1;
-    const socketX=this.hero.x+side*15,socketY=this.hero.y-5;
+    const socket=this.characterSystem.getWeaponSocket(q),socketX=socket.x,socketY=socket.y;
     const recoil=this.weaponV3Recoil||0;this.__d1Socket.set(socketX,socketY);
     arm.setPosition(socketX-u.x*recoil*3.2,socketY-u.y*recoil*3.2).setDepth(q>=5?19:31);
     this.__d1ArmJoint.setPosition(socketX,socketY).setDepth(q>=5?18:30);
-    const reach=q%2?70:76;this.__d1Muzzle.set(socketX+u.x*reach,socketY+u.y*reach);
+    const reach=this.characterSystem.getMuzzleReach(q);this.__d1Muzzle.set(socketX+u.x*reach,socketY+u.y*reach);
     this.visualAimAngle=a;this.weaponV3Recoil*=.7;
     this.__c4Grip?.copy?.(this.__d1Socket);this.__c4Muzzle?.copy?.(this.__d1Muzzle);
   };
-  s.getWeaponMuzzle=function(spread=0){const a=(this.__d1Pose>=0?this.__d1Pose*Math.PI/4:this.weaponAim)+spread;return new Phaser.Math.Vector2(this.__d1Socket.x+Math.cos(a)*76,this.__d1Socket.y+Math.sin(a)*76)};
+  s.getWeaponMuzzle=function(spread=0){const a=(this.__d1Pose>=0?this.__d1Pose*Math.PI/4:this.weaponAim)+spread,reach=this.characterSystem.definition.weapon.muzzleReachStraight;return new Phaser.Math.Vector2(this.__d1Socket.x+Math.cos(a)*reach,this.__d1Socket.y+Math.sin(a)*reach)};
   const oldMove=s.updateMovement?.bind(s);
   if(oldMove)s.updateMovement=function(time){
-    oldMove(time);const moving=this.move.lengthSq()>.035,key=moving?'d1-hero-run':'d1-hero-idle';
-    if(this.hero.anims.currentAnim?.key!==key)this.hero.play(key,true);
-    if(moving){this.hero.anims.timeScale=Phaser.Math.Clamp((this.heroSpeed||255)/255,.82,1.25);this.hero.setFlipX(this.move.x<-.1);this.hero.setRotation(Phaser.Math.Linear(this.hero.rotation||0,Phaser.Math.Clamp(this.move.x,-1,1)*.035,.18));}
-    else this.hero.setRotation(Phaser.Math.Linear(this.hero.rotation||0,0,.2));
+    oldMove(time);
+    this.characterSystem.updateLocomotionVisuals();
   };
   s.updateWeaponPose();s.__d1MechanicalArm=true;s.__d1AnimatedRunner=true;
 }
@@ -64,9 +59,9 @@ function installPremiumCards(s){
 }
 
 function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='1')return;
-  const runFrames=s.anims.get('d1-hero-run')?.frames?.length||0,allCardFrames=CARD_IDS.every(id=>ensureFrame(s,CARD_FRAME(id))),roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
+  const runFrames=s.anims.get(s.characterDefinition?.animations?.run?.key)?.frames?.length||0,allCardFrames=CARD_IDS.every(id=>ensureFrame(s,CARD_FRAME(id))),roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
   const probe=s.add.image(-9999,-9999,'c3-atlas',CARD_FRAME('overclock'));fit(probe,190,140);
-  const checks={animatedLegs:runFrames===2&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allCardFrames&&probe.frame?.name===CARD_FRAME('overclock')&&probe.displayWidth>130,roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth};probe.destroy();
+  const checks={animatedLegs:runFrames===2&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allCardFrames&&probe.frame?.name===CARD_FRAME('overclock')&&probe.displayWidth>130,roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth,characterSystem:s.characterId==='runner'&&s.characterDefinition?.id==='runner'&&s.__characterSystemReady===true};probe.destroy();
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_D1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchD1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`D1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase D.1 self-test failed: '+detail)
 }
 
