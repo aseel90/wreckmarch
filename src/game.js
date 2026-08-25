@@ -1,3 +1,5 @@
+import { InputManager } from './input/input-manager.js?v=1';
+
 /* WRECKMARCH — Phase A: hero-owned combat core */
 const W = 540;
 const H = 960;
@@ -30,6 +32,7 @@ class WreckmarchScene extends Phaser.Scene {
     this.createArtCompatibility();
     this.createHUD();
     this.createJoystick();
+    this.inputManager = new InputManager({ keyboard: this.input.keyboard, joystick: this.joy });
     this.createAudio();
 
     this.physics.world.setBounds(24, 105, W - 48, H - 158);
@@ -252,18 +255,7 @@ class WreckmarchScene extends Phaser.Scene {
   }
 
   updateMovement(time) {
-    this.move.set(0, 0);
-    if (this.joy.active) {
-      this.move.set(this.joy.current.x - this.joy.origin.x, this.joy.current.y - this.joy.origin.y);
-      if (this.move.length() > 8) this.move.normalize(); else this.move.set(0, 0);
-    }
-    const kb = this.input.keyboard;
-    if (kb) {
-      const c = kb.createCursorKeys();
-      if (c.left.isDown) this.move.x -= 1; if (c.right.isDown) this.move.x += 1;
-      if (c.up.isDown) this.move.y -= 1; if (c.down.isDown) this.move.y += 1;
-      if (this.move.lengthSq() > 1) this.move.normalize();
-    }
+    this.inputManager.readMove(this.move);
     const moving = this.move.lengthSq() > .05;
     let vx = this.move.x * this.heroSpeed, vy = this.move.y * this.heroSpeed;
     if (time < this.heroKnockbackUntil) {
