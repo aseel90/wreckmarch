@@ -10,7 +10,7 @@ export const SCRAP_RAT_VISUAL = Object.freeze({
   frameCount: SCRAP_RAT_FRAME_COUNT,
   frames: Object.freeze({
     idle: Object.freeze([0, 1]),
-    run: Object.freeze([2, 3, 4, 5]),
+    run: Object.freeze([2]),
     hit: Object.freeze([6, 7]),
     death: Object.freeze([8, 9, 10, 11])
   }),
@@ -69,14 +69,28 @@ function installAnimations(scene) {
   replaceAnimation(scene, 'rat-run', SCRAP_RAT_VISUAL.frames.run, 12, -1);
 }
 
+function installStrideMotion(enemy, baseScale) {
+  enemy.__scrapRatStrideTween?.stop?.();
+  enemy.__scrapRatStrideTween = enemy.scene?.tweens?.add({
+    targets: enemy,
+    scaleY: baseScale * .95,
+    duration: 120,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.InOut'
+  });
+}
+
 export function tuneScrapRatVisual(enemy) {
   if (!enemy?.active) return enemy;
   const elite = Boolean(enemy.elite);
   enemy.stop?.();
   enemy.setTexture(SCRAP_RAT_VISUAL.texture, SCRAP_RAT_VISUAL.frames.run[0]);
-  enemy.setOrigin(.5, .58).setScale(elite ? SCRAP_RAT_VISUAL.scale.elite : SCRAP_RAT_VISUAL.scale.normal);
+  const baseScale = elite ? SCRAP_RAT_VISUAL.scale.elite : SCRAP_RAT_VISUAL.scale.normal;
+  enemy.setOrigin(.5, .58).setScale(baseScale);
+  installStrideMotion(enemy, baseScale);
   enemy.__scrapRatVisual = true;
-  enemy.__scrapRatVisualVersion = 'production-v1';
+  enemy.__scrapRatVisualVersion = 'production-v2';
   enemy.play(SCRAP_RAT_VISUAL.animations.run, true);
   return enemy;
 }
@@ -157,6 +171,6 @@ export async function installScrapRatVisuals(scene) {
   scene.__scrapRatVisualReady = true;
   window.__WM_SCRAP_RAT_VISUAL__ = true;
   document.documentElement.dataset.wreckmarchScrapRatVisual = 'production';
-  window.__WM_LOG__?.('Production Scrap Rat active: 12-frame idle/run/hit/death sprite set');
+  window.__WM_LOG__?.('Production Scrap Rat active: stable run frame + hit/death sprite set');
   return true;
 }

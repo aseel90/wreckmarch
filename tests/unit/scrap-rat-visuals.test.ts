@@ -17,10 +17,17 @@ describe('production Scrap Rat visuals', () => {
   it('defines production idle, run, hit and death frame groups', () => {
     const visuals = read('src/enemies/scrap-rat-visuals.js');
     expect(visuals).toContain('idle: Object.freeze([0, 1])');
-    expect(visuals).toContain('run: Object.freeze([2, 3, 4, 5])');
+    expect(visuals).toContain('run: Object.freeze([2])');
     expect(visuals).toContain('hit: Object.freeze([6, 7])');
     expect(visuals).toContain('death: Object.freeze([8, 9, 10, 11])');
-    expect(visuals).toContain("__scrapRatVisualVersion = 'production-v1'");
+    expect(visuals).toContain("__scrapRatVisualVersion = 'production-v2'");
+  });
+
+  it('keeps normal running on one stable art frame and uses procedural stride motion', () => {
+    const visuals = read('src/enemies/scrap-rat-visuals.js');
+    expect(visuals).toContain('run: Object.freeze([2])');
+    expect(visuals).toContain('function installStrideMotion');
+    expect(visuals).toContain('scaleY: baseScale * .95');
   });
 
   it('retires the old rat SVG renderer and keeps the production wrapper outermost', () => {
