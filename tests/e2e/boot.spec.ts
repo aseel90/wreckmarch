@@ -85,6 +85,7 @@ test('boots the current game, routes movement through InputManager, and keeps as
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
+    scene.fireDelay = 999999;
     scene.enemies.clear(true, true);
     scene.spawnEnemy(false);
     const enemy = scene.enemies.getChildren().find((object: any) => object?.active);
@@ -94,18 +95,29 @@ test('boots the current game, routes movement through InputManager, and keeps as
       version: enemy.__scrapRatVisualVersion,
       animation: enemy.anims?.currentAnim?.key,
       hitRadius: enemy.hitRadius,
-      scale: Math.abs(enemy.scaleX || 0)
+      scale: Math.abs(enemy.scaleX || 0),
+      frame: Number(enemy.frame?.name)
     } : null;
   });
   expect(scrapRatVisual).not.toBeNull();
   expect(scrapRatVisual).toMatchObject({
     texture: 'scrap-rat-sheet',
     production: true,
-    version: 'production-v1',
+    version: 'production-v2',
     animation: 'scrap-rat-run',
-    hitRadius: 24
+    hitRadius: 24,
+    frame: 2
   });
   expect(scrapRatVisual!.scale).toBeGreaterThan(.65);
+
+  await page.waitForTimeout(450);
+  const stableRunFrame = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    const enemy = scene.enemies.getChildren().find((object: any) => object?.active);
+    return enemy ? Number(enemy.frame?.name) : null;
+  });
+  expect(stableRunFrame).toBe(2);
 
   const beforeX = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
