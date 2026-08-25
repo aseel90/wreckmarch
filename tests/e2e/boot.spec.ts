@@ -15,7 +15,9 @@ test('boots the current game, routes movement through InputManager, and keeps as
           terrainOwner: scene?.__terrainSystemState?.owner,
           characterId: scene?.characterId,
           characterReady: scene?.__characterSystemReady,
-          characterAnimation: scene?.hero?.anims?.currentAnim?.key
+          characterAnimation: scene?.hero?.anims?.currentAnim?.key,
+          scrapRatReady: scene?.__scrapRatVisualReady,
+          scrapRatDataset: document.documentElement.dataset.wreckmarchScrapRatVisual
         };
       }
       return originalAdd.apply(this, tokens);
@@ -52,7 +54,9 @@ test('boots the current game, routes movement through InputManager, and keeps as
     terrainOwner: 'e1',
     characterId: 'runner',
     characterReady: true,
-    characterAnimation: 'character-runner-idle'
+    characterAnimation: 'character-runner-idle',
+    scrapRatReady: true,
+    scrapRatDataset: 'production'
   });
 
   const terrainOwnership = await page.evaluate(() => {
@@ -76,6 +80,32 @@ test('boots the current game, routes movement through InputManager, and keeps as
     }),
     { timeout: 20_000 }
   ).toBe(true);
+
+  const scrapRatVisual = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    scene.spawnEvent.paused = true;
+    scene.enemies.clear(true, true);
+    scene.spawnEnemy(false);
+    const enemy = scene.enemies.getChildren().find((object: any) => object?.active);
+    return enemy ? {
+      texture: enemy.texture?.key,
+      production: enemy.__scrapRatVisual,
+      version: enemy.__scrapRatVisualVersion,
+      animation: enemy.anims?.currentAnim?.key,
+      hitRadius: enemy.hitRadius,
+      scale: Math.abs(enemy.scaleX || 0)
+    } : null;
+  });
+  expect(scrapRatVisual).not.toBeNull();
+  expect(scrapRatVisual).toMatchObject({
+    texture: 'scrap-rat-sheet',
+    production: true,
+    version: 'production-v1',
+    animation: 'scrap-rat-run',
+    hitRadius: 25
+  });
+  expect(scrapRatVisual!.scale).toBeGreaterThan(.65);
 
   const beforeX = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
