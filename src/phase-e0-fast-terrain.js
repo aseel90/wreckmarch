@@ -1,9 +1,25 @@
 /* WRECKMARCH Phase E.0 — fast terrain bootstrap only */
-import { C4_GROUND, C4_ROAD } from './c4-assets.js?v=1';
-const WORLD_W=2200,WORLD_H=2200,wait=ms=>new Promise(r=>setTimeout(r,ms));
-async function getScene(timeout=5000){const t=performance.now();while(performance.now()-t<timeout){const g=window.Phaser?.GAMES?.find(Boolean)||window.Phaser?.GAMES?.[0],s=g?.scene?.getScene?.('Wreckmarch');if(s?.sys?.isActive?.()&&s.hero)return s;await wait(25)}throw Error('Phase E.0 scene timeout')}
-function addDataTexture(scene,key,b64){if(scene.textures.exists(key))return Promise.resolve();return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>{try{scene.textures.addImage(key,img);resolve()}catch(e){reject(e)}};img.onerror=()=>reject(Error('Failed to decode '+key));img.src='data:image/png;base64,'+b64})}
-function segment(s,a,b,w,name,i){const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx),x=(a.x+b.x)/2,y=(a.y+b.y)/2;const shoulder=s.add.rectangle(x,y,len+34,w+36,0x4a3528,.98).setDepth(.8).setRotation(ang).setName(`${name}-shoulder-${i}`),road=s.add.tileSprite(x,y,len+18,w,'c4-road').setDepth(.9).setRotation(ang).setName(`${name}-asphalt-${i}`).setAlpha(1);road.setTileScale(Math.max(1,w/112));road.tilePositionX=(i*37)%256;road.__e0Road=true;const center=s.add.rectangle(x,y,len+10,3,0xc5b27e,.22).setDepth(.95).setRotation(ang).setName(`${name}-center-${i}`);return[shoulder,road,center]}
-function route(s,pts,w,name){const c=new Phaser.Curves.Spline(pts.map(([x,y])=>new Phaser.Math.Vector2(x,y))),p=c.getSpacedPoints(64),out=[];for(let i=0;i<p.length-1;i++)out.push(...segment(s,p[i],p[i+1],w,name,i));return out}
-function build(s){s.__e0FastTerrain?.forEach?.(o=>o?.destroy?.());s.__e0FastTerrain=[];const base=s.add.tileSprite(WORLD_W/2,WORLD_H/2,WORLD_W,WORLD_H,'c4-ground').setDepth(.2).setName('e0-ground-base');s.__e0FastTerrain.push(base);const routes=[{w:210,p:[[-180,1100],[280,1040],[650,1120],[960,1080],[1100,1100],[1420,1030],[1810,1120],[2380,1060]]},{w:190,p:[[1090,-180],[1040,250],[1120,610],[1080,900],[1100,1100],[1040,1450],[1110,1830],[1060,2380]]},{w:170,p:[[-160,480],[340,540],[760,490],[1130,590],[1600,520],[2360,610]]},{w:170,p:[[-160,1780],[380,1640],[790,1700],[1190,1600],[1580,1480],[1930,1560],[2360,1660]]}];routes.forEach((r,i)=>s.__e0FastTerrain.push(...route(s,r.p,r.w,`e0-road-${i}`)));s.__e0FastRoadCount=s.__e0FastTerrain.filter(o=>o.__e0Road).length}
-export async function applyFastTerrain(){const start=performance.now(),s=await getScene();await Promise.all([addDataTexture(s,'c4-ground',C4_GROUND),addDataTexture(s,'c4-road',C4_ROAD)]);build(s);const ms=Math.round(performance.now()-start);window.__WM_PHASE_E0__=true;document.documentElement.dataset.wreckmarchPhaseE0='active';window.__WM_LOG__?.(`FAST TERRAIN ready in ${ms}ms: roads=${s.__e0FastRoadCount||0}`);return true}
+import { buildTerrainLayer, ensureTerrainTextures, getWreckmarchScene } from './world/terrain-system.js?v=1';
+
+export async function applyFastTerrain(){
+  const start=performance.now(),s=await getWreckmarchScene({timeout:5000});
+  await ensureTerrainTextures(s);
+  const built=buildTerrainLayer(s,{
+    owner:'e0',
+    terrainStore:'__e0FastTerrain',
+    roadStore:'__e0FastRoadSegments',
+    roadMarker:'__e0Road',
+    groundDepth:.2,
+    shoulderDepth:.8,
+    roadDepth:.9,
+    centerDepth:.95,
+    samples:64,
+    tileOffsetStep:37
+  });
+  s.__e0FastRoadCount=built.roads.length;
+  const ms=Math.round(performance.now()-start);
+  window.__WM_PHASE_E0__=true;
+  document.documentElement.dataset.wreckmarchPhaseE0='active';
+  window.__WM_LOG__?.(`FAST TERRAIN ready in ${ms}ms: roads=${s.__e0FastRoadCount||0}`);
+  return true;
+}
