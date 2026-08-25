@@ -15,7 +15,8 @@ Goal: reorganize Wreckmarch for long-term Web + Android development without chan
 - [x] Added unit checks for the current boot contract.
 - [x] Added a Playwright test for E0 startup terrain and E1 12-second asphalt persistence.
 - [x] Documented the target production architecture and Android boundary.
-- [ ] Wire Node checks into GitHub Actions.
+- [x] Wired foundation checks into GitHub Actions.
+- [x] Extended legacy smoke checks through E0/E1 persistence instead of stopping at D1.
 - [ ] Extract the first stable production module from legacy phase layers.
 - [ ] Introduce normalized input contracts for keyboard/touch/gamepad.
 - [ ] Consolidate terrain/road ownership.
