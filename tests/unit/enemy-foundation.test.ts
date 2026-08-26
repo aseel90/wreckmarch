@@ -14,10 +14,12 @@ function fakeEnemy() {
 }
 
 describe('enemy foundation', () => {
-  it('registers Scrap Rat as the first canonical enemy', () => {
+  it('registers Scrap Rat and Rust Hound as canonical enemies', () => {
     const definitions = listEnemyDefinitions();
-    expect(definitions.map(definition => definition.id)).toEqual(['scrap-rat']);
+    expect(definitions.map(definition => definition.id)).toEqual(['scrap-rat', 'rust-hound']);
     expect(getEnemyDefinition('scrap-rat').behavior).toBe('chase');
+    expect(getEnemyDefinition('rust-hound').behavior).toBe('hound-pounce');
+    expect(getEnemyDefinition('rust-hound').threatValue).toBe(2);
     expect(() => getEnemyDefinition('missing')).toThrow('Unknown enemy definition: missing');
   });
 
@@ -58,6 +60,8 @@ describe('enemy foundation', () => {
     expect(created.maxHp).toBe(66.5);
     expect(created.speed).toBe(88);
     expect(created.damage).toBe(10);
+    expect(created.baseDamage).toBe(10);
+    expect(created.threatValue).toBe(1);
     expect(created.scrapDrop).toBe(1);
     expect(created.circle).toEqual([21, 24, 17]);
     expect(scene.enemySerial).toBe(8);

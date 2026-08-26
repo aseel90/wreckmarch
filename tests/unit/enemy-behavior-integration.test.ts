@@ -5,7 +5,7 @@ const system = fs.readFileSync(new URL('../../src/enemies/enemy-system.js', impo
 
 describe('live behavior integration', () => {
   it('routes updateEnemies through EnemyBehaviorSystem while preserving rollback access', () => {
-    expect(system).toContain("import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=1'");
+    expect(system).toContain("import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=2'");
     expect(system).toContain('scene.enemyBehaviorSystem = new EnemyBehaviorSystem(scene)');
     expect(system).toContain('scene.__legacyUpdateEnemies = scene.updateEnemies.bind(scene)');
     expect(system).toContain('this.enemyBehaviorSystem.updateAll(this.enemies, this.hero)');

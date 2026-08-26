@@ -27,15 +27,7 @@ describe('production Scrap Rat visuals', () => {
 
   it('does not recolor, normalize or rebuild Rat pixels at runtime', () => {
     const visuals = read('src/enemies/scrap-rat-visuals.js');
-    for (const forbidden of [
-      'normalizeRunPalette',
-      'installStableRunTextures',
-      'createCanvas',
-      'getImageData',
-      'putImageData',
-      'scrap-rat-run-stable-',
-      'scaleY: baseScale'
-    ]) expect(visuals).not.toContain(forbidden);
+    for (const forbidden of ['normalizeRunPalette','installStableRunTextures','createCanvas','getImageData','putImageData','scrap-rat-run-stable-','scaleY: baseScale']) expect(visuals).not.toContain(forbidden);
     expect(visuals).toContain('scene.load.image(key, uri)');
     expect(visuals).toContain('scene.textures.remove(key)');
   });
@@ -55,7 +47,7 @@ describe('production Scrap Rat visuals', () => {
     const art = html.indexOf('./src/art-runtime.js?v=6');
     const phaseC = html.indexOf('await phaseC.applyPhaseC()');
     const phaseE1 = html.indexOf('await phaseE1.applyPhaseE1()');
-    const lock = html.indexOf("./src/enemies/scrap-rat-visuals.js?v=5");
+    const lock = html.indexOf("./src/enemies/scrap-rat-visuals.js?v=6");
     expect(art).toBeGreaterThan(-1);
     expect(phaseC).toBeGreaterThan(art);
     expect(phaseE1).toBeGreaterThan(phaseC);

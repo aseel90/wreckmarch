@@ -17,9 +17,10 @@ function fakeEnemy(x: number, y: number, speed = 100) {
 }
 
 describe('EnemyBehaviorSystem', () => {
-  it('registers chase as the first canonical behavior', () => {
-    expect(listEnemyBehaviorKeys()).toEqual(['chase']);
+  it('registers chase and Rust Hound pounce behaviors', () => {
+    expect(listEnemyBehaviorKeys()).toEqual(['chase', 'hound-pounce']);
     expect(typeof getEnemyBehavior('chase')).toBe('function');
+    expect(typeof getEnemyBehavior('hound-pounce')).toBe('function');
     expect(() => getEnemyBehavior('missing')).toThrow('Unknown enemy behavior: missing');
   });
 
