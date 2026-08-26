@@ -1,4 +1,5 @@
 import { InputManager } from './input/input-manager.js?v=1';
+import { EnemyCombatSystem } from './combat/enemy-combat-system.js?v=1';
 
 /* WRECKMARCH — Phase A: hero-owned combat core */
 const W = 540;
@@ -34,6 +35,7 @@ class WreckmarchScene extends Phaser.Scene {
     this.createJoystick();
     this.inputManager = new InputManager({ keyboard: this.input.keyboard, joystick: this.joy });
     this.createAudio();
+    this.enemyCombatSystem = new EnemyCombatSystem(this);
 
     this.physics.world.setBounds(24, 105, W - 48, H - 158);
     this.spawnEvent = this.time.addEvent({ delay: 690, loop: true, callback: () => this.spawnEnemy() });
@@ -78,58 +80,55 @@ class WreckmarchScene extends Phaser.Scene {
         g.fillStyle(0x7f5d3e).fillRoundedRect(24, 43, 45, 42, 10);
         g.fillStyle(0x153f49).fillTriangle(28, 37, 65, 37, 47, 55);
         g.fillStyle(0xe0a673).fillCircle(47, 29, 20);
-        g.fillStyle(0x34241d).fillTriangle(28, 27, 39, 6, 45, 25).fillTriangle(43, 22, 58, 4, 64, 29);
+        g.fillStyle(0x34241d).fillTriangle(28, 27, 39, 6, 45, 25);
+        g.fillTriangle(43, 22, 58, 4, 64, 29);
         g.fillStyle(0x2f3437).fillCircle(38, 18, 10).fillCircle(58, 18, 10);
         g.fillStyle(0x55d7e7).fillCircle(38, 18, 6).fillCircle(58, 18, 6);
-        g.fillStyle(0x2b2d2f).fillRoundedRect(29 + s * .35, 76, 14, 23, 5).fillRoundedRect(52 - s * .35, 76, 14, 23, 5);
+        g.fillStyle(0x2b2d2f).fillRoundedRect(29 + s / 2, 76, 14, 23, 5).fillRoundedRect(52 - s / 2, 76, 14, 23, 5);
       });
     }
     for (let i = 0; i < 2; i++) {
-      this.makeTexture(`rat-run-${i}`, 86, 60, g => {
-        const s = i ? 4 : -4;
-        g.lineStyle(5, 0x4a352b).beginPath().moveTo(18, 34).lineTo(3, 25 - s).lineTo(2, 12).strokePath();
-        g.fillStyle(0x715844).fillEllipse(43, 35, 55, 34);
-        g.fillStyle(0x4c5559).fillRoundedRect(28, 22, 27, 18, 4);
-        g.fillStyle(0x81634b).fillEllipse(67, 32, 30, 27);
-        g.fillStyle(0xef5541).fillCircle(69, 29, 4);
-        g.fillStyle(0x32251f).fillEllipse(31 + s, 51, 18, 7).fillEllipse(54 - s, 51, 18, 7);
+      this.makeTexture(`rat-run-${i}`, 90, 70, g => {
+        const leg = i ? 5 : -5;
+        g.fillStyle(0x5e4c40).fillEllipse(43, 38, 52, 32);
+        g.fillStyle(0x735f4d).fillTriangle(12, 33, 3, 22, 17, 22).fillTriangle(13, 33, 5, 40, 18, 43);
+        g.fillStyle(0x3e342e).fillCircle(62, 32, 13);
+        g.fillStyle(0xe7a25e).fillCircle(66, 28, 4);
+        g.fillStyle(0x9a7552).lineStyle(5, 0x9a7552, 1).beginPath().moveTo(17, 42).lineTo(4, 50).strokePath();
+        g.lineStyle(5, 0x453932, 1).beginPath().moveTo(28, 49).lineTo(23 + leg, 62).moveTo(50, 49).lineTo(55 - leg, 62).strokePath();
       });
     }
-    this.makeTexture('bullet', 20, 20, g => {
-      g.fillStyle(0xffca62).fillCircle(10, 10, 7);
-      g.fillStyle(0xffffff).fillCircle(8, 8, 3);
-    });
+    this.makeTexture('bullet', 18, 18, g => g.fillStyle(0xf0c35d).fillCircle(9, 9, 7));
+    this.makeTexture('flash', 32, 18, g => g.fillStyle(0xffd66f).fillTriangle(0, 9, 25, 1, 25, 17));
     this.makeTexture('scrap', 28, 28, g => {
-      g.fillStyle(0x5d4a35).fillCircle(14, 14, 12);
-      g.fillStyle(0xc79553).fillRect(11, 3, 6, 22).fillRect(3, 11, 22, 6);
-      g.fillStyle(0xe8c68d).fillCircle(14, 14, 5);
-      g.fillStyle(0x5d4a35).fillCircle(14, 14, 2.5);
+      g.fillStyle(0xd4974d).fillRect(5, 7, 18, 14);
+      g.fillStyle(0x54453c).fillCircle(9, 10, 4).fillCircle(19, 18, 4);
+      g.lineStyle(2, 0xf0c878).strokeRect(5, 7, 18, 14);
     });
-    this.makeTexture('flash', 28, 18, g => {
-      g.fillStyle(0xffd56c).fillTriangle(0, 9, 28, 0, 20, 9);
-      g.fillStyle(0xff7d34).fillTriangle(0, 9, 24, 18, 18, 9);
-    });
-    this.makeTexture('art-compat', 2, 2, g => g.fillStyle(0xffffff, 0).fillRect(0, 0, 2, 2));
   }
 
   createAnimations() {
-    this.anims.create({ key: 'hero-idle', frames: [{ key: 'hero-idle-0' }, { key: 'hero-idle-1' }], frameRate: 2, repeat: -1 });
-    this.anims.create({ key: 'hero-run', frames: [{ key: 'hero-run-0' }, { key: 'hero-run-1' }], frameRate: 9, repeat: -1 });
-    this.anims.create({ key: 'rat-run', frames: [{ key: 'rat-run-0' }, { key: 'rat-run-1' }], frameRate: 10, repeat: -1 });
+    this.anims.create({ key: 'hero-idle', frames: [{ key: 'hero-idle-0' }, { key: 'hero-idle-1' }], frameRate: 3, repeat: -1 });
+    this.anims.create({ key: 'hero-run', frames: [{ key: 'hero-run-0' }, { key: 'hero-run-1' }], frameRate: 8, repeat: -1 });
+    this.anims.create({ key: 'rat-run', frames: [{ key: 'rat-run-0' }, { key: 'rat-run-1' }], frameRate: 8, repeat: -1 });
   }
 
   createWorld() {
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(0x3a3028, 0x332b25, 0x171d26, 0x171d26, 1).fillRect(0, 0, W, H);
-    const road = this.add.graphics();
-    road.fillStyle(0x2b3037).fillRoundedRect(68, 80, W - 136, H - 126, 70);
-    road.lineStyle(2, 0x4b443d, .8).strokeRoundedRect(68, 80, W - 136, H - 126, 70);
-    for (let i = 0; i < 52; i++) {
-      const x = Phaser.Math.Between(30, W - 30), y = Phaser.Math.Between(105, H - 55);
-      const c = Phaser.Math.RND.pick([0x6f5842, 0x4a4f51, 0x8a6b48]);
-      this.add.rectangle(x, y, Phaser.Math.Between(3, 12), Phaser.Math.Between(2, 5), c, Phaser.Math.FloatBetween(.15, .38)).setRotation(Phaser.Math.FloatBetween(0, TAU));
+    this.cameras.main.setBackgroundColor('#5f4935');
+    this.physics.world.setBoundsCollision(true, true, true, true);
+    const g = this.add.graphics().setDepth(0);
+    g.fillStyle(0x604a36, 1).fillRect(0, 0, W, H);
+    g.fillStyle(0x745a43, 1).fillRect(20, 120, W - 40, H - 190);
+    g.fillStyle(0x3f4545, 1).fillRect(0, 210, W, 210);
+    g.fillStyle(0x353b3c, 1).fillRect(180, 105, 180, H - 160);
+    g.lineStyle(4, 0xa69573, .45).beginPath().moveTo(0, 315).lineTo(W, 315).moveTo(270, 105).lineTo(270, H - 55).strokePath();
+    for (let y = 150; y < H - 90; y += 70) {
+      for (let x = 45 + ((y / 70) % 2) * 18; x < W - 30; x += 85) {
+        const c = (x + y) % 3 ? 0x846b4d : 0x4a4c46;
+        g.fillStyle(c, .2).fillCircle(x, y, 6 + ((x * y) % 9));
+      }
     }
-    this.add.rectangle(W / 2, 52, W, 105, 0x0b0e13, .84).setDepth(500);
+    this.add.text(26, 136, 'WRECKMARCH', { fontFamily: 'Arial Black, Arial', fontSize: '13px', color: '#dcb878' }).setDepth(1).setAlpha(.7);
   }
 
   createGroups() {
@@ -139,83 +138,67 @@ class WreckmarchScene extends Phaser.Scene {
   }
 
   createHero() {
-    this.heroShadow = this.add.ellipse(W / 2, H * .76 + 38, 52, 17, 0x000000, .28).setDepth(20);
-    this.hero = this.physics.add.sprite(W / 2, H * .76, 'hero-idle-0').setDepth(22).setScale(.78);
-    this.hero.play('hero-idle');
-    this.hero.setCollideWorldBounds(true);
-    this.hero.body.setCircle(22, 24, 46);
-    this.heroSpeed = 255;
+    this.heroShadow = this.add.ellipse(W / 2, H * .62 + 38, 62, 24, 0x000000, .24).setDepth(9);
+    this.hero = this.physics.add.sprite(W / 2, H * .62, 'hero-idle-0').setDepth(20).setScale(.82);
+    this.hero.play('hero-idle'); this.hero.setCircle(22, 24, 27); this.hero.setCollideWorldBounds(true);
+    this.move = new Phaser.Math.Vector2(); this.heroSpeed = 255;
     this.heroKnockback = new Phaser.Math.Vector2();
-    this.move = new Phaser.Math.Vector2();
-
-    this.heroHpWidth = 68;
-    this.heroHpBg = this.add.rectangle(this.hero.x, this.hero.y - 64, 72, 10, 0x0b0f14, .86).setDepth(60).setStrokeStyle(1, 0xffffff, .14);
-    this.heroHpBar = this.add.rectangle(this.hero.x - 34, this.hero.y - 64, 68, 6, 0x55d66f).setOrigin(0, .5).setDepth(61);
   }
 
   createArtCompatibility() {
-    // Hidden scaffold used only so the current production art loader can initialize.
-    // It has no collision, no HP, no attack logic, and is never rendered in Phase A.
-    this.cart = this.add.container(-5000, -5000).setVisible(false).setActive(false);
-    this.cartShadow = this.add.image(0, 0, 'art-compat');
-    this.cartBody = this.add.image(0, 0, 'art-compat');
-    this.cartWheels = [0, 1, 2, 3].map(() => this.add.image(0, 0, 'art-compat'));
-    this.turrets = [this.add.image(0, 0, 'art-compat')];
-    this.cart.add([this.cartShadow, ...this.cartWheels, this.cartBody, ...this.turrets]);
-    this.cartCore = this.physics.add.image(-5000, -5000, 'art-compat').setVisible(false).setActive(false);
+    this.weaponContainer = this.add.container(this.hero.x + 20, this.hero.y - 7).setDepth(21);
+    const body = this.add.rectangle(0, 0, 38, 12, 0x30383b).setOrigin(0, .5);
+    const core = this.add.circle(7, 0, 5, 0x50d8e7, 1);
+    const barrel = this.add.rectangle(26, 0, 28, 6, 0xb96f3a).setOrigin(0, .5);
+    this.weaponContainer.add([body, core, barrel]);
   }
 
   createHUD() {
-    const small = { fontFamily: 'Arial, sans-serif', fontSize: '18px', color: '#d7dde5', fontStyle: 'bold' };
-    this.titleText = this.add.text(28, 20, 'WRECKMARCH', { fontFamily: 'Arial Black, Arial', fontSize: '23px', color: '#f2d19b' }).setDepth(700);
-    this.timerText = this.add.text(W - 28, 23, '00:00', small).setOrigin(1, 0).setDepth(700);
-    this.waveText = this.add.text(W / 2, 74, 'WAVE 1', { ...small, fontSize: '13px', color: '#8793a0' }).setOrigin(.5).setDepth(700);
+    const small = { fontFamily: 'Arial Black, Arial', fontStyle: 'bold', color: '#d9dde0' };
+    this.add.rectangle(W / 2, 55, W - 28, 74, 0x071016, .92).setDepth(699);
+    this.hpBack = this.add.rectangle(20, 34, 170, 13, 0x182127).setOrigin(0, .5).setDepth(700).setStrokeStyle(2, 0x35434a);
+    this.hpBar = this.add.rectangle(22, 34, 166, 9, 0x4bd777).setOrigin(0, .5).setDepth(701);
+    this.add.text(20, 14, 'RUNNER', { ...small, fontSize: '11px', color: '#e3b65f' }).setDepth(701);
+    this.waveText = this.add.text(W / 2, 14, 'WAVE 1', { ...small, fontSize: '12px' }).setOrigin(.5, 0).setDepth(701);
+    this.timerText = this.add.text(W - 20, 14, '00:00', { ...small, fontSize: '13px' }).setOrigin(1, 0).setDepth(701);
     this.scrapText = this.add.text(W - 28, 70, 'SCRAP  0', { ...small, fontSize: '14px', color: '#e8c68d' }).setOrigin(1, 0).setDepth(700);
-    this.hint = this.add.text(W / 2, H - 28, 'DRAG TO MOVE • HERO AUTO-FIRES', { ...small, fontSize: '12px', color: '#77818d' }).setOrigin(.5, 1).setDepth(700);
-    this.time.delayedCall(5000, () => this.tweens.add({ targets: this.hint, alpha: 0, duration: 700 }));
+    this.levelText = this.add.text(20, 70, 'LV 1', { ...small, fontSize: '14px', color: '#d6cfb4' }).setDepth(700);
+    this.banner = this.add.text(W / 2, 102, '', { fontFamily: 'Arial Black, Arial', fontSize: '18px', color: '#f1c675', stroke: '#15110a', strokeThickness: 5 }).setOrigin(.5).setDepth(701).setAlpha(0);
   }
 
   createJoystick() {
-    this.joy = { id: null, origin: new Phaser.Math.Vector2(), current: new Phaser.Math.Vector2(), radius: 62, active: false };
-    this.joyBase = this.add.circle(92, H - 118, 55, 0x111820, .38).setStrokeStyle(2, 0x9ba8b6, .18).setDepth(650);
-    this.joyKnob = this.add.circle(92, H - 118, 24, 0xe7c38d, .4).setDepth(651);
-    this.input.on('pointerdown', p => {
-      if (this.gameOver || p.y < H * .36) return;
-      this.joy.id = p.id; this.joy.active = true; this.joy.origin.set(p.x, p.y); this.joy.current.set(p.x, p.y);
-      this.joyBase.setPosition(p.x, p.y).setAlpha(.75); this.joyKnob.setPosition(p.x, p.y).setAlpha(.85);
-    });
+    this.joyBase = this.add.circle(85, H - 92, 54, 0x111921, .38).setDepth(700).setScrollFactor(0).setStrokeStyle(3, 0xa1adad, .35);
+    this.joyKnob = this.add.circle(85, H - 92, 22, 0xc9d1d2, .45).setDepth(701).setScrollFactor(0);
+    this.joy = { pointer: null, baseX: 85, baseY: H - 92, dx: 0, dy: 0 };
+    this.input.on('pointerdown', p => { if (p.x < W * .48 && p.y > H * .55) this.joy.pointer = p.id; });
     this.input.on('pointermove', p => {
-      if (!this.joy.active || p.id !== this.joy.id) return;
-      this.joy.current.set(p.x, p.y);
-      const d = new Phaser.Math.Vector2(p.x - this.joy.origin.x, p.y - this.joy.origin.y);
-      if (d.length() > this.joy.radius) d.setLength(this.joy.radius);
-      this.joyKnob.setPosition(this.joy.origin.x + d.x, this.joy.origin.y + d.y);
+      if (this.joy.pointer !== p.id || !p.isDown) return;
+      const dx = p.x - this.joy.baseX, dy = p.y - this.joy.baseY, len = Math.hypot(dx, dy), max = 48, m = len > max ? max / len : 1;
+      this.joy.dx = dx * m; this.joy.dy = dy * m; this.joyKnob.setPosition(this.joy.baseX + this.joy.dx, this.joy.baseY + this.joy.dy);
     });
-    const release = p => {
-      if (p.id !== this.joy.id) return;
-      this.joy.active = false; this.joy.id = null;
-      this.joyBase.setPosition(92, H - 118).setAlpha(.38); this.joyKnob.setPosition(92, H - 118).setAlpha(.4);
-    };
-    this.input.on('pointerup', release); this.input.on('pointerupoutside', release);
+    const end = p => { if (this.joy.pointer === p.id) { this.joy.pointer = null; this.joy.dx = this.joy.dy = 0; this.joyKnob.setPosition(this.joy.baseX, this.joy.baseY); } };
+    this.input.on('pointerup', end); this.input.on('pointerupoutside', end);
   }
 
   createAudio() {
-    this.audioCtx = null;
-    try {
-      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (this.audioCtx.state === 'running') this.audioCtx.suspend();
-    } catch (_) {}
+    this.audioCtx = null; this.audioUnlocked = false;
+  }
+  unlockAudio() {
+    if (this.audioUnlocked) return;
+    try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); this.audioCtx.resume(); this.audioUnlocked = true; } catch (_) {}
+  }
+  playTone(freq = 220, duration = .04, type = 'square', gain = .02, slide = 0) {
+    if (!this.audioUnlocked || !this.audioCtx) return;
+    const now = this.audioCtx.currentTime, osc = this.audioCtx.createOscillator(), vol = this.audioCtx.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, now); osc.frequency.linearRampToValueAtTime(Math.max(25, freq + slide), now + duration);
+    vol.gain.setValueAtTime(gain, now); vol.gain.exponentialRampToValueAtTime(.0001, now + duration);
+    osc.connect(vol).connect(this.audioCtx.destination); osc.start(now); osc.stop(now + duration);
   }
 
-  unlockAudio() { if (this.audioCtx?.state === 'suspended') this.audioCtx.resume(); }
-
-  playTone(freq, duration = .05, type = 'sine', volume = .03, slide = 0) {
-    if (!this.audioCtx || this.audioCtx.state !== 'running') return;
-    const now = this.audioCtx.currentTime, osc = this.audioCtx.createOscillator(), gain = this.audioCtx.createGain();
-    osc.type = type; osc.frequency.setValueAtTime(freq, now);
-    if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), now + duration);
-    gain.gain.setValueAtTime(volume, now); gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
-    osc.connect(gain).connect(this.audioCtx.destination); osc.start(now); osc.stop(now + duration);
+  showBanner(text) {
+    this.banner.setText(text).setAlpha(1).setScale(.65);
+    this.tweens.killTweensOf(this.banner);
+    this.tweens.add({ targets: this.banner, scale: 1, duration: 170, ease: 'Back.Out', hold: 720, yoyo: true, onComplete: () => this.banner.setAlpha(0) });
   }
 
   advanceWave() {
@@ -334,14 +317,7 @@ class WreckmarchScene extends Phaser.Scene {
   }
 
   onBulletHit(bullet, enemy) {
-    if (!bullet.active || !enemy.active) return;
-    const vx = bullet.body.velocity.x, vy = bullet.body.velocity.y;
-    bullet.destroy(); enemy.hp -= bullet.damage ?? this.damage;
-    enemy.setTintFill(0xffffff); this.time.delayedCall(55, () => enemy?.active && enemy.clearTint());
-    enemy.body.velocity.x += vx * .05; enemy.body.velocity.y += vy * .05;
-    this.spawnHitFx(enemy.x, enemy.y, vx, vy);
-    this.playTone(78, .025, 'square', .013, 35);
-    if (enemy.hp <= 0) this.killEnemy(enemy);
+    return this.enemyCombatSystem.hitByProjectile(bullet, enemy);
   }
 
   spawnHitFx(x, y, vx, vy) {
@@ -353,17 +329,7 @@ class WreckmarchScene extends Phaser.Scene {
   }
 
   killEnemy(enemy) {
-    const x = enemy.x, y = enemy.y, elite = enemy.elite;
-    enemy.body.enable = false; enemy.setVelocity(0, 0); enemy.anims.stop();
-    this.cameras.main.shake(elite ? 90 : 40, elite ? .0045 : .0015);
-    this.playTone(elite ? 52 : 64, elite ? .11 : .06, 'sawtooth', .025, -18);
-    this.tweens.add({ targets: enemy, angle: enemy.flipX ? -28 : 28, y: y + 12, scaleX: enemy.scaleX * 1.15, scaleY: enemy.scaleY * .55, alpha: .35, duration: 180, onComplete: () => enemy.destroy() });
-    const burst = this.add.circle(x, y, elite ? 28 : 18, 0xd8954f, .55).setDepth(13);
-    this.tweens.add({ targets: burst, scale: 2.4, alpha: 0, duration: 180, onComplete: () => burst.destroy() });
-    for (let i = 0; i < (elite ? 3 : 1); i++) {
-      const s = this.scraps.create(x + Phaser.Math.Between(-12, 12), y + Phaser.Math.Between(-12, 12), 'scrap').setDepth(10);
-      s.setScale(elite ? .95 : .78); s.setCircle(11, 3, 3); s.setVelocity(Phaser.Math.Between(-90, 90), Phaser.Math.Between(-90, 90)); s.setBounce(.4);
-    }
+    return this.enemyCombatSystem.killEnemy(enemy);
   }
 
   collectScrap(hero, scrap) {
@@ -388,59 +354,50 @@ class WreckmarchScene extends Phaser.Scene {
 
     this.hero.setTintFill(0xff6a5d);
     this.tweens.add({ targets: this.hero, alpha: .45, duration: 55, yoyo: true, repeat: 2, onComplete: () => { if (this.hero?.active) { this.hero.clearTint(); this.hero.setAlpha(1); } } });
-    this.cameras.main.shake(70, .0032); this.playTone(110, .055, 'square', .022, -45);
+    this.cameras.main.shake(100, .0045);
+    this.playTone(58, .09, 'sawtooth', .025, -20);
 
     const damageText = this.add.text(this.hero.x, this.hero.y - 72, `-${damage}`, {
-      fontFamily: 'Arial Black, Arial', fontSize: '18px', color: '#ff7768', stroke: '#160e0d', strokeThickness: 4
-    }).setOrigin(.5).setDepth(80);
+      fontFamily: 'Arial Black, Arial', fontSize: '18px', color: '#ff8072', stroke: '#210806', strokeThickness: 4
+    }).setOrigin(.5).setDepth(705);
     this.tweens.add({ targets: damageText, y: damageText.y - 34, alpha: 0, duration: 520, ease: 'Cubic.Out', onComplete: () => damageText.destroy() });
-    if (this.heroHp <= 0) this.endRun('RUNNER DOWN');
-  }
-
-  updateHUD() {
-    const hp = Phaser.Math.Clamp(this.heroHp / this.heroMaxHp, 0, 1);
-    this.heroHpBg.setPosition(this.hero.x, this.hero.y - 64);
-    this.heroHpBar.setPosition(this.hero.x - this.heroHpWidth / 2, this.hero.y - 64);
-    this.heroHpBar.width = this.heroHpWidth * hp;
-    this.heroHpBar.setFillStyle(hp > .55 ? 0x55d66f : hp > .25 ? 0xf0b84b : 0xe9574f, 1);
-    const hpAlpha = hp >= .999 ? .32 : .96;
-    this.heroHpBg.setAlpha(hpAlpha); this.heroHpBar.setAlpha(hpAlpha);
-    this.scrapText.setText(`SCRAP  ${this.scrap}`);
+    if (this.heroHp <= 0) this.endGame();
   }
 
   updateTimer() {
-    const sec = Math.floor(this.runTime), m = String(Math.floor(sec / 60)).padStart(2, '0'), s = String(sec % 60).padStart(2, '0');
+    const total = Math.floor(this.runTime), m = String(Math.floor(total / 60)).padStart(2, '0'), s = String(total % 60).padStart(2, '0');
     this.timerText.setText(`${m}:${s}`);
   }
 
-  showBanner(text) {
-    const t = this.add.text(W / 2, 142, text.toUpperCase(), { fontFamily: 'Arial Black', fontSize: '16px', color: '#f0cc91', backgroundColor: '#111820cc', padding: { x: 16, y: 8 } }).setOrigin(.5).setDepth(850).setAlpha(0).setY(132);
-    this.tweens.add({ targets: t, alpha: 1, y: 142, duration: 180, hold: 800, yoyo: true, onComplete: () => t.destroy() });
+  updateHUD() {
+    const hpRatio = Phaser.Math.Clamp(this.heroHp / this.heroMaxHp, 0, 1);
+    this.hpBar.width = 166 * hpRatio;
+    this.hpBar.fillColor = hpRatio > .55 ? 0x4bd777 : hpRatio > .25 ? 0xe6b54f : 0xe65a4f;
+    this.scrapText.setText(`SCRAP  ${this.scrap}`);
+    this.levelText.setText(`LV ${1 + Math.floor(this.scrap / 9)}`);
+    this.weaponContainer.setPosition(this.hero.x + (this.hero.flipX ? -26 : 22), this.hero.y - 7).setScale(this.hero.flipX ? -1 : 1, 1);
   }
 
-  endRun(reason) {
+  endGame() {
     if (this.gameOver) return;
-    this.gameOver = true; this.physics.pause(); this.spawnEvent.paused = true;
-    this.hero.setVelocity(0, 0); this.cameras.main.shake(260, .008); this.playTone(90, .35, 'sawtooth', .04, -55);
-    this.add.rectangle(W / 2, H / 2, W, H, 0x090d12, .88).setDepth(2000);
-    this.add.text(W / 2, H * .38, reason, { fontFamily: 'Arial Black', fontSize: '32px', color: '#d56a49' }).setOrigin(.5).setDepth(2001);
+    this.gameOver = true; this.physics.pause(); this.spawnEvent.remove(false); this.waveEvent.remove(false);
+    this.hero.setTint(0xff5f52); this.hero.setAlpha(.65);
+    const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x05080b, .8).setDepth(1999);
+    this.add.text(W / 2, H * .36, 'RUN ENDED', { fontFamily: 'Arial Black, Arial', fontSize: '38px', color: '#e75c4c', stroke: '#180606', strokeThickness: 7 }).setOrigin(.5).setDepth(2001);
     this.add.text(W / 2, H * .45, `SURVIVED ${Math.floor(this.runTime)}s  •  SCRAP ${this.scrap}`, { fontFamily: 'Arial', fontSize: '16px', color: '#c0c8d1' }).setOrigin(.5).setDepth(2001);
-    const btn = this.add.rectangle(W / 2, H * .56, 260, 64, 0xb97945).setDepth(2001).setInteractive({ useHandCursor: true });
-    this.add.text(W / 2, H * .56, 'RUN AGAIN', { fontFamily: 'Arial Black', fontSize: '20px', color: '#171d26' }).setOrigin(.5).setDepth(2002);
-    btn.on('pointerdown', () => this.scene.restart());
+    const retry = this.add.text(W / 2, H * .56, 'TAP TO RETRY', { fontFamily: 'Arial Black, Arial', fontSize: '20px', color: '#f0c15e', backgroundColor: '#182027', padding: { x: 24, y: 12 } }).setOrigin(.5).setDepth(2001).setInteractive({ useHandCursor: true });
+    retry.on('pointerdown', () => location.reload());
+    shade.setInteractive();
   }
 }
 
 const config = {
-  type: Phaser.AUTO,
-  parent: 'game',
-  width: W,
-  height: H,
-  backgroundColor: '#171d26',
-  render: { antialias: true, pixelArt: false, roundPixels: false },
-  physics: { default: 'arcade', arcade: { debug: false, gravity: { x: 0, y: 0 } } },
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: W, height: H },
-  input: { activePointers: 3 },
-  scene: [WreckmarchScene]
+  type: Phaser.AUTO, width: W, height: H, parent: 'game', backgroundColor: '#4e3d2f',
+  pixelArt: false, antialias: true,
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  physics: { default: 'arcade', arcade: { debug: false } },
+  scene: WreckmarchScene
 };
-new Phaser.Game(config);
+
+const game = new Phaser.Game(config);
+window.__WM_GAME__ = game;
