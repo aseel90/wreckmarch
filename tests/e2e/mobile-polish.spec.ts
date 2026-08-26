@@ -49,17 +49,18 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
   const observed = await page.evaluate(async () => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
-    const textures: string[] = [];
+    const frameTextureKeys: string[] = [];
     const frameIndexes: number[] = [];
-    for (let index = 0; index < 10; index += 1) {
-      textures.push(String(scene.hero.texture?.key || ''));
-      frameIndexes.push(Number(scene.hero.anims.currentFrame?.index || 0));
+    for (let index = 0; index < 12; index += 1) {
+      const currentFrame = scene.hero.anims.currentFrame;
+      frameTextureKeys.push(String(currentFrame?.textureKey || ''));
+      frameIndexes.push(Number(currentFrame?.index || 0));
       await new Promise(resolve => setTimeout(resolve, 55));
     }
     return {
       animation: scene.hero.anims.currentAnim?.key,
       isPlaying: scene.hero.anims.isPlaying,
-      textures,
+      frameTextureKeys,
       frameIndexes,
       x: scene.hero.x
     };
@@ -68,6 +69,6 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
 
   expect(observed.animation).toBe('character-runner-run');
   expect(observed.isPlaying).toBe(true);
-  expect(new Set(observed.textures.filter(key => key.startsWith('runner-run-'))).size).toBeGreaterThanOrEqual(3);
+  expect(new Set(observed.frameTextureKeys.filter(key => key.startsWith('runner-run-'))).size).toBeGreaterThanOrEqual(3);
   expect(new Set(observed.frameIndexes).size).toBeGreaterThanOrEqual(3);
 });
