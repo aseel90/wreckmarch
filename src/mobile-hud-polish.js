@@ -1,4 +1,18 @@
 /* WRECKMARCH mobile polish — compact landscape HUD rail */
+function gameplayHudObjects(scene) {
+  const refs = [
+    scene.titleText, scene.waveText, scene.timerText, scene.levelText, scene.scrapText,
+    scene.xpBg, scene.xpFill, scene.hint, scene.joyBase, scene.joyKnob, scene.hitboxButton
+  ];
+  const rails = scene.children.list.filter(object => object?.name === 'mobile-hud-polish');
+  return [...new Set([...refs, ...rails].filter(Boolean))];
+}
+
+function applySuppressedState(scene) {
+  if (!scene.__gameplayHudSuppressed) return;
+  gameplayHudObjects(scene).forEach(object => object.setVisible?.(false));
+}
+
 function layout(scene) {
   const W = scene.scale.gameSize.width;
   const H = scene.scale.gameSize.height;
@@ -36,13 +50,104 @@ function layout(scene) {
   scene.hint.setPosition(W / 2, H - 8).setFontSize(9).setDepth(800).setScrollFactor(0);
   scene.refreshProgressHud?.();
   scene.__mobileHudPolish = { width: W, height: H, railHeight: hudH };
+  applySuppressedState(scene);
+}
+
+function installOverlayStateOwnership(scene) {
+  const priorOpen = scene.openUpgradeCards?.bind(scene);
+  const priorClose = scene.closeUpgradeCards?.bind(scene);
+
+  if (priorOpen) {
+    scene.openUpgradeCards = function(...args) {
+      const result = priorOpen(...args);
+      if (this.upgradeOpen) this.setGameplayHudVisible?.(false);
+      return result;
+    };
+  }
+
+  if (priorClose) {
+    scene.closeUpgradeCards = function(...args) {
+      const result = priorClose(...args);
+      if (!this.gameOver) this.setGameplayHudVisible?.(true);
+      return result;
+    };
+  }
+
+  scene.endRun = function(reason) {
+    if (this.gameOver) return;
+    this.gameOver = true;
+    this.physics.pause();
+    if (this.spawnEvent) this.spawnEvent.paused = true;
+    if (this.waveEvent) this.waveEvent.paused = true;
+    this.hero.setVelocity(0, 0);
+    this.cameras.main.shake(260, .008);
+    this.playTone?.(90, .35, 'sawtooth', .04, -55);
+
+    const W = this.scale.width || this.cameras.main.width || 960;
+    const H = this.scale.height || this.cameras.main.height || 540;
+
+    ['UpgradeScene', 'UpgradeSceneV2', 'UpgradeSceneV3', 'UpgradeSceneV4'].forEach(key => {
+      if (this.scene.isActive?.(key)) this.scene.stop(key);
+    });
+    this.upgradeOpen = false;
+    this.input.enabled = true;
+    this.setGameplayHudVisible?.(false);
+
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x090d12, .92)
+      .setDepth(6000).setScrollFactor(0).setName('run-end-overlay');
+    const heading = this.add.text(W / 2, H * .36, reason, {
+      fontFamily: 'Arial Black, Arial', fontSize: '32px', color: '#d56a49', align: 'center'
+    }).setOrigin(.5).setDepth(6001).setScrollFactor(0).setName('run-end-title');
+    const summary = this.add.text(W / 2, H * .45, `SURVIVED ${Math.floor(this.runTime)}s  •  SCRAP ${this.scrap}`, {
+      fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#c0c8d1', align: 'center'
+    }).setOrigin(.5).setDepth(6001).setScrollFactor(0).setName('run-end-summary');
+    const btn = this.add.rectangle(W / 2, H * .60, 260, 64, 0xb97945)
+      .setDepth(6001).setScrollFactor(0).setName('run-end-button').setInteractive({ useHandCursor: true });
+    const buttonLabel = this.add.text(W / 2, H * .60, 'RUN AGAIN', {
+      fontFamily: 'Arial Black, Arial', fontSize: '20px', color: '#171d26'
+    }).setOrigin(.5).setDepth(6002).setScrollFactor(0).setName('run-end-button-label');
+
+    window.__WM_END_RUN_LAYOUT__ = { width: W, height: H, overlay, heading, summary, btn, buttonLabel };
+    document.documentElement.dataset.wreckmarchEndRunLayout = 'runtime-v1';
+    btn.on('pointerdown', () => this.scene.restart());
+  };
 }
 
 export function installMobileHudPolish(scene) {
+  scene.setGameplayHudVisible = function(visible) {
+    const targets = gameplayHudObjects(this);
+    if (!visible) {
+      if (!this.__gameplayHudSuppressed) {
+        this.__gameplayHudVisibilitySnapshot = targets.map(object => [object, object.visible !== false]);
+      }
+      this.__gameplayHudSuppressed = true;
+      targets.forEach(object => object.setVisible?.(false));
+      document.documentElement.dataset.wreckmarchGameplayHud = 'suppressed';
+      return;
+    }
+
+    this.__gameplayHudSuppressed = false;
+    const snapshot = this.__gameplayHudVisibilitySnapshot || [];
+    const restored = new Set();
+    snapshot.forEach(([object, wasVisible]) => {
+      if (!object?.active && object?.active !== undefined) return;
+      object?.setVisible?.(wasVisible);
+      restored.add(object);
+    });
+    gameplayHudObjects(this).forEach(object => {
+      if (!restored.has(object)) object.setVisible?.(true);
+    });
+    this.__gameplayHudVisibilitySnapshot = null;
+    document.documentElement.dataset.wreckmarchGameplayHud = 'visible';
+  };
+
+  installOverlayStateOwnership(scene);
+
   scene.children.list
     .filter(object => object?.name === 'c1-hud-shade' || object?.name === 'c2-hud-shade')
     .forEach(object => object.setVisible(false));
   layout(scene);
+  if (!scene.__gameplayHudSuppressed) document.documentElement.dataset.wreckmarchGameplayHud = 'visible';
 
   const relayout = () => requestAnimationFrame(() => layout(scene));
   window.addEventListener('resize', relayout, { passive: true });
