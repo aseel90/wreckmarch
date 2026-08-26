@@ -35,6 +35,9 @@ export const RUNNER_CHARACTER = Object.freeze({
     idleTexture: 'art-hero-idle-0'
   }),
   animations: Object.freeze({
+    // Keep the scene-level semantic keys stable. CharacterSystem replaces the
+    // frames behind these keys for the selected character, so the legacy
+    // movement shell cannot restart a competing animation every frame.
     idle: Object.freeze({
       key: 'hero-idle',
       frames: Object.freeze(['art-hero-idle-0', 'art-hero-idle-1']),
@@ -42,19 +45,19 @@ export const RUNNER_CHARACTER = Object.freeze({
     }),
     run: Object.freeze({
       key: 'hero-run',
-      frames: Object.freeze(['art-hero-run-0', 'art-hero-run-1', 'art-hero-run-2', 'art-hero-run-3']),
+      frames: Object.freeze(['runner-run-0', 'runner-run-1', 'runner-run-2', 'runner-run-3']),
       frameRate: 12
     })
   }),
   locomotion: Object.freeze({
     movingThresholdSq: .035,
     flipThreshold: .1,
-    leanRadians: .05,
-    leanLerp: .18,
-    settleLerp: .2,
+    leanRadians: .055,
+    leanLerp: .22,
+    settleLerp: .24,
     animationBaseSpeed: 255,
-    minTimeScale: .9,
-    maxTimeScale: 1.35
+    minTimeScale: .72,
+    maxTimeScale: 1.32
   }),
   weapon: Object.freeze({
     socketOffsetX: 15,
