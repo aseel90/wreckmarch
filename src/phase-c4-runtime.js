@@ -1,6 +1,7 @@
 /* WRECKMARCH Phase C.4 — permanent weapon sockets + spring Rig follow + PNG terrain */
 import { C4_GROUND, C4_ROAD } from './c4-assets.js?v=1';
 import { buildTerrainLayer } from './world/terrain-system.js?v=1';
+import { RigSystem } from './rig/rig-system.js';
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const WORLD_W = 2200, WORLD_H = 2200;
@@ -133,10 +134,6 @@ function buildTerrain(s){
   }
 }
 
-function ensureRigState(s){
-  if(s.__c4RigState) return s.__c4RigState;
-  return s.__c4RigState={pos:new Phaser.Math.Vector2(s.cart.x,s.cart.y),vel:new Phaser.Math.Vector2(),dir:new Phaser.Math.Vector2(1,0),goal:new Phaser.Math.Vector2(),travel:0,dustAt:0,lane:1};
-}
 function spawnDust(s,state,speed){
   if(!s.textures.exists('c3-atlas')||speed<55)return;
   const name=speed>165?'rig_dust_big.png':'rig_dust_med.png';
@@ -144,46 +141,25 @@ function spawnDust(s,state,speed){
   fitFrame(p,speed>165?76:56,42);p.setRotation(Math.atan2(state.dir.y,state.dir.x)+Math.PI);
   s.tweens.add({targets:p,alpha:0,scaleX:p.scaleX*1.55,scaleY:p.scaleY*1.55,x:p.x-state.dir.x*24,y:p.y-state.dir.y*16,duration:420,ease:'Quad.Out',onComplete:()=>p.destroy()});
 }
-function rigSpringMove(s,time,delta){
-  if(!s.rigSummoned||!s.cart?.visible) return;
-  const st=ensureRigState(s),dt=Math.min(.035,Math.max(.001,delta/1000));
-  if(s.move?.lengthSq?.()>.06){const d=s.move.clone().normalize();st.dir.lerp(d,1-Math.exp(-4.2*dt));if(st.dir.lengthSq()>.001) st.dir.normalize();}
-  const side=new Phaser.Math.Vector2(-st.dir.y,st.dir.x);
-  st.goal.set(s.hero.x-st.dir.x*176+side.x*44*st.lane,s.hero.y-st.dir.y*145+side.y*44*st.lane+20);
-  const err=st.goal.clone().subtract(st.pos),dist=err.length();
-  const omega=dist>360?4.9:3.8, accel=err.scale(omega*omega).subtract(st.vel.clone().scale(2*omega));
-  const maxA=dist>360?620:430,al=accel.length(); if(al>maxA) accel.scale(maxA/al);
-  st.vel.add(accel.scale(dt));
-  const maxV=dist>430?275:dist>260?225:190,vl=st.vel.length(); if(vl>maxV) st.vel.scale(maxV/vl);
-  if(dist<32) st.vel.scale(Math.pow(.12,dt));
-  const step=st.vel.clone().scale(dt); st.pos.add(step); st.travel+=step.length();
-  s.cart.setPosition(st.pos.x,st.pos.y);
-  const speed=st.vel.length(),motion=Phaser.Math.Clamp(speed/210,0,1);
-  s.cart.rotation=Phaser.Math.Linear(s.cart.rotation,Phaser.Math.Clamp(st.vel.x/240*.024,-.024,.024),1-Math.exp(-4.5*dt));
-  const spin=st.travel/15;s.cartWheels?.forEach((w,i)=>w.setRotation((i<2?-1:1)*spin));
-  const suspension=Math.sin(st.travel*.085)*1.45*motion + Math.sin(time*.008)*.45*motion;
-  if(s.cartBody) s.cartBody.y=(s.__c3RigBaseBodyY??-6)+suspension;
-  if(s.__c3Turret) s.__c3Turret.y=(s.__c3RigBaseTurretY??-32)+suspension*.55;
-  if(speed>60&&time>st.dustAt+(speed>170?110:165)){st.dustAt=time;spawnDust(s,st,speed)}
-  const target=s.weaponSystem.acquireTarget(s.cart.x,s.cart.y,560);if(!target||!s.__c3Turret) return;
-  const wa=Phaser.Math.Angle.Between(s.cart.x+20,s.cart.y-25,target.x,target.y),native=-.79,local=wa-s.cart.rotation-native;
-  s.__c3Turret.rotation=Phaser.Math.Angle.RotateTo(s.__c3Turret.rotation,local,1.85*dt);
-  const aimed=s.__c3Turret.rotation+s.cart.rotation+native;
-  if(Math.abs(Phaser.Math.Angle.Wrap(wa-aimed))>.25||time<s.lastRigShot+s.rigFireDelay) return;
-  s.lastRigShot=time;
-  s.weaponSystem.fireSupportVolley({originX:s.cart.x+20,originY:s.cart.y-25,angle:wa,spreads:s.rigShots>1?[-.055,.055]:[0],muzzleDistance:61,speed:680,damage:s.primaryWeapon.damage*s.rigDamageScale,lifeMs:1100,scale:.66});
+function installRigSystem(s){
+  if(s.rigSystem instanceof RigSystem){
+    s.rigSystem.setDustSpawner((state,speed)=>spawnDust(s,state,speed));
+    return s.rigSystem;
+  }
+  s.rigSystem=new RigSystem(s,{spawnDust:(state,speed)=>spawnDust(s,state,speed)});
+  return s.rigSystem;
 }
 
 function debugVisuals(s){if(!window.__WM_DEBUG__) return;s.__c4Debug=s.add.graphics().setDepth(1000);s.__c4DebugText=s.add.text(12,74,'SOCKET DEBUG',{fontFamily:'monospace',fontSize:'10px',color:'#73ff8d',backgroundColor:'#061109'}).setScrollFactor(0).setDepth(1001);}
 function updateDebug(s){const g=s.__c4Debug;if(!g)return;g.clear();g.lineStyle(2,0x65ff83,.9);g.strokeCircle(s.__c4Grip.x,s.__c4Grip.y,5);g.lineStyle(2,0xffcb58,.9);g.strokeCircle(s.__c4Muzzle.x,s.__c4Muzzle.y,5);g.lineBetween(s.__c4Grip.x,s.__c4Grip.y,s.__c4Muzzle.x,s.__c4Muzzle.y);if(s.__c4RigState&&s.rigSummoned){g.lineStyle(2,0x62d8ff,.8);g.strokeCircle(s.__c4RigState.goal.x,s.__c4RigState.goal.y,11);g.lineBetween(s.cart.x,s.cart.y,s.__c4RigState.goal.x,s.__c4RigState.goal.y)}}
-function installLoop(s){const old=(s.sys?.sceneUpdate||s.update).bind(s);const up=function(t,d){const rig=!!this.rigSummoned;if(rig)this.rigSummoned=false;old(t,d);if(rig)this.rigSummoned=true;this.updateWeaponPose?.();if(!this.gameOver&&!this.upgradeOpen) rigSpringMove(this,t,d);updateDebug(this);};s.update=up;if(s.sys)s.sys.sceneUpdate=up;}
+function installLoop(s){const old=(s.sys?.sceneUpdate||s.update).bind(s);const up=function(t,d){const rig=!!this.rigSummoned;if(rig)this.rigSummoned=false;old(t,d);if(rig)this.rigSummoned=true;this.updateWeaponPose?.();if(!this.gameOver&&!this.upgradeOpen) this.rigSystem?.update(t,d);updateDebug(this);};s.update=up;if(s.sys)s.sys.sceneUpdate=up;}
 function selfTest(s){
   if(new URLSearchParams(location.search).get('autotest')!=='1')return;
   const terrainRoads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false);
   const checks={sockets:!!(s.weaponSocketProfile&&s.__c4Grip&&s.__c4Muzzle),noThirdHand:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB].every(o=>!o||o.visible===false),ground:s.textures.exists('c4-ground')&&!!s.children.list.find(o=>o?.name==='e0-ground-base'),roads:s.textures.exists('c4-road')&&terrainRoads.length>180,noAngularRoadGraphics:!s.children.list.some(o=>o?.type==='Graphics'&&(o.depth??0)<=-2)};
-  const save={r:s.rigSummoned,v:s.cart.visible,x:s.cart.x,y:s.cart.y,state:s.__c4RigState,mx:s.move?.x||0,my:s.move?.y||0};let smooth=false,wheels=false,approach=false;
-  try{s.rigSummoned=true;s.cart.setVisible(true);s.__c4RigState={pos:new Phaser.Math.Vector2(s.hero.x-360,s.hero.y+140),vel:new Phaser.Math.Vector2(),dir:new Phaser.Math.Vector2(1,0),goal:new Phaser.Math.Vector2(),travel:0,dustAt:0,lane:1};s.cart.setPosition(s.__c4RigState.pos.x,s.__c4RigState.pos.y);s.move?.set?.(1,0);const startDist=Phaser.Math.Distance.Between(s.cart.x,s.cart.y,s.hero.x,s.hero.y),steps=[];let lastX=s.cart.x,lastY=s.cart.y;for(let i=0;i<45;i++){rigSpringMove(s,1000+i*16,16);steps.push(Math.hypot(s.cart.x-lastX,s.cart.y-lastY));lastX=s.cart.x;lastY=s.cart.y}const endDist=Phaser.Math.Distance.Between(s.cart.x,s.cart.y,s.hero.x,s.hero.y);approach=endDist<startDist;smooth=Math.max(...steps)<8&&steps[4]<steps[20]+.2;wheels=s.cartWheels?.some(w=>Math.abs(w.rotation)>.05);}finally{s.rigSummoned=save.r;s.cart.setVisible(save.v).setPosition(save.x,save.y);s.__c4RigState=save.state;s.move?.set?.(save.mx,save.my);}
-  checks.rigSpring=smooth&&approach;checks.wheels=wheels;checks.sharedTerrain=s.__terrainSystemState?.owner==='e0';const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_C4_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchC4SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`C4 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase C.4 self-test failed: '+detail);
+  const save={r:s.rigSummoned,v:s.cart.visible,x:s.cart.x,y:s.cart.y,state:s.rigSystem?.state??null,mx:s.move?.x||0,my:s.move?.y||0};let smooth=false,wheels=false,approach=false;
+  try{s.rigSummoned=true;s.cart.setVisible(true);const state=s.rigSystem.createState(s.hero.x-360,s.hero.y+140,1,0,1);s.rigSystem.setState(state);s.cart.setPosition(state.pos.x,state.pos.y);s.move?.set?.(1,0);const startDist=Phaser.Math.Distance.Between(s.cart.x,s.cart.y,s.hero.x,s.hero.y),steps=[];let lastX=s.cart.x,lastY=s.cart.y;for(let i=0;i<45;i++){s.rigSystem.update(1000+i*16,16);steps.push(Math.hypot(s.cart.x-lastX,s.cart.y-lastY));lastX=s.cart.x;lastY=s.cart.y}const endDist=Phaser.Math.Distance.Between(s.cart.x,s.cart.y,s.hero.x,s.hero.y);approach=endDist<startDist;smooth=Math.max(...steps)<8&&steps[4]<steps[20]+.2;wheels=s.cartWheels?.some(w=>Math.abs(w.rotation)>.05);}finally{s.rigSummoned=save.r;s.cart.setVisible(save.v).setPosition(save.x,save.y);save.state?s.rigSystem.setState(save.state):s.rigSystem.resetState();s.move?.set?.(save.mx,save.my);}
+  checks.rigSystem=s.rigSystem instanceof RigSystem;checks.rigSpring=smooth&&approach;checks.wheels=wheels;checks.sharedTerrain=s.__terrainSystemState?.owner==='e0';const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_C4_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchC4SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`C4 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase C.4 self-test failed: '+detail);
 }
 
-export async function applyPhaseC4(){const s=await getScene();await Promise.all([addDataTexture(s,'c4-ground',C4_GROUND),addDataTexture(s,'c4-road',C4_ROAD)]);clearAngularRoads(s);restoreSharedTerrain(s);installWeaponSockets(s);debugVisuals(s);installLoop(s);window.__WM_PHASE_C4__=true;document.documentElement.dataset.wreckmarchPhaseC4='active';window.__WM_LOG__?.('Phase C.4 active: permanent weapon sockets + spring Rig follow + PNG terrain roads');selfTest(s);return true;}
+export async function applyPhaseC4(){const s=await getScene();await Promise.all([addDataTexture(s,'c4-ground',C4_GROUND),addDataTexture(s,'c4-road',C4_ROAD)]);clearAngularRoads(s);restoreSharedTerrain(s);installWeaponSockets(s);installRigSystem(s);debugVisuals(s);installLoop(s);window.__WM_PHASE_C4__=true;document.documentElement.dataset.wreckmarchPhaseC4='active';window.__WM_LOG__?.('Phase C.4 active: permanent weapon sockets + RigSystem spring follow + PNG terrain roads');selfTest(s);return true;}
