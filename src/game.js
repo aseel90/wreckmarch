@@ -54,7 +54,6 @@ class WreckmarchScene extends Phaser.Scene {
   }
 
   createTextures() {
-    // Lightweight fallbacks shown only until the production SVG art pack is applied.
     for (let i = 0; i < 2; i++) {
       this.makeTexture(`hero-idle-${i}`, 92, 104, g => {
         const bob = i ? 1 : 0;
@@ -152,8 +151,6 @@ class WreckmarchScene extends Phaser.Scene {
   }
 
   createArtCompatibility() {
-    // Hidden scaffold used only so the current production art loader can initialize.
-    // It has no collision, no HP, no attack logic, and is never rendered in Phase A.
     this.cart = this.add.container(-5000, -5000).setVisible(false).setActive(false);
     this.cartShadow = this.add.image(0, 0, 'art-compat');
     this.cartBody = this.add.image(0, 0, 'art-compat');
@@ -246,9 +243,9 @@ class WreckmarchScene extends Phaser.Scene {
     this.updateTimer();
     this.updateMovement(time);
     this.updateEnemies();
-    this.updateBullets(delta);
+    this.projectileSystem?.update(delta);
     this.updateScrapMagnet();
-    this.autoFire(time);
+    this.weaponSystem?.update(time);
     this.updateHUD();
   }
 
@@ -284,14 +281,6 @@ class WreckmarchScene extends Phaser.Scene {
     });
   }
 
-  updateBullets(delta) {
-    this.bullets.children.iterate(b => {
-      if (!b?.active) return;
-      b.life -= delta;
-      if (b.life <= 0 || b.x < -30 || b.x > W + 30 || b.y < 80 || b.y > H + 30) b.destroy();
-    });
-  }
-
   updateScrapMagnet() {
     this.scraps.children.iterate(s => {
       if (!s?.active) return;
@@ -305,37 +294,11 @@ class WreckmarchScene extends Phaser.Scene {
     });
   }
 
-  autoFire(time) {
-    if (time < this.lastShot + this.fireDelay) return;
-    const target = this.findNearestEnemy(this.hero.x, this.hero.y, 455);
-    if (!target) return;
-    this.lastShot = time;
-    const ang = Phaser.Math.Angle.Between(this.hero.x, this.hero.y - 6, target.x, target.y);
-    const sx = this.hero.x + Math.cos(ang) * 31, sy = this.hero.y - 8 + Math.sin(ang) * 31;
-    const b = this.bullets.create(sx, sy, 'bullet').setDepth(30).setScale(.86);
-    b.setCircle(7, 3, 3); b.damage = this.damage; b.life = 1000;
-    b.setVelocity(Math.cos(ang) * 690, Math.sin(ang) * 690);
-    const flash = this.add.image(sx, sy, 'flash').setDepth(31).setRotation(ang).setScale(.62);
-    this.tweens.add({ targets: flash, alpha: 0, scale: .12, duration: 70, onComplete: () => flash.destroy() });
-    this.hero.rotation += Phaser.Math.Clamp(Math.cos(ang) * -.035, -.035, .035);
-    this.playTone(180, .04, 'square', .018, -28);
-  }
-
-  findNearestEnemy(x, y, maxD = Infinity) {
-    let best = null, bestSq = maxD * maxD;
-    this.enemies.children.iterate(e => {
-      if (!e?.active) return;
-      const d = Phaser.Math.Distance.Squared(x, y, e.x, e.y);
-      if (d < bestSq) { best = e; bestSq = d; }
-    });
-    return best;
-  }
-
   spawnHitFx(x, y, vx, vy) {
     for (let i = 0; i < 4; i++) {
       const p = this.add.circle(x, y, Phaser.Math.Between(2, 4), i === 0 ? 0x61d9e6 : 0xf1c675, .9).setDepth(30);
       const a = Math.atan2(vy, vx) + Math.PI + Phaser.Math.FloatBetween(-.8, .8), dist = Phaser.Math.Between(16, 36);
-      this.tweens.add({ targets: p, x: x + Math.cos(a) * dist, y: y + Math.sin(a) * dist, alpha: 0, scale: .2, duration: 170, onComplete: () => p.destroy() });
+      this.tweens.add({ targets: p, x: x + Math.cos(a) * dist, y: y - Phaser.Math.Between(1, 8), alpha: 0, scale: .2, duration: 170, onComplete: () => p.destroy() });
     }
   }
 
