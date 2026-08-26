@@ -14,6 +14,8 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 - ✅ `?debug=1` diagnostics.
 - ✅ Debug panel is collapsible on mobile.
 - ✅ Chromium smoke test gates PRs before merge/deploy.
+- ✅ GitHub Actions runs quality, Playwright E2E and production smoke checks in parallel before deployment.
+- ✅ Main-branch CI failures are bridged into an open `[CI] main is failing` Issue with the `ci-failure` label, failed-job results, commit and workflow-run links; the Issue auto-closes after a fully successful `main` run.
 
 ## Phase A — Hero-owned combat core
 
@@ -139,48 +141,53 @@ See `GAMEPLAY_REDESIGN_PLAN.md` for the full approved design and architecture.
 - ✅ Upgrade card sizing adapts to the live landscape viewport.
 - ✅ Browser smoke test gates the responsive visual foundation.
 
----
+## Phase C.3 — Exclusive PNG art + movement/combat polish
 
-## M. Phase C.3 — Exclusive Art + Motion / Combat Polish
+- ✅ Exclusive transparent PNG art replaces the previous temporary weapon/Fortress/card/wreck presentation.
+- ✅ Weapon aim remains accurate while the rendered weapon switches among fixed directional poses.
+- ✅ Fortress follow motion is velocity-based instead of directly teleporting toward the Hero.
+- ✅ Fortress wheels rotate from actual travel distance.
+- ✅ Enemy crowd separation reduces visual stacking while preserving Hero pursuit.
+- ✅ Browser self-tests cover atlas availability, weapon readability, Fortress parts, cards, wrecks, crowd separation, Fortress motion and wheel rotation.
 
-- ✅ Exclusive generated PNG art sheet was cropped into dedicated production pieces for 8 Rivet Gun directions, Rig chassis/turret/wheels/dust, upgrade illustrations, and wreck props.
-- ✅ Cropped pieces are packed into an optimized transparent atlas and cropped at runtime, keeping the generated art intact while remaining GitHub-connector friendly.
-- ✅ Rivet Gun uses exclusive 8-direction perspective art and two visible hands/arms instead of the thin prototype SVG weapon.
-- ✅ Muzzle position remains tied to the active aim pose and supports multi-shot spread.
-- ✅ Fortress visual is rebuilt from separate chassis, turret, wheel and shadow layers.
+## Phase C.3.1 — Real atlas frame registration
+
+- ✅ Atlas crop/display bug fixed by registering real Phaser texture frames against decoded PNG source images.
+- ✅ Production art keeps native/full-size frame dimensions instead of the broken 1×1 placeholder atlas metadata.
+- ✅ Browser self-tests cover full-size weapon/Fortress/card rendering.
+
+## Phase C.4 — Permanent weapon sockets + spring Rig + PNG terrain
+
+- ✅ Weapon sockets are pose-specific and stay attached to the Hero body without rendering a third hand.
 - ✅ Fortress follow motion uses velocity, acceleration, arrival slowdown and limited catch-up speed instead of direct positional lerp.
-- ✅ Fortress wheels rotate from actual travel speed; chassis has subtle speed-dependent suspension movement.
-- ✅ Fortress turret turns with angular lag and only fires after it aligns with the target.
-- ✅ Speed-dependent dust trails make vehicle movement readable.
-- ✅ Enemy population cap plus local separation/swarm bias reduces unreadable stacking.
-- ✅ Wreck props use exclusive damaged-vehicle art at more believable world scale.
-- ✅ UpgradeScene V3 uses large exclusive illustrated art for current Hero / Utility / Fortress cards.
-- ✅ Camera is pulled back slightly and the top HUD is thinner.
-- ✅ Browser gate decodes the atlas and tests directional weapon dimensions, Rig parts, card/wreck art, crowd-control installation, Rig travel and real wheel rotation before merge.
+- ✅ Fortress wheels remain synchronized with actual movement.
+- ✅ Terrain roads use PNG surface assets and preserve a clear draw order below gameplay actors.
+- ✅ Browser self-tests cover weapon sockets, third-hand absence, ground/road rendering, Rig spring motion and wheels.
 
-Validation target: PR Chromium smoke test must pass all Phase C.3 checks before merge.
+## Phase C.5 — Aim-facing body + HD cards + visible road network
 
----
+- ✅ Hero body orientation follows current aim direction without changing gameplay movement direction.
+- ✅ Upgrade card art is rendered from 2× vector sources for sharper landscape presentation.
+- ✅ Road network coverage is expanded so asphalt is visible during normal play instead of only at isolated positions.
+- ✅ Browser self-tests cover body aim, third-hand absence, HD card art and road/ground visibility.
 
-## N. Phase C.3.1 — Atlas Frame / Visual Scale Hotfix
+## Phase D.1 — Runner + mechanical arm + premium cards + real vehicle scale
 
-- ✅ Root visual bug identified: C3 used `setCrop()` on the full atlas and then `setDisplaySize()`, so Phaser scaled against the whole atlas frame; weapon, Rig pieces and upgrade illustrations therefore rendered as tiny/flat fragments.
-- ✅ Exclusive atlas regions are now registered as real named Phaser texture frames before use.
-- ✅ Rivet Gun switches between real 8-direction named frames and renders at intended readable size.
-- ✅ Rig chassis, turret, shadow and four perspective wheel frames render at their intended scale; wheel motion from Phase C.3 is preserved.
-- ✅ Upgrade illustrations use real framed art instead of a tiny crop inside the full atlas.
-- ✅ Cache version for Phase C.3 was bumped so Safari/Chrome cannot silently reuse the broken cached module.
-- ✅ Chromium browser test now checks actual rendered frame names and display dimensions for the gun, Rig, wheels and a card-art probe, not just object existence.
-- ✅ The strengthened rendered-size Chromium test passed before merge.
+- ✅ Runner gains animated leg motion instead of a static body.
+- ✅ Mechanical weapon arm is integrated with the body and replaces separate floating hand sprites.
+- ✅ Upgrade cards use premium PNG illustrations.
+- ✅ Road/asphalt presentation is reinforced for visibility across the large world.
+- ✅ Wrecked vehicles use a more believable scale relative to the Runner.
+- ✅ Browser self-tests cover animated legs, mechanical arm integration, card quality, road visibility and vehicle scale.
 
----
+## Phase E.0 — Fast terrain bootstrap
 
-## O. Phase C.4 — Permanent weapon sockets + spring Rig + PNG terrain
+- ✅ Fast terrain is installed before the heavier historical visual stack.
+- ✅ Terrain reports readiness in debug diagnostics and exposes a DOM readiness flag.
 
-- ✅ Removed the old generated C3 arm/hand overlays from normal gameplay so the Hero cannot visually gain a third hand.
-- ✅ Added a permanent 8-direction weapon socket contract: each weapon pose owns its frame, grip origin, Hero socket, muzzle point, size and layer depth. Future weapons must register the same profile instead of rotating free arm sprites.
-- ✅ Replaced direct Rig chasing with a critically-damped spring formation target behind the Hero; acceleration, catch-up and arrival slowdown are smoothed.
-- ✅ Rig wheel rotation is tied to travelled distance; suspension, turret lag and dust scale from actual vehicle motion.
-- ✅ Replaced old polygon/angular road Graphics with repeatable PNG wasteland ground plus PNG road strips placed along smooth spline curves.
-- ✅ Debug mode shows weapon grip socket, muzzle socket and Rig follow target.
-- ✅ Chromium browser validation passed: sockets, no-third-hand state, PNG ground, curved roads, removal of angular road Graphics, spring Rig motion and wheel rotation.
+## Phase E.1 — Persistent asphalt ownership cleanup
+
+- ✅ Final asphalt renderer owns the visible road layer after all historical terrain passes.
+- ✅ Legacy road cover/repaint paths are removed from the final visible layer.
+- ✅ Road ordering is deterministic: ground below asphalt, gameplay actors above it.
+- ✅ Browser self-tests verify road segments, spawn-area asphalt, no legacy cover, draw ordering and 12-second persistence.
