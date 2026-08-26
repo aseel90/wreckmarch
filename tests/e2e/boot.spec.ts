@@ -56,7 +56,7 @@ test('boots the current game, routes movement through InputManager, and keeps as
     characterReady: true,
     characterAnimation: 'character-runner-idle',
     scrapRatReady: true,
-    scrapRatDataset: 'production'
+    scrapRatDataset: 'production-master'
   });
 
   const terrainOwnership = await page.evaluate(() => {
@@ -94,22 +94,34 @@ test('boots the current game, routes movement through InputManager, and keeps as
       texture: enemy.texture?.key,
       production: enemy.__scrapRatVisual,
       version: enemy.__scrapRatVisualVersion,
+      staticMaster: enemy.__scrapRatStaticMaster,
+      sceneStaticMaster: scene.__scrapRatStaticMaster,
+      legacyCombatVisuals: Boolean(scene.__scrapRatCombatVisualsInstalled),
+      dataset: document.documentElement.dataset.wreckmarchScrapRatVisual,
       animation: enemy.anims?.currentAnim?.key,
       runFrames: scene.anims.get('scrap-rat-run')?.frames?.length || 0,
       hitRadius: enemy.hitRadius,
       scaleX: Math.abs(enemy.scaleX || 0),
-      scaleY: Math.abs(enemy.scaleY || 0)
+      scaleY: Math.abs(enemy.scaleY || 0),
+      alpha: enemy.alpha,
+      isTinted: Boolean(enemy.isTinted)
     } : null;
   });
   expect(scrapRatVisual).not.toBeNull();
   expect(scrapRatVisual).toMatchObject({
     production: true,
-    version: 'production-v3',
+    version: 'production-v4',
+    staticMaster: true,
+    sceneStaticMaster: true,
+    legacyCombatVisuals: false,
+    dataset: 'production-master',
     animation: 'scrap-rat-run',
     runFrames: 4,
-    hitRadius: 24
+    hitRadius: 24,
+    alpha: 1,
+    isTinted: false
   });
-  expect(scrapRatVisual!.texture).toMatch(/^scrap-rat-run-stable-[0-3]$/);
+  expect(scrapRatVisual!.texture).toMatch(/^scrap-rat-run-master-[0-3]$/);
   expect(scrapRatVisual!.scaleX).toBeGreaterThan(.65);
   expect(Math.abs(scrapRatVisual!.scaleX - scrapRatVisual!.scaleY)).toBeLessThan(.001);
 
@@ -117,23 +129,26 @@ test('boots the current game, routes movement through InputManager, and keeps as
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     const enemy = scene.enemies.getChildren().find((object: any) => object?.active) as any;
-    const observed: string[] = [];
+    const observed: Array<{ key: string; alpha: number; tinted: boolean }> = [];
     for (let i = 0; i < 8; i += 1) {
-      observed.push(String(enemy?.texture?.key || ''));
+      observed.push({
+        key: String(enemy?.texture?.key || ''),
+        alpha: Number(enemy?.alpha ?? 0),
+        tinted: Boolean(enemy?.isTinted)
+      });
       await new Promise(resolve => setTimeout(resolve, 70));
     }
     return {
       observed,
       animation: enemy?.anims?.currentAnim?.key,
-      alpha: enemy?.alpha,
       scaleX: Math.abs(enemy?.scaleX || 0),
       scaleY: Math.abs(enemy?.scaleY || 0)
     };
   });
-  expect(new Set(groundedRunCycle.observed).size).toBeGreaterThanOrEqual(3);
-  expect(groundedRunCycle.observed.every(key => /^scrap-rat-run-stable-[0-3]$/.test(key))).toBe(true);
+  expect(new Set(groundedRunCycle.observed.map(sample => sample.key)).size).toBeGreaterThanOrEqual(3);
+  expect(groundedRunCycle.observed.every(sample => /^scrap-rat-run-master-[0-3]$/.test(sample.key))).toBe(true);
+  expect(groundedRunCycle.observed.every(sample => sample.alpha === 1 && sample.tinted === false)).toBe(true);
   expect(groundedRunCycle.animation).toBe('scrap-rat-run');
-  expect(groundedRunCycle.alpha).toBe(1);
   expect(Math.abs(groundedRunCycle.scaleX - groundedRunCycle.scaleY)).toBeLessThan(.001);
 
   const beforeX = await page.evaluate(() => {
