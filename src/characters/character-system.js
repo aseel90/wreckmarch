@@ -76,8 +76,10 @@ export class CharacterSystem {
     const key = moving ? definition.animations.run.key : definition.animations.idle.key;
     if (hero.anims.currentAnim?.key !== key) hero.play(key, true);
     if (moving) {
+      const movePower = Phaser.Math.Clamp(scene.move.length(), 0, 1);
+      const speedRatio = (scene.heroSpeed || definition.stats.moveSpeed) / motion.animationBaseSpeed;
       hero.anims.timeScale = Phaser.Math.Clamp(
-        (scene.heroSpeed || definition.stats.moveSpeed) / motion.animationBaseSpeed,
+        speedRatio * Phaser.Math.Linear(motion.minTimeScale, motion.maxTimeScale, movePower),
         motion.minTimeScale,
         motion.maxTimeScale
       );
