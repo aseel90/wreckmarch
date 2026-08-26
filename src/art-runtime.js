@@ -1,4 +1,4 @@
-import { installScrapRatVisuals } from './enemies/scrap-rat-visuals.js?v=3';
+import { installScrapRatVisuals } from './enemies/scrap-rat-visuals.js?v=4';
 
 // WRECKMARCH production art runtime v2 — detailed SVG assets rendered as Phaser textures.
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
