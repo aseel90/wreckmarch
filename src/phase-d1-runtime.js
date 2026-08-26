@@ -31,7 +31,7 @@ function installRunnerAndMechanicalArm(s){
     this.visualAimAngle=a;this.weaponV3Recoil*=.7;
     this.__c4Grip?.copy?.(this.__d1Socket);this.__c4Muzzle?.copy?.(this.__d1Muzzle);
   };
-  s.getWeaponMuzzle=function(spread=0){const a=(this.__d1Pose>=0?this.__d1Pose*Math.PI/4:this.weaponAim)+spread,reach=this.characterSystem.definition.weapon.muzzleReachStraight;return new Phaser.Math.Vector2(this.__d1Socket.x+Math.cos(a)*reach,this.__d1Socket.y+Math.sin(a)*reach)};
+  s.weaponSystem.setMuzzleResolver(spread=>{const a=(s.__d1Pose>=0?s.__d1Pose*Math.PI/4:s.weaponAim)+spread,reach=s.characterSystem.definition.weapon.muzzleReachStraight;return new Phaser.Math.Vector2(s.__d1Socket.x+Math.cos(a)*reach,s.__d1Socket.y+Math.sin(a)*reach)});
   const oldMove=s.updateMovement?.bind(s);
   if(oldMove)s.updateMovement=function(time){
     oldMove(time);
