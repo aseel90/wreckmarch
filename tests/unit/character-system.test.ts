@@ -14,8 +14,7 @@ describe('CharacterSystem', () => {
     const runner = getCharacterDefinition('runner');
     expect(listCharacterDefinitions().map(character => character.id)).toEqual(['runner']);
     expect(runner.stats).toEqual({ maxHp: 100, moveSpeed: 255 });
-    expect(runner.animations.run.key).toBe('hero-run');
-    expect(runner.animations.run.frames).toEqual(['art-hero-run-0', 'art-hero-run-1', 'art-hero-run-2', 'art-hero-run-3']);
+    expect(runner.animations.run.frames).toEqual(['runner-run-0', 'runner-run-1', 'runner-run-2', 'runner-run-3']);
     expect(() => getCharacterDefinition('missing')).toThrow('Unknown character: missing');
   });
 

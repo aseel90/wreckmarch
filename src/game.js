@@ -261,10 +261,14 @@ class WreckmarchScene extends Phaser.Scene {
       vx += this.heroKnockback.x * strength; vy += this.heroKnockback.y * strength;
     }
     this.hero.setVelocity(vx, vy);
-    this.hero.rotation = Phaser.Math.Linear(this.hero.rotation, moving ? this.move.x * .09 : 0, .16);
-    this.hero.setFlipX(this.move.x < -.12);
-    if (moving && this.hero.anims.currentAnim?.key !== 'hero-run') this.hero.play('hero-run', true);
-    if (!moving && this.hero.anims.currentAnim?.key !== 'hero-idle') this.hero.play('hero-idle', true);
+    // Bootstrap owns fallback locomotion only until CharacterSystem installs.
+    // Production character visuals then have exclusive animation/pose ownership.
+    if (!this.__characterSystemReady) {
+      this.hero.rotation = Phaser.Math.Linear(this.hero.rotation, moving ? this.move.x * .09 : 0, .16);
+      this.hero.setFlipX(this.move.x < -.12);
+      if (moving && this.hero.anims.currentAnim?.key !== 'hero-run') this.hero.play('hero-run', true);
+      if (!moving && this.hero.anims.currentAnim?.key !== 'hero-idle') this.hero.play('hero-idle', true);
+    }
     this.heroShadow.setPosition(this.hero.x, this.hero.y + 36).setScale(moving ? 1.08 : 1, moving ? .85 : 1);
     if (moving && time > this.lastDustAt + 115) { this.lastDustAt = time; this.spawnDust(this.hero.x - this.move.x * 22, this.hero.y + 36, .65); }
   }
@@ -301,7 +305,7 @@ class WreckmarchScene extends Phaser.Scene {
     for (let i = 0; i < 4; i++) {
       const p = this.add.circle(x, y, Phaser.Math.Between(2, 4), i === 0 ? 0x61d9e6 : 0xf1c675, .9).setDepth(30);
       const a = Math.atan2(vy, vx) + Math.PI + Phaser.Math.FloatBetween(-.8, .8), dist = Phaser.Math.Between(16, 36);
-      this.tweens.add({ targets: p, x: x + Math.cos(a) * dist, y: y + Math.sin(a) * dist, alpha: 0, scale: .2, duration: 170, onComplete: () => p.destroy() });
+      this.tweens.add({ targets: p, x: x + Math.cos(a) * dist, y: y - Phaser.Math.Between(1, 8), scale: 1.7, alpha: 0, duration: 300, onComplete: () => p.destroy() });
     }
   }
 

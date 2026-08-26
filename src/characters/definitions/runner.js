@@ -35,16 +35,13 @@ export const RUNNER_CHARACTER = Object.freeze({
     idleTexture: 'art-hero-idle-0'
   }),
   animations: Object.freeze({
-    // Keep the scene-level semantic keys stable. CharacterSystem replaces the
-    // frames behind these keys for the selected character, so the legacy
-    // movement shell cannot restart a competing animation every frame.
     idle: Object.freeze({
-      key: 'hero-idle',
+      key: 'character-runner-idle',
       frames: Object.freeze(['art-hero-idle-0', 'art-hero-idle-1']),
       frameRate: 2
     }),
     run: Object.freeze({
-      key: 'hero-run',
+      key: 'character-runner-run',
       frames: Object.freeze(['runner-run-0', 'runner-run-1', 'runner-run-2', 'runner-run-3']),
       frameRate: 12
     })
