@@ -1,6 +1,7 @@
 /* WRECKMARCH — live enemy foundation installer */
 import { EnemyFactory } from './enemy-factory.js?v=1';
 import { SpawnSystem } from './spawn-system.js?v=1';
+import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=1';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -21,14 +22,22 @@ export async function installEnemyFoundation() {
 
   scene.enemyFactory = new EnemyFactory(scene);
   scene.spawnSystem = new SpawnSystem(scene, { factory: scene.enemyFactory });
+  scene.enemyBehaviorSystem = new EnemyBehaviorSystem(scene);
+
   scene.__legacySpawnEnemy = scene.spawnEnemy.bind(scene);
   scene.spawnEnemy = function(elite = false) {
     return this.spawnSystem.spawn('scrap-rat', { elite });
   };
 
+  scene.__legacyUpdateEnemies = scene.updateEnemies.bind(scene);
+  scene.updateEnemies = function() {
+    return this.enemyBehaviorSystem.updateAll(this.enemies, this.hero);
+  };
+
   scene.__enemyFoundationReady = true;
+  scene.__enemyBehaviorFoundationReady = true;
   window.__WM_ENEMY_FOUNDATION__ = true;
   document.documentElement.dataset.wreckmarchEnemyFoundation = 'active';
-  window.__WM_LOG__?.('Enemy Foundation active: Scrap Rat -> Registry -> Factory -> SpawnSystem');
+  window.__WM_LOG__?.('Enemy Foundation active: Registry -> Factory -> SpawnSystem -> BehaviorSystem');
   return scene;
 }
