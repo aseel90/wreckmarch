@@ -212,44 +212,41 @@ jobs:
           check_log 'Phase C.5 active: aim-facing hero body + 2x vector upgrade art + visible road network' 'Phase C.5 body/card/terrain runtime was not applied'
           check_log 'C5 browser self-test PASSED: bodyAim=ok noThirdHand=ok cardArtVectorHD=ok roadNetwork=ok roadsVisible=ok groundVisible=ok' 'Phase C.5 browser visual/behavior self-test did not pass'
           check_log 'data-wreckmarch-c5-self-test="passed"' 'Phase C.5 DOM self-test flag missing'
-          check_log 'Phase D.1 active: animated Runner + integrated mechanical arm + premium PNG card art + visible asphalt + real vehicle scale' 'Phase D.1 world/player rebuild was not applied'
-          check_log 'D1 browser self-test PASSED: animatedLegs=ok mechanicalArm=ok noHandSprites=ok premiumCards=ok roadsVisible=ok vehicleScale=ok' 'Phase D.1 browser visual/behavior self-test did not pass'
+          check_log 'Phase D.1 active: animated Runner + integrated mechanical arm + HD vector rarity cards + visible asphalt + real vehicle scale' 'Phase D.1 world/player rebuild was not applied'
+          check_log 'D1 browser self-test PASSED: animatedLegs=ok mechanicalArm=ok noHandSprites=ok premiumCards=ok rarityCards=ok roadsVisible=ok vehicleScale=ok characterSystem=ok' 'Phase D.1 browser visual/behavior self-test did not pass'
           check_log 'data-wreckmarch-d1-self-test="passed"' 'Phase D.1 DOM self-test flag missing'
           check_log 'data-wreckmarch-phase-e0="active"' 'Phase E.0 fast terrain bootstrap flag missing'
           check_log 'FAST TERRAIN ready in' 'Phase E.0 fast terrain did not report readiness'
           check_log 'Phase E.1b active: persistent asphalt layer' 'Phase E.1 final asphalt layer was not applied'
-          check_log 'E1 browser self-test PASSED: roadSegments=ok roadAtSpawn=ok noLegacyCover=ok groundBelowRoad=ok roadAboveGround=ok' 'Phase E.1 browser road test did not pass'
-          check_log 'data-wreckmarch-e1-self-test="passed"' 'Phase E.1 browser road test DOM flag missing'
-          check_log 'E1 persistence test PASSED at 12s' 'Phase E.1 asphalt did not remain valid for 12 seconds'
-          check_log 'data-wreckmarch-e1-persistence="passed"' 'Phase E.1 persistence DOM flag missing'
+          check_log 'data-wreckmarch-phase-e1="active"' 'Phase E.1 final asphalt layer DOM flag missing'
+          check_log 'data-wreckmarch-e1-self-test="passed"' 'Phase E.1 road persistence self-test did not pass'
+          check_log 'E1 persistence test PASSED at 12s' 'Phase E.1 persistence runtime test did not reach pass condition'
+          check_log 'data-wreckmarch-enemy-foundation="ready"' 'enemy foundation DOM flag missing'
+          check_log 'data-wreckmarch-enemy-behavior="ready"' 'enemy behavior DOM flag missing'
+          check_log 'data-wreckmarch-enemy-combat="ready"' 'enemy combat DOM flag missing'
+          check_log 'data-wreckmarch-combat-system="ready"' 'combat system DOM flag missing'
+          check_log 'data-wreckmarch-weapon-system="ready"' 'weapon system DOM flag missing'
+          check_log 'data-wreckmarch-projectile-system="ready"' 'projectile system DOM flag missing'
+          check_log 'Enemy behavior system ready: active=chase' 'enemy behavior system runtime log missing'
+          check_log 'Enemy combat system ready: projectile damage/death/drop ownership installed' 'enemy combat system runtime log missing'
+          check_log 'Combat system ready: overlap ownership installed' 'combat system runtime log missing'
+          check_log 'Weapon system ready: target acquisition + hero/rig firing ownership installed' 'weapon system runtime log missing'
+          check_log 'Projectile system ready: projectile construction + swept collision + lifecycle ownership installed' 'projectile system runtime log missing'
+          check_log 'data-wreckmarch-input-manager="ready"' 'input manager DOM flag missing'
+          check_log 'Input manager ready: touch + keyboard + gamepad providers merged' 'input manager runtime log missing'
+          check_log 'data-wreckmarch-rig-system="ready"' 'RigSystem DOM flag missing'
+          check_log 'Rig system ready: follow + wheel + turret + support-fire ownership installed' 'RigSystem runtime log missing'
 
-          if grep -Eq '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
-            echo "Browser test failed: boot loader reported an error"
+          if grep -qE 'boot-error|FAILED|TypeError|ReferenceError|SyntaxError' /tmp/wm-dom.html; then
+            echo "Browser test failed: runtime error marker detected"
             cat /tmp/wm-chrome.log
             cat /tmp/wm-dom.html
             exit 1
           fi
 
-          echo "Wreckmarch E1c production-baseline browser test passed"
-
-      - name: Comment browser diagnostics
-        if: failure() && github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import html, re
-          dom = Path('/tmp/wm-dom.html').read_text(errors='ignore') if Path('/tmp/wm-dom.html').exists() else ''
-          chrome = Path('/tmp/wm-chrome.log').read_text(errors='ignore') if Path('/tmp/wm-chrome.log').exists() else ''
-          m = re.search(r'<pre id="debug-panel"[^>]*>(.*?)</pre>', dom, re.S)
-          debug = html.unescape(re.sub('<[^>]+>', '', m.group(1))).strip() if m else 'debug panel not found'
-          body = '### Browser smoke diagnostic\n\n```text\n' + debug[-5000:] + '\n```\n\nChrome tail:\n```text\n' + chrome[-2500:] + '\n```\n'
-          Path('/tmp/wm-diagnostic.md').write_text(body)
-          PY
-          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-diagnostic.md
-      - name: Preserve browser smoke diagnostics
+          test -s /tmp/wm-dom.html
+          cp /tmp/wm-dom.html /tmp/wm-smoke-dom.html
+      - name: Preserve smoke diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -257,170 +254,74 @@ jobs:
           path: |
             /tmp/wm-smoke.log
             /tmp/wm-http.log
-            /tmp/wm-dom.html
             /tmp/wm-chrome.log
+            /tmp/wm-smoke-dom.html
           if-no-files-found: ignore
           retention-days: 2
 
   ci_bridge:
     name: CI failure bridge
-    if: ${{ always() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     needs: [quality, e2e, smoke]
+    if: always() && github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     permissions:
       contents: read
       issues: write
-    env:
-      GH_TOKEN: ${{ github.token }}
-      QUALITY_RESULT: ${{ needs.quality.result }}
-      E2E_RESULT: ${{ needs.e2e.result }}
-      SMOKE_RESULT: ${{ needs.smoke.result }}
     steps:
-      - name: Download CI diagnostics
-        if: always()
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          pattern: ci-*
-          path: /tmp/wm-ci-logs
-          merge-multiple: true
-      - name: Create or resolve CI failure issue
+      - name: Bridge main CI state to issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          QUALITY: ${{ needs.quality.result }}
+          E2E: ${{ needs.e2e.result }}
+          SMOKE: ${{ needs.smoke.result }}
         shell: bash
         run: |
           set -euo pipefail
-
           TITLE='[CI] main is failing'
-          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          COMMIT_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
+          ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[CI] main is failing") | .number' | head -n1)"
 
-          gh label create ci-failure \
-            --repo "$GITHUB_REPOSITORY" \
-            --color B60205 \
-            --description 'Automated Wreckmarch CI failure tracker' \
-            --force >/dev/null
-
-          ISSUE_NUMBER="$(gh issue list \
-            --repo "$GITHUB_REPOSITORY" \
-            --state open \
-            --label ci-failure \
-            --json number,title \
-            --jq ".[] | select(.title == \"$TITLE\") | .number" \
-            | head -n 1)"
-
-          FAILED=()
-          [ "$QUALITY_RESULT" = 'failure' ] && FAILED+=('quality')
-          [ "$E2E_RESULT" = 'failure' ] && FAILED+=('e2e')
-          [ "$SMOKE_RESULT" = 'failure' ] && FAILED+=('smoke')
-
-          if [ ${#FAILED[@]} -gt 0 ]; then
-            FAILED_LIST="$(IFS=', '; echo "${FAILED[*]}")"
-            python3 - <<'PY'
-          from pathlib import Path
-          import html, re
-
-          root = Path('/tmp/wm-ci-logs')
-          sections = []
-
-          def tail(title, filename, limit=3500):
-              p = root / filename
-              if not p.exists():
-                  return
-              text = p.read_text(errors='ignore').strip()
-              if text:
-                  sections.append(f'### {title}\n```text\n{text[-limit:]}\n```')
-
-          tail('Quality: typecheck / unit / build', 'wm-quality-check.log', 4500)
-          tail('Quality: dependency install', 'wm-quality-install.log', 2200)
-          tail('Playwright E2E', 'wm-e2e.log', 4500)
-          tail('Playwright browser install', 'wm-e2e-playwright-install.log', 2200)
-          tail('Playwright dependency install', 'wm-e2e-install.log', 1800)
-
-          dom_path = root / 'wm-dom.html'
-          if dom_path.exists():
-              dom = dom_path.read_text(errors='ignore')
-              m = re.search(r'<pre id="debug-panel"[^>]*>(.*?)</pre>', dom, re.S)
-              if m:
-                  debug = html.unescape(re.sub('<[^>]+>', '', m.group(1))).strip()
-                  if debug:
-                      sections.append(f'### Smoke: game debug panel\n```text\n{debug[-4500:]}\n```')
-          tail('Smoke: browser test output', 'wm-smoke.log', 4500)
-          tail('Smoke: Chrome stderr', 'wm-chrome.log', 3000)
-          tail('Smoke: HTTP server', 'wm-http.log', 1500)
-
-          Path('/tmp/wm-ci-diagnostics.md').write_text('\n\n'.join(sections))
-          PY
-            cat > /tmp/wm-ci-failure.md <<EOF
-          ## Wreckmarch CI failure
-
-          **Failed jobs:** ${FAILED_LIST}
-
-          | Job | Result |
-          | --- | --- |
-          | quality | ${QUALITY_RESULT} |
-          | e2e | ${E2E_RESULT} |
-          | smoke | ${SMOKE_RESULT} |
-
-          - Commit: [\`${GITHUB_SHA:0:7}\`](${COMMIT_URL})
-          - Workflow run: [open diagnostics](${RUN_URL})
-          - Trigger: \`${GITHUB_EVENT_NAME}\`
-
-          This issue is managed automatically by GitHub Actions. A later successful run on \`main\` will close it.
-          EOF
-
-            if [ -s /tmp/wm-ci-diagnostics.md ]; then
-              printf '\n\n## Diagnostic excerpts\n\n' >> /tmp/wm-ci-failure.md
-              cat /tmp/wm-ci-diagnostics.md >> /tmp/wm-ci-failure.md
-            fi
-
+          if [ "$QUALITY" = 'success' ] && [ "$E2E" = 'success' ] && [ "$SMOKE" = 'success' ]; then
             if [ -n "$ISSUE_NUMBER" ]; then
-              gh issue comment "$ISSUE_NUMBER" \
-                --repo "$GITHUB_REPOSITORY" \
-                --body-file /tmp/wm-ci-failure.md
-            else
-              gh issue create \
-                --repo "$GITHUB_REPOSITORY" \
-                --title "$TITLE" \
-                --label ci-failure \
-                --body-file /tmp/wm-ci-failure.md
+              gh issue close "$ISSUE_NUMBER" --repo "$REPO" --comment "CI recovered on \`$SHA\`: quality=$QUALITY, e2e=$E2E, smoke=$SMOKE."
             fi
             exit 0
           fi
 
-          if [ "$QUALITY_RESULT" = 'success' ] && [ "$E2E_RESULT" = 'success' ] && [ "$SMOKE_RESULT" = 'success' ]; then
-            if [ -n "$ISSUE_NUMBER" ]; then
-              gh issue close "$ISSUE_NUMBER" \
-                --repo "$GITHUB_REPOSITORY" \
-                --comment "CI recovered on commit ${GITHUB_SHA:0:7}. All quality, e2e and smoke checks passed. Run: ${RUN_URL}"
-            fi
+          RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+          BODY="CI failed on \`$SHA\`.\n\n- quality: **$QUALITY**\n- e2e: **$E2E**\n- smoke: **$SMOKE**\n\nRun: $RUN_URL"
+          if [ -n "$ISSUE_NUMBER" ]; then
+            gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$BODY"
+          else
+            gh issue create --repo "$REPO" --title "$TITLE" --body "$BODY" --label ci-failure
           fi
 
   deploy:
     name: Deploy GitHub Pages
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [quality, e2e, smoke]
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Configure Pages
+      - name: Setup Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Vendor Phaser locally
-        shell: bash
+      - name: Prepare artifact
         run: |
-          mkdir -p vendor
-          curl -fsSL --retry 3 --connect-timeout 10 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js \
-            || curl -fsSL --retry 3 --connect-timeout 10 https://unpkg.com/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js
-          test -s vendor/phaser.min.js
-      - name: Upload site
+          mkdir -p _site
+          cp index.html style.css _site/
+          cp -R src _site/src
+          cp -R assets _site/assets
+          mkdir -p _site/vendor
+          if [ -f vendor/phaser.min.js ]; then cp vendor/phaser.min.js _site/vendor/phaser.min.js; else curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o _site/vendor/phaser.min.js; fi
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
-      - name: Deploy
+          path: _site
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
