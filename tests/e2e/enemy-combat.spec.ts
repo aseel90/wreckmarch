@@ -28,9 +28,16 @@ test('routes the live Arcade bullet overlap through EnemyCombatSystem', async ({
     const combat = scene.enemyCombatSystem;
     const baseHit = combat.hitByProjectile.bind(combat);
     scene.__combatTestLastHit = null;
+    scene.__combatTestKill = null;
     combat.hitByProjectile = function(bullet: any, target: any) {
       const result = baseHit(bullet, target);
       scene.__combatTestLastHit = result;
+      if (result?.killed) {
+        scene.__combatTestKill = {
+          bodyEnabled: target.body?.enable,
+          drops: scene.scraps.getChildren().filter((object: any) => object?.active).length
+        };
+      }
       return result;
     };
 
@@ -114,10 +121,8 @@ test('routes the live Arcade bullet overlap through EnemyCombatSystem', async ({
   const lethal = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
-    const dying = scene.enemies.getChildren().find((object: any) => object?.active && object.hp <= 0);
     return {
-      bodyEnabled: dying?.body?.enable,
-      drops: scene.scraps.getChildren().filter((object: any) => object?.active).length,
+      ...scene.__combatTestKill,
       result: scene.__combatTestLastHit
     };
   });
