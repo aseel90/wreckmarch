@@ -66,6 +66,16 @@ jobs:
           Path('/tmp/wm-quality-diagnostic.md').write_text('## Quality diagnostic\n\n' + '\n\n'.join(sections))
           PY
           gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-quality-diagnostic.md
+      - name: Preserve quality diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-quality
+          path: |
+            /tmp/wm-quality-install.log
+            /tmp/wm-quality-check.log
+          if-no-files-found: ignore
+          retention-days: 2
 
   e2e:
     name: Playwright browser tests
@@ -120,6 +130,17 @@ jobs:
           Path('/tmp/wm-e2e-diagnostic.md').write_text('## Playwright diagnostic\n\n' + '\n\n'.join(sections))
           PY
           gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-e2e-diagnostic.md
+      - name: Preserve Playwright diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-e2e
+          path: |
+            /tmp/wm-e2e-install.log
+            /tmp/wm-e2e-playwright-install.log
+            /tmp/wm-e2e.log
+          if-no-files-found: ignore
+          retention-days: 2
 
   smoke:
     name: Production browser smoke
@@ -226,6 +247,17 @@ jobs:
           Path('/tmp/wm-diagnostic.md').write_text(body)
           PY
           gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-diagnostic.md
+      - name: Preserve browser smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-smoke
+          path: |
+            /tmp/wm-http.log
+            /tmp/wm-dom.html
+            /tmp/wm-chrome.log
+          if-no-files-found: ignore
+          retention-days: 2
 
   ci_bridge:
     name: CI failure bridge
@@ -242,6 +274,14 @@ jobs:
       E2E_RESULT: ${{ needs.e2e.result }}
       SMOKE_RESULT: ${{ needs.smoke.result }}
     steps:
+      - name: Download CI diagnostics
+        if: always()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: ci-*
+          path: /tmp/wm-ci-logs
+          merge-multiple: true
       - name: Create or resolve CI failure issue
         shell: bash
         run: |
@@ -272,6 +312,40 @@ jobs:
 
           if [ ${#FAILED[@]} -gt 0 ]; then
             FAILED_LIST="$(IFS=', '; echo "${FAILED[*]}")"
+            python3 - <<'PY'
+          from pathlib import Path
+          import html, re
+
+          root = Path('/tmp/wm-ci-logs')
+          sections = []
+
+          def tail(title, filename, limit=3500):
+              p = root / filename
+              if not p.exists():
+                  return
+              text = p.read_text(errors='ignore').strip()
+              if text:
+                  sections.append(f'### {title}\n```text\n{text[-limit:]}\n```')
+
+          tail('Quality: typecheck / unit / build', 'wm-quality-check.log', 4500)
+          tail('Quality: dependency install', 'wm-quality-install.log', 2200)
+          tail('Playwright E2E', 'wm-e2e.log', 4500)
+          tail('Playwright browser install', 'wm-e2e-playwright-install.log', 2200)
+          tail('Playwright dependency install', 'wm-e2e-install.log', 1800)
+
+          dom_path = root / 'wm-dom.html'
+          if dom_path.exists():
+              dom = dom_path.read_text(errors='ignore')
+              m = re.search(r'<pre id="debug-panel"[^>]*>(.*?)</pre>', dom, re.S)
+              if m:
+                  debug = html.unescape(re.sub('<[^>]+>', '', m.group(1))).strip()
+                  if debug:
+                      sections.append(f'### Smoke: game debug panel\n```text\n{debug[-4500:]}\n```')
+          tail('Smoke: Chrome stderr', 'wm-chrome.log', 3000)
+          tail('Smoke: HTTP server', 'wm-http.log', 1500)
+
+          Path('/tmp/wm-ci-diagnostics.md').write_text('\n\n'.join(sections))
+          PY
             cat > /tmp/wm-ci-failure.md <<EOF
           ## Wreckmarch CI failure
 
@@ -289,6 +363,11 @@ jobs:
 
           This issue is managed automatically by GitHub Actions. A later successful run on \`main\` will close it.
           EOF
+
+            if [ -s /tmp/wm-ci-diagnostics.md ]; then
+              printf '\n\n## Diagnostic excerpts\n\n' >> /tmp/wm-ci-failure.md
+              cat /tmp/wm-ci-diagnostics.md >> /tmp/wm-ci-failure.md
+            fi
 
             if [ -n "$ISSUE_NUMBER" ]; then
               gh issue comment "$ISSUE_NUMBER" \
