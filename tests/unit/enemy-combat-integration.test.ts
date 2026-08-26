@@ -5,7 +5,7 @@ const game = fs.readFileSync(new URL('../../src/game.js', import.meta.url), 'utf
 const system = fs.readFileSync(new URL('../../src/enemies/enemy-system.js', import.meta.url), 'utf8');
 const combat = fs.readFileSync(new URL('../../src/combat/combat-system.js', import.meta.url), 'utf8');
 const enemyCombat = fs.readFileSync(new URL('../../src/combat/enemy-combat-system.js', import.meta.url), 'utf8');
-const phaseC = fs.readFileSync(new URL('../../src/phase-c-runtime.js', import.meta.url), 'utf8');
+const projectileSystem = fs.readFileSync(new URL('../../src/combat/projectile-system.js', import.meta.url), 'utf8');
 
 describe('authoritative CombatSystem integration', () => {
   it('owns bullet/enemy overlap instead of the base scene', () => {
@@ -21,10 +21,10 @@ describe('authoritative CombatSystem integration', () => {
     expect(combat).toContain('return this.enemy.hitByProjectile(bullet, enemy)');
   });
 
-  it('routes swept projectile hits directly to CombatSystem', () => {
+  it('routes swept projectile hits directly from ProjectileSystem to CombatSystem', () => {
     expect(enemyCombat).toContain('resolveEnemyProjectileHit');
     expect(enemyCombat).toContain('resolveEnemyScrapDropCount');
-    expect(phaseC).toContain('this.combatSystem.hitEnemyByProjectile(bullet, bestEnemy)');
-    expect(phaseC).not.toContain('this.onBulletHit(bullet, bestEnemy)');
+    expect(projectileSystem).toContain('scene.combatSystem?.hitEnemyByProjectile?.(bullet, enemy)');
+    expect(projectileSystem).not.toContain('this.onBulletHit(bullet, enemy)');
   });
 });
