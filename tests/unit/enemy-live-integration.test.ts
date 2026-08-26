@@ -7,9 +7,9 @@ describe('Enemy Foundation boot integration', () => {
   it('installs before legacy visual/gameplay phases wrap spawnEnemy', () => {
     const html = read('index.html');
     const game = html.indexOf("await import('./src/game.js?v=8')");
-    const enemy = html.indexOf("./src/enemies/enemy-system.js?v=6");
+    const enemy = html.indexOf("./src/enemies/enemy-system.js?v=7");
     const e0 = html.indexOf("./src/phase-e0-fast-terrain.js?v=2");
-    const phaseC = html.indexOf("./src/phase-c-runtime.js?v=4");
+    const phaseC = html.indexOf("./src/phase-c-runtime.js?v=5");
     expect(game).toBeGreaterThan(-1);
     expect(enemy).toBeGreaterThan(game);
     expect(e0).toBeGreaterThan(enemy);
