@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
   pages: write
   id-token: write
 
@@ -225,6 +226,91 @@ jobs:
           Path('/tmp/wm-diagnostic.md').write_text(body)
           PY
           gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-diagnostic.md
+
+  ci_bridge:
+    name: CI failure bridge
+    if: ${{ always() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    needs: [quality, e2e, smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QUALITY_RESULT: ${{ needs.quality.result }}
+      E2E_RESULT: ${{ needs.e2e.result }}
+      SMOKE_RESULT: ${{ needs.smoke.result }}
+    steps:
+      - name: Create or resolve CI failure issue
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TITLE='[CI] main is failing'
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          COMMIT_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
+
+          gh label create ci-failure \
+            --repo "$GITHUB_REPOSITORY" \
+            --color B60205 \
+            --description 'Automated Wreckmarch CI failure tracker' \
+            --force >/dev/null
+
+          ISSUE_NUMBER="$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --label ci-failure \
+            --json number,title \
+            --jq ".[] | select(.title == \"$TITLE\") | .number" \
+            | head -n 1)"
+
+          FAILED=()
+          [ "$QUALITY_RESULT" = 'failure' ] && FAILED+=('quality')
+          [ "$E2E_RESULT" = 'failure' ] && FAILED+=('e2e')
+          [ "$SMOKE_RESULT" = 'failure' ] && FAILED+=('smoke')
+
+          if [ ${#FAILED[@]} -gt 0 ]; then
+            FAILED_LIST="$(IFS=', '; echo "${FAILED[*]}")"
+            cat > /tmp/wm-ci-failure.md <<EOF
+          ## Wreckmarch CI failure
+
+          **Failed jobs:** ${FAILED_LIST}
+
+          | Job | Result |
+          | --- | --- |
+          | quality | ${QUALITY_RESULT} |
+          | e2e | ${E2E_RESULT} |
+          | smoke | ${SMOKE_RESULT} |
+
+          - Commit: [\`${GITHUB_SHA:0:7}\`](${COMMIT_URL})
+          - Workflow run: [open diagnostics](${RUN_URL})
+          - Trigger: \`${GITHUB_EVENT_NAME}\`
+
+          This issue is managed automatically by GitHub Actions. A later successful run on \`main\` will close it.
+          EOF
+
+            if [ -n "$ISSUE_NUMBER" ]; then
+              gh issue comment "$ISSUE_NUMBER" \
+                --repo "$GITHUB_REPOSITORY" \
+                --body-file /tmp/wm-ci-failure.md
+            else
+              gh issue create \
+                --repo "$GITHUB_REPOSITORY" \
+                --title "$TITLE" \
+                --label ci-failure \
+                --body-file /tmp/wm-ci-failure.md
+            fi
+            exit 0
+          fi
+
+          if [ "$QUALITY_RESULT" = 'success' ] && [ "$E2E_RESULT" = 'success' ] && [ "$SMOKE_RESULT" = 'success' ]; then
+            if [ -n "$ISSUE_NUMBER" ]; then
+              gh issue close "$ISSUE_NUMBER" \
+                --repo "$GITHUB_REPOSITORY" \
+                --comment "CI recovered on commit ${GITHUB_SHA:0:7}. All quality, e2e and smoke checks passed. Run: ${RUN_URL}"
+            fi
+          fi
 
   deploy:
     name: Deploy GitHub Pages
