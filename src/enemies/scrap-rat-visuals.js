@@ -1,7 +1,7 @@
 import {
   SCRAP_RAT_RUN_FRAME_COUNT,
   SCRAP_RAT_RUN_MASTER_DATA
-} from './scrap-rat-asset.js?v=4';
+} from './scrap-rat-asset.js?v=5';
 
 const RUN_TEXTURES = Object.freeze(
   Array.from({ length: SCRAP_RAT_RUN_FRAME_COUNT }, (_, index) => `scrap-rat-run-master-${index}`)
@@ -17,6 +17,12 @@ export const SCRAP_RAT_VISUAL = Object.freeze({
 });
 
 function loadMasterRunFrames(scene) {
+  if (scene.__scrapRatMasterAssetVersion !== 'production-v5') {
+    RUN_TEXTURES.forEach(key => {
+      if (scene.textures.exists(key)) scene.textures.remove(key);
+    });
+  }
+
   const missing = RUN_TEXTURES
     .map((key, index) => ({ key, uri: SCRAP_RAT_RUN_MASTER_DATA[index] }))
     .filter(({ key }) => !scene.textures.exists(key));
@@ -58,9 +64,9 @@ function replaceTextureAnimation(scene, key, textureKeys, frameRate, repeat) {
 
 function installAnimations(scene) {
   replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.idle, RUN_TEXTURES.slice(0, 2), 3, -1);
-  replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.run, RUN_TEXTURES, 11, -1);
+  replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.run, RUN_TEXTURES, 8, -1);
   // Legacy gameplay still asks for rat-run during spawn. Keep that key mapped to the static master cycle.
-  replaceTextureAnimation(scene, 'rat-run', RUN_TEXTURES, 11, -1);
+  replaceTextureAnimation(scene, 'rat-run', RUN_TEXTURES, 8, -1);
 }
 
 export function tuneScrapRatVisual(enemy) {
@@ -74,7 +80,7 @@ export function tuneScrapRatVisual(enemy) {
   enemy.setTexture(RUN_TEXTURES[0]);
   enemy.setOrigin(.5, .58).setScale(elite ? SCRAP_RAT_VISUAL.scale.elite : SCRAP_RAT_VISUAL.scale.normal);
   enemy.__scrapRatVisual = true;
-  enemy.__scrapRatVisualVersion = 'production-v4';
+  enemy.__scrapRatVisualVersion = 'production-v5';
   enemy.__scrapRatStaticMaster = true;
   enemy.play(SCRAP_RAT_VISUAL.animations.run, true);
   return enemy;
@@ -82,7 +88,7 @@ export function tuneScrapRatVisual(enemy) {
 
 function installSpawnVisuals(scene) {
   const currentSpawn = scene.spawnEnemy;
-  if (currentSpawn?.__scrapRatVisualWrapperVersion === 'static-master-v4') return;
+  if (currentSpawn?.__scrapRatVisualWrapperVersion === 'static-master-v5') return;
   const baseSpawn = currentSpawn.bind(scene);
   const wrappedSpawn = function(elite = false) {
     const before = new Set(this.enemies.getChildren());
@@ -93,12 +99,13 @@ function installSpawnVisuals(scene) {
     return result;
   };
   wrappedSpawn.__scrapRatVisualWrapper = true;
-  wrappedSpawn.__scrapRatVisualWrapperVersion = 'static-master-v4';
+  wrappedSpawn.__scrapRatVisualWrapperVersion = 'static-master-v5';
   scene.spawnEnemy = wrappedSpawn;
 }
 
 export async function installScrapRatVisuals(scene) {
   await loadMasterRunFrames(scene);
+  scene.__scrapRatMasterAssetVersion = 'production-v5';
   installAnimations(scene);
   scene.enemies.children.iterate(tuneScrapRatVisual);
   installSpawnVisuals(scene);
@@ -106,6 +113,6 @@ export async function installScrapRatVisuals(scene) {
   scene.__scrapRatStaticMaster = true;
   window.__WM_SCRAP_RAT_VISUAL__ = true;
   document.documentElement.dataset.wreckmarchScrapRatVisual = 'production-master';
-  window.__WM_LOG__?.('Production Scrap Rat active: static baked 4-pose master cycle; no runtime recoloring');
+  window.__WM_LOG__?.('Production Scrap Rat active: clean baked 2-pose scuttle; complete silhouettes and alpha-bled tail edges');
   return true;
 }
