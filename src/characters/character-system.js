@@ -20,6 +20,8 @@ export class CharacterSystem {
     const { scene, definition } = this;
     scene.heroMaxHp = definition.stats.maxHp;
     scene.heroSpeed = definition.stats.moveSpeed;
+    scene.playerCombatProfile = definition.combat || scene.playerCombatProfile;
+    if (definition.combat?.invulnerabilityMs != null) scene.heroInvulnMs = definition.combat.invulnerabilityMs;
     if (resetHealth || !Number.isFinite(scene.heroHp)) scene.heroHp = definition.stats.maxHp;
     if (scene.hero?.body?.setCircle) {
       const p = definition.physics;
