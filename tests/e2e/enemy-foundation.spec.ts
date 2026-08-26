@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('spawns the live Scrap Rat through Enemy Foundation without changing balance', async ({ page }) => {
+test('spawns the live Scrap Rat through Enemy Foundation with Wave balance ownership', async ({ page }) => {
   await page.goto('/?debug=1&autotest=1');
   await expect.poll(
     () => page.evaluate(() => document.body.classList.contains('visual-ready')),
@@ -17,10 +17,15 @@ test('spawns the live Scrap Rat through Enemy Foundation without changing balanc
     const beforeSerial = scene.enemySerial;
     scene.spawnEnemy(false);
     const enemy = scene.enemies.getChildren().find((object: any) => object?.active);
+    const directorState = scene.runDirector?.getState?.(scene.runTime);
     return enemy ? {
       foundationReady: scene.__enemyFoundationReady === true,
       factoryReady: Boolean(scene.enemyFactory),
       spawnSystemReady: Boolean(scene.spawnSystem),
+      runBalanceReady: scene.__runBalanceEnabled === true,
+      runDirectorReady: scene.__runDirectorReady === true,
+      runDirectorDataset: document.documentElement.dataset.wreckmarchRunDirector,
+      wave: directorState?.wave,
       dataset: document.documentElement.dataset.wreckmarchEnemyFoundation,
       enemyId: enemy.enemyId,
       definitionId: enemy.enemyDefinition?.id,
@@ -29,8 +34,8 @@ test('spawns the live Scrap Rat through Enemy Foundation without changing balanc
       damage: enemy.damage,
       scrapDrop: enemy.scrapDrop,
       maxHpMatchesHp: enemy.maxHp === enemy.hp,
-      speedInLegacyRange: enemy.speed >= 88 && enemy.speed <= 122,
-      hpMatchesLegacyFormula: Math.abs(enemy.hp - (54 + scene.runTime * 1.25)) < .01,
+      speedInWaveOneRange: enemy.speed >= 88 && enemy.speed <= 122,
+      hpMatchesWaveOneBase: Math.abs(enemy.hp - 54) < .01,
       serialAdvanced: scene.enemySerial === beforeSerial + 1,
       productionVisual: enemy.__scrapRatVisual === true,
       hitRadius: enemy.hitRadius
@@ -41,6 +46,10 @@ test('spawns the live Scrap Rat through Enemy Foundation without changing balanc
     foundationReady: true,
     factoryReady: true,
     spawnSystemReady: true,
+    runBalanceReady: true,
+    runDirectorReady: true,
+    runDirectorDataset: 'balance-v1',
+    wave: 1,
     dataset: 'active',
     enemyId: 'scrap-rat',
     definitionId: 'scrap-rat',
@@ -49,8 +58,8 @@ test('spawns the live Scrap Rat through Enemy Foundation without changing balanc
     damage: 10,
     scrapDrop: 1,
     maxHpMatchesHp: true,
-    speedInLegacyRange: true,
-    hpMatchesLegacyFormula: true,
+    speedInWaveOneRange: true,
+    hpMatchesWaveOneBase: true,
     serialAdvanced: true,
     productionVisual: true,
     hitRadius: 24
