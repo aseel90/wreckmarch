@@ -10,9 +10,6 @@ function installCombatSystem(scene) {
   scene.combatSystem = new CombatSystem(scene);
   scene.enemyCombatSystem = scene.combatSystem.enemy;
   scene.playerDamageSystem = scene.combatSystem.player;
-  scene.onBulletHit = function(bullet, enemy) {
-    return this.combatSystem.hitEnemyByProjectile(bullet, enemy);
-  };
   scene.combatSystem.installOverlaps();
   scene.__enemyCombatFoundationReady = true;
   scene.__playerDamageFoundationReady = true;
