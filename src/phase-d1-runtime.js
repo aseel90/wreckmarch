@@ -17,7 +17,7 @@ const RARITY_STYLE={
 };
 const CARD_IDS=['heavy-rivets','overclock','long-barrel','twin-riveter','fleet-feet','scrap-magnet','armor-plate','call-rig','rig-overdrive','twin-cannon'];
 const GUN_FRAMES=['gun_e.png','gun_se.png','gun_s.png','gun_sw.png','gun_w.png','gun_nw.png','gun_n.png','gun_ne.png'];
-const CARD_FRAME=id=>`icon_${id}.png`;
+const CARD_FRAME=id=>`icon_${id}.png`; // compact gameplay icon; HD illustration sheet remains available for future codex/detail views
 const WRECK_FRAMES={sedan:'wreck_a.png',overturned:'wreck_c.png',van:'wreck_b.png',truck:'wreck_d.png'};
 const VEHICLE_PROFILE={sedan:{w:246,h:166},overturned:{w:270,h:240},van:{w:292,h:214},truck:{w:356,h:302}};
 
@@ -81,10 +81,11 @@ function installPremiumCards(s){
     const categoryText=this.add.text(-w/2+16,-h/2+28,u.category,{fontFamily:'Arial Black,Arial',fontSize:'10px',color:Phaser.Display.Color.IntegerToColor(category).rgba}).setOrigin(0,.5);
     const rarityText=this.add.text(w/2-16,-h/2+28,style.label,{fontFamily:'Arial Black,Arial',fontSize:rank>=3?'9px':'8px',color:Phaser.Display.Color.IntegerToColor(style.frame).rgba,letterSpacing:1}).setOrigin(1,.5);
 
-    const artH=Math.min(182,h*.46),artY=-h*.17;
-    const artBg=this.add.rectangle(0,artY,w-22,artH,0x080d12,.94).setStrokeStyle(1.5,style.frame,rank>=2?.44:.26);
-    const art=this.add.image(0,artY,'c5-upgrade-sheet',`c5-card-${u.id}`);
-    fit(art,w-34,artH-10);
+    const artH=Math.min(154,h*.39),artY=-h*.18;
+    const artBg=this.add.rectangle(0,artY,w-34,artH,0x0a1015,.96).setStrokeStyle(2,style.frame,rank>=2?.48:.28);
+    const iconPlate=this.add.circle(0,artY,Math.min(58,artH*.39),0x111a20,1).setStrokeStyle(3,category,.42);
+    const art=this.add.image(0,artY,'c3-atlas',CARD_FRAME(u.id));
+    fit(art,Math.min(116,w*.43),Math.min(102,artH*.68));
 
     const title=this.add.text(0,h*.105,u.title,{fontFamily:'Arial Black,Arial',fontSize:`${Math.max(16,Math.min(21,w/13.6))}px`,color:'#f4f6f7',align:'center',wordWrap:{width:w-28}}).setOrigin(.5);
     const desc=this.add.text(0,h*.225,u.desc,{fontFamily:'Arial',fontSize:'12px',color:'#c1c9d0',align:'center',wordWrap:{width:w-34},lineSpacing:3}).setOrigin(.5,0);
@@ -98,8 +99,8 @@ function installPremiumCards(s){
       accents.push(this.add.rectangle(w/2-5,0,3,h*.52,style.frame,.34));
     }
     if(rank>=2){
-      accents.push(this.add.triangle(-w/2+14,-h/2+14,0,10,10,0,20,10,style.frame,.88));
-      accents.push(this.add.triangle(w/2-14,-h/2+14,0,10,10,0,20,10,style.frame,.88).setRotation(Math.PI/2));
+      accents.push(this.add.rectangle(-w/2+8,-h/2+9,28,3,style.frame,.82));
+      accents.push(this.add.rectangle(w/2-8,-h/2+9,28,3,style.frame,.82));
       accents.push(this.add.rectangle(0,h/2-7,w*.42,3,style.frame,.65));
     }
     if(rank>=3){
@@ -112,7 +113,7 @@ function installPremiumCards(s){
     const hit=this.add.zone(0,0,w,h).setInteractive({useHandCursor:true});
     hit.on('pointerover',()=>{this.selectedIndex=i;this.refresh()});
     hit.on('pointerdown',(_p,_x,_y,e)=>{e?.stopPropagation?.();this.choose(i)});
-    g.add([shadow,glow,bg,inner,header,strip,categoryText,rarityText,artBg,art,title,desc,footer,...accents,hit]);
+    g.add([shadow,glow,bg,inner,header,strip,categoryText,rarityText,artBg,iconPlate,art,title,desc,footer,...accents,hit]);
     this.cards.push({g,bg,inner,strip,art,glow,rarityText,rarity,style,a:style.frame});
   };
 
@@ -132,14 +133,14 @@ function installPremiumCards(s){
 
   s.__d1PremiumCards=true;
   s.__d1CardRarity={...CARD_RARITY};
-  s.__d1CardArtSource='c5-upgrade-sheet';
+  s.__d1CardArtSource='c3-atlas-icons';
 }
 
 function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='1')return;
-  const runFrames=s.anims.get(s.characterDefinition?.animations?.run?.key)?.frames?.length||0,hdSheet=s.textures.get('c5-upgrade-sheet'),allHdCards=CARD_IDS.every(id=>hdSheet?.has?.(`c5-card-${id}`)&&hdSheet.get(`c5-card-${id}`).realWidth>=480),rarities=new Set(Object.values(s.__d1CardRarity||{})),roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
-  const probe=s.add.image(-9999,-9999,'c5-upgrade-sheet','c5-card-overclock');fit(probe,220,150);
-  const checks={animatedLegs:runFrames>=4&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allHdCards&&probe.texture?.key==='c5-upgrade-sheet'&&probe.frame?.realWidth>=480&&probe.displayWidth>180,rarityCards:['COMMON','RARE','EPIC','LEGENDARY'].every(r=>rarities.has(r)),roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth,characterSystem:s.characterId==='runner'&&s.characterDefinition?.id==='runner'&&s.__characterSystemReady===true};probe.destroy();
+  const runFrames=s.anims.get(s.characterDefinition?.animations?.run?.key)?.frames?.length||0,hdSheet=s.textures.get('c5-upgrade-sheet'),allHdCards=CARD_IDS.every(id=>s.textures.get('c3-atlas')?.has?.(CARD_FRAME(id))),rarities=new Set(Object.values(s.__d1CardRarity||{})),roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
+  const probe=s.add.image(-9999,-9999,'c3-atlas',CARD_FRAME('overclock'));fit(probe,112,96);
+  const checks={animatedLegs:runFrames>=4&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allHdCards&&probe.texture?.key==='c3-atlas'&&probe.displayWidth>=80,rarityCards:['COMMON','RARE','EPIC','LEGENDARY'].every(r=>rarities.has(r)),roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth,characterSystem:s.characterId==='runner'&&s.characterDefinition?.id==='runner'&&s.__characterSystemReady===true};probe.destroy();
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_D1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchD1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`D1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase D.1 self-test failed: '+detail)
 }
 
-export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installMobileHudPolish(s);installVehicleScale(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: animated Runner + integrated mechanical arm + HD vector rarity cards + visible asphalt + real vehicle scale');selfTest(s);return true}
+export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installMobileHudPolish(s);installVehicleScale(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: animated Runner + integrated mechanical arm + compact icon rarity cards + visible asphalt + real vehicle scale');selfTest(s);return true}
