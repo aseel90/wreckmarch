@@ -90,10 +90,11 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 - ✅ Enemy movement is dispatched through `EnemyBehaviorSystem` with `chase` as the first behavior.
 - ✅ Enemy projectile damage, knockback, hit feedback, death and Scrap-drop rules are owned by `EnemyCombatSystem`.
 - ✅ Hero contact damage, knockback, hit feedback and invulnerability are owned by `PlayerDamageSystem`; Runner tuning lives in `CharacterDefinition`.
-- ✅ `CombatSystem` is now the authoritative live combat boundary and directly owns bullet/enemy and hero/enemy Arcade overlaps.
+- ✅ `CombatSystem` is the authoritative live combat boundary and directly owns bullet/enemy and hero/enemy Arcade overlaps.
 - ✅ `game.js` no longer creates combat overlaps or contains legacy `onBulletHit`, `killEnemy`, or `enemyTouchesHero` implementations.
-- 🟡 Phase C swept-projectile collision still uses a compatibility `onBulletHit` adapter name, but the adapter contains no combat logic and dispatches immediately into `CombatSystem`; removing this last name-level shim is the next cleanup.
-- ✅ Unit + Playwright coverage guards single overlap ownership, projectile damage/death/drop parity, contact damage and Runner i-frames.
+- ✅ Phase C swept-projectile collision dispatches directly to `CombatSystem`; the final `onBulletHit` compatibility shim has been removed.
+- ✅ Unit + Playwright coverage guards single overlap ownership, direct swept-hit dispatch, projectile damage/death/drop parity, contact damage and Runner i-frames.
+- ✅ Combat damage/death/contact/overlap ownership is fully separated from the legacy scene/runtime callbacks.
 - 🟡 Weapon firing/target acquisition and projectile lifetime still live in the historical Phase C/runtime layer; moving those behind a dedicated weapon/projectile owner is the next combat-adjacent cleanup, without changing current balance.
 
 ## Later roadmap
