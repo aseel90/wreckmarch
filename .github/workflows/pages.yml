@@ -18,8 +18,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  foundation:
+  quality:
+    name: Typecheck, unit tests and build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,27 +34,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: pnpm
+          cache-dependency-path: package.json
       - name: Install dependencies
         shell: bash
         run: |
           set -o pipefail
-          pnpm install --no-frozen-lockfile 2>&1 | tee /tmp/wm-f0-install.log
+          pnpm install --prefer-offline --no-frozen-lockfile 2>&1 | tee /tmp/wm-quality-install.log
       - name: Typecheck, unit tests and static build
         shell: bash
         run: |
           set -o pipefail
-          pnpm check 2>&1 | tee /tmp/wm-f0-check.log
-      - name: Install Playwright Chromium
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm exec playwright install --with-deps chromium 2>&1 | tee /tmp/wm-f0-playwright-install.log
-      - name: E0/E1 browser persistence test
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm test:e2e 2>&1 | tee /tmp/wm-f0-e2e.log
-      - name: Comment foundation diagnostics
+          pnpm check 2>&1 | tee /tmp/wm-quality-check.log
+      - name: Comment quality diagnostics
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -62,20 +56,74 @@ jobs:
           from pathlib import Path
           sections = []
           for title, path in [
-              ('pnpm install', '/tmp/wm-f0-install.log'),
-              ('typecheck / unit / build', '/tmp/wm-f0-check.log'),
-              ('Playwright install', '/tmp/wm-f0-playwright-install.log'),
-              ('Playwright E2E', '/tmp/wm-f0-e2e.log'),
+              ('pnpm install', '/tmp/wm-quality-install.log'),
+              ('typecheck / unit / build', '/tmp/wm-quality-check.log'),
           ]:
               p = Path(path)
               if p.exists():
                   sections.append(f'### {title}\n```text\n{p.read_text(errors="ignore")[-6000:]}\n```')
-          Path('/tmp/wm-f0-diagnostic.md').write_text('## F0 foundation diagnostic\n\n' + '\n\n'.join(sections))
+          Path('/tmp/wm-quality-diagnostic.md').write_text('## Quality diagnostic\n\n' + '\n\n'.join(sections))
           PY
-          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-f0-diagnostic.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-quality-diagnostic.md
+
+  e2e:
+    name: Playwright browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+          run_install: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: package.json
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm install --prefer-offline --no-frozen-lockfile 2>&1 | tee /tmp/wm-e2e-install.log
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee /tmp/wm-e2e-playwright-install.log
+      - name: Run Playwright tests
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test:e2e 2>&1 | tee /tmp/wm-e2e.log
+      - name: Comment Playwright diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          sections = []
+          for title, path in [
+              ('pnpm install', '/tmp/wm-e2e-install.log'),
+              ('Playwright install', '/tmp/wm-e2e-playwright-install.log'),
+              ('Playwright E2E', '/tmp/wm-e2e.log'),
+          ]:
+              p = Path(path)
+              if p.exists():
+                  sections.append(f'### {title}\n```text\n{p.read_text(errors="ignore")[-6000:]}\n```')
+          Path('/tmp/wm-e2e-diagnostic.md').write_text('## Playwright diagnostic\n\n' + '\n\n'.join(sections))
+          PY
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-e2e-diagnostic.md
 
   smoke:
+    name: Production browser smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -147,7 +195,7 @@ jobs:
           check_log 'FAST TERRAIN ready in' 'Phase E.0 fast terrain did not report readiness'
           check_log 'Phase E.1b active: persistent asphalt layer' 'Phase E.1 final asphalt layer was not applied'
           check_log 'E1 browser self-test PASSED: roadSegments=ok roadAtSpawn=ok noLegacyCover=ok groundBelowRoad=ok roadAboveGround=ok' 'Phase E.1 browser road test did not pass'
-          check_log 'data-wreckmarch-e1-self-test="passed"' 'Phase E.1 DOM self-test flag missing'
+          check_log 'data-wreckmarch-e1-self-test="passed"' 'Phase E.1 browser road test DOM flag missing'
           check_log 'E1 persistence test PASSED at 12s' 'Phase E.1 asphalt did not remain valid for 12 seconds'
           check_log 'data-wreckmarch-e1-persistence="passed"' 'Phase E.1 persistence DOM flag missing'
 
@@ -179,8 +227,9 @@ jobs:
           gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-diagnostic.md
 
   deploy:
+    name: Deploy GitHub Pages
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    needs: [foundation, smoke]
+    needs: [quality, e2e, smoke]
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
