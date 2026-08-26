@@ -110,18 +110,18 @@ test('boots the current game, routes movement through InputManager, and keeps as
   expect(scrapRatVisual).not.toBeNull();
   expect(scrapRatVisual).toMatchObject({
     production: true,
-    version: 'production-v4',
+    version: 'production-v5',
     staticMaster: true,
     sceneStaticMaster: true,
     legacyCombatVisuals: false,
     dataset: 'production-master',
     animation: 'scrap-rat-run',
-    runFrames: 4,
+    runFrames: 2,
     hitRadius: 24,
     alpha: 1,
     isTinted: false
   });
-  expect(scrapRatVisual!.texture).toMatch(/^scrap-rat-run-master-[0-3]$/);
+  expect(scrapRatVisual!.texture).toMatch(/^scrap-rat-run-master-[0-1]$/);
   expect(scrapRatVisual!.scaleX).toBeGreaterThan(.65);
   expect(Math.abs(scrapRatVisual!.scaleX - scrapRatVisual!.scaleY)).toBeLessThan(.001);
 
@@ -145,11 +145,45 @@ test('boots the current game, routes movement through InputManager, and keeps as
       scaleY: Math.abs(enemy?.scaleY || 0)
     };
   });
-  expect(new Set(groundedRunCycle.observed.map(sample => sample.key)).size).toBeGreaterThanOrEqual(3);
-  expect(groundedRunCycle.observed.every(sample => /^scrap-rat-run-master-[0-3]$/.test(sample.key))).toBe(true);
+  expect(new Set(groundedRunCycle.observed.map(sample => sample.key)).size).toBeGreaterThanOrEqual(2);
+  expect(groundedRunCycle.observed.every(sample => /^scrap-rat-run-master-[0-1]$/.test(sample.key))).toBe(true);
   expect(groundedRunCycle.observed.every(sample => sample.alpha === 1 && sample.tinted === false)).toBe(true);
   expect(groundedRunCycle.animation).toBe('scrap-rat-run');
   expect(Math.abs(groundedRunCycle.scaleX - groundedRunCycle.scaleY)).toBeLessThan(.001);
+
+  const runTextureMetrics = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    return [0, 1].map(index => {
+      const key = `scrap-rat-run-master-${index}`;
+      const source = scene.textures.get(key).getSourceImage() as CanvasImageSource;
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const context = canvas.getContext('2d', { willReadFrequently: true })!;
+      context.clearRect(0, 0, 128, 128);
+      context.drawImage(source, 0, 0, 128, 128);
+      const data = context.getImageData(0, 0, 128, 128).data;
+      let opaquePixels = 0;
+      let darkTailPixels = 0;
+      for (let y = 0; y < 128; y += 1) {
+        for (let x = 0; x < 128; x += 1) {
+          const offset = (y * 128 + x) * 4;
+          const alpha = data[offset + 3];
+          if (alpha <= 32) continue;
+          opaquePixels += 1;
+          if (
+            x >= 8 && x < 58 && y >= 50 && y < 92 &&
+            data[offset] < 20 && data[offset + 1] < 45 && data[offset + 2] < 60
+          ) darkTailPixels += 1;
+        }
+      }
+      return { key, opaquePixels, darkTailPixels };
+    });
+  });
+  const occupied = runTextureMetrics.map(metric => metric.opaquePixels);
+  expect(Math.min(...occupied) / Math.max(...occupied)).toBeGreaterThan(.7);
+  expect(runTextureMetrics.every(metric => metric.darkTailPixels < 350)).toBe(true);
 
   const beforeX = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
