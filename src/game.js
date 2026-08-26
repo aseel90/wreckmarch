@@ -246,9 +246,9 @@ class WreckmarchScene extends Phaser.Scene {
     this.updateTimer();
     this.updateMovement(time);
     this.updateEnemies();
-    this.updateBullets(delta);
+    this.projectileSystem?.update(delta);
     this.updateScrapMagnet();
-    this.autoFire(time);
+    this.weaponSystem?.update(time);
     this.updateHUD();
   }
 
@@ -284,14 +284,6 @@ class WreckmarchScene extends Phaser.Scene {
     });
   }
 
-  updateBullets(delta) {
-    this.bullets.children.iterate(b => {
-      if (!b?.active) return;
-      b.life -= delta;
-      if (b.life <= 0 || b.x < -30 || b.x > W + 30 || b.y < 80 || b.y > H + 30) b.destroy();
-    });
-  }
-
   updateScrapMagnet() {
     this.scraps.children.iterate(s => {
       if (!s?.active) return;
@@ -303,32 +295,6 @@ class WreckmarchScene extends Phaser.Scene {
       } else s.setVelocity(s.body.velocity.x * .9, s.body.velocity.y * .9);
       s.rotation += .045;
     });
-  }
-
-  autoFire(time) {
-    if (time < this.lastShot + this.fireDelay) return;
-    const target = this.findNearestEnemy(this.hero.x, this.hero.y, 455);
-    if (!target) return;
-    this.lastShot = time;
-    const ang = Phaser.Math.Angle.Between(this.hero.x, this.hero.y - 6, target.x, target.y);
-    const sx = this.hero.x + Math.cos(ang) * 31, sy = this.hero.y - 8 + Math.sin(ang) * 31;
-    const b = this.bullets.create(sx, sy, 'bullet').setDepth(30).setScale(.86);
-    b.setCircle(7, 3, 3); b.damage = this.damage; b.life = 1000;
-    b.setVelocity(Math.cos(ang) * 690, Math.sin(ang) * 690);
-    const flash = this.add.image(sx, sy, 'flash').setDepth(31).setRotation(ang).setScale(.62);
-    this.tweens.add({ targets: flash, alpha: 0, scale: .12, duration: 70, onComplete: () => flash.destroy() });
-    this.hero.rotation += Phaser.Math.Clamp(Math.cos(ang) * -.035, -.035, .035);
-    this.playTone(180, .04, 'square', .018, -28);
-  }
-
-  findNearestEnemy(x, y, maxD = Infinity) {
-    let best = null, bestSq = maxD * maxD;
-    this.enemies.children.iterate(e => {
-      if (!e?.active) return;
-      const d = Phaser.Math.Distance.Squared(x, y, e.x, e.y);
-      if (d < bestSq) { best = e; bestSq = d; }
-    });
-    return best;
   }
 
   spawnHitFx(x, y, vx, vy) {
