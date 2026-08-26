@@ -39,9 +39,7 @@ class WreckmarchScene extends Phaser.Scene {
     this.spawnEvent = this.time.addEvent({ delay: 690, loop: true, callback: () => this.spawnEnemy() });
     this.waveEvent = this.time.addEvent({ delay: 15000, loop: true, callback: () => this.advanceWave() });
 
-    this.physics.add.overlap(this.bullets, this.enemies, this.onBulletHit, undefined, this);
     this.physics.add.overlap(this.hero, this.scraps, this.collectScrap, undefined, this);
-    this.physics.add.overlap(this.hero, this.enemies, this.enemyTouchesHero, undefined, this);
 
     this.input.once('pointerdown', () => this.unlockAudio());
     window.__WM_LOG__?.('Phase A ready: hero-only combat core');
@@ -333,36 +331,11 @@ class WreckmarchScene extends Phaser.Scene {
     return best;
   }
 
-  onBulletHit(bullet, enemy) {
-    if (!bullet.active || !enemy.active) return;
-    const vx = bullet.body.velocity.x, vy = bullet.body.velocity.y;
-    bullet.destroy(); enemy.hp -= bullet.damage ?? this.damage;
-    enemy.setTintFill(0xffffff); this.time.delayedCall(55, () => enemy?.active && enemy.clearTint());
-    enemy.body.velocity.x += vx * .05; enemy.body.velocity.y += vy * .05;
-    this.spawnHitFx(enemy.x, enemy.y, vx, vy);
-    this.playTone(78, .025, 'square', .013, 35);
-    if (enemy.hp <= 0) this.killEnemy(enemy);
-  }
-
   spawnHitFx(x, y, vx, vy) {
     for (let i = 0; i < 4; i++) {
       const p = this.add.circle(x, y, Phaser.Math.Between(2, 4), i === 0 ? 0x61d9e6 : 0xf1c675, .9).setDepth(30);
       const a = Math.atan2(vy, vx) + Math.PI + Phaser.Math.FloatBetween(-.8, .8), dist = Phaser.Math.Between(16, 36);
       this.tweens.add({ targets: p, x: x + Math.cos(a) * dist, y: y + Math.sin(a) * dist, alpha: 0, scale: .2, duration: 170, onComplete: () => p.destroy() });
-    }
-  }
-
-  killEnemy(enemy) {
-    const x = enemy.x, y = enemy.y, elite = enemy.elite;
-    enemy.body.enable = false; enemy.setVelocity(0, 0); enemy.anims.stop();
-    this.cameras.main.shake(elite ? 90 : 40, elite ? .0045 : .0015);
-    this.playTone(elite ? 52 : 64, elite ? .11 : .06, 'sawtooth', .025, -18);
-    this.tweens.add({ targets: enemy, angle: enemy.flipX ? -28 : 28, y: y + 12, scaleX: enemy.scaleX * 1.15, scaleY: enemy.scaleY * .55, alpha: .35, duration: 180, onComplete: () => enemy.destroy() });
-    const burst = this.add.circle(x, y, elite ? 28 : 18, 0xd8954f, .55).setDepth(13);
-    this.tweens.add({ targets: burst, scale: 2.4, alpha: 0, duration: 180, onComplete: () => burst.destroy() });
-    for (let i = 0; i < (elite ? 3 : 1); i++) {
-      const s = this.scraps.create(x + Phaser.Math.Between(-12, 12), y + Phaser.Math.Between(-12, 12), 'scrap').setDepth(10);
-      s.setScale(elite ? .95 : .78); s.setCircle(11, 3, 3); s.setVelocity(Phaser.Math.Between(-90, 90), Phaser.Math.Between(-90, 90)); s.setBounce(.4);
     }
   }
 
@@ -373,28 +346,6 @@ class WreckmarchScene extends Phaser.Scene {
     this.tweens.add({ targets: this.scrapText, scale: 1.12, duration: 70, yoyo: true });
     const glow = this.add.circle(this.hero.x, this.hero.y, 18, 0x55d9e6, .35).setDepth(21);
     this.tweens.add({ targets: glow, scale: 2.1, alpha: 0, duration: 180, onComplete: () => glow.destroy() });
-  }
-
-  enemyTouchesHero(hero, enemy) {
-    const now = this.time.now;
-    if (!enemy.active || now < this.lastHeroHit + this.heroInvulnMs) return;
-    const damage = Math.max(1, Math.round(enemy.damage));
-    this.lastHeroHit = now;
-    this.heroHp = Math.max(0, this.heroHp - damage);
-
-    const away = new Phaser.Math.Vector2(this.hero.x - enemy.x, this.hero.y - enemy.y);
-    if (away.lengthSq() < 1) away.set(1, 0);
-    away.normalize().scale(190); this.heroKnockback.copy(away); this.heroKnockbackUntil = now + 140;
-
-    this.hero.setTintFill(0xff6a5d);
-    this.tweens.add({ targets: this.hero, alpha: .45, duration: 55, yoyo: true, repeat: 2, onComplete: () => { if (this.hero?.active) { this.hero.clearTint(); this.hero.setAlpha(1); } } });
-    this.cameras.main.shake(70, .0032); this.playTone(110, .055, 'square', .022, -45);
-
-    const damageText = this.add.text(this.hero.x, this.hero.y - 72, `-${damage}`, {
-      fontFamily: 'Arial Black, Arial', fontSize: '18px', color: '#ff7768', stroke: '#160e0d', strokeThickness: 4
-    }).setOrigin(.5).setDepth(80);
-    this.tweens.add({ targets: damageText, y: damageText.y - 34, alpha: 0, duration: 520, ease: 'Cubic.Out', onComplete: () => damageText.destroy() });
-    if (this.heroHp <= 0) this.endRun('RUNNER DOWN');
   }
 
   updateHUD() {
