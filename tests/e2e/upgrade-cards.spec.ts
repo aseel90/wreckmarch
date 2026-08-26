@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 960, height: 540 } });
 
-test('upgrade cards use HD vector art and expose all rarity treatments', async ({ page }) => {
+test('upgrade cards use compact gameplay icon art and expose all rarity treatments', async ({ page }) => {
   await page.goto('/?debug=1&autotest=1');
   await expect(page.locator('canvas')).toBeVisible({ timeout: 20_000 });
   await expect.poll(
@@ -39,14 +39,14 @@ test('upgrade cards use HD vector art and expose all rarity treatments', async (
     };
   });
 
-  expect(result.artSource).toBe('c5-upgrade-sheet');
+  expect(result.artSource).toBe('c3-atlas-icons');
   expect(result.premiumCards).toBe(true);
   expect(new Set(result.rarityValues)).toEqual(new Set(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']));
   expect(result.cards).toHaveLength(3);
   for (const card of result.cards) {
-    expect(card.texture).toBe('c5-upgrade-sheet');
-    expect(card.frameWidth).toBeGreaterThanOrEqual(480);
-    expect(card.frameHeight).toBeGreaterThanOrEqual(320);
+    expect(card.texture).toBe('c3-atlas');
+    expect(card.frameWidth).toBeGreaterThanOrEqual(70);
+    expect(card.frameHeight).toBeGreaterThanOrEqual(60);
     expect(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']).toContain(card.rarity);
     expect(card.rank).toBeGreaterThanOrEqual(0);
     expect(card.rank).toBeLessThanOrEqual(3);
