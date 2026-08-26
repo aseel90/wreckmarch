@@ -109,7 +109,18 @@ function installOverlayStateOwnership(scene) {
 
     window.__WM_END_RUN_LAYOUT__ = { width: W, height: H, overlay, heading, summary, btn, buttonLabel };
     document.documentElement.dataset.wreckmarchEndRunLayout = 'runtime-v1';
-    btn.on('pointerdown', () => this.scene.restart());
+    this.restartRun = () => {
+      if (this.__runRestarting) return;
+      this.__runRestarting = true;
+      btn.disableInteractive?.().setAlpha?.(.7);
+      buttonLabel.setText('RESTARTING…');
+      document.documentElement.dataset.wreckmarchRunRestart = 'reloading';
+      // Runtime phases patch this Scene instance after boot. A Phaser-only scene.restart()
+      // recreates base objects but leaves those patches pointing at destroyed objects.
+      // Reload the document so every phase is installed against one fresh scene.
+      window.location.reload();
+    };
+    btn.on('pointerdown', () => this.restartRun());
   };
 }
 
