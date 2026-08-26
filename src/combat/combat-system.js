@@ -17,6 +17,17 @@ export class CombatSystem {
     const scene = this.scene;
     if (scene.__combatOverlapsInstalled) return;
 
+    const activeColliders = scene.physics?.world?.colliders?.getActive?.() || [];
+    for (const collider of activeColliders) {
+      const projectilePair =
+        (collider.object1 === scene.bullets && collider.object2 === scene.enemies) ||
+        (collider.object1 === scene.enemies && collider.object2 === scene.bullets);
+      const playerPair =
+        (collider.object1 === scene.hero && collider.object2 === scene.enemies) ||
+        (collider.object1 === scene.enemies && collider.object2 === scene.hero);
+      if (projectilePair || playerPair) collider.destroy();
+    }
+
     scene.__enemyProjectileOverlap = scene.physics.add.overlap(
       scene.bullets,
       scene.enemies,
