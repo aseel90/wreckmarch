@@ -79,11 +79,11 @@ function installWeaponSockets(s){
     this.visualAimAngle=a;
     this.weaponV3Recoil*=.70;
   };
-  s.getWeaponMuzzle=function(spread=0){
-    if(Math.abs(spread)<.0001) return this.__c4Muzzle.clone();
-    const q=this.__c4AimPose>=0?this.__c4AimPose:aimIndex(this.weaponAim),a=q*Math.PI/4+spread;
-    return new Phaser.Math.Vector2(this.hero.x+Math.cos(a)*76,this.hero.y+8+Math.sin(a)*76);
-  };
+  s.weaponSystem.setMuzzleResolver(spread=>{
+    if(Math.abs(spread)<.0001) return s.__c4Muzzle.clone();
+    const q=s.__c4AimPose>=0?s.__c4AimPose:aimIndex(s.weaponAim),a=q*Math.PI/4+spread;
+    return new Phaser.Math.Vector2(s.hero.x+Math.cos(a)*76,s.hero.y+8+Math.sin(a)*76);
+  });
   s.updateWeaponPose();
 }
 
@@ -165,13 +165,13 @@ function rigSpringMove(s,time,delta){
   if(s.cartBody) s.cartBody.y=(s.__c3RigBaseBodyY??-6)+suspension;
   if(s.__c3Turret) s.__c3Turret.y=(s.__c3RigBaseTurretY??-32)+suspension*.55;
   if(speed>60&&time>st.dustAt+(speed>170?110:165)){st.dustAt=time;spawnDust(s,st,speed)}
-  const target=s.findNearestEnemy(s.cart.x,s.cart.y,560);if(!target||!s.__c3Turret) return;
+  const target=s.weaponSystem.acquireTarget(s.cart.x,s.cart.y,560);if(!target||!s.__c3Turret) return;
   const wa=Phaser.Math.Angle.Between(s.cart.x+20,s.cart.y-25,target.x,target.y),native=-.79,local=wa-s.cart.rotation-native;
   s.__c3Turret.rotation=Phaser.Math.Angle.RotateTo(s.__c3Turret.rotation,local,1.85*dt);
   const aimed=s.__c3Turret.rotation+s.cart.rotation+native;
   if(Math.abs(Phaser.Math.Angle.Wrap(wa-aimed))>.25||time<s.lastRigShot+s.rigFireDelay) return;
   s.lastRigShot=time;
-  (s.rigShots>1?[-.055,.055]:[0]).forEach(sp=>{const a=wa+sp,x=s.cart.x+20+Math.cos(a)*61,y=s.cart.y-25+Math.sin(a)*61,b=s.bullets.create(x,y,'bullet').setDepth(30).setScale(.66).setTint(0x66dce9);b.setCircle(8,2,2);b.damage=s.primaryWeapon.damage*s.rigDamageScale;b.life=1100;b.prevX=x;b.prevY=y;b.setVelocity(Math.cos(a)*680,Math.sin(a)*680);});
+  s.weaponSystem.fireSupportVolley({originX:s.cart.x+20,originY:s.cart.y-25,angle:wa,spreads:s.rigShots>1?[-.055,.055]:[0],muzzleDistance:61,speed:680,damage:s.primaryWeapon.damage*s.rigDamageScale,lifeMs:1100,scale:.66});
 }
 
 function debugVisuals(s){if(!window.__WM_DEBUG__) return;s.__c4Debug=s.add.graphics().setDepth(1000);s.__c4DebugText=s.add.text(12,74,'SOCKET DEBUG',{fontFamily:'monospace',fontSize:'10px',color:'#73ff8d',backgroundColor:'#061109'}).setScrollFactor(0).setDepth(1001);}
