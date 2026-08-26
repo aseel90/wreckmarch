@@ -182,13 +182,23 @@ function updateChase(scene, enemy, target, state, cfg, random, dt) {
   let sharpness = Number(cfg.chaseSharpness) || 8.5;
 
   const holdRange = Number(cfg.holdRange) || 132;
-  if (!ready && distance < holdRange) {
+  if (distance < holdRange) {
     const side = enemy.__houndOrbitSide || (enemy.__houndOrbitSide = random() < .5 ? -1 : 1);
     const tangentX = -ny * side;
     const tangentY = nx * side;
-    const retreat = clamp((holdRange - distance) / holdRange, 0, 1);
-    desiredX = (tangentX * .78 - nx * (.18 + retreat * .42)) * speed * .72;
-    desiredY = (tangentY * .78 - ny * (.18 + retreat * .42)) * speed * .72;
+
+    if (ready && distance < minRange) {
+      // The pounce is ready but the hound overshot its launch lane.
+      // Peel away diagonally until a readable launch gap exists instead of
+      // body-hugging the player forever.
+      const gap = clamp((minRange - distance) / minRange, 0, 1);
+      desiredX = (tangentX * .38 - nx * (.78 + gap * .28)) * speed * .86;
+      desiredY = (tangentY * .38 - ny * (.78 + gap * .28)) * speed * .86;
+    } else {
+      const retreat = clamp((holdRange - distance) / holdRange, 0, 1);
+      desiredX = (tangentX * .78 - nx * (.18 + retreat * .42)) * speed * .72;
+      desiredY = (tangentY * .78 - ny * (.18 + retreat * .42)) * speed * .72;
+    }
     sharpness = Number(cfg.holdSharpness) || 10.5;
   }
 

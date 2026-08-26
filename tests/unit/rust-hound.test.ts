@@ -66,4 +66,22 @@ describe('Rust Hound', () => {
     expect(enemy.__houndPhase).toBe('recover');
     expect(enemy.damage).toBe(12);
   });
+
+  it('peels out of point-blank range and rebuilds a readable pounce lane', () => {
+    const enemy = fakeHound();
+    enemy.x = 105;
+    enemy.y = 480;
+    const target: any = { x: 320, y: 480, body: { velocity: { x: 0, y: 0 } } };
+    const scene = fakeScene(0);
+    for (let frame = 0; frame < 120; frame += 1) {
+      scene.time.now = frame * 16.667;
+      updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
+      const dt = 16.667 / 1000;
+      enemy.x += enemy.body.velocity.x * dt;
+      enemy.y += enemy.body.velocity.y * dt;
+    }
+    expect(enemy.__houndTelegraphCount).toBeGreaterThanOrEqual(1);
+    expect(enemy.__houndPounceCount).toBeGreaterThanOrEqual(1);
+    expect(enemy.__houndMotion.maxObservedSpeed).toBeCloseTo(348, 3);
+  });
 });
