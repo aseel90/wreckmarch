@@ -18,7 +18,7 @@ describe('F0 production foundation', () => {
   it('keeps legacy boot visuals covered until D1 and E1 are complete', async () => {
     const html = await read('index.html');
     const css = await read('style.css');
-    expect(html).toContain('./style.css?v=10');
+    expect(html).toContain('./style.css?v=11');
     expect(css).toContain('body.visual-ready #boot');
     expect(css).not.toContain('body.ready #boot');
     expect(css).toContain('body.visual-ready #game');

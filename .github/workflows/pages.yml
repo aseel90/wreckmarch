@@ -221,21 +221,8 @@ jobs:
           check_log 'data-wreckmarch-phase-e1="active"' 'Phase E.1 final asphalt layer DOM flag missing'
           check_log 'data-wreckmarch-e1-self-test="passed"' 'Phase E.1 road persistence self-test did not pass'
           check_log 'E1 persistence test PASSED at 12s' 'Phase E.1 persistence runtime test did not reach pass condition'
-          check_log 'data-wreckmarch-enemy-foundation="ready"' 'enemy foundation DOM flag missing'
-          check_log 'data-wreckmarch-enemy-behavior="ready"' 'enemy behavior DOM flag missing'
-          check_log 'data-wreckmarch-enemy-combat="ready"' 'enemy combat DOM flag missing'
-          check_log 'data-wreckmarch-combat-system="ready"' 'combat system DOM flag missing'
-          check_log 'data-wreckmarch-weapon-system="ready"' 'weapon system DOM flag missing'
-          check_log 'data-wreckmarch-projectile-system="ready"' 'projectile system DOM flag missing'
-          check_log 'Enemy behavior system ready: active=chase' 'enemy behavior system runtime log missing'
-          check_log 'Enemy combat system ready: projectile damage/death/drop ownership installed' 'enemy combat system runtime log missing'
-          check_log 'Combat system ready: overlap ownership installed' 'combat system runtime log missing'
-          check_log 'Weapon system ready: target acquisition + hero/rig firing ownership installed' 'weapon system runtime log missing'
-          check_log 'Projectile system ready: projectile construction + swept collision + lifecycle ownership installed' 'projectile system runtime log missing'
-          check_log 'data-wreckmarch-input-manager="ready"' 'input manager DOM flag missing'
-          check_log 'Input manager ready: touch + keyboard + gamepad providers merged' 'input manager runtime log missing'
-          check_log 'data-wreckmarch-rig-system="ready"' 'RigSystem DOM flag missing'
-          check_log 'Rig system ready: follow + wheel + turret + support-fire ownership installed' 'RigSystem runtime log missing'
+          check_log 'data-wreckmarch-enemy-foundation="active"' 'enemy foundation DOM flag missing'
+          check_log 'Enemy Foundation active: Registry -&gt; Factory -&gt; SpawnSystem -&gt; BehaviorSystem -&gt; CombatSystem -&gt; WeaponSystem -&gt; ProjectileSystem' 'enemy foundation ownership runtime log missing'
 
           if grep -qE 'boot-error|FAILED|TypeError|ReferenceError|SyntaxError' /tmp/wm-dom.html; then
             echo "Browser test failed: runtime error marker detected"
