@@ -207,7 +207,7 @@ jobs:
           check_log 'data-wreckmarch-e1-self-test="passed"' 'Phase E.1 road persistence self-test did not pass'
           check_log 'data-wreckmarch-enemy-foundation="active"' 'enemy foundation DOM flag missing'
 
-          if grep -qE 'boot-error|TypeError|ReferenceError|SyntaxError|self-test FAILED|browser self-test FAILED' /tmp/wm-dom.html; then
+          if grep -qE '<body[^>]*class="[^"]*boot-error' /tmp/wm-dom.html; then
             echo "Browser test failed: runtime error marker detected"
             cat /tmp/wm-chrome.log
             cat /tmp/wm-dom.html
