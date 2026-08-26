@@ -2,7 +2,7 @@
 
 Persistent project implementation log. Update this file after every meaningful development batch.
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-26
 
 Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planned · ❌ superseded/removed
 
@@ -82,6 +82,19 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 - 🟡 Card balance and first-level timing still require mobile playtest tuning.
 - ❌ Continuous rotating single-arm Weapon Rig is superseded by the Phase C.1/C.3 directional two-handed pose system.
 - ⬜ Synergies/evolutions remain a later Phase C+ addition after the base card loop is validated.
+
+## Phase F0 — Production foundation / ownership cleanup
+
+- ✅ Data-driven playable-character boundary is live; Runner remains the only current character while future character definitions can supply their own stats/combat tuning.
+- ✅ Enemy definitions, registry, factory and spawn ownership are separated from the legacy scene.
+- ✅ Enemy movement is dispatched through `EnemyBehaviorSystem` with `chase` as the first behavior.
+- ✅ Enemy projectile damage, knockback, hit feedback, death and Scrap-drop rules are owned by `EnemyCombatSystem`.
+- ✅ Hero contact damage, knockback, hit feedback and invulnerability are owned by `PlayerDamageSystem`; Runner tuning lives in `CharacterDefinition`.
+- ✅ `CombatSystem` is now the authoritative live combat boundary and directly owns bullet/enemy and hero/enemy Arcade overlaps.
+- ✅ `game.js` no longer creates combat overlaps or contains legacy `onBulletHit`, `killEnemy`, or `enemyTouchesHero` implementations.
+- 🟡 Phase C swept-projectile collision still uses a compatibility `onBulletHit` adapter name, but the adapter contains no combat logic and dispatches immediately into `CombatSystem`; removing this last name-level shim is the next cleanup.
+- ✅ Unit + Playwright coverage guards single overlap ownership, projectile damage/death/drop parity, contact damage and Runner i-frames.
+- 🟡 Weapon firing/target acquisition and projectile lifetime still live in the historical Phase C/runtime layer; moving those behind a dedicated weapon/projectile owner is the next combat-adjacent cleanup, without changing current balance.
 
 ## Later roadmap
 
