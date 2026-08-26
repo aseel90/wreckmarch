@@ -192,7 +192,7 @@ function installSweptProjectileCollision(scene) {
       });
 
       if (bestEnemy && bullet.active) {
-        this.onBulletHit(bullet, bestEnemy);
+        this.combatSystem.hitEnemyByProjectile(bullet, bestEnemy);
         return;
       }
 
