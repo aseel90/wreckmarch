@@ -166,7 +166,17 @@ export class RigSystem {
     scene.cart.rotation = (scene.cart.rotation || 0) + (desiredRotation - (scene.cart.rotation || 0)) * rotationFollow;
 
     const spin = state.travel / 15;
-    scene.cartWheels?.forEach((wheel, index) => wheel.setRotation((index < 2 ? -1 : 1) * spin));
+    if (scene.__rigVisualType === 'robot-dog') {
+      const gait = state.travel * .095;
+      scene.cartWheels?.forEach((part) => {
+        if (part?.__dogPhase == null) return;
+        const swing = Math.sin(gait + part.__dogPhase) * .26 * motion;
+        part.setRotation(swing * (part.__dogLane || 1));
+      });
+      if (scene.__c3RigEye) scene.__c3RigEye.setAlpha(.72 + Math.sin(time * .012) * .22);
+    } else {
+      scene.cartWheels?.forEach((wheel, index) => wheel.setRotation((index < 2 ? -1 : 1) * spin));
+    }
 
     const suspension = Math.sin(state.travel * .085) * 1.45 * motion + Math.sin(time * .008) * .45 * motion;
     if (scene.cartBody) scene.cartBody.y = (scene.__c3RigBaseBodyY ?? -6) + suspension;
