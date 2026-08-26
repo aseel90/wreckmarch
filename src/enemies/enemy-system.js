@@ -2,8 +2,40 @@
 import { EnemyFactory } from './enemy-factory.js?v=1';
 import { SpawnSystem } from './spawn-system.js?v=1';
 import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=1';
+import { EnemyCombatSystem } from '../combat/enemy-combat-system.js?v=1';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function installCombatOverlap(scene) {
+  const activeColliders = scene.physics?.world?.colliders?.getActive?.() || [];
+  const legacyCollider = activeColliders.find(collider =>
+    collider?.active !== false &&
+    ((collider.object1 === scene.bullets && collider.object2 === scene.enemies) ||
+      (collider.object1 === scene.enemies && collider.object2 === scene.bullets)) &&
+    collider.collideCallback === scene.onBulletHit
+  );
+  if (!legacyCollider) throw new Error('Enemy Foundation could not locate the legacy bullet/enemy overlap');
+
+  scene.__legacyOnBulletHit = scene.onBulletHit.bind(scene);
+  scene.__legacyKillEnemy = scene.killEnemy.bind(scene);
+  legacyCollider.destroy();
+
+  scene.enemyCombatSystem = new EnemyCombatSystem(scene);
+  scene.onBulletHit = function(bullet, enemy) {
+    return this.enemyCombatSystem.hitByProjectile(bullet, enemy);
+  };
+  scene.killEnemy = function(enemy) {
+    return this.enemyCombatSystem.killEnemy(enemy);
+  };
+  scene.__enemyProjectileOverlap = scene.physics.add.overlap(
+    scene.bullets,
+    scene.enemies,
+    scene.onBulletHit,
+    undefined,
+    scene
+  );
+  scene.__enemyCombatFoundationReady = true;
+}
 
 async function getScene(timeoutMs = 9000) {
   const start = performance.now();
@@ -23,6 +55,7 @@ export async function installEnemyFoundation() {
   scene.enemyFactory = new EnemyFactory(scene);
   scene.spawnSystem = new SpawnSystem(scene, { factory: scene.enemyFactory });
   scene.enemyBehaviorSystem = new EnemyBehaviorSystem(scene);
+  installCombatOverlap(scene);
 
   scene.__legacySpawnEnemy = scene.spawnEnemy.bind(scene);
   scene.spawnEnemy = function(elite = false) {
@@ -38,6 +71,6 @@ export async function installEnemyFoundation() {
   scene.__enemyBehaviorFoundationReady = true;
   window.__WM_ENEMY_FOUNDATION__ = true;
   document.documentElement.dataset.wreckmarchEnemyFoundation = 'active';
-  window.__WM_LOG__?.('Enemy Foundation active: Registry -> Factory -> SpawnSystem -> BehaviorSystem');
+  window.__WM_LOG__?.('Enemy Foundation active: Registry -> Factory -> SpawnSystem -> BehaviorSystem -> CombatSystem');
   return scene;
 }
