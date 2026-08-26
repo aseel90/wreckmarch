@@ -22,9 +22,22 @@ test('routes live hero contact through PlayerDamageSystem and preserves Runner i
     const system = scene.playerDamageSystem;
     const baseHit = system.hitByContact.bind(system);
     scene.__playerDamageTestHits = [];
+    scene.__playerDamageFirstSnapshot = null;
     system.hitByContact = function(hero: any, enemy: any) {
       const result = baseHit(hero, enemy);
       scene.__playerDamageTestHits.push(result);
+      if (result && !result.ignored && !scene.__playerDamageFirstSnapshot) {
+        const immediateRepeat = baseHit(hero, enemy);
+        scene.__playerDamageFirstSnapshot = {
+          hp: scene.heroHp,
+          result,
+          immediateRepeat,
+          repeatHp: scene.heroHp,
+          knockbackX: scene.heroKnockback.x,
+          knockbackY: scene.heroKnockback.y
+        };
+        enemy.setPosition(hero.x - 300, hero.y);
+      }
       return result;
     };
 
@@ -76,13 +89,7 @@ test('routes live hero contact through PlayerDamageSystem and preserves Runner i
   const firstHit = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
-    const result = scene.__playerDamageTestHits.find((entry: any) => entry && !entry.ignored);
-    return {
-      hp: scene.heroHp,
-      result,
-      knockbackX: scene.heroKnockback.x,
-      knockbackY: scene.heroKnockback.y
-    };
+    return scene.__playerDamageFirstSnapshot;
   });
 
   expect(firstHit.hp).toBe(90);
@@ -90,15 +97,6 @@ test('routes live hero contact through PlayerDamageSystem and preserves Runner i
   expect(firstHit.result.knockbackX).toBeCloseTo(190, 2);
   expect(firstHit.result.knockbackY).toBeCloseTo(0, 2);
   expect(firstHit.knockbackX).toBeCloseTo(190, 2);
-
-  const immediateRepeat = await page.evaluate(() => {
-    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-    const scene = game.scene.getScene('Wreckmarch');
-    const enemy = scene.enemies.getChildren().find((object: any) => object?.active);
-    const result = scene.playerDamageSystem.hitByContact(scene.hero, enemy);
-    return { hp: scene.heroHp, result };
-  });
-
-  expect(immediateRepeat.hp).toBe(90);
-  expect(immediateRepeat.result).toMatchObject({ ignored: true, appliedDamage: 0, nextHp: 90 });
+  expect(firstHit.repeatHp).toBe(90);
+  expect(firstHit.immediateRepeat).toMatchObject({ ignored: true, appliedDamage: 0, nextHp: 90 });
 });
