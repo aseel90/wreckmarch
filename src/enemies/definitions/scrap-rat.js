@@ -3,6 +3,7 @@ export const SCRAP_RAT_DEFINITION = Object.freeze({
   id: 'scrap-rat',
   name: 'Scrap Rat',
   behavior: 'chase',
+  threatValue: 1,
   combat: Object.freeze({
     incomingDamageMultiplier: 1,
     projectileKnockbackMultiplier: 1,
