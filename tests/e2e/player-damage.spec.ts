@@ -56,10 +56,10 @@ test('routes live hero contact through PlayerDamageSystem and preserves Runner i
     );
 
     return {
-      ready: scene.__playerDamageFoundationReady === true,
+      ready: scene.__combatSystemReady === true,
       system: system.constructor.name,
       contactColliderCount: contactColliders.length,
-      colliderUsesLiveCallback: contactColliders[0]?.collideCallback === scene.enemyTouchesHero,
+      colliderUsesLiveCallback: contactColliders[0]?.collideCallback === scene.combatSystem.handlePlayerContact,
       characterId: scene.characterId,
       profile: scene.playerCombatProfile
     };

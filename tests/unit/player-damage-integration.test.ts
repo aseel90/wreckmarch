@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 
+const game = fs.readFileSync(new URL('../../src/game.js', import.meta.url), 'utf8');
 const enemySystem = fs.readFileSync(new URL('../../src/enemies/enemy-system.js', import.meta.url), 'utf8');
+const combat = fs.readFileSync(new URL('../../src/combat/combat-system.js', import.meta.url), 'utf8');
 const characterSystem = fs.readFileSync(new URL('../../src/characters/character-system.js', import.meta.url), 'utf8');
 const runner = fs.readFileSync(new URL('../../src/characters/definitions/runner.js', import.meta.url), 'utf8');
 
 describe('live PlayerDamageSystem integration', () => {
-  it('moves hero/enemy overlap ownership into PlayerDamageSystem with rollback access', () => {
-    expect(enemySystem).toContain("import { PlayerDamageSystem } from '../combat/player-damage-system.js?v=1'");
-    expect(enemySystem).toContain('collider.collideCallback === scene.enemyTouchesHero');
-    expect(enemySystem).toContain('scene.__legacyEnemyTouchesHero = scene.enemyTouchesHero.bind(scene)');
-    expect(enemySystem).toContain('legacyCollider.destroy()');
-    expect(enemySystem).toContain('scene.playerDamageSystem = new PlayerDamageSystem(scene)');
-    expect(enemySystem).toContain('scene.__playerEnemyOverlap = scene.physics.add.overlap(');
-    expect(enemySystem).toContain('return this.playerDamageSystem.hitByContact(hero, enemy)');
+  it('owns hero/enemy contact through CombatSystem instead of the base scene', () => {
+    expect(game).not.toContain('this.physics.add.overlap(this.hero, this.enemies');
+    expect(game).not.toContain('enemyTouchesHero(hero, enemy)');
+    expect(enemySystem).toContain('scene.playerDamageSystem = scene.combatSystem.player');
+    expect(combat).toContain('scene.__playerEnemyOverlap = scene.physics.add.overlap(');
+    expect(combat).toContain('this.handlePlayerContact');
+    expect(combat).toContain('return this.player.hitByContact(hero, enemy)');
     expect(enemySystem).toContain('__playerDamageFoundationReady = true');
   });
 

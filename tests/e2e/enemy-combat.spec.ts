@@ -54,10 +54,10 @@ test('routes the live Arcade bullet overlap through EnemyCombatSystem', async ({
     bullet.setVelocity(690, -120);
 
     return {
-      ready: scene.__enemyCombatFoundationReady === true,
+      ready: scene.__combatSystemReady === true,
       system: combat.constructor.name,
       projectileColliderCount: projectileColliders.length,
-      colliderUsesLiveCallback: projectileColliders[0]?.collideCallback === scene.onBulletHit,
+      colliderUsesLiveCallback: projectileColliders[0]?.collideCallback === scene.combatSystem.handleProjectileOverlap,
       enemyId: enemy.enemyId,
       productionVisual: enemy.__scrapRatVisual === true,
       profile: enemy.combatProfile
