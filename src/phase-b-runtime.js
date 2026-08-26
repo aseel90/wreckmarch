@@ -58,9 +58,6 @@ function addWreck(scene, x, y, rot = 0) {
 
 function buildExpandedWasteland(scene) {
   clearOldArena(scene);
-
-  // TerrainSystem owns all ground and road rendering. Phase B now contributes
-  // only temporary world props that later art phases may replace.
   addWreck(scene, 330, 790, -.18);
   addWreck(scene, 1550, 470, .11);
   addWreck(scene, 1780, 1520, -.28);
@@ -206,14 +203,6 @@ function installOutsideViewportSpawns(scene) {
     enemy.setPosition(x, y);
     enemy.body?.reset?.(x, y);
   };
-
-  scene.updateBullets = function(delta) {
-    this.bullets.children.iterate(b => {
-      if (!b?.active) return;
-      b.life -= delta;
-      if (b.life <= 0 || b.x < -60 || b.x > WORLD_W + 60 || b.y < -60 || b.y > WORLD_H + 60) b.destroy();
-    });
-  };
 }
 
 function installVisibleStarterWeapon(scene) {
@@ -240,14 +229,6 @@ function installVisibleStarterWeapon(scene) {
     this.weaponSprite.setFlipY(Math.cos(ang) < 0);
   };
 
-  scene.getWeaponMuzzle = function() {
-    const ang = this.weaponAim;
-    return new Phaser.Math.Vector2(
-      this.weaponSprite.x + Math.cos(ang) * this.primaryWeapon.muzzleDistance,
-      this.weaponSprite.y + Math.sin(ang) * this.primaryWeapon.muzzleDistance
-    );
-  };
-
   scene.equipPrimaryWeapon = function(definition) {
     this.primaryWeapon = { ...this.primaryWeapon, ...definition };
     if (definition.texture) this.weaponSprite.setTexture(definition.texture);
@@ -255,35 +236,29 @@ function installVisibleStarterWeapon(scene) {
     this.fireDelay = this.primaryWeapon.fireDelay;
   };
 
-  scene.autoFire = function(time) {
-    const target = this.findNearestEnemy(this.hero.x, this.hero.y, this.primaryWeapon.range);
-
-    if (target) {
-      const desired = Phaser.Math.Angle.Between(this.hero.x, this.hero.y + 4, target.x, target.y);
-      this.weaponAim = Phaser.Math.Angle.RotateTo(this.weaponAim, desired, .22);
-    } else if (this.move.lengthSq() > .05) {
-      this.weaponAim = Phaser.Math.Angle.RotateTo(this.weaponAim, Math.atan2(this.move.y, this.move.x), .14);
+  scene.projectileSystem.configureBounds({ minX: -60, maxX: WORLD_W + 60, minY: -60, maxY: WORLD_H + 60 });
+  scene.weaponSystem.configureHero({
+    aimYOffset: 4,
+    targetTurnRate: .22,
+    moveTurnRate: .14,
+    twinSpread2: .055,
+    twinSpread3: .085,
+    projectile: { lifeMs: 1120, scale: .74, radius: 7, offsetX: 3, offsetY: 3 },
+    muzzleResolver: () => {
+      const ang = scene.weaponAim;
+      return new Phaser.Math.Vector2(
+        scene.weaponSprite.x + Math.cos(ang) * scene.primaryWeapon.muzzleDistance,
+        scene.weaponSprite.y + Math.sin(ang) * scene.primaryWeapon.muzzleDistance
+      );
+    },
+    fireFeedback: ({ angle, muzzle }) => {
+      const flash = scene.add.image(muzzle.x, muzzle.y, 'flash').setDepth(31).setRotation(angle).setScale(.58);
+      scene.tweens.add({ targets: flash, alpha: 0, scale: .12, duration: 70, onComplete: () => flash.destroy() });
+      scene.weaponSprite.x -= Math.cos(angle) * 5;
+      scene.weaponSprite.y -= Math.sin(angle) * 5;
+      scene.playTone(165, .045, 'square', .019, -34);
     }
-    this.updateWeaponPose();
-
-    if (!target || time < this.lastShot + this.primaryWeapon.fireDelay) return;
-    this.lastShot = time;
-
-    const ang = this.weaponAim;
-    const muzzle = this.getWeaponMuzzle();
-    const bullet = this.bullets.create(muzzle.x, muzzle.y, 'bullet').setDepth(30).setScale(.74);
-    bullet.setCircle(7, 3, 3);
-    bullet.damage = this.primaryWeapon.damage;
-    bullet.life = 1120;
-    bullet.setVelocity(Math.cos(ang) * this.primaryWeapon.projectileSpeed, Math.sin(ang) * this.primaryWeapon.projectileSpeed);
-
-    const flash = this.add.image(muzzle.x, muzzle.y, 'flash').setDepth(31).setRotation(ang).setScale(.58);
-    this.tweens.add({ targets: flash, alpha: 0, scale: .12, duration: 70, onComplete: () => flash.destroy() });
-
-    this.weaponSprite.x -= Math.cos(ang) * 5;
-    this.weaponSprite.y -= Math.sin(ang) * 5;
-    this.playTone(165, .045, 'square', .019, -34);
-  };
+  });
 }
 
 export async function applyPhaseB() {

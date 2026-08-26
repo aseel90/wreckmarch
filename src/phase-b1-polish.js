@@ -69,12 +69,31 @@ function addWorldProps(scene) {
 
 function rebuildWasteland(scene) {
   clearOldWorldArt(scene);
-  // TerrainSystem remains untouched; B.1 only installs its higher fidelity props.
   addWorldProps(scene);
 }
 
 function repinWeapon(scene) {
   scene.primaryWeapon = { ...scene.primaryWeapon, texture: 'b1-rivet-gun', muzzleDistance: 37 };
+  scene.weaponSystem.configureHero({
+    aimYOffset: 7,
+    targetTurnRate: .22,
+    moveTurnRate: .14,
+    projectile: { lifeMs: 1120, scale: .74, radius: 7, offsetX: 3, offsetY: 3 },
+    muzzleResolver: () => {
+      const ang = scene.weaponAim;
+      const side = scene.weaponHandSide || 1;
+      const anchorX = scene.weaponAnchor.x || scene.hero.x + side * 28;
+      const anchorY = scene.weaponAnchor.y || scene.hero.y + 16;
+      return new Phaser.Math.Vector2(anchorX + Math.cos(ang) * scene.primaryWeapon.muzzleDistance, anchorY + Math.sin(ang) * scene.primaryWeapon.muzzleDistance);
+    },
+    fireFeedback: ({ angle, muzzle }) => {
+      const flash = scene.add.image(muzzle.x, muzzle.y, 'flash').setDepth(31).setRotation(angle).setScale(.52);
+      scene.tweens.add({ targets: flash, alpha: 0, scale: .1, duration: 70, onComplete: () => flash.destroy() });
+      scene.weaponSprite.x -= Math.cos(angle) * 4;
+      scene.weaponSprite.y -= Math.sin(angle) * 4;
+      scene.playTone?.(165, .045, 'square', .019, -34);
+    }
+  });
   scene.weaponSprite.setTexture('b1-rivet-gun').setScale(.54).setDepth(24);
   scene.weaponAnchor = new Phaser.Math.Vector2();
   scene.weaponHandSide = 1;
@@ -89,37 +108,6 @@ function repinWeapon(scene) {
     this.weaponSprite.setPosition(handX, handY);
     this.weaponSprite.setRotation(ang);
     this.weaponSprite.setFlipY(side < 0);
-  };
-  scene.getWeaponMuzzle = function() {
-    const ang = this.weaponAim;
-    const side = this.weaponHandSide || 1;
-    const anchorX = this.weaponAnchor.x || this.hero.x + side * 28;
-    const anchorY = this.weaponAnchor.y || this.hero.y + 16;
-    return new Phaser.Math.Vector2(anchorX + Math.cos(ang) * this.primaryWeapon.muzzleDistance, anchorY + Math.sin(ang) * this.primaryWeapon.muzzleDistance);
-  };
-  scene.autoFire = function(time) {
-    const target = this.findNearestEnemy(this.hero.x, this.hero.y, this.primaryWeapon.range);
-    if (target) {
-      const desired = Phaser.Math.Angle.Between(this.hero.x, this.hero.y + 7, target.x, target.y);
-      this.weaponAim = Phaser.Math.Angle.RotateTo(this.weaponAim, desired, .22);
-    } else if (this.move.lengthSq() > .05) {
-      this.weaponAim = Phaser.Math.Angle.RotateTo(this.weaponAim, Math.atan2(this.move.y, this.move.x), .14);
-    }
-    this.updateWeaponPose();
-    if (!target || time < this.lastShot + this.primaryWeapon.fireDelay) return;
-    this.lastShot = time;
-    const ang = this.weaponAim;
-    const muzzle = this.getWeaponMuzzle();
-    const bullet = this.bullets.create(muzzle.x, muzzle.y, 'bullet').setDepth(30).setScale(.74);
-    bullet.setCircle(7, 3, 3);
-    bullet.damage = this.primaryWeapon.damage;
-    bullet.life = 1120;
-    bullet.setVelocity(Math.cos(ang) * this.primaryWeapon.projectileSpeed, Math.sin(ang) * this.primaryWeapon.projectileSpeed);
-    const flash = this.add.image(muzzle.x, muzzle.y, 'flash').setDepth(31).setRotation(ang).setScale(.52);
-    this.tweens.add({ targets: flash, alpha: 0, scale: .1, duration: 70, onComplete: () => flash.destroy() });
-    this.weaponSprite.x -= Math.cos(ang) * 4;
-    this.weaponSprite.y -= Math.sin(ang) * 4;
-    this.playTone?.(165, .045, 'square', .019, -34);
   };
   scene.updateWeaponPose();
 }
