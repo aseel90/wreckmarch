@@ -13,19 +13,21 @@ const defs = `
 
 function heroSvg(step = 0) {
   const run = step !== 0;
-  const sign = step > 0 ? 1 : -1;
-  const bob = run ? 1 : 0;
-  const frontLeg = run ? 7 * sign : 0;
+  const stride = Math.max(-1, Math.min(1, step));
+  const bob = run ? (Math.abs(stride) < .6 ? 3 : 0) : 0;
+  const frontLeg = run ? 13 * stride : 0;
   const backLeg = -frontLeg;
-  const arm = run ? -7 * sign : 0;
-  const scarf = run ? 7 : 2;
+  const frontLift = run ? (stride > .15 ? -3 : stride < -.15 ? 2 : 0) : 0;
+  const backLift = run ? (stride < -.15 ? -3 : stride > .15 ? 2 : 0) : 0;
+  const arm = run ? -10 * stride : 0;
+  const scarf = run ? 8 + Math.abs(stride) * 2 : 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 148">${defs}
   <ellipse cx="63" cy="140" rx="34" ry="6" fill="#000" opacity=".2"/>
   <g transform="translate(0 ${bob})" stroke="#241b18" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
     <path d="M44 54 C28 ${53-scarf} 17 ${56-scarf} 6 ${65-scarf} C21 ${67-scarf} 32 ${73-scarf} 47 68Z" fill="#ba4b2f"/>
     <path d="M45 61 C29 ${62+scarf/2} 17 ${72+scarf/2} 10 ${79+scarf/2} C27 78 37 79 50 71Z" fill="#8d3427"/>
-    <g transform="translate(${backLeg*.48} 0)"><path d="M67 101L83 103 87 127 75 131 64 112Z" fill="#383630"/><path d="M72 124L91 124 97 136 72 140 64 133Z" fill="url(#leather)"/></g>
-    <g transform="translate(${frontLeg*.48} 0)"><path d="M45 101L62 103 58 128 44 131 37 111Z" fill="#454139"/><path d="M41 125L61 126 66 137 39 140 32 133Z" fill="url(#leather)"/></g>
+    <g transform="translate(${backLeg*.62} ${backLift}) rotate(${-stride*5} 76 108)"><path d="M67 101L83 103 87 127 75 131 64 112Z" fill="#383630"/><path d="M72 124L91 124 97 136 72 140 64 133Z" fill="url(#leather)"/></g>
+    <g transform="translate(${frontLeg*.62} ${frontLift}) rotate(${stride*5} 53 108)"><path d="M45 101L62 103 58 128 44 131 37 111Z" fill="#454139"/><path d="M41 125L61 126 66 137 39 140 32 133Z" fill="url(#leather)"/></g>
     <path d="M37 59Q43 51 55 50L78 51Q91 55 94 69L89 105Q68 112 42 105L33 72Z" fill="#8b6543"/>
     <path d="M49 61L79 61 83 99Q66 104 48 99Z" fill="#263038"/>
     <path d="M51 62L63 78 75 62" fill="none" stroke="#c0874b"/>
@@ -64,7 +66,8 @@ async function getScene(timeoutMs = 9000) {
 function loadSvgPack(scene) {
   const files = {
     'art-hero-idle-0': heroSvg(0), 'art-hero-idle-1': heroSvg(0),
-    'art-hero-run-0': heroSvg(-1), 'art-hero-run-1': heroSvg(1),
+    'art-hero-run-0': heroSvg(-1), 'art-hero-run-1': heroSvg(-.34),
+    'art-hero-run-2': heroSvg(.34), 'art-hero-run-3': heroSvg(1),
     'art-fortress-body': fortressSvg(), 'art-turret': turretSvg(), 'art-wheel': wheelSvg(),
     'art-wasteland': wastelandSvg(), 'art-scrap-pile': scrapPileSvg(), 'art-barrel': barrelSvg()
   };
@@ -92,7 +95,7 @@ function loadSvgPack(scene) {
 
 function rebuildAnimations(scene) {
   ['hero-run', 'hero-idle'].forEach(key => scene.anims.exists(key) && scene.anims.remove(key));
-  scene.anims.create({ key: 'hero-run', frames: [{key:'art-hero-run-0'},{key:'art-hero-run-1'}], frameRate: 9, repeat: -1 });
+  scene.anims.create({ key: 'hero-run', frames: [{key:'art-hero-run-0'},{key:'art-hero-run-1'},{key:'art-hero-run-2'},{key:'art-hero-run-3'}], frameRate: 12, repeat: -1 });
   scene.anims.create({ key: 'hero-idle', frames: [{key:'art-hero-idle-0'},{key:'art-hero-idle-1'}], frameRate: 2, repeat: -1 });
 }
 

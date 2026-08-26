@@ -1,7 +1,5 @@
 /* WRECKMARCH Phase D.1 — animated runner + integrated mechanical arm + premium PNG cards + real roads + vehicle scale */
-import { CharacterSystem } from './characters/character-system.js?v=2';
-import { loadRunnerLocomotionArt } from './characters/runner-locomotion-art.js?v=1';
-import { installMobileHudPolish } from './mobile-hud-polish.js?v=1';
+import { CharacterSystem } from './characters/character-system.js?v=1';
 const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const COLORS={HERO:0xd98446,UTILITY:0x4fc8d8,FORTRESS:0xd4ad62,EVOLUTION:0x9d6be8};
@@ -67,4 +65,4 @@ function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_D1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchD1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`D1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase D.1 self-test failed: '+detail)
 }
 
-export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installMobileHudPolish(s);installVehicleScale(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: animated Runner + integrated mechanical arm + premium PNG card art + visible asphalt + real vehicle scale');selfTest(s);return true}
+export async function applyPhaseD1(){const s=await getScene();installRunnerAndMechanicalArm(s);installVehicleScale(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: animated Runner + integrated mechanical arm + premium PNG card art + visible asphalt + real vehicle scale');selfTest(s);return true}

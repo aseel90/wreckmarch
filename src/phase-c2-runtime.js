@@ -59,22 +59,26 @@ function repositionHud(scene, W, H) {
     .filter(obj => obj?.name === 'c2-hud-shade')
     .forEach(obj => obj.destroy());
 
-  scene.add.rectangle(W / 2, 36, W, 72, 0x090d13, .92)
+  const edge = Phaser.Math.Clamp(Math.round(W * .018), 14, 22);
+  const hudH = 66;
+  scene.add.rectangle(W / 2, hudH / 2, W, hudH, 0x090d13, .94)
     .setDepth(890).setScrollFactor(0).setName('c2-hud-shade');
 
-  scene.titleText.setPosition(20, 10).setFontSize(20).setDepth(920).setScrollFactor(0);
-  scene.timerText.setPosition(W - 20, 12).setFontSize(15).setDepth(920).setScrollFactor(0);
-  scene.waveText.setPosition(W / 2, 12).setFontSize(11).setDepth(920).setScrollFactor(0);
+  // Mobile-first hierarchy: run identity left, progression centered, time right.
+  scene.titleText.setOrigin(0, 0).setPosition(edge, 7).setFontSize(17).setDepth(920).setScrollFactor(0);
+  scene.waveText.setOrigin(0, 0).setPosition(edge, 33).setFontSize(10).setDepth(920).setScrollFactor(0);
+  scene.timerText.setOrigin(1, 0).setPosition(W - edge, 8).setFontSize(15).setDepth(920).setScrollFactor(0);
 
-  const barW = Phaser.Math.Clamp(Math.round(W * .50), 360, 650);
+  const barW = Phaser.Math.Clamp(Math.round(W * .43), 350, 500);
   const barX = W / 2;
-  const barY = 51;
-  scene.levelText.setPosition(barX - barW / 2 - 18, barY - 1).setFontSize(11).setDepth(922).setScrollFactor(0);
-  scene.scrapText.setPosition(barX + barW / 2 + 18, barY - 2).setFontSize(12).setDepth(922).setScrollFactor(0);
+  const barY = 43;
+  const labelGap = 13;
+  scene.levelText.setOrigin(1, .5).setPosition(barX - barW / 2 - labelGap, barY).setFontSize(11).setDepth(922).setScrollFactor(0);
+  scene.scrapText.setOrigin(0, .5).setPosition(barX + barW / 2 + labelGap, barY).setFontSize(11).setDepth(922).setScrollFactor(0);
   scene.xpBg?.destroy?.();
   scene.xpFill?.destroy?.();
-  scene.xpBg = scene.add.rectangle(barX, barY, barW, 10, 0x111820, .98)
-    .setStrokeStyle(2, 0x59636d, .75).setDepth(918).setScrollFactor(0);
+  scene.xpBg = scene.add.rectangle(barX, barY, barW, 11, 0x111820, .98)
+    .setStrokeStyle(1.5, 0x68727c, .78).setDepth(918).setScrollFactor(0);
   scene.xpFill = scene.add.rectangle(barX - (barW - 6) / 2, barY, barW - 6, 6, 0x55d7e5, 1)
     .setOrigin(0, .5).setDepth(919).setScrollFactor(0);
 
@@ -85,7 +89,10 @@ function repositionHud(scene, W, H) {
   scene.joyKnob.setPosition(joyX, joyY).setScrollFactor(0);
   scene.joyHomeX = joyX;
   scene.joyHomeY = joyY;
-  if (scene.hitboxButton) scene.hitboxButton.setPosition(W - 18, H - 42).setScrollFactor(0).setDepth(5100);
+  if (scene.hitboxButton) scene.hitboxButton.setPosition(W - edge, H - 42).setScrollFactor(0).setDepth(5100);
+
+  scene.__mobileHudLayout = { width: W, height: H, hudH, edge, barX, barY, barW };
+  document.documentElement.dataset.wreckmarchHud = 'mobile-compact-v1';
   scene.refreshProgressHud?.();
 }
 

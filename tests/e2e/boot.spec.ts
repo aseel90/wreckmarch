@@ -54,10 +54,57 @@ test('boots the current game, routes movement through InputManager, and keeps as
     terrainOwner: 'e1',
     characterId: 'runner',
     characterReady: true,
-    characterAnimation: 'character-runner-idle',
+    characterAnimation: 'hero-idle',
     scrapRatReady: true,
     scrapRatDataset: 'production-master'
   });
+
+  const mobileHud = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    const layout = scene.__mobileHudLayout;
+    return {
+      dataset: document.documentElement.dataset.wreckmarchHud,
+      viewport: document.documentElement.dataset.wreckmarchViewport,
+      layout,
+      title: { x: scene.titleText.x, y: scene.titleText.y },
+      wave: { x: scene.waveText.x, y: scene.waveText.y },
+      timer: { x: scene.timerText.x, y: scene.timerText.y },
+      level: { x: scene.levelText.x, y: scene.levelText.y },
+      scrap: { x: scene.scrapText.x, y: scene.scrapText.y }
+    };
+  });
+  expect(mobileHud.dataset).toBe('mobile-compact-v1');
+  expect(mobileHud.viewport).toBe('960x540');
+  expect(mobileHud.layout.hudH).toBeLessThanOrEqual(68);
+  expect(mobileHud.layout.barW).toBeGreaterThanOrEqual(400);
+  expect(mobileHud.title.x).toBeLessThan(30);
+  expect(mobileHud.wave.x).toBeLessThan(30);
+  expect(mobileHud.timer.x).toBeGreaterThan(930);
+  expect(mobileHud.level.x).toBeLessThan(mobileHud.layout.barX - mobileHud.layout.barW / 2);
+  expect(mobileHud.scrap.x).toBeGreaterThan(mobileHud.layout.barX + mobileHud.layout.barW / 2);
+
+  await page.keyboard.down('ArrowRight');
+  const runnerCycle = await page.evaluate(async () => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    const samples: string[] = [];
+    for (let i = 0; i < 10; i += 1) {
+      samples.push(String(scene.hero?.texture?.key || ''));
+      await new Promise(resolve => setTimeout(resolve, 70));
+    }
+    return {
+      samples,
+      animation: scene.hero?.anims?.currentAnim?.key,
+      runFrames: scene.anims.get('hero-run')?.frames?.length || 0,
+      moving: scene.move?.lengthSq?.() > .05
+    };
+  });
+  await page.keyboard.up('ArrowRight');
+  expect(runnerCycle.animation).toBe('hero-run');
+  expect(runnerCycle.runFrames).toBeGreaterThanOrEqual(4);
+  expect(runnerCycle.moving).toBe(true);
+  expect(new Set(runnerCycle.samples.filter(key => /^art-hero-run-[0-3]$/.test(key))).size).toBeGreaterThanOrEqual(3);
 
   const terrainOwnership = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
@@ -209,7 +256,7 @@ test('boots the current game, routes movement through InputManager, and keeps as
     id: 'runner',
     maxHp: 100,
     speed: 255,
-    animation: 'character-runner-run'
+    animation: 'hero-run'
   });
   await page.waitForTimeout(120);
   await page.keyboard.up('ArrowRight');
