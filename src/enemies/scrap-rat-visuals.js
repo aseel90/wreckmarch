@@ -65,12 +65,11 @@ function replaceTextureAnimation(scene, key, textureKeys, frameRate, repeat) {
 function installAnimations(scene) {
   replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.idle, RUN_TEXTURES.slice(0, 2), 3, -1);
   replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.run, RUN_TEXTURES, 8, -1);
-  // Legacy gameplay still asks for rat-run during spawn. Keep that key mapped to the static master cycle.
   replaceTextureAnimation(scene, 'rat-run', RUN_TEXTURES, 8, -1);
 }
 
 export function tuneScrapRatVisual(enemy) {
-  if (!enemy?.active) return enemy;
+  if (!enemy?.active || enemy.enemyId !== 'scrap-rat') return enemy;
   const elite = Boolean(enemy.elite);
   enemy.__scrapRatStrideTween?.stop?.();
   enemy.__scrapRatStrideTween = null;
@@ -94,7 +93,7 @@ function installSpawnVisuals(scene) {
     const before = new Set(this.enemies.getChildren());
     const result = baseSpawn(elite);
     this.enemies.children.iterate(enemy => {
-      if (enemy?.active && !before.has(enemy)) tuneScrapRatVisual(enemy);
+      if (enemy?.active && !before.has(enemy) && enemy.enemyId === 'scrap-rat') tuneScrapRatVisual(enemy);
     });
     return result;
   };
