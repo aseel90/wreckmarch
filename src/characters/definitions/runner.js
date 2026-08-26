@@ -42,19 +42,19 @@ export const RUNNER_CHARACTER = Object.freeze({
     }),
     run: Object.freeze({
       key: 'character-runner-run',
-      frames: Object.freeze(['art-hero-run-0', 'art-hero-run-1']),
-      frameRate: 10
+      frames: Object.freeze(['runner-run-0', 'runner-run-1', 'runner-run-2', 'runner-run-3']),
+      frameRate: 12
     })
   }),
   locomotion: Object.freeze({
     movingThresholdSq: .035,
     flipThreshold: .1,
-    leanRadians: .035,
-    leanLerp: .18,
-    settleLerp: .2,
+    leanRadians: .055,
+    leanLerp: .22,
+    settleLerp: .24,
     animationBaseSpeed: 255,
-    minTimeScale: .82,
-    maxTimeScale: 1.25
+    minTimeScale: .72,
+    maxTimeScale: 1.32
   }),
   weapon: Object.freeze({
     socketOffsetX: 15,
