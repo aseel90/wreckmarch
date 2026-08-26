@@ -4,33 +4,36 @@ import fs from 'node:fs';
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
 describe('production Scrap Rat visuals', () => {
-  it('ships the approved 12-frame sprite sheet as local chunked runtime data', () => {
+  it('ships four static baked run master frames', () => {
     const asset = read('src/enemies/scrap-rat-asset.js');
-    const chunks = Array.from({ length: 8 }, (_, i) => read(`src/enemies/assets/scrap-rat-sheet-${i}.js`));
-    expect(asset).toContain('SCRAP_RAT_FRAME_SIZE = 128');
-    expect(asset).toContain('SCRAP_RAT_FRAME_COUNT = 12');
-    expect(asset).toContain('data:image/webp;base64,');
-    expect(chunks.every(chunk => chunk.length > 10_000)).toBe(true);
-    expect(chunks.reduce((sum, chunk) => sum + chunk.length, 0)).toBeGreaterThan(90_000);
+    const masters = Array.from({ length: 4 }, (_, i) => read(`src/enemies/assets/scrap-rat-run-master-${i}.js`));
+    expect(asset).toContain('SCRAP_RAT_RUN_FRAME_COUNT = 4');
+    expect(asset).toContain('SCRAP_RAT_RUN_MASTER_DATA');
+    expect(asset).not.toContain('scrap-rat-sheet-0.js');
+    expect(masters.every(frame => frame.includes('data:image/webp;base64,'))).toBe(true);
+    expect(masters.every(frame => frame.length > 4_500)).toBe(true);
   });
 
-  it('uses four distinct run poses while reserving hit and death frames for combat', () => {
+  it('uses the static four-pose master for normal running', () => {
     const visuals = read('src/enemies/scrap-rat-visuals.js');
-    expect(visuals).toContain('idle: Object.freeze([0, 1])');
-    expect(visuals).toContain('run: Object.freeze([2, 3, 4, 5])');
-    expect(visuals).toContain('hit: Object.freeze([6, 7])');
-    expect(visuals).toContain('death: Object.freeze([8, 9, 10, 11])');
-    expect(visuals).toContain("__scrapRatVisualVersion = 'production-v3'");
+    expect(visuals).toContain('scrap-rat-run-master-');
+    expect(visuals).toContain("replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.run, RUN_TEXTURES, 11, -1)");
+    expect(visuals).toContain("__scrapRatVisualVersion = 'production-v4'");
+    expect(visuals).toContain('__scrapRatStaticMaster = true');
   });
 
-  it('normalizes the four run poses into stable runtime textures instead of the floating one-frame workaround', () => {
+  it('does not recolor, normalize or rebuild Rat pixels at runtime', () => {
     const visuals = read('src/enemies/scrap-rat-visuals.js');
-    expect(visuals).toContain('function normalizeRunPalette');
-    expect(visuals).toContain('function installStableRunTextures');
-    expect(visuals).toContain("'scrap-rat-run-stable-0'");
-    expect(visuals).toContain('replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.run, STABLE_RUN_TEXTURES, 11, -1)');
-    expect(visuals).not.toContain('function installStrideMotion');
-    expect(visuals).not.toContain('scaleY: baseScale * .95');
+    for (const forbidden of [
+      'normalizeRunPalette',
+      'installStableRunTextures',
+      'createCanvas',
+      'getImageData',
+      'putImageData',
+      'scrap-rat-run-stable-',
+      'scaleY: baseScale'
+    ]) expect(visuals).not.toContain(forbidden);
+    expect(visuals).toContain('scene.load.image(key, uri)');
   });
 
   it('retires the old rat SVG renderer and keeps the production wrapper outermost', () => {
@@ -38,17 +41,17 @@ describe('production Scrap Rat visuals', () => {
     const visuals = read('src/enemies/scrap-rat-visuals.js');
     expect(art).not.toContain('function ratSvg');
     expect(art).not.toContain("'art-rat-run-0'");
-    expect(art).toContain("./enemies/scrap-rat-visuals.js?v=3");
+    expect(art).toContain("./enemies/scrap-rat-visuals.js?v=4");
     expect(art).toContain('await installScrapRatVisuals(scene)');
     expect(visuals).toContain('__scrapRatVisualWrapper');
   });
 
-  it('reapplies grounded production Rat visuals after the final legacy runtime phase', () => {
+  it('reapplies the static master after the final legacy runtime phase', () => {
     const html = read('index.html');
-    const art = html.indexOf('./src/art-runtime.js?v=4');
+    const art = html.indexOf('./src/art-runtime.js?v=5');
     const phaseC = html.indexOf('await phaseC.applyPhaseC()');
     const phaseE1 = html.indexOf('await phaseE1.applyPhaseE1()');
-    const lock = html.indexOf("./src/enemies/scrap-rat-visuals.js?v=3");
+    const lock = html.indexOf("./src/enemies/scrap-rat-visuals.js?v=4");
     expect(art).toBeGreaterThan(-1);
     expect(phaseC).toBeGreaterThan(art);
     expect(phaseE1).toBeGreaterThan(phaseC);
