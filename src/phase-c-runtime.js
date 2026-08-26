@@ -101,106 +101,31 @@ function installWeaponRig(scene) {
     this.weaponArm.setFlipY(facesLeft);
   };
 
-  scene.getWeaponMuzzle = function(spread = 0) {
-    const ang = this.weaponAim + spread;
-    return new Phaser.Math.Vector2(
-      this.weaponRig.x + Math.cos(ang) * this.weaponMuzzleLocal,
-      this.weaponRig.y + Math.sin(ang) * this.weaponMuzzleLocal
-    );
-  };
-
-  scene.fireHeroBullet = function(angle, damageScale = 1) {
-    const muzzle = this.getWeaponMuzzle(angle - this.weaponAim);
-    const bullet = this.bullets.create(muzzle.x, muzzle.y, 'bullet').setDepth(30).setScale(.74);
-    bullet.setCircle(8, 2, 2);
-    bullet.damage = this.primaryWeapon.damage * damageScale;
-    bullet.life = 1180;
-    bullet.prevX = muzzle.x;
-    bullet.prevY = muzzle.y;
-    bullet.setVelocity(Math.cos(angle) * this.primaryWeapon.projectileSpeed, Math.sin(angle) * this.primaryWeapon.projectileSpeed);
-    return { bullet, muzzle };
-  };
-
-  scene.autoFire = function(time) {
-    const target = this.findNearestEnemy(this.hero.x, this.hero.y, this.primaryWeapon.range);
-    if (target) {
-      const desired = Phaser.Math.Angle.Between(this.hero.x, this.hero.y + 6, target.x, target.y);
-      this.weaponAim = Phaser.Math.Angle.RotateTo(this.weaponAim, desired, .22);
-    } else if (this.move.lengthSq() > .05) {
-      this.weaponAim = Phaser.Math.Angle.RotateTo(this.weaponAim, Math.atan2(this.move.y, this.move.x), .14);
+  scene.projectileSystem.configureBounds({ minX: -80, maxX: WORLD_W + 80, minY: -80, maxY: WORLD_H + 80 });
+  scene.weaponSystem.configureHero({
+    aimYOffset: 6,
+    targetTurnRate: .22,
+    moveTurnRate: .14,
+    twinSpread2: .055,
+    twinSpread3: .085,
+    projectile: { lifeMs: 1180, scale: .74, radius: 8, offsetX: 2, offsetY: 2 },
+    muzzleResolver: spread => {
+      const ang = scene.weaponAim + spread;
+      return new Phaser.Math.Vector2(
+        scene.weaponRig.x + Math.cos(ang) * scene.weaponMuzzleLocal,
+        scene.weaponRig.y + Math.sin(ang) * scene.weaponMuzzleLocal
+      );
+    },
+    fireFeedback: ({ angle, muzzle }) => {
+      const flash = scene.add.image(muzzle.x, muzzle.y, 'flash').setDepth(31).setRotation(angle).setScale(.52);
+      scene.tweens.add({ targets: flash, alpha: 0, scale: .1, duration: 70, onComplete: () => flash.destroy() });
+      scene.weaponRig.x -= Math.cos(angle) * 4;
+      scene.weaponRig.y -= Math.sin(angle) * 4;
+      scene.playTone?.(165, .045, 'square', .019, -34);
     }
-    this.updateWeaponPose();
-    if (!target || time < this.lastShot + this.primaryWeapon.fireDelay) return;
-    this.lastShot = time;
-
-    const count = Math.max(1, this.twinShots || 1);
-    const spreads = count === 1 ? [0] : count === 2 ? [-.055, .055] : [-.085, 0, .085];
-    let flashPoint = null;
-    spreads.forEach((spread, index) => {
-      const shot = this.fireHeroBullet(this.weaponAim + spread, count > 1 ? .9 : 1);
-      if (index === Math.floor(spreads.length / 2)) flashPoint = shot.muzzle;
-      if (!flashPoint) flashPoint = shot.muzzle;
-    });
-
-    const flash = this.add.image(flashPoint.x, flashPoint.y, 'flash').setDepth(31).setRotation(this.weaponAim).setScale(.52);
-    this.tweens.add({ targets: flash, alpha: 0, scale: .1, duration: 70, onComplete: () => flash.destroy() });
-    this.weaponRig.x -= Math.cos(this.weaponAim) * 4;
-    this.weaponRig.y -= Math.sin(this.weaponAim) * 4;
-    this.playTone?.(165, .045, 'square', .019, -34);
-  };
+  });
 
   scene.updateWeaponPose();
-}
-
-function segmentCircleHit(x1, y1, x2, y2, cx, cy, radius) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const lenSq = dx * dx + dy * dy;
-  let t = 0;
-  if (lenSq > .0001) t = ((cx - x1) * dx + (cy - y1) * dy) / lenSq;
-  t = Phaser.Math.Clamp(t, 0, 1);
-  const px = x1 + dx * t;
-  const py = y1 + dy * t;
-  const ox = px - cx;
-  const oy = py - cy;
-  return ox * ox + oy * oy <= radius * radius ? t : null;
-}
-
-function installSweptProjectileCollision(scene) {
-  scene.updateBullets = function(delta) {
-    this.bullets.children.iterate(bullet => {
-      if (!bullet?.active) return;
-      bullet.life -= delta;
-
-      const x2 = bullet.x;
-      const y2 = bullet.y;
-      const x1 = Number.isFinite(bullet.prevX) ? bullet.prevX : x2;
-      const y1 = Number.isFinite(bullet.prevY) ? bullet.prevY : y2;
-      let bestEnemy = null;
-      let bestT = Infinity;
-
-      this.enemies.children.iterate(enemy => {
-        if (!enemy?.active || enemy.hp <= 0) return;
-        const radius = (enemy.hitRadius || 25) + 5;
-        const centerX = enemy.x + (enemy.flipX ? -4 : 4);
-        const centerY = enemy.y + 1;
-        const t = segmentCircleHit(x1, y1, x2, y2, centerX, centerY, radius);
-        if (t !== null && t < bestT) {
-          bestT = t;
-          bestEnemy = enemy;
-        }
-      });
-
-      if (bestEnemy && bullet.active) {
-        this.combatSystem.hitEnemyByProjectile(bullet, bestEnemy);
-        return;
-      }
-
-      bullet.prevX = x2;
-      bullet.prevY = y2;
-      if (bullet.life <= 0 || bullet.x < -80 || bullet.x > WORLD_W + 80 || bullet.y < -80 || bullet.y > WORLD_H + 80) bullet.destroy();
-    });
-  };
 }
 
 function installHitboxDebug(scene) {
@@ -489,24 +414,22 @@ function updateRig(scene, time, delta) {
   scene.cart.rotation = Phaser.Math.Linear(scene.cart.rotation, (scene.move?.x || 0) * .025, .08);
   scene.cartWheels?.forEach((wheel, i) => wheel.rotation += .05 + moveLen * .08 * (i % 2 ? 1 : .92));
 
-  const target = scene.findNearestEnemy(scene.cart.x, scene.cart.y, 500);
+  const target = scene.weaponSystem.acquireTarget(scene.cart.x, scene.cart.y, 500);
   if (!target) return;
   const angle = Phaser.Math.Angle.Between(scene.cart.x, scene.cart.y - 18, target.x, target.y);
   scene.turrets?.forEach(turret => turret.rotation = Phaser.Math.Angle.RotateTo(turret.rotation, angle - scene.cart.rotation, .13));
   if (time < scene.lastRigShot + scene.rigFireDelay) return;
   scene.lastRigShot = time;
-  const spreads = scene.rigShots > 1 ? [-.06, .06] : [0];
-  spreads.forEach(spread => {
-    const ang = angle + spread;
-    const sx = scene.cart.x + Math.cos(ang) * 52;
-    const sy = scene.cart.y - 18 + Math.sin(ang) * 52;
-    const bullet = scene.bullets.create(sx, sy, 'bullet').setDepth(30).setScale(.64).setTint(0x66dce9);
-    bullet.setCircle(8, 2, 2);
-    bullet.damage = scene.primaryWeapon.damage * scene.rigDamageScale;
-    bullet.life = 1050;
-    bullet.prevX = sx;
-    bullet.prevY = sy;
-    bullet.setVelocity(Math.cos(ang) * 660, Math.sin(ang) * 660);
+  scene.weaponSystem.fireSupportVolley({
+    originX: scene.cart.x,
+    originY: scene.cart.y - 18,
+    angle,
+    spreads: scene.rigShots > 1 ? [-.06, .06] : [0],
+    muzzleDistance: 52,
+    speed: 660,
+    damage: scene.primaryWeapon.damage * scene.rigDamageScale,
+    lifeMs: 1050,
+    scale: .64
   });
   scene.playTone?.(118, .035, 'square', .012, -22);
 }
@@ -537,7 +460,6 @@ export async function applyPhaseC() {
   tuneWorldScale(scene);
   installEnemyScaleAndHitboxes(scene);
   installWeaponRig(scene);
-  installSweptProjectileCollision(scene);
   installProgressHud(scene);
   installUpgradeCards(scene);
   installScrapProgression(scene);
@@ -546,6 +468,6 @@ export async function applyPhaseC() {
 
   window.__WM_PHASE_C__ = true;
   document.documentElement.dataset.wreckmarchPhaseC = 'active';
-  window.__WM_LOG__?.('Phase C active: weapon rig + scaled combat + swept hitboxes + Scrap cards + optional Rig');
+  window.__WM_LOG__?.('Phase C active: weapon rig + WeaponSystem profile + Scrap cards + optional Rig');
   return true;
 }
