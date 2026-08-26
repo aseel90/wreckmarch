@@ -39,7 +39,7 @@ const cursorKeys = (down: Partial<Record<'left' | 'right' | 'up' | 'down', boole
 describe('InputManager', () => {
   it('creates cursor keys once instead of once per frame', () => {
     const createCursorKeys = vi.fn(() => cursorKeys({ right: true }));
-    const input = new InputManager({ keyboard: { createCursorKeys } });
+    const input = new InputManager({ keyboard: { createCursorKeys }, gamepad: null });
     const out = new TestVector();
 
     input.readMove(out);
@@ -52,6 +52,7 @@ describe('InputManager', () => {
 
   it('preserves the current eight-pixel joystick deadzone', () => {
     const input = new InputManager({
+      gamepad: null,
       joystick: {
         active: true,
         origin: { x: 100, y: 100 },
@@ -68,6 +69,7 @@ describe('InputManager', () => {
 
   it('normalizes joystick movement outside the deadzone', () => {
     const input = new InputManager({
+      gamepad: null,
       joystick: {
         active: true,
         origin: { x: 10, y: 10 },
@@ -87,6 +89,7 @@ describe('InputManager', () => {
     const keyboard = { createCursorKeys: () => cursorKeys({ right: true }) };
     const input = new InputManager({
       keyboard,
+      gamepad: null,
       joystick: {
         active: true,
         origin: { x: 0, y: 0 },
@@ -100,5 +103,32 @@ describe('InputManager', () => {
     expect(out.length()).toBeCloseTo(1);
     expect(out.x).toBeCloseTo(Math.SQRT1_2);
     expect(out.y).toBeCloseTo(-Math.SQRT1_2);
+  });
+
+  it('combines gamepad movement through the same normalized movement boundary', () => {
+    const keyboard = { createCursorKeys: () => cursorKeys({ up: true }) };
+    const gamepad = {
+      readMove(out: TestVector) {
+        return out.set(1, 0);
+      }
+    };
+    const input = new InputManager({ keyboard, gamepad });
+    const out = new TestVector();
+
+    input.readMove(out);
+
+    expect(out.length()).toBeCloseTo(1);
+    expect(out.x).toBeCloseTo(Math.SQRT1_2);
+    expect(out.y).toBeCloseTo(-Math.SQRT1_2);
+  });
+
+  it('allows gamepad input to be disabled explicitly', () => {
+    const input = new InputManager({ gamepad: null });
+    const out = new TestVector();
+
+    input.readMove(out);
+
+    expect(out.x).toBe(0);
+    expect(out.y).toBe(0);
   });
 });
