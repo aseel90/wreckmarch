@@ -27,6 +27,7 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
       scrap: { x: scene.scrapText.x, y: scene.scrapText.y },
       timer: { x: scene.timerText.x, y: scene.timerText.y, left: scene.timerText.x - scene.timerText.displayWidth },
       xp: { x: scene.xpBg.x, y: scene.xpBg.y, width: scene.xpBg.displayWidth },
+      runKey,
       runFrames: scene.anims.get(runKey)?.frames?.length || 0
     };
   });
@@ -41,6 +42,7 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
   expect(baseline.xp.width).toBeGreaterThanOrEqual(300);
   expect(baseline.title.right).toBeLessThan(baseline.level.x);
   expect(baseline.scrap.x).toBeLessThan(baseline.timer.left);
+  expect(baseline.runKey).toBe('hero-run');
   expect(baseline.runFrames).toBeGreaterThanOrEqual(4);
 
   await page.keyboard.down('ArrowRight');
@@ -48,18 +50,24 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     const textures: string[] = [];
-    for (let index = 0; index < 8; index += 1) {
+    const frameIndexes: number[] = [];
+    for (let index = 0; index < 10; index += 1) {
       textures.push(String(scene.hero.texture?.key || ''));
+      frameIndexes.push(Number(scene.hero.anims.currentFrame?.index || 0));
       await new Promise(resolve => setTimeout(resolve, 55));
     }
     return {
       animation: scene.hero.anims.currentAnim?.key,
+      isPlaying: scene.hero.anims.isPlaying,
       textures,
+      frameIndexes,
       x: scene.hero.x
     };
   });
   await page.keyboard.up('ArrowRight');
 
-  expect(observed.animation).toBe('character-runner-run');
+  expect(observed.animation).toBe('hero-run');
+  expect(observed.isPlaying).toBe(true);
   expect(new Set(observed.textures.filter(key => key.startsWith('runner-run-'))).size).toBeGreaterThanOrEqual(3);
+  expect(new Set(observed.frameIndexes).size).toBeGreaterThanOrEqual(3);
 });
