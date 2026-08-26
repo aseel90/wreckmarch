@@ -21,11 +21,11 @@ Goal: reorganize Wreckmarch for long-term Web + Android development without chan
 - [x] Consolidated player/character ownership around the data-driven Runner definition while keeping the registry open for future characters.
 - [x] Consolidated enemy definitions, spawning and live behavior behind `EnemyRegistry`, `EnemyFactory`, `SpawnSystem` and `EnemyBehaviorSystem`.
 - [x] Consolidated combat damage/death/contact/overlap ownership behind `CombatSystem`, `EnemyCombatSystem` and `PlayerDamageSystem`; legacy scene combat callbacks are no longer part of the live path.
+- [x] Consolidated Hero/Rig target acquisition, firing, projectile construction, swept collision and projectile lifetime behind `WeaponSystem` and `ProjectileSystem`; historical runtime phases now only configure profiles, sockets and feedback.
 
 ## Next
 
 - [ ] Add a gamepad input provider behind the existing input boundary.
-- [ ] Consolidate weapon firing/target acquisition/projectile lifetime behind a dedicated weapon/projectile owner.
 - [ ] Consolidate Rig ownership.
 - [ ] Remove superseded runtime phase modules only after their remaining behavior has equivalent tested production owners.
 

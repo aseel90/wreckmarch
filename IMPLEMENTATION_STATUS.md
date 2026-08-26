@@ -95,7 +95,10 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 - ✅ Phase C swept-projectile collision dispatches directly to `CombatSystem`; the final `onBulletHit` compatibility shim has been removed.
 - ✅ Unit + Playwright coverage guards single overlap ownership, direct swept-hit dispatch, projectile damage/death/drop parity, contact damage and Runner i-frames.
 - ✅ Combat damage/death/contact/overlap ownership is fully separated from the legacy scene/runtime callbacks.
-- 🟡 Weapon firing/target acquisition and projectile lifetime still live in the historical Phase C/runtime layer; moving those behind a dedicated weapon/projectile owner is the next combat-adjacent cleanup, without changing current balance.
+- ✅ `WeaponSystem` now owns Hero/Rig target acquisition and firing, while `ProjectileSystem` exclusively owns projectile construction, swept-hit checks, bounds cleanup and lifetime.
+- ✅ Historical B/B1/C/C1/C2/C3/C4/C5/D1 layers no longer define `autoFire`, `findNearestEnemy`, `getWeaponMuzzle`, `fireHeroBullet`, `updateBullets`, or call `bullets.create(...)`; they only configure weapon profiles, sockets and visual/audio feedback.
+- ✅ `game.js` updates the authoritative `ProjectileSystem` then `WeaponSystem`; ownership is installed with Enemy Foundation before the historical visual/gameplay phases run.
+- ✅ Unit + Playwright coverage guards target acquisition, support volleys, exclusive projectile construction and absence of legacy weapon/projectile scene callbacks.
 
 ## Later roadmap
 
