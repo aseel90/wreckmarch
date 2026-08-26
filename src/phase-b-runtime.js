@@ -154,10 +154,16 @@ function installMovementTuning(scene) {
     }
     this.hero.setVelocity(vx, vy);
 
-    this.hero.rotation = Phaser.Math.Linear(this.hero.rotation, moving ? this.move.x * .075 : 0, .15);
-    this.hero.setFlipX(this.move.x < -.12);
-    if (moving && this.hero.anims.currentAnim?.key !== 'hero-run') this.hero.play('hero-run', true);
-    if (!moving && this.hero.anims.currentAnim?.key !== 'hero-idle') this.hero.play('hero-idle', true);
+    // Phase B owns movement physics, but only owns fallback character visuals
+    // until CharacterSystem installs the production Runner. Keeping these legacy
+    // hero-run/hero-idle calls active would restart the production animation
+    // every frame and pin it to its first frame.
+    if (!this.__characterSystemReady) {
+      this.hero.rotation = Phaser.Math.Linear(this.hero.rotation, moving ? this.move.x * .075 : 0, .15);
+      this.hero.setFlipX(this.move.x < -.12);
+      if (moving && this.hero.anims.currentAnim?.key !== 'hero-run') this.hero.play('hero-run', true);
+      if (!moving && this.hero.anims.currentAnim?.key !== 'hero-idle') this.hero.play('hero-idle', true);
+    }
 
     const shadowY = this.textures.exists('art-hero-idle-0') ? 50 : 36;
     this.heroShadow.setPosition(this.hero.x, this.hero.y + shadowY).setScale(moving ? 1.12 : 1.04, moving ? .82 : .9);
