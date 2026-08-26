@@ -41,6 +41,7 @@ test('routes the live Arcade bullet overlap through EnemyCombatSystem', async ({
     );
 
     const bullet = scene.bullets.create(enemy.x, enemy.y, 'bullet');
+    scene.__combatTestBullet = bullet;
     bullet.damage = 24;
     bullet.life = 1000;
     bullet.setVelocity(690, -120);
@@ -83,11 +84,11 @@ test('routes the live Arcade bullet overlap through EnemyCombatSystem', async ({
     return {
       hp: enemy?.hp,
       result: scene.__combatTestLastHit,
-      bullets: scene.bullets.getChildren().filter((object: any) => object?.active).length
+      testBulletActive: scene.__combatTestBullet?.active
     };
   });
   expect(nonLethal.hp).toBe(30);
-  expect(nonLethal.bullets).toBe(0);
+  expect(nonLethal.testBulletActive).toBe(false);
   expect(nonLethal.result).toMatchObject({ appliedDamage: 24, killed: false, knockbackX: 34.5, knockbackY: -6 });
 
   await page.evaluate(() => {
