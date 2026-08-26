@@ -52,7 +52,7 @@ describe('production Scrap Rat visuals', () => {
 
   it('reapplies the clean master after the final legacy runtime phase', () => {
     const html = read('index.html');
-    const art = html.indexOf('./src/art-runtime.js?v=5');
+    const art = html.indexOf('./src/art-runtime.js?v=6');
     const phaseC = html.indexOf('await phaseC.applyPhaseC()');
     const phaseE1 = html.indexOf('await phaseE1.applyPhaseE1()');
     const lock = html.indexOf("./src/enemies/scrap-rat-visuals.js?v=5");

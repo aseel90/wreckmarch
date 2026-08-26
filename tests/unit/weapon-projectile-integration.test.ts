@@ -21,7 +21,7 @@ describe('Weapon / Projectile ownership integration', () => {
   it('installs authoritative systems with Enemy Foundation', () => {
     const enemySystem = read('src/enemies/enemy-system.js');
     expect(enemySystem).toContain("import { ProjectileSystem } from '../combat/projectile-system.js?v=1'");
-    expect(enemySystem).toContain("import { WeaponSystem } from '../combat/weapon-system.js?v=1'");
+    expect(enemySystem).toContain("import { WeaponSystem } from '../combat/weapon-system.js?v=2'");
     expect(enemySystem).toContain('scene.projectileSystem = new ProjectileSystem(scene)');
     expect(enemySystem).toContain('scene.weaponSystem = new WeaponSystem(scene, { projectileSystem: scene.projectileSystem })');
   });
