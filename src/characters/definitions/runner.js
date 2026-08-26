@@ -6,6 +6,17 @@ export const RUNNER_CHARACTER = Object.freeze({
     maxHp: 100,
     moveSpeed: 255
   }),
+  combat: Object.freeze({
+    incomingDamageMultiplier: 1,
+    contactKnockbackMultiplier: 1,
+    invulnerabilityMs: 450,
+    contactKnockbackStrength: 190,
+    contactKnockbackDurationMs: 140,
+    hitFlashColor: 0xff6a5d,
+    hitFlashAlpha: .45,
+    hitFlashDurationMs: 55,
+    hitFlashRepeats: 2
+  }),
   physics: Object.freeze({
     radius: 22,
     offsetX: 24,
