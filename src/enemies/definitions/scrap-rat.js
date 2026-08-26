@@ -3,6 +3,11 @@ export const SCRAP_RAT_DEFINITION = Object.freeze({
   id: 'scrap-rat',
   name: 'Scrap Rat',
   behavior: 'chase',
+  combat: Object.freeze({
+    incomingDamageMultiplier: 1,
+    projectileKnockbackMultiplier: 1,
+    hitFlashMs: 55
+  }),
   naming: Object.freeze({ prefix: 'scraprat' }),
   bootstrap: Object.freeze({
     texture: 'rat-run-0',
