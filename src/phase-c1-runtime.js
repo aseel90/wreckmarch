@@ -125,43 +125,30 @@ function installTwoHandAim(scene) {
     this.aimPose.setDepth(behind ? 18 : 27);
   };
 
-  scene.getWeaponMuzzle = function(spread = 0) {
-    const visual = this.visualAimAngle + spread;
-    const radius = 49;
-    return new Phaser.Math.Vector2(
-      this.hero.x + Math.cos(visual) * radius,
-      this.hero.y + 8 + Math.sin(visual) * radius
-    );
-  };
-
-  scene.autoFire = function(time) {
-    const target = this.findNearestEnemy(this.hero.x, this.hero.y, this.primaryWeapon.range);
-    if (target) {
-      const desired = Phaser.Math.Angle.Between(this.hero.x, this.hero.y + 6, target.x, target.y);
-      this.weaponAim = Phaser.Math.Angle.RotateTo(this.weaponAim, desired, .24);
-    } else if (this.move.lengthSq() > .05) {
-      this.weaponAim = Phaser.Math.Angle.RotateTo(this.weaponAim, Math.atan2(this.move.y, this.move.x), .18);
+  scene.weaponSystem.configureHero({
+    aimYOffset: 6,
+    targetTurnRate: .24,
+    moveTurnRate: .18,
+    twinSpread2: .055,
+    twinSpread3: .085,
+    muzzleResolver: spread => {
+      const visual = scene.visualAimAngle + spread;
+      const radius = 49;
+      return new Phaser.Math.Vector2(
+        scene.hero.x + Math.cos(visual) * radius,
+        scene.hero.y + 8 + Math.sin(visual) * radius
+      );
+    },
+    fireFeedback: ({ visualAngle, muzzle }) => {
+      const flash = scene.add.image(muzzle.x, muzzle.y, 'flash')
+        .setDepth(31).setRotation(visualAngle).setScale(.5);
+      scene.tweens.add({ targets: flash, alpha: 0, scale: .08, duration: 68, onComplete: () => flash.destroy() });
+      scene.tweens.killTweensOf(scene.aimPose);
+      scene.aimPose.setDisplaySize(85, 71);
+      scene.tweens.add({ targets: scene.aimPose, displayWidth: 90, displayHeight: 75, duration: 72, ease: 'Quad.Out' });
+      scene.playTone?.(165, .045, 'square', .019, -34);
     }
-    this.updateWeaponPose();
-    if (!target || time < this.lastShot + this.primaryWeapon.fireDelay) return;
-    this.lastShot = time;
-
-    const count = Math.max(1, this.twinShots || 1);
-    const spreads = count === 1 ? [0] : count === 2 ? [-.055, .055] : [-.085, 0, .085];
-    let flashPoint = null;
-    spreads.forEach((spread, index) => {
-      const shot = this.fireHeroBullet(this.weaponAim + spread, count > 1 ? .9 : 1);
-      if (index === Math.floor(spreads.length / 2) || !flashPoint) flashPoint = shot.muzzle;
-    });
-
-    const flash = this.add.image(flashPoint.x, flashPoint.y, 'flash')
-      .setDepth(31).setRotation(this.visualAimAngle).setScale(.5);
-    this.tweens.add({ targets: flash, alpha: 0, scale: .08, duration: 68, onComplete: () => flash.destroy() });
-    this.tweens.killTweensOf(this.aimPose);
-    this.aimPose.setDisplaySize(85, 71);
-    this.tweens.add({ targets: this.aimPose, displayWidth: 90, displayHeight: 75, duration: 72, ease: 'Quad.Out' });
-    this.playTone?.(165, .045, 'square', .019, -34);
-  };
+  });
 
   scene.updateWeaponPose();
 }
