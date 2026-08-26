@@ -1,7 +1,7 @@
 /* WRECKMARCH Phase D.1 — animated runner + integrated mechanical arm + premium PNG cards + real roads + vehicle scale */
 import { CharacterSystem } from './characters/character-system.js?v=2';
 import { loadRunnerLocomotionArt } from './characters/runner-locomotion-art.js?v=1';
-import { installMobileHudPolish } from './mobile-hud-polish.js?v=1';
+import { installMobileHudPolish } from './mobile-hud-polish.js?v=2';
 const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const COLORS={HERO:0xd98446,UTILITY:0x4fc8d8,FORTRESS:0xd4ad62,EVOLUTION:0x9d6be8};
