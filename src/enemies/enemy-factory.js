@@ -51,6 +51,7 @@ export class EnemyFactory {
     enemy.enemyId = definition.id;
     enemy.enemyDefinition = definition;
     enemy.behaviorKey = definition.behavior;
+    enemy.combatProfile = definition.combat;
     enemy.variantKey = stats.variantKey;
     enemy.hp = stats.hp;
     enemy.maxHp = stats.hp;
