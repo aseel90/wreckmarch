@@ -4,12 +4,14 @@ import fs from 'node:fs';
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const historical = [
   'src/game.js',
+  'src/art-runtime.js',
   'src/phase-b-runtime.js',
   'src/phase-b1-polish.js',
   'src/phase-c-runtime.js',
   'src/phase-c1-runtime.js',
   'src/phase-c2-runtime.js',
   'src/phase-c3-runtime.js',
+  'src/phase-c3-frame-fix.js',
   'src/phase-c4-runtime.js',
   'src/phase-c5-runtime.js',
   'src/phase-d1-runtime.js'

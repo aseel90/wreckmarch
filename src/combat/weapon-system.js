@@ -157,7 +157,7 @@ export class WeaponSystem {
     radius = 8,
     offsetX = 2,
     offsetY = 2,
-    onShot
+    onShot = null
   }) {
     const shots = [];
     spreads.forEach(spread => {

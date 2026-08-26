@@ -161,6 +161,8 @@ jobs:
       - name: Browser smoke test
         shell: bash
         run: |
+          set -o pipefail
+          exec > >(tee /tmp/wm-smoke.log) 2>&1
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/wm-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
@@ -253,6 +255,7 @@ jobs:
         with:
           name: ci-smoke
           path: |
+            /tmp/wm-smoke.log
             /tmp/wm-http.log
             /tmp/wm-dom.html
             /tmp/wm-chrome.log
@@ -341,6 +344,7 @@ jobs:
                   debug = html.unescape(re.sub('<[^>]+>', '', m.group(1))).strip()
                   if debug:
                       sections.append(f'### Smoke: game debug panel\n```text\n{debug[-4500:]}\n```')
+          tail('Smoke: browser test output', 'wm-smoke.log', 4500)
           tail('Smoke: Chrome stderr', 'wm-chrome.log', 3000)
           tail('Smoke: HTTP server', 'wm-http.log', 1500)
 
