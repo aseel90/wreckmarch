@@ -2,67 +2,18 @@
 import { EnemyFactory } from './enemy-factory.js?v=1';
 import { SpawnSystem } from './spawn-system.js?v=1';
 import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=1';
-import { EnemyCombatSystem } from '../combat/enemy-combat-system.js?v=1';
-import { PlayerDamageSystem } from '../combat/player-damage-system.js?v=1';
+import { CombatSystem } from '../combat/combat-system.js?v=1';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-function installCombatOverlap(scene) {
-  const activeColliders = scene.physics?.world?.colliders?.getActive?.() || [];
-  const legacyCollider = activeColliders.find(collider =>
-    collider?.active !== false &&
-    ((collider.object1 === scene.bullets && collider.object2 === scene.enemies) ||
-      (collider.object1 === scene.enemies && collider.object2 === scene.bullets)) &&
-    collider.collideCallback === scene.onBulletHit
-  );
-  if (!legacyCollider) throw new Error('Enemy Foundation could not locate the legacy bullet/enemy overlap');
-
-  scene.__legacyOnBulletHit = scene.onBulletHit.bind(scene);
-  scene.__legacyKillEnemy = scene.killEnemy.bind(scene);
-  legacyCollider.destroy();
-
-  scene.enemyCombatSystem = new EnemyCombatSystem(scene);
-  scene.onBulletHit = function(bullet, enemy) {
-    return this.enemyCombatSystem.hitByProjectile(bullet, enemy);
-  };
-  scene.killEnemy = function(enemy) {
-    return this.enemyCombatSystem.killEnemy(enemy);
-  };
-  scene.__enemyProjectileOverlap = scene.physics.add.overlap(
-    scene.bullets,
-    scene.enemies,
-    scene.onBulletHit,
-    undefined,
-    scene
-  );
+function installCombatSystem(scene) {
+  scene.combatSystem = new CombatSystem(scene);
+  scene.enemyCombatSystem = scene.combatSystem.enemy;
+  scene.playerDamageSystem = scene.combatSystem.player;
+  scene.combatSystem.installOverlaps();
   scene.__enemyCombatFoundationReady = true;
-}
-
-function installPlayerDamageOverlap(scene) {
-  const activeColliders = scene.physics?.world?.colliders?.getActive?.() || [];
-  const legacyCollider = activeColliders.find(collider =>
-    collider?.active !== false &&
-    ((collider.object1 === scene.hero && collider.object2 === scene.enemies) ||
-      (collider.object1 === scene.enemies && collider.object2 === scene.hero)) &&
-    collider.collideCallback === scene.enemyTouchesHero
-  );
-  if (!legacyCollider) throw new Error('Enemy Foundation could not locate the legacy hero/enemy overlap');
-
-  scene.__legacyEnemyTouchesHero = scene.enemyTouchesHero.bind(scene);
-  legacyCollider.destroy();
-
-  scene.playerDamageSystem = new PlayerDamageSystem(scene);
-  scene.enemyTouchesHero = function(hero, enemy) {
-    return this.playerDamageSystem.hitByContact(hero, enemy);
-  };
-  scene.__playerEnemyOverlap = scene.physics.add.overlap(
-    scene.hero,
-    scene.enemies,
-    scene.enemyTouchesHero,
-    undefined,
-    scene
-  );
   scene.__playerDamageFoundationReady = true;
+  scene.__combatSystemReady = true;
 }
 
 async function getScene(timeoutMs = 9000) {
@@ -83,8 +34,7 @@ export async function installEnemyFoundation() {
   scene.enemyFactory = new EnemyFactory(scene);
   scene.spawnSystem = new SpawnSystem(scene, { factory: scene.enemyFactory });
   scene.enemyBehaviorSystem = new EnemyBehaviorSystem(scene);
-  installCombatOverlap(scene);
-  installPlayerDamageOverlap(scene);
+  installCombatSystem(scene);
 
   scene.__legacySpawnEnemy = scene.spawnEnemy.bind(scene);
   scene.spawnEnemy = function(elite = false) {
@@ -100,6 +50,6 @@ export async function installEnemyFoundation() {
   scene.__enemyBehaviorFoundationReady = true;
   window.__WM_ENEMY_FOUNDATION__ = true;
   document.documentElement.dataset.wreckmarchEnemyFoundation = 'active';
-  window.__WM_LOG__?.('Enemy Foundation active: Registry -> Factory -> SpawnSystem -> BehaviorSystem -> EnemyCombatSystem -> PlayerDamageSystem');
+  window.__WM_LOG__?.('Enemy Foundation active: Registry -> Factory -> SpawnSystem -> BehaviorSystem -> CombatSystem');
   return scene;
 }
