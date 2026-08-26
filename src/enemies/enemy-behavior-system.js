@@ -1,11 +1,7 @@
 /* WRECKMARCH — enemy behavior dispatch boundary */
-import { getEnemyBehavior } from './enemy-behavior-registry.js';
+import { getEnemyBehavior } from './enemy-behavior-registry.js?v=2';
 
 export class EnemyBehaviorSystem {
-  /**
-   * @param {any} scene
-   * @param {{ random?: () => number }} [options]
-   */
   constructor(scene, { random = Math.random } = {}) {
     this.scene = scene;
     this.random = random;

@@ -1,16 +1,20 @@
 /* WRECKMARCH — canonical run balance foundation */
+
+const pool = (wave, ratWeight, houndWeight = 0) => Object.freeze({
+  wave,
+  entries: Object.freeze([
+    Object.freeze({ id: 'scrap-rat', weight: ratWeight, threat: 1 }),
+    ...(houndWeight > 0 ? [Object.freeze({ id: 'rust-hound', weight: houndWeight, threat: 2 })] : [])
+  ])
+});
+
 export const RUN_BALANCE = Object.freeze({
   runDurationSeconds: 600,
   waveDurationSeconds: 60,
   pressureStepSeconds: 15,
   pressureBudgetMultipliers: Object.freeze([1, 1.08, 1.16, 1.24]),
   pressureSpawnMultipliers: Object.freeze([1, .94, .88, .82]),
-  player: Object.freeze({
-    baseMoveSpeed: 255,
-    fleetFeetPercent: .06,
-    fleetFeetMaxLevel: 3,
-    moveSpeedHardCap: 310
-  }),
+  player: Object.freeze({ baseMoveSpeed: 255, fleetFeetPercent: .06, fleetFeetMaxLevel: 3, moveSpeedHardCap: 310 }),
   waves: Object.freeze([
     Object.freeze({ wave: 1, threatBudget: 16, activeCap: 28, spawnIntervalMs: 690, hpMultiplier: 1.00, damageMultiplier: 1.00, speedMultiplier: 1.00 }),
     Object.freeze({ wave: 2, threatBudget: 19, activeCap: 30, spawnIntervalMs: 650, hpMultiplier: 1.10, damageMultiplier: 1.04, speedMultiplier: 1.01 }),
@@ -23,12 +27,11 @@ export const RUN_BALANCE = Object.freeze({
     Object.freeze({ wave: 9, threatBudget: 46, activeCap: 48, spawnIntervalMs: 415, hpMultiplier: 1.80, damageMultiplier: 1.32, speedMultiplier: 1.08 }),
     Object.freeze({ wave: 10, threatBudget: 51, activeCap: 50, spawnIntervalMs: 390, hpMultiplier: 1.90, damageMultiplier: 1.36, speedMultiplier: 1.09 })
   ]),
-  eliteRewards: Object.freeze({
-    guaranteedAtSeconds: Object.freeze([270, 450]),
-    bonusWindowStartSeconds: 540,
-    choices: 3,
-    minimumRarity: 'RARE'
-  })
+  enemyPools: Object.freeze([
+    pool(1, 1.00), pool(2, .78, .22), pool(3, .72, .28), pool(4, .68, .32), pool(5, .67, .33),
+    pool(6, .66, .34), pool(7, .65, .35), pool(8, .64, .36), pool(9, .63, .37), pool(10, .62, .38)
+  ]),
+  eliteRewards: Object.freeze({ guaranteedAtSeconds: Object.freeze([270, 450]), bonusWindowStartSeconds: 540, choices: 3, minimumRarity: 'RARE' })
 });
 
 export function getWaveNumber(runTimeSeconds = 0) {
@@ -42,17 +45,24 @@ export function getPressureStep(runTimeSeconds = 0) {
   return Math.min(3, Math.floor(withinWave / RUN_BALANCE.pressureStepSeconds));
 }
 
-export function getWaveBalance(runTimeSeconds = 0) {
-  return RUN_BALANCE.waves[getWaveNumber(runTimeSeconds) - 1];
+export function getWaveBalance(runTimeSeconds = 0) { return RUN_BALANCE.waves[getWaveNumber(runTimeSeconds) - 1]; }
+export function getEnemyPool(runTimeSeconds = 0) { return RUN_BALANCE.enemyPools[getWaveNumber(runTimeSeconds) - 1]; }
+
+export function pickEnemyForRun(runTimeSeconds = 0, random = Math.random) {
+  const entries = getEnemyPool(runTimeSeconds).entries;
+  const roll = Math.max(0, Math.min(.999999, Number(random?.()) || 0));
+  const total = entries.reduce((sum, entry) => sum + entry.weight, 0) || 1;
+  let cursor = roll * total;
+  for (const entry of entries) {
+    cursor -= entry.weight;
+    if (cursor < 0) return entry;
+  }
+  return entries[entries.length - 1];
 }
 
 export function getEnemyDifficultyMultipliers(runTimeSeconds = 0) {
   const wave = getWaveBalance(runTimeSeconds);
-  return Object.freeze({
-    hp: wave.hpMultiplier,
-    damage: wave.damageMultiplier,
-    speed: wave.speedMultiplier
-  });
+  return Object.freeze({ hp: wave.hpMultiplier, damage: wave.damageMultiplier, speed: wave.speedMultiplier });
 }
 
 export function getPlayerMoveSpeed(baseSpeed = RUN_BALANCE.player.baseMoveSpeed, fleetFeetLevel = 0) {

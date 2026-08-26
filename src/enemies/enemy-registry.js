@@ -1,8 +1,10 @@
 /* WRECKMARCH — stable enemy content registry */
 import { SCRAP_RAT_DEFINITION } from './definitions/scrap-rat.js';
+import { RUST_HOUND_DEFINITION } from './definitions/rust-hound.js';
 
 const ENEMY_DEFINITIONS = new Map([
-  [SCRAP_RAT_DEFINITION.id, SCRAP_RAT_DEFINITION]
+  [SCRAP_RAT_DEFINITION.id, SCRAP_RAT_DEFINITION],
+  [RUST_HOUND_DEFINITION.id, RUST_HOUND_DEFINITION]
 ]);
 
 export function getEnemyDefinition(enemyId) {

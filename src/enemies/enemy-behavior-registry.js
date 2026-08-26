@@ -1,8 +1,10 @@
 /* WRECKMARCH — enemy behavior registry */
 import { updateChaseBehavior } from './behaviors/chase.js';
+import { updateHoundPounceBehavior } from './behaviors/hound-pounce.js';
 
 const ENEMY_BEHAVIORS = new Map([
-  ['chase', updateChaseBehavior]
+  ['chase', updateChaseBehavior],
+  ['hound-pounce', updateHoundPounceBehavior]
 ]);
 
 export function getEnemyBehavior(behaviorKey) {

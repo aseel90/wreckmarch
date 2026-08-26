@@ -1,6 +1,6 @@
 /* WRECKMARCH — enemy construction boundary */
-import { getEnemyDefinition } from './enemy-registry.js';
-import { getEnemyDifficultyMultipliers } from '../balance/run-balance.js?v=1';
+import { getEnemyDefinition } from './enemy-registry.js?v=2';
+import { getEnemyDifficultyMultipliers } from '../balance/run-balance.js?v=2';
 
 function fallbackBetween(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -23,19 +23,11 @@ export function resolveEnemySpawnStats(definition, { elite = false, runTime = 0,
 }
 
 export class EnemyFactory {
-  /**
-   * @param {any} scene
-   * @param {{ randomBetween?: (min: number, max: number) => number }} [options]
-   */
   constructor(scene, { randomBetween } = {}) {
     this.scene = scene;
     this.randomBetween = randomBetween || ((min, max) => globalThis.Phaser?.Math?.Between?.(min, max) ?? fallbackBetween(min, max));
   }
 
-  /**
-   * @param {string} enemyId
-   * @param {{ elite?: boolean, x?: number, y?: number, runTime?: number }} [options]
-   */
   create(enemyId, { elite = false, x, y, runTime = this.scene.runTime } = {}) {
     const definition = getEnemyDefinition(enemyId);
     const stats = resolveEnemySpawnStats(definition, {
@@ -55,13 +47,17 @@ export class EnemyFactory {
     enemy.enemyId = definition.id;
     enemy.enemyDefinition = definition;
     enemy.behaviorKey = definition.behavior;
+    enemy.behaviorConfig = definition.behaviorConfig || null;
     enemy.combatProfile = definition.combat;
     enemy.variantKey = stats.variantKey;
     enemy.hp = stats.hp;
     enemy.maxHp = stats.hp;
     enemy.speed = stats.speed;
+    enemy.baseSpeed = stats.speed;
     enemy.damage = stats.damage;
+    enemy.baseDamage = stats.damage;
     enemy.scrapDrop = stats.scrapDrop;
+    enemy.threatValue = Number(definition.threatValue) || (elite ? 4 : 1);
     enemy.elite = elite;
     if (elite && bootstrap.eliteTint != null) enemy.setTint(bootstrap.eliteTint);
     return enemy;
