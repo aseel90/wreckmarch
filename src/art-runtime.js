@@ -55,9 +55,9 @@ const barrelSvg = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48
 async function getScene(timeoutMs = 9000) {
   const start = performance.now();
   while (performance.now() - start < timeoutMs) {
-    const game = window.Phaser?.GAMES?.find(Boolean) || window.Phaser?.GAMES?.[0];
+    const game = window.__WM_GAME__;
     const scene = game?.scene?.getScene?.('Wreckmarch');
-    if (scene?.sys?.isActive?.() && scene.hero && scene.cart) return scene;
+    if (scene?.sys?.isActive?.() && scene.hero) return scene;
     await wait(60);
   }
   throw new Error('Timed out waiting for Wreckmarch scene');
