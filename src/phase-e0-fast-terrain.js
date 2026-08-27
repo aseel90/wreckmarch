@@ -1,5 +1,5 @@
 /* WRECKMARCH Phase E.0 — fast terrain bootstrap only */
-import { buildTerrainLayer, ensureTerrainTextures, getWreckmarchScene } from './world/terrain-system.js?v=1';
+import { buildTerrainLayer, ensureTerrainTextures, getWreckmarchScene } from './world/terrain-system.js?v=2';
 
 export async function applyFastTerrain(){
   const start=performance.now(),s=await getWreckmarchScene({timeout:5000});

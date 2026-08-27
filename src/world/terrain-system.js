@@ -16,7 +16,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 export async function getWreckmarchScene({ timeout = 5000, requireTerrainTextures = false } = {}) {
   const started = performance.now();
   while (performance.now() - started < timeout) {
-    const game = window.Phaser?.GAMES?.find(Boolean) || window.Phaser?.GAMES?.[0];
+    const game = window.__WM_GAME__ || window.Phaser?.GAMES?.find(Boolean) || window.Phaser?.GAMES?.[0];
     const scene = game?.scene?.getScene?.('Wreckmarch');
     const texturesReady = !requireTerrainTextures || (
       scene?.textures?.exists?.('c4-ground') && scene?.textures?.exists?.('c4-road')
