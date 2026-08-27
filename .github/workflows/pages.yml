@@ -246,6 +246,20 @@ jobs:
           name: ci-quality
           path: /tmp/ci-quality
 
+      - name: Download E2E diagnostics
+        if: needs.e2e.result == 'failure'
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-e2e
+          path: /tmp/ci-e2e
+
+      - name: Download smoke diagnostics
+        if: needs.smoke.result == 'failure'
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-smoke
+          path: /tmp/ci-smoke
+
       - name: Bridge main CI state to issue
         env:
           GH_TOKEN: ${{ github.token }}
@@ -278,6 +292,26 @@ jobs:
                 if [ -s "$LOG" ]; then
                   printf '\n### %s\n```text\n' "$(basename "$LOG")"
                   tail -n 80 "$LOG"
+                  printf '\n```\n'
+                fi
+              done
+            fi
+
+            if [ "$E2E" != 'success' ]; then
+              for LOG in /tmp/ci-e2e/wm-e2e.log /tmp/ci-e2e/wm-e2e-playwright-install.log; do
+                if [ -s "$LOG" ]; then
+                  printf '\n### %s\n```text\n' "$(basename "$LOG")"
+                  tail -n 100 "$LOG"
+                  printf '\n```\n'
+                fi
+              done
+            fi
+
+            if [ "$SMOKE" != 'success' ]; then
+              for LOG in /tmp/ci-smoke/wm-smoke.log /tmp/ci-smoke/wm-chrome.log /tmp/ci-smoke/wm-http.log; do
+                if [ -s "$LOG" ]; then
+                  printf '\n### %s\n```text\n' "$(basename "$LOG")"
+                  tail -n 100 "$LOG"
                   printf '\n```\n'
                 fi
               done

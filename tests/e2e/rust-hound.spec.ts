@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('Rust Hound uses baked transparent art with a readable bounded pounce', async ({ page }) => {
+test('Rust Hound uses baked transparent art with a readable committed ground slide', async ({ page }) => {
   await page.goto('/?debug=1');
   await expect.poll(
     () => page.evaluate(() => document.body.classList.contains('visual-ready')),
@@ -63,9 +63,9 @@ test('Rust Hound uses baked transparent art with a readable bounded pounce', asy
         hound.__rustHoundBakedFrames === true &&
         hound.__rustHoundTransparentMaster === true &&
         Number(hound.__houndTelegraphCount) >= 1 &&
-        Number(hound.__houndPounceCount) >= 1 &&
-        Number(hound.__houndLastPounceSpeed) >= 330 &&
-        Number(hound.__houndLastPounceSpeed) <= 370 &&
+        Number(hound.__houndSlideCount) >= 1 &&
+        Number(hound.__houndLastSlideSpeed) >= 350 &&
+        Number(hound.__houndLastSlideSpeed) <= 370 &&
         Number.isFinite(state?.vx) &&
         Number.isFinite(state?.vy) &&
         Number(state?.maxObservedSpeed) >= 330 &&
@@ -82,9 +82,9 @@ test('Rust Hound uses baked transparent art with a readable bounded pounce', asy
     return {
       active: Boolean(hound?.active),
       phase: hound?.__houndPhase,
-      pounces: Number(hound?.__houndPounceCount) || 0,
+      slides: Number(hound?.__houndSlideCount) || 0,
       telegraphs: Number(hound?.__houndTelegraphCount) || 0,
-      lastPounceSpeed: Number(hound?.__houndLastPounceSpeed) || 0,
+      lastSlideSpeed: Number(hound?.__houndLastSlideSpeed) || 0,
       maxObservedSpeed: Math.round(Number(hound?.__houndMotion?.maxObservedSpeed) || 0),
       visualVersion: hound?.__rustHoundVisualVersion,
       bakedFrames: hound?.__rustHoundBakedFrames === true,
@@ -97,9 +97,9 @@ test('Rust Hound uses baked transparent art with a readable bounded pounce', asy
   expect(result.transparentMaster).toBe(true);
   expect(result.visualVersion).toBe('production-v3-baked-alpha');
   expect(result.telegraphs).toBeGreaterThanOrEqual(1);
-  expect(result.pounces).toBeGreaterThanOrEqual(1);
-  expect(result.lastPounceSpeed).toBeGreaterThanOrEqual(330);
-  expect(result.lastPounceSpeed).toBeLessThanOrEqual(370);
+  expect(result.slides).toBeGreaterThanOrEqual(1);
+  expect(result.lastSlideSpeed).toBeGreaterThanOrEqual(350);
+  expect(result.lastSlideSpeed).toBeLessThanOrEqual(370);
   expect(result.maxObservedSpeed).toBeGreaterThanOrEqual(330);
   expect(result.maxObservedSpeed).toBeLessThanOrEqual(380);
 });
