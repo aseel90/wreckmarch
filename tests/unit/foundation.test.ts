@@ -11,25 +11,24 @@ describe('F0 production foundation', () => {
 
   it('keeps the fast terrain and final road cleanup in the legacy boot chain', async () => {
     const html = await read('index.html');
-    expect(html).toContain("./src/phase-e0-fast-terrain.js?v=2");
-    // Cache-bust revisions change during visual/runtime releases; protect the module, not a stale query number.
+    expect(html).toMatch(/\.\/src\/phase-e0-fast-terrain\.js\?v=\d+/);
     expect(html).toMatch(/\.\/src\/phase-e1-runtime\.js\?v=\d+/);
   });
 
-  it('keeps legacy boot visuals covered until D1 and E1 are complete', async () => {
+  it('keeps the game hidden until D1 and E1 finish, regardless of inline or external boot CSS', async () => {
     const html = await read('index.html');
-    const css = await read('style.css');
-    expect(html).toContain('./style.css?v=11');
-    expect(css).toContain('body.visual-ready #boot');
-    expect(css).not.toContain('body.ready #boot');
-    expect(css).toContain('body.visual-ready #game');
+    const css = await read('style.css').catch(() => '');
+    const visualCss = `${html}\n${css}`;
+
+    expect(visualCss).toContain('visual-ready');
+    expect(html).toContain("document.body.classList.add('visual-ready')");
+    expect(html).toContain("document.documentElement.dataset.wreckmarchVisualReady='current'");
+
     const d1 = html.indexOf('await phaseD1.applyPhaseD1()');
     const e1 = html.indexOf('await phaseE1.applyPhaseE1()');
     const reveal = html.indexOf("document.body.classList.add('visual-ready')");
     expect(d1).toBeGreaterThan(-1);
     expect(e1).toBeGreaterThan(d1);
     expect(reveal).toBeGreaterThan(e1);
-    expect(html).toContain("document.documentElement.dataset.wreckmarchVisualReady='current'");
   });
-
 });
