@@ -59,8 +59,8 @@ describe('production Rust Hound visuals', () => {
     expect(runtime).toContain("'rust-hound-crouch': RUST_HOUND_SPECIAL_MASTERS.crouch");
     expect(runtime).toContain("'rust-hound-pounce': RUST_HOUND_SPECIAL_MASTERS.pounce");
     expect(runtime).toContain("'rust-hound-land': RUST_HOUND_SPECIAL_MASTERS.recover");
-    expect(behavior).toContain("setTexture('rust-hound-crouch')");
-    expect(behavior).toContain("setTexture('rust-hound-pounce')");
+    expect(behavior).toMatch(/setTexture(?:\?\.)?\('rust-hound-crouch'\)/);
+    expect(behavior).toMatch(/setTexture(?:\?\.)?\('rust-hound-pounce'\)/);
     expect(definition).toContain("texture: 'rust-hound-run-0'");
     expect(definition).toContain("animation: 'rust-hound-run'");
   });
