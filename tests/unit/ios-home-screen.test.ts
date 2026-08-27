@@ -5,6 +5,7 @@ import path from 'node:path';
 const root = path.resolve(import.meta.dirname, '../..');
 const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.webmanifest'), 'utf8'));
+const workflow = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8');
 
 describe('iOS Home Screen standalone mode', () => {
   it('ships the Apple standalone web-app metadata', () => {
@@ -20,6 +21,10 @@ describe('iOS Home Screen standalone mode', () => {
     expect(manifest.scope).toBe('./');
     expect(manifest.display).toBe('standalone');
     expect(manifest.orientation).toBe('landscape');
+  });
+
+  it('publishes the manifest in the GitHub Pages artifact', () => {
+    expect(workflow).toContain('cp index.html style.css manifest.webmanifest _site/');
   });
 
   it('recognizes iOS navigator.standalone at runtime', () => {
