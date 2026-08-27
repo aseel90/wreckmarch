@@ -1,0 +1,64 @@
+name: Verify iOS Standalone Live
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ios-standalone-live
+  cancel-in-progress: true
+
+jobs:
+  verify-live-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for current Pages metadata and verify standalone mode
+        id: verify
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          PAGE='https://aseel90.github.io/wreckmarch/'
+          HTML=/tmp/wreckmarch-live.html
+          MANIFEST=/tmp/wreckmarch-manifest.json
+          ok=0
+          for attempt in $(seq 1 36); do
+            curl -fsSL -H 'Cache-Control: no-cache' "${PAGE}?iosverify=${SHA}-${attempt}" -o "$HTML" || true
+            curl -fsSL -H 'Cache-Control: no-cache' "${PAGE}manifest.webmanifest?iosverify=${SHA}-${attempt}" -o "$MANIFEST" || true
+            if grep -Fq '<meta name="apple-mobile-web-app-capable" content="yes"' "$HTML" \
+              && grep -Fq '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"' "$HTML" \
+              && grep -Fq 'navigator.standalone' "$HTML" \
+              && grep -Fq 'manifest.webmanifest' "$HTML" \
+              && grep -Eq '"display"[[:space:]]*:[[:space:]]*"standalone"' "$MANIFEST" \
+              && grep -Eq '"orientation"[[:space:]]*:[[:space:]]*"landscape"' "$MANIFEST"; then
+              ok=1
+              break
+            fi
+            sleep 5
+          done
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+          echo '--- LIVE HEAD ---'
+          head -n 20 "$HTML" || true
+          echo '--- LIVE MANIFEST ---'
+          cat "$MANIFEST" || true
+          test "$ok" = 1
+
+      - name: Report live verification success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          gh issue comment 64 --repo "${{ github.repository }}" --body "iOS live verification PASSED on \`$SHA\`: GitHub Pages is serving apple-mobile-web-app-capable=yes, black-translucent status bar, navigator.standalone detection, and a published manifest with display=standalone + landscape."
+
+      - name: Report live verification failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          gh issue comment 64 --repo "${{ github.repository }}" --body "iOS live verification FAILED on \`$SHA\`: the live GitHub Pages response did not expose the required standalone metadata/manifest after polling."
