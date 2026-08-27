@@ -48,6 +48,75 @@ body.browser-fit-mode #game canvas { width: 100% !important; height: 100% !impor
 #boot small.error { color: #e77b62; }
 body.visual-ready #boot { opacity: 0; visibility: hidden; }
 body.boot-error #boot { background: #0c1017; }
+/* Current shell IDs used by index.html. Keep every shell control out of document flow
+   so the fixed full-bleed game cannot create page scrollbars. */
+#rotate {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  background: radial-gradient(circle at 50% 40%, #17232a, #090d13 70%);
+  color: #f2d19b;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 28px;
+  letter-spacing: .08em;
+}
+#rotate strong { font: 900 22px/1.1 ui-sans-serif, system-ui; }
+#rotate span { max-width: 320px; color: #93a0aa; font-size: 13px; letter-spacing: .03em; }
+
+#fs-btn {
+  position: fixed;
+  z-index: 10001;
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  min-width: 112px;
+  border: 1px solid rgba(242,209,155,.5);
+  border-radius: 11px;
+  padding: 9px 12px;
+  background: rgba(8,12,17,.9);
+  color: #f2d19b;
+  box-shadow: 0 6px 20px rgba(0,0,0,.28);
+  font: 800 10px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: .08em;
+  touch-action: manipulation;
+}
+
+#debug {
+  position: fixed;
+  z-index: 10000;
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  width: min(520px, calc(100vw - 20px));
+  margin: 0;
+  color: #8ff0a4;
+  font: 11px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+#debug > summary {
+  width: max-content;
+  margin-left: auto;
+  border: 1px solid rgba(143,240,164,.38);
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: rgba(0,0,0,.88);
+  cursor: pointer;
+  list-style: none;
+}
+#debug > summary::-webkit-details-marker { display: none; }
+#debug > button { margin: 6px 0 0 auto; display: block; }
+#debug > pre {
+  margin: 6px 0 0;
+  max-height: 50vh;
+  overflow: auto;
+  padding: 10px 12px;
+  background: rgba(0,0,0,.92);
+  border: 1px solid rgba(143,240,164,.35);
+  white-space: pre-wrap;
+  pointer-events: auto;
+}
+
 #rotate-device {
   display: none;
   position: fixed;
@@ -127,11 +196,11 @@ body.debug-enabled #debug-toggle { display: block; }
 #debug-panel.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; border-top-color: transparent; opacity: 0; overflow: hidden; }
 body.debug-enabled:not(:has(#debug-panel.collapsed)) #debug-toggle { bottom: calc(55vh + 8px + env(safe-area-inset-bottom, 0px)); }
 @media (orientation: portrait) {
-  #rotate-device { display: grid; }
+  #rotate-device, #rotate { display: grid; }
   #game { visibility: hidden; }
-  #fullscreen-toggle, #debug-toggle, #debug-panel { visibility: hidden !important; }
+  #fullscreen-toggle, #debug-toggle, #debug-panel, #fs-btn, #debug { visibility: hidden !important; }
 }
 @media (orientation: landscape) {
-  #rotate-device { display: none; }
+  #rotate-device, #rotate { display: none; }
   #game { visibility: visible; }
 }
