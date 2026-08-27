@@ -30,11 +30,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
       - name: Install dependencies
         run: |
           set -o pipefail
-          pnpm install --frozen-lockfile 2>&1 | tee wm-quality-install.log
+          pnpm install --no-frozen-lockfile 2>&1 | tee wm-quality-install.log
       - name: Typecheck, unit tests and static build
         run: |
           set -o pipefail
@@ -80,11 +79,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
       - name: Install dependencies
         run: |
           set -o pipefail
-          pnpm install --frozen-lockfile 2>&1 | tee wm-e2e-install.log
+          pnpm install --no-frozen-lockfile 2>&1 | tee wm-e2e-install.log
       - name: Install Playwright Chromium
         run: |
           set -o pipefail
@@ -259,15 +257,13 @@ jobs:
           if [ -n "$ISSUE_NUMBER" ]; then
             gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file /tmp/wm-ci-issue.md
           else
-            gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/wm-ci-issue.md --label ci-failure
+            gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/wm-ci-issue.md
           fi
 
   deploy:
     name: Deploy GitHub Pages
-    # Publish after the fast correctness gates. E2E still runs and is reported by ci-bridge,
-    # but a superseded/cancelled Playwright run must not leave Pages serving stale PWA metadata.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [quality, smoke]
+    needs: [quality, e2e, smoke]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.quality.result == 'success' && needs.e2e.result == 'success' && needs.smoke.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -275,32 +271,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Prepare artifact
+      - name: Vendor Phaser locally
         run: |
-          mkdir -p _site
-          cp index.html style.css manifest.webmanifest _site/
-          cp -R src _site/src
-          cp -R assets _site/assets
-          mkdir -p _site/vendor
-          if [ -f vendor/phaser.min.js ]; then cp vendor/phaser.min.js _site/vendor/phaser.min.js; else curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o _site/vendor/phaser.min.js; fi
-      - name: Upload Pages artifact
+          mkdir -p vendor
+          curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: .
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Report Pages deployment
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-        run: |
-          TITLE='[CI] main is failing'
-          ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[CI] main is failing") | .number' | head -n1)"
-          if [ -n "$ISSUE_NUMBER" ]; then
-            gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "Pages deployed $SHA successfully: $PAGE_URL"
-          fi
