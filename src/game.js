@@ -205,87 +205,98 @@ class WreckmarchScene extends Phaser.Scene {
     } catch (_) {}
   }
 
-  unlockAudio() { if (this.audioCtx?.state === 'suspended') this.audioCtx.resume(); }
-
-  playTone(freq, duration = .05, type = 'sine', volume = .03, slide = 0) {
-    if (!this.audioCtx || this.audioCtx.state !== 'running') return;
-    const now = this.audioCtx.currentTime, osc = this.audioCtx.createOscillator(), gain = this.audioCtx.createGain();
-    osc.type = type; osc.frequency.setValueAtTime(freq, now);
-    if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), now + duration);
-    gain.gain.setValueAtTime(volume, now); gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
-    osc.connect(gain).connect(this.audioCtx.destination); osc.start(now); osc.stop(now + duration);
+  unlockAudio() {
+    if (this.audioCtx?.state === 'suspended') this.audioCtx.resume().catch(() => {});
   }
 
-  advanceWave() {
-    if (this.gameOver) return;
-    const wave = Math.floor(this.runTime / 15) + 1;
-    this.waveText.setText(`WAVE ${wave}`);
-    this.spawnEvent.delay = Math.max(270, 690 - wave * 78);
-    this.showBanner(wave % 2 === 0 ? 'Horde incoming' : 'The road gets meaner');
-    for (let i = 0; i < Math.min(8, wave * 2); i++) this.time.delayedCall(i * 85, () => this.spawnEnemy(true));
+  playTone(freq, dur = .05, type = 'square', gain = .03, slide = 0) {
+    if (!this.audioCtx || this.audioCtx.state !== 'running') return;
+    const t = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator(), amp = this.audioCtx.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, t);
+    if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq + slide), t + dur);
+    amp.gain.setValueAtTime(gain, t); amp.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    osc.connect(amp); amp.connect(this.audioCtx.destination); osc.start(t); osc.stop(t + dur);
   }
 
   spawnEnemy(elite = false) {
-    if (this.gameOver) return;
-    const side = Phaser.Math.Between(0, 3); let x, y;
-    if (side === 0) { x = Phaser.Math.Between(20, W - 20); y = 105; }
-    if (side === 1) { x = W - 20; y = Phaser.Math.Between(130, H - 180); }
-    if (side === 2) { x = Phaser.Math.Between(20, W - 20); y = H - 165; }
-    if (side === 3) { x = 20; y = Phaser.Math.Between(130, H - 180); }
-    const e = this.enemies.create(x, y, 'rat-run-0').setDepth(12).setScale(elite ? 1.08 : .88);
-    e.play('rat-run'); e.name = `scraprat-${this.enemySerial++}`; e.setCircle(21, 24, 17);
-    e.hp = elite ? 110 + this.runTime * 2.4 : 54 + this.runTime * 1.25;
-    e.speed = elite ? Phaser.Math.Between(70, 88) : Phaser.Math.Between(88, 122);
-    e.damage = elite ? 19 : 10; e.elite = elite;
-    if (elite) e.setTint(0xe69b56);
+    // Legacy adapter only. Enemy Foundation replaces this method at runtime.
+    return this.spawnSystem?.spawn?.('scrap-rat', { elite }) || null;
+  }
+
+  advanceWave() {
+    // Legacy adapter only. Run balance owns real wave progression after Phase E.1.
+    this.wave = Math.max(1, Number(this.wave) || 1) + 1;
+    this.waveText?.setText?.(`WAVE ${this.wave}`);
+    this.showBanner?.(`WAVE ${this.wave}`);
+  }
+
+  fireAtNearest() {
+    return this.weaponSystem?.tryFire?.(this.hero, this.enemies?.getChildren?.() || []) || null;
+  }
+
+  onBulletHit(enemy, bullet) {
+    this.enemyCombatSystem?.onProjectileHit?.(bullet, enemy);
+  }
+
+  onEnemyHeroTouch(hero, enemy) {
+    this.playerDamageSystem?.onEnemyContact?.(hero, enemy, this.time.now);
+  }
+
+  onHeroHit(enemy) {
+    if (!enemy?.active) return;
+    const now = this.time.now;
+    if (now < this.lastHeroHit + this.heroInvulnMs) return;
+    this.lastHeroHit = now;
+    const dmg = enemy.contactDamage || 10; this.heroHp -= dmg;
+    const ang = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.hero.x, this.hero.y);
+    this.heroKnockback.set(Math.cos(ang) * 340, Math.sin(ang) * 340); this.heroKnockbackUntil = now + 140;
+    this.cameras.main.shake(100, .004); this.playTone(135, .07, 'sawtooth', .025, -30);
+    const hit = this.add.circle(this.hero.x, this.hero.y, 24, 0xe85d4d, .32).setDepth(31);
+    this.tweens.add({ targets: hit, scale: 2, alpha: 0, duration: 180, onComplete: () => hit.destroy() });
+    if (this.heroHp <= 0) this.endRun('WRECKED');
+  }
+
+  onEnemyKilled(enemy) {
+    if (!enemy?.active) return;
+    for (let i = 0; i < enemy.scrapDrop; i++) {
+      const s = this.scraps.get(enemy.x + Phaser.Math.Between(-16, 16), enemy.y + Phaser.Math.Between(-14, 14), 'scrap');
+      if (s) { s.setActive(true).setVisible(true).setDepth(11).setScale(.7); s.body.enable = true; s.body.setAllowGravity(false); s.setVelocity(Phaser.Math.Between(-70, 70), Phaser.Math.Between(-70, 70)); }
+    }
+    this.playTone(enemy.elite ? 95 : 150, enemy.elite ? .12 : .055, 'triangle', .025, enemy.elite ? -40 : 40);
+    enemy.disableBody(true, true);
   }
 
   update(time, delta) {
     if (this.gameOver) return;
     this.runTime += delta / 1000;
-    this.updateTimer();
-    this.updateMovement(time);
-    this.updateEnemies();
-    this.projectileSystem?.update(delta);
+    this.updateMovement(time, delta);
+    this.enemyBehaviorSystem?.update?.(time, delta);
+    this.fireAtNearest(time);
     this.updateScrapMagnet();
-    this.weaponSystem?.update(time);
     this.updateHUD();
+    this.updateTimer();
   }
 
   updateMovement(time) {
-    this.inputManager.readMove(this.move);
-    const moving = this.move.lengthSq() > .05;
-    let vx = this.move.x * this.heroSpeed, vy = this.move.y * this.heroSpeed;
     if (time < this.heroKnockbackUntil) {
-      const strength = Phaser.Math.Clamp((this.heroKnockbackUntil - time) / 140, 0, 1);
-      vx += this.heroKnockback.x * strength; vy += this.heroKnockback.y * strength;
+      this.hero.setVelocity(this.heroKnockback.x, this.heroKnockback.y);
+      this.heroKnockback.scale(.92); return;
     }
-    this.hero.setVelocity(vx, vy);
-    // Bootstrap owns fallback locomotion only until CharacterSystem installs.
-    // Production character visuals then have exclusive animation/pose ownership.
-    if (!this.__characterSystemReady) {
-      this.hero.rotation = Phaser.Math.Linear(this.hero.rotation, moving ? this.move.x * .09 : 0, .16);
-      this.hero.setFlipX(this.move.x < -.12);
-      if (moving && this.hero.anims.currentAnim?.key !== 'hero-run') this.hero.play('hero-run', true);
-      if (!moving && this.hero.anims.currentAnim?.key !== 'hero-idle') this.hero.play('hero-idle', true);
-    }
-    this.heroShadow.setPosition(this.hero.x, this.hero.y + 36).setScale(moving ? 1.08 : 1, moving ? .85 : 1);
-    if (moving && time > this.lastDustAt + 115) { this.lastDustAt = time; this.spawnDust(this.hero.x - this.move.x * 22, this.hero.y + 36, .65); }
-  }
-
-  spawnDust(x, y, scale = 1) {
-    const p = this.add.ellipse(x + Phaser.Math.Between(-6, 6), y, 20 * scale, 9 * scale, 0x9a8066, .33).setDepth(9);
-    this.tweens.add({ targets: p, x: x - Phaser.Math.Between(6, 20), y: y - Phaser.Math.Between(1, 8), scale: 1.7, alpha: 0, duration: 300, onComplete: () => p.destroy() });
-  }
-
-  updateEnemies() {
-    this.enemies.children.iterate(e => {
-      if (!e?.active) return;
-      const ang = Phaser.Math.Angle.Between(e.x, e.y, this.hero.x, this.hero.y);
-      e.setVelocity(Math.cos(ang) * e.speed, Math.sin(ang) * e.speed);
-      e.setFlipX(Math.cos(ang) < 0);
-      if (Math.random() < .012) this.spawnDust(e.x, e.y + 22, .38);
-    });
+    const input = this.inputManager?.readMovement?.() || { x: 0, y: 0, active: false };
+    const raw = new Phaser.Math.Vector2(input.x, input.y);
+    this.move.set(input.x, input.y);
+    if (raw.lengthSq() > 1) raw.normalize();
+    const target = raw.scale(this.heroSpeed);
+    const current = new Phaser.Math.Vector2(this.hero.body.velocity.x, this.hero.body.velocity.y);
+    const sharpness = raw.lengthSq() > .02 ? 12 : 15;
+    current.lerp(target, 1 - Math.exp(-sharpness * (1 / 60)));
+    this.hero.setVelocity(current.x, current.y);
+    const moving = raw.lengthSq() > .05;
+    const anim = moving ? 'hero-run' : 'hero-idle';
+    if (this.hero.anims.currentAnim?.key !== anim) this.hero.play(anim, true);
+    if (Math.abs(raw.x) > .08) this.hero.setFlipX(raw.x < 0);
+    this.heroShadow.setPosition(this.hero.x, this.hero.y + 36);
   }
 
   updateScrapMagnet() {
@@ -364,5 +375,12 @@ const config = {
   input: { activePointers: 3 },
   scene: [WreckmarchScene]
 };
-// Publish the authoritative game handle so boot/runtime layers do not depend on Phaser's internal GAMES registry.
-window.__WM_GAME__ = new Phaser.Game(config);
+// Publish the authoritative game handle and keep Phaser.GAMES compatible for legacy runtime layers.
+const game = new Phaser.Game(config);
+window.__WM_GAME__ = game;
+if (Array.isArray(window.Phaser?.GAMES)) {
+  const games = window.Phaser.GAMES;
+  const existingIndex = games.indexOf(game);
+  if (existingIndex > 0) games.splice(existingIndex, 1);
+  if (games[0] !== game) games.unshift(game);
+}
