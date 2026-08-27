@@ -218,74 +218,121 @@ class WreckmarchScene extends Phaser.Scene {
 
   advanceWave() {
     if (this.gameOver) return;
-    const wave = Math.floor(this.runTime / 15) + 1;
+    const wave = 1 + Math.floor(this.runTime / 15);
     this.waveText.setText(`WAVE ${wave}`);
-    this.spawnEvent.delay = Math.max(270, 690 - wave * 78);
-    this.showBanner(wave % 2 === 0 ? 'Horde incoming' : 'The road gets meaner');
-    for (let i = 0; i < Math.min(8, wave * 2); i++) this.time.delayedCall(i * 85, () => this.spawnEnemy(true));
+    this.showBanner(`Wave ${wave}`);
+    this.spawnEvent.delay = Math.max(330, 690 - wave * 24);
   }
 
   spawnEnemy(elite = false) {
-    if (this.gameOver) return;
-    const side = Phaser.Math.Between(0, 3); let x, y;
-    if (side === 0) { x = Phaser.Math.Between(20, W - 20); y = 105; }
-    if (side === 1) { x = W - 20; y = Phaser.Math.Between(130, H - 180); }
-    if (side === 2) { x = Phaser.Math.Between(20, W - 20); y = H - 165; }
-    if (side === 3) { x = 20; y = Phaser.Math.Between(130, H - 180); }
-    const e = this.enemies.create(x, y, 'rat-run-0').setDepth(12).setScale(elite ? 1.08 : .88);
-    e.play('rat-run'); e.name = `scraprat-${this.enemySerial++}`; e.setCircle(21, 24, 17);
-    e.hp = elite ? 110 + this.runTime * 2.4 : 54 + this.runTime * 1.25;
-    e.speed = elite ? Phaser.Math.Between(70, 88) : Phaser.Math.Between(88, 122);
-    e.damage = elite ? 19 : 10; e.elite = elite;
-    if (elite) e.setTint(0xe69b56);
+    const side = Phaser.Math.Between(0, 3);
+    const margin = 34;
+    let x, y;
+    if (side === 0) { x = margin; y = Phaser.Math.Between(130, H - 85); }
+    else if (side === 1) { x = W - margin; y = Phaser.Math.Between(130, H - 85); }
+    else if (side === 2) { x = Phaser.Math.Between(50, W - 50); y = 120; }
+    else { x = Phaser.Math.Between(50, W - 50); y = H - 70; }
+
+    const e = this.enemies.create(x, y, 'rat-run-0').setDepth(18).setScale(elite ? 1.05 : .86);
+    e.play('rat-run'); e.setTint(elite ? 0xd99658 : 0xffffff); e.elite = elite;
+    e.hp = elite ? 110 : 54; e.maxHp = e.hp; e.speed = elite ? 120 : Phaser.Math.Between(92, 114);
+    e.damage = elite ? 18 : 10; e.scrapDrop = elite ? 4 : 1; e.enemyId = `rat-${this.enemySerial++}`;
+    e.body.setCircle(20, 23, 18);
+    e.hpBg = this.add.rectangle(x, y - 37, 43, 6, 0x0b0f14, .75).setDepth(27);
+    e.hpBar = this.add.rectangle(x - 20, y - 37, 40, 4, elite ? 0xef9c54 : 0xc74b40).setOrigin(0, .5).setDepth(28);
+    this.tweens.add({ targets: e, alpha: { from: 0, to: 1 }, scale: { from: e.scale * .7, to: e.scale }, duration: 150 });
+    return e;
   }
 
   update(time, delta) {
     if (this.gameOver) return;
-    this.runTime += delta / 1000;
-    this.updateTimer();
-    this.updateMovement(time);
-    this.updateEnemies();
-    this.projectileSystem?.update(delta);
-    this.updateScrapMagnet();
-    this.weaponSystem?.update(time);
-    this.updateHUD();
+    const dt = Math.min(delta / 1000, .034); this.runTime += dt;
+    this.updateMovement(time, dt); this.updateEnemies(dt); this.updateBullets(time); this.updateScrapMagnet(); this.updateHUD(); this.updateTimer();
+    if (this.runTime > 55 && !this.__eliteSpawned) { this.__eliteSpawned = true; this.spawnEnemy(true); this.showBanner('ELITE INBOUND'); }
   }
 
-  updateMovement(time) {
-    this.inputManager.readMove(this.move);
+  updateMovement(_time, dt) {
+    const input = this.inputManager?.read?.() || { x: 0, y: 0, active: false };
+    this.move.set(input.x, input.y);
+    if (this.move.lengthSq() > 1) this.move.normalize();
+
+    if (performance.now() < this.heroKnockbackUntil) {
+      this.hero.setVelocity(this.heroKnockback.x, this.heroKnockback.y);
+      this.heroKnockback.scale(Math.pow(.05, dt * 4));
+    } else this.hero.setVelocity(this.move.x * this.heroSpeed, this.move.y * this.heroSpeed);
+
     const moving = this.move.lengthSq() > .05;
-    let vx = this.move.x * this.heroSpeed, vy = this.move.y * this.heroSpeed;
-    if (time < this.heroKnockbackUntil) {
-      const strength = Phaser.Math.Clamp((this.heroKnockbackUntil - time) / 140, 0, 1);
-      vx += this.heroKnockback.x * strength; vy += this.heroKnockback.y * strength;
-    }
-    this.hero.setVelocity(vx, vy);
-    // Bootstrap owns fallback locomotion only until CharacterSystem installs.
-    // Production character visuals then have exclusive animation/pose ownership.
-    if (!this.__characterSystemReady) {
-      this.hero.rotation = Phaser.Math.Linear(this.hero.rotation, moving ? this.move.x * .09 : 0, .16);
-      this.hero.setFlipX(this.move.x < -.12);
-      if (moving && this.hero.anims.currentAnim?.key !== 'hero-run') this.hero.play('hero-run', true);
-      if (!moving && this.hero.anims.currentAnim?.key !== 'hero-idle') this.hero.play('hero-idle', true);
-    }
-    this.heroShadow.setPosition(this.hero.x, this.hero.y + 36).setScale(moving ? 1.08 : 1, moving ? .85 : 1);
-    if (moving && time > this.lastDustAt + 115) { this.lastDustAt = time; this.spawnDust(this.hero.x - this.move.x * 22, this.hero.y + 36, .65); }
-  }
-
-  spawnDust(x, y, scale = 1) {
-    const p = this.add.ellipse(x + Phaser.Math.Between(-6, 6), y, 20 * scale, 9 * scale, 0x9a8066, .33).setDepth(9);
-    this.tweens.add({ targets: p, x: x - Phaser.Math.Between(6, 20), y: y - Phaser.Math.Between(1, 8), scale: 1.7, alpha: 0, duration: 300, onComplete: () => p.destroy() });
+    if (moving && this.hero.anims.currentAnim?.key !== 'hero-run') this.hero.play('hero-run', true);
+    if (!moving && this.hero.anims.currentAnim?.key !== 'hero-idle') this.hero.play('hero-idle', true);
+    if (Math.abs(this.move.x) > .08) this.hero.setFlipX(this.move.x < 0);
+    this.heroShadow.setPosition(this.hero.x, this.hero.y + 38);
   }
 
   updateEnemies() {
     this.enemies.children.iterate(e => {
       if (!e?.active) return;
-      const ang = Phaser.Math.Angle.Between(e.x, e.y, this.hero.x, this.hero.y);
-      e.setVelocity(Math.cos(ang) * e.speed, Math.sin(ang) * e.speed);
-      e.setFlipX(Math.cos(ang) < 0);
-      if (Math.random() < .012) this.spawnDust(e.x, e.y + 22, .38);
+      const a = Phaser.Math.Angle.Between(e.x, e.y, this.hero.x, this.hero.y);
+      e.setVelocity(Math.cos(a) * e.speed, Math.sin(a) * e.speed);
+      e.setFlipX(Math.cos(a) < 0);
+      e.hpBg?.setPosition(e.x, e.y - (e.elite ? 45 : 37)); e.hpBar?.setPosition(e.x - 20, e.y - (e.elite ? 45 : 37));
+      const d = Phaser.Math.Distance.Between(e.x, e.y, this.hero.x, this.hero.y);
+      if (d < (e.elite ? 44 : 37) && performance.now() - this.lastHeroHit > this.heroInvulnMs) this.hitHero(e.damage, e);
     });
+  }
+
+  updateBullets(time) {
+    if (time - this.lastShot > this.fireDelay) {
+      const alive = this.enemies.getChildren().filter(e => e.active);
+      if (alive.length) {
+        alive.sort((a, b) => Phaser.Math.Distance.Squared(a.x, a.y, this.hero.x, this.hero.y) - Phaser.Math.Distance.Squared(b.x, b.y, this.hero.x, this.hero.y));
+        const target = alive[0], ang = Phaser.Math.Angle.Between(this.hero.x, this.hero.y, target.x, target.y);
+        this.fireBullet(this.hero.x + Math.cos(ang) * 29, this.hero.y + Math.sin(ang) * 29, ang, target);
+        this.lastShot = time;
+      }
+    }
+    this.bullets.children.iterate(b => {
+      if (!b?.active) return;
+      if (b.x < -30 || b.x > W + 30 || b.y < 70 || b.y > H + 30) b.destroy();
+    });
+  }
+
+  fireBullet(x, y, angle) {
+    const b = this.bullets.create(x, y, 'bullet').setDepth(25);
+    b.setVelocity(Math.cos(angle) * 570, Math.sin(angle) * 570); b.damage = this.damage; b.birth = performance.now(); b.setScale(.65);
+    const flash = this.add.image(x, y, 'flash').setDepth(24).setRotation(angle).setScale(.7);
+    this.tweens.add({ targets: flash, alpha: 0, scaleX: 1.4, duration: 70, onComplete: () => flash.destroy() });
+    this.playTone(190, .045, 'square', .018, 120);
+    this.physics.add.overlap(b, this.enemies, (bullet, enemy) => this.hitEnemy(bullet, enemy), undefined, this);
+  }
+
+  hitEnemy(bullet, enemy) {
+    if (!bullet.active || !enemy.active) return;
+    bullet.destroy(); enemy.hp -= bullet.damage;
+    enemy.hpBar.width = 40 * Phaser.Math.Clamp(enemy.hp / enemy.maxHp, 0, 1);
+    this.spawnHitFx(enemy.x, enemy.y, enemy.body.velocity.x, enemy.body.velocity.y);
+    this.tweens.add({ targets: enemy, scaleX: enemy.scaleX * 1.08, scaleY: enemy.scaleY * .9, duration: 45, yoyo: true });
+    this.cameras.main.shake(55, .0012);
+    this.playTone(260, .035, 'triangle', .014, -80);
+    if (enemy.hp <= 0) this.killEnemy(enemy);
+  }
+
+  killEnemy(enemy) {
+    const x = enemy.x, y = enemy.y, drop = enemy.scrapDrop;
+    enemy.hpBg?.destroy(); enemy.hpBar?.destroy(); enemy.destroy();
+    for (let i = 0; i < drop; i++) {
+      const s = this.scraps.create(x + Phaser.Math.Between(-9, 9), y + Phaser.Math.Between(-9, 9), 'scrap').setDepth(15).setScale(.6);
+      s.setVelocity(Phaser.Math.Between(-90, 90), Phaser.Math.Between(-90, 90));
+    }
+  }
+
+  hitHero(damage, enemy) {
+    if (performance.now() - this.lastHeroHit < this.heroInvulnMs) return;
+    this.lastHeroHit = performance.now(); this.heroHp -= damage;
+    const a = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.hero.x, this.hero.y);
+    this.heroKnockback.set(Math.cos(a) * 260, Math.sin(a) * 260); this.heroKnockbackUntil = performance.now() + 130;
+    this.cameras.main.shake(100, .004); this.hero.setTint(0xff7c6d);
+    this.time.delayedCall(90, () => this.hero?.clearTint()); this.playTone(110, .08, 'sawtooth', .03, -40);
+    if (this.heroHp <= 0) this.endRun('WRECKED');
   }
 
   updateScrapMagnet() {
@@ -364,5 +411,15 @@ const config = {
   input: { activePointers: 3 },
   scene: [WreckmarchScene]
 };
-// Publish the authoritative game handle so boot/runtime layers do not depend on Phaser's internal GAMES registry.
-window.__WM_GAME__ = new Phaser.Game(config);
+// Publish one authoritative game handle, then mirror it into the legacy
+// Phaser.GAMES registry expected by older runtime layers. The ESM bundle does
+// not reliably expose/populate window.Phaser.GAMES, so keep both paths aligned.
+const game = new Phaser.Game(config);
+window.__WM_GAME__ = game;
+if (window.Phaser) {
+  if (!Array.isArray(window.Phaser.GAMES)) window.Phaser.GAMES = [];
+  const games = window.Phaser.GAMES;
+  const existingIndex = games.indexOf(game);
+  if (existingIndex > 0) games.splice(existingIndex, 1);
+  if (games[0] !== game) games.unshift(game);
+}
