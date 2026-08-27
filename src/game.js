@@ -364,4 +364,5 @@ const config = {
   input: { activePointers: 3 },
   scene: [WreckmarchScene]
 };
-new Phaser.Game(config);
+// Publish the authoritative game handle so boot/runtime layers do not depend on Phaser's internal GAMES registry.
+window.__WM_GAME__ = new Phaser.Game(config);

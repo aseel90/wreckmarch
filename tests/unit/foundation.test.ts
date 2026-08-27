@@ -9,6 +9,13 @@ describe('F0 production foundation', () => {
     expect(pkg.dependencies.phaser).toBe('3.90.0');
   });
 
+  it('publishes the authoritative Phaser game handle for runtime installers', async () => {
+    const game = await read('src/game.js');
+    const html = await read('index.html');
+    expect(game).toContain('window.__WM_GAME__ = new Phaser.Game(config)');
+    expect(html).toMatch(/\.\/src\/game\.js\?v=\d+/);
+  });
+
   it('keeps the fast terrain and final road cleanup in the legacy boot chain', async () => {
     const html = await read('index.html');
     expect(html).toMatch(/\.\/src\/phase-e0-fast-terrain\.js\?v=\d+/);
