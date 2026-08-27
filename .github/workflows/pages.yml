@@ -153,9 +153,9 @@ jobs:
           import re, sys
           text = Path('wm-chrome.log').read_text(errors='ignore') if Path('wm-chrome.log').exists() else ''
           markers = {
-              'visual': 'Current visual stack revealed',
-              'phase_e1': 'Phase E.1 clean road renderer active',
-              'rat': 'Production Scrap Rat locked after final runtime',
+              'visual': 'Art pack v2 applied: Runner + production Scrap Rat + Fortress + wasteland',
+              'phase_e1': 'Phase E.1b active: persistent asphalt layer',
+              'rat': 'Production Scrap Rat active: clean baked 2-pose scuttle',
               'terrain': 'E1 persistence test PASSED',
           }
           missing = [name for name, marker in markers.items() if marker not in text]
