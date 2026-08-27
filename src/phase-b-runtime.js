@@ -9,7 +9,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function getScene(timeoutMs = 9000) {
   const start = performance.now();
   while (performance.now() - start < timeoutMs) {
-    const game = window.Phaser?.GAMES?.find(Boolean) || window.Phaser?.GAMES?.[0];
+    const game = window.__WM_GAME__ || window.Phaser?.GAMES?.find(Boolean) || window.Phaser?.GAMES?.[0];
     const scene = game?.scene?.getScene?.('Wreckmarch');
     if (scene?.sys?.isActive?.() && scene.hero) return scene;
     await wait(60);
