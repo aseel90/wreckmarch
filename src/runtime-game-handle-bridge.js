@@ -6,7 +6,9 @@ export function syncRuntimeGameHandle() {
   if (!phaser) throw new Error('Phaser namespace missing after Phase A');
 
   if (Array.isArray(phaser.GAMES)) {
-    if (!phaser.GAMES.includes(game)) phaser.GAMES.unshift(game);
+    // Legacy runtimes call GAMES.find(Boolean). Canonicalize the registry so the
+    // only truthy entry is the authoritative WRECKMARCH game instance.
+    phaser.GAMES.splice(0, phaser.GAMES.length, game);
   } else {
     // ESM namespace objects can be read-only; replace only the window alias with a plain facade.
     window.Phaser = { ...phaser, GAMES: [game] };
