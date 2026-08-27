@@ -4,6 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <meta name="theme-color" content="#0b1114" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WRECKMARCH" />
+  <meta name="format-detection" content="telephone=no" />
+  <link rel="manifest" href="./manifest.webmanifest?v=1" />
   <title>WRECKMARCH</title>
   <link rel="stylesheet" href="./style.css?v=13" />
 </head>
@@ -16,6 +22,10 @@
 
   <script type="module">
     const bootEl=document.getElementById('boot'), status=document.getElementById('boot-status'), logEl=document.getElementById('log');
+    const standalone=window.matchMedia?.('(display-mode: standalone)')?.matches||window.navigator.standalone===true;
+    document.documentElement.dataset.wreckmarchDisplayMode=standalone?'standalone':'browser';
+    document.body.classList.toggle('standalone-mode',standalone);
+    if(standalone) document.getElementById('fs-btn').hidden=true;
     const lines=[]; const log=(m)=>{const line=`[${new Date().toISOString()}] ${m}`;lines.push(line);logEl.textContent=lines.join('\n');console.log(line)};
     window.__WM_LOG__=log;
     const fail=(m)=>{log(m);status.textContent='LOAD FAILED — OPEN DEBUG';bootEl.classList.add('failed');document.getElementById('debug').open=true};
