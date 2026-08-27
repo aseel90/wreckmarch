@@ -20,6 +20,8 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
     return {
       viewport: document.documentElement.dataset.wreckmarchViewport,
       hudVersion: document.documentElement.dataset.wreckmarchMobileHud,
+      finalPolish: document.documentElement.dataset.wreckmarchFinalPolish,
+      safeInsets: scene.__mobileHudPolish?.safeInsets,
       railHeight,
       title: { x: scene.titleText.x, y: scene.titleText.y, right: scene.titleText.x + scene.titleText.displayWidth },
       wave: { x: scene.waveText.x, y: scene.waveText.y },
@@ -33,7 +35,9 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
   });
 
   expect(baseline.viewport).toBe('960x540');
-  expect(baseline.hudVersion).toBe('compact-v1');
+  expect(baseline.hudVersion).toBe('compact-v2');
+  expect(baseline.finalPolish).toBe('presentation-v1');
+  expect(baseline.safeInsets).toMatchObject({ top: 0, right: 0, bottom: 0, left: 0 });
   expect(baseline.railHeight).toBe(62);
   expect(baseline.title).toMatchObject({ x: 16, y: 8 });
   expect(baseline.wave).toMatchObject({ x: 16, y: 34 });

@@ -1,8 +1,9 @@
-/* WRECKMARCH mobile polish — compact landscape HUD rail */
+/* WRECKMARCH mobile polish — safe-area-aware compact landscape HUD rail */
 function gameplayHudObjects(scene) {
   const refs = [
     scene.titleText, scene.waveText, scene.timerText, scene.levelText, scene.scrapText,
-    scene.xpBg, scene.xpFill, scene.hint, scene.joyBase, scene.joyKnob, scene.hitboxButton
+    scene.xpBg, scene.xpFill, scene.hint, scene.joyBase, scene.joyKnob,
+    scene.heroHpBg, scene.heroHpBar, scene.hitboxButton
   ];
   const rails = scene.children.list.filter(object => object?.name === 'mobile-hud-polish');
   return [...new Set([...refs, ...rails].filter(Boolean))];
@@ -13,47 +14,137 @@ function applySuppressedState(scene) {
   gameplayHudObjects(scene).forEach(object => object.setVisible?.(false));
 }
 
+function readSafeAreaInsets() {
+  if (typeof document === 'undefined' || !document.body) return { top: 0, right: 0, bottom: 0, left: 0 };
+  const probe = document.createElement('div');
+  probe.setAttribute('aria-hidden', 'true');
+  probe.style.cssText = [
+    'position:fixed', 'inset:0', 'visibility:hidden', 'pointer-events:none',
+    'padding-top:env(safe-area-inset-top)', 'padding-right:env(safe-area-inset-right)',
+    'padding-bottom:env(safe-area-inset-bottom)', 'padding-left:env(safe-area-inset-left)'
+  ].join(';');
+  document.body.appendChild(probe);
+  const css = getComputedStyle(probe);
+  const px = value => Math.max(0, Number.parseFloat(value) || 0);
+  const result = {
+    top: px(css.paddingTop), right: px(css.paddingRight),
+    bottom: px(css.paddingBottom), left: px(css.paddingLeft)
+  };
+  probe.remove();
+  return result;
+}
+
+function logicalSafeArea(scene) {
+  const W = scene.scale.gameSize.width;
+  const H = scene.scale.gameSize.height;
+  const viewport = window.visualViewport;
+  const cssW = Math.max(1, Number(viewport?.width) || window.innerWidth || W);
+  const cssH = Math.max(1, Number(viewport?.height) || window.innerHeight || H);
+  const px = readSafeAreaInsets();
+  return {
+    top: px.top * H / cssH,
+    right: px.right * W / cssW,
+    bottom: px.bottom * H / cssH,
+    left: px.left * W / cssW
+  };
+}
+
+function restoreJoystick(scene) {
+  const polish = scene.__mobileHudPolish;
+  if (!polish || scene.joy?.active) return;
+  scene.joyBase?.setPosition?.(polish.joyRestX, polish.joyRestY).setAlpha?.(.22);
+  scene.joyKnob?.setPosition?.(polish.joyRestX, polish.joyRestY).setAlpha?.(.32);
+}
+
+function clampJoystickOrigin(scene, pointer) {
+  if (!scene.joy?.active || scene.joy.id !== pointer.id) return;
+  const polish = scene.__mobileHudPolish;
+  if (!polish) return;
+  const { safeInsets, railHeight } = polish;
+  const radius = Number(scene.joy.radius) || 62;
+  const minX = safeInsets.left + radius + 14;
+  const maxX = scene.scale.gameSize.width - safeInsets.right - radius - 14;
+  const minY = railHeight + radius + 14;
+  const maxY = scene.scale.gameSize.height - safeInsets.bottom - radius - 14;
+  const x = Phaser.Math.Clamp(pointer.x, Math.min(minX, maxX), Math.max(minX, maxX));
+  const y = Phaser.Math.Clamp(pointer.y, Math.min(minY, maxY), Math.max(minY, maxY));
+  scene.joy.origin.set(x, y);
+  scene.joy.current.set(x, y);
+  scene.joyBase?.setPosition?.(x, y).setAlpha?.(.64);
+  scene.joyKnob?.setPosition?.(x, y).setAlpha?.(.88);
+}
+
+function installSafeJoystick(scene) {
+  if (scene.__mobileHudSafeJoystickInstalled || !scene.input) return;
+  scene.__mobileHudSafeJoystickInstalled = true;
+  const onDown = pointer => clampJoystickOrigin(scene, pointer);
+  const onRelease = () => requestAnimationFrame(() => restoreJoystick(scene));
+  scene.input.on('pointerdown', onDown);
+  scene.input.on('pointerup', onRelease);
+  scene.input.on('pointerupoutside', onRelease);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    scene.input.off('pointerdown', onDown);
+    scene.input.off('pointerup', onRelease);
+    scene.input.off('pointerupoutside', onRelease);
+  });
+}
+
 function layout(scene) {
   const W = scene.scale.gameSize.width;
   const H = scene.scale.gameSize.height;
+  const safe = logicalSafeArea(scene);
   scene.children.list.filter(object => object?.name === 'mobile-hud-polish').forEach(object => object.destroy());
   scene.children.list
     .filter(object => object?.name === 'c1-hud-shade' || object?.name === 'c2-hud-shade')
     .forEach(object => object.setVisible(false));
 
-  const hudH = 62;
-  scene.add.rectangle(W / 2, hudH / 2, W, hudH, 0x090d13, .94)
+  const contentH = 62;
+  const hudH = safe.top + contentH;
+  scene.add.rectangle(W / 2, hudH / 2, W, hudH, 0x090d13, .95)
     .setDepth(916).setScrollFactor(0).setName('mobile-hud-polish');
-  scene.add.rectangle(W / 2, hudH - 1, W, 2, 0x59636d, .38)
+  scene.add.rectangle(W / 2, hudH - 1, W, 2, 0x68737e, .34)
+    .setDepth(917).setScrollFactor(0).setName('mobile-hud-polish');
+  scene.add.rectangle(W / 2, safe.top + 1, W, 1, 0xf2d19b, .07)
     .setDepth(917).setScrollFactor(0).setName('mobile-hud-polish');
 
-  const edge = 16;
-  scene.titleText.setPosition(edge, 8).setFontSize(17).setDepth(920).setScrollFactor(0);
-  scene.waveText.setPosition(edge, 34).setOrigin(0, 0).setFontSize(10).setDepth(920).setScrollFactor(0);
-  scene.timerText.setPosition(W - edge, 8).setOrigin(1, 0).setFontSize(14).setDepth(920).setScrollFactor(0);
+  const edgeLeft = Math.max(16, safe.left + 12);
+  const edgeRight = Math.max(16, safe.right + 12);
+  const top = safe.top;
+  scene.titleText.setPosition(edgeLeft, top + 8).setFontSize(17).setDepth(920).setScrollFactor(0);
+  scene.waveText.setPosition(edgeLeft, top + 34).setOrigin(0, 0).setFontSize(10).setDepth(920).setScrollFactor(0);
+  scene.timerText.setPosition(W - edgeRight, top + 8).setOrigin(1, 0).setFontSize(14).setDepth(920).setScrollFactor(0);
 
-  const barW = Phaser.Math.Clamp(Math.round(W * .44), 300, 520);
-  const barX = W / 2;
-  const barY = 42;
+  const usableW = Math.max(320, W - edgeLeft - edgeRight);
+  const barW = Phaser.Math.Clamp(Math.round(usableW * .42), 250, 460);
+  const barX = (edgeLeft + (W - edgeRight)) / 2;
+  const barY = top + 42;
   const barLeft = barX - barW / 2;
   const barRight = barX + barW / 2;
 
-  scene.levelText.setPosition(barLeft, 8).setOrigin(0, 0).setFontSize(11).setDepth(922).setScrollFactor(0);
-  scene.scrapText.setPosition(barRight, 8).setOrigin(1, 0).setFontSize(11).setDepth(922).setScrollFactor(0);
+  scene.levelText.setPosition(barLeft, top + 8).setOrigin(0, 0).setFontSize(11).setDepth(922).setScrollFactor(0);
+  scene.scrapText.setPosition(barRight, top + 8).setOrigin(1, 0).setFontSize(11).setDepth(922).setScrollFactor(0);
   scene.xpBg?.destroy?.();
   scene.xpFill?.destroy?.();
   scene.xpBg = scene.add.rectangle(barX, barY, barW, 11, 0x111820, .98)
-    .setStrokeStyle(1.5, 0x59636d, .75).setDepth(918).setScrollFactor(0);
+    .setStrokeStyle(1.5, 0x66727d, .7).setDepth(918).setScrollFactor(0);
   scene.xpFill = scene.add.rectangle(barLeft + 3, barY, barW - 6, 7, 0x55d7e5, 1)
     .setOrigin(0, .5).setDepth(919).setScrollFactor(0);
 
-  scene.hint.setPosition(W / 2, H - 8).setFontSize(9).setDepth(800).setScrollFactor(0);
+  scene.hint.setPosition(W / 2, H - safe.bottom - 8).setFontSize(9).setDepth(800).setScrollFactor(0);
+  const joyRestX = edgeLeft + 64;
+  const joyRestY = H - safe.bottom - 96;
+  scene.__mobileHudPolish = {
+    width: W, height: H, railHeight: hudH, contentHeight: contentH,
+    edgeLeft, edgeRight, safeInsets: safe, joyRestX, joyRestY
+  };
+  restoreJoystick(scene);
   scene.refreshProgressHud?.();
-  scene.__mobileHudPolish = { width: W, height: H, railHeight: hudH };
   applySuppressedState(scene);
 }
 
 function installOverlayStateOwnership(scene) {
+  if (scene.__mobileHudOverlayOwnershipInstalled) return;
+  scene.__mobileHudOverlayOwnershipInstalled = true;
   const priorOpen = scene.openUpgradeCards?.bind(scene);
   const priorClose = scene.closeUpgradeCards?.bind(scene);
 
@@ -80,11 +171,15 @@ function installOverlayStateOwnership(scene) {
     if (this.spawnEvent) this.spawnEvent.paused = true;
     if (this.waveEvent) this.waveEvent.paused = true;
     this.hero.setVelocity(0, 0);
-    this.cameras.main.shake(260, .008);
-    this.playTone?.(90, .35, 'sawtooth', .04, -55);
+    this.cameras.main.shake(220, .0065);
+    this.playTone?.(90, .30, 'sawtooth', .035, -55);
 
     const W = this.scale.width || this.cameras.main.width || 960;
     const H = this.scale.height || this.cameras.main.height || 540;
+    const safe = this.__mobileHudPolish?.safeInsets || { top: 0, right: 0, bottom: 0, left: 0 };
+    const usableTop = safe.top;
+    const usableBottom = H - safe.bottom;
+    const centerY = (usableTop + usableBottom) / 2;
 
     ['UpgradeScene', 'UpgradeSceneV2', 'UpgradeSceneV3', 'UpgradeSceneV4'].forEach(key => {
       if (this.scene.isActive?.(key)) this.scene.stop(key);
@@ -93,31 +188,32 @@ function installOverlayStateOwnership(scene) {
     this.input.enabled = true;
     this.setGameplayHudVisible?.(false);
 
-    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x090d12, .92)
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x080c11, .93)
       .setDepth(6000).setScrollFactor(0).setName('run-end-overlay');
-    const heading = this.add.text(W / 2, H * .36, reason, {
-      fontFamily: 'Arial Black, Arial', fontSize: '32px', color: '#d56a49', align: 'center'
+    const kicker = this.add.text(W / 2, centerY - 92, 'RUN COMPLETE', {
+      fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#7f8b96', letterSpacing: 2
+    }).setOrigin(.5).setDepth(6001).setScrollFactor(0).setName('run-end-kicker');
+    const heading = this.add.text(W / 2, centerY - 54, reason, {
+      fontFamily: 'Arial Black, Arial', fontSize: '30px', color: '#d96d4d', align: 'center'
     }).setOrigin(.5).setDepth(6001).setScrollFactor(0).setName('run-end-title');
-    const summary = this.add.text(W / 2, H * .45, `SURVIVED ${Math.floor(this.runTime)}s  •  SCRAP ${this.scrap}`, {
-      fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#c0c8d1', align: 'center'
+    const summary = this.add.text(W / 2, centerY - 10, `SURVIVED ${Math.floor(this.runTime)}s  •  SCRAP ${this.scrap}`, {
+      fontFamily: 'Arial, sans-serif', fontSize: '15px', color: '#c5ccd4', align: 'center'
     }).setOrigin(.5).setDepth(6001).setScrollFactor(0).setName('run-end-summary');
-    const btn = this.add.rectangle(W / 2, H * .60, 260, 64, 0xb97945)
+    const btn = this.add.rectangle(W / 2, centerY + 72, 246, 58, 0xbc7b46)
+      .setStrokeStyle(2, 0xf1c988, .58)
       .setDepth(6001).setScrollFactor(0).setName('run-end-button').setInteractive({ useHandCursor: true });
-    const buttonLabel = this.add.text(W / 2, H * .60, 'RUN AGAIN', {
-      fontFamily: 'Arial Black, Arial', fontSize: '20px', color: '#171d26'
+    const buttonLabel = this.add.text(W / 2, centerY + 72, 'RUN AGAIN', {
+      fontFamily: 'Arial Black, Arial', fontSize: '18px', color: '#171d26'
     }).setOrigin(.5).setDepth(6002).setScrollFactor(0).setName('run-end-button-label');
 
-    window.__WM_END_RUN_LAYOUT__ = { width: W, height: H, overlay, heading, summary, btn, buttonLabel };
-    document.documentElement.dataset.wreckmarchEndRunLayout = 'runtime-v1';
+    window.__WM_END_RUN_LAYOUT__ = { width: W, height: H, overlay, kicker, heading, summary, btn, buttonLabel };
+    document.documentElement.dataset.wreckmarchEndRunLayout = 'runtime-v2';
     this.restartRun = () => {
       if (this.__runRestarting) return;
       this.__runRestarting = true;
       btn.disableInteractive?.().setAlpha?.(.7);
       buttonLabel.setText('RESTARTING…');
       document.documentElement.dataset.wreckmarchRunRestart = 'reloading';
-      // Runtime phases patch this Scene instance after boot. A Phaser-only scene.restart()
-      // recreates base objects but leaves those patches pointing at destroyed objects.
-      // Reload the document so every phase is installed against one fresh scene.
       window.location.reload();
     };
     btn.on('pointerdown', () => this.restartRun());
@@ -153,21 +249,28 @@ export function installMobileHudPolish(scene) {
   };
 
   installOverlayStateOwnership(scene);
-
+  installSafeJoystick(scene);
   scene.children.list
     .filter(object => object?.name === 'c1-hud-shade' || object?.name === 'c2-hud-shade')
     .forEach(object => object.setVisible(false));
   layout(scene);
   if (!scene.__gameplayHudSuppressed) document.documentElement.dataset.wreckmarchGameplayHud = 'visible';
 
-  const relayout = () => requestAnimationFrame(() => layout(scene));
+  let relayoutFrame = 0;
+  const relayout = () => {
+    cancelAnimationFrame(relayoutFrame);
+    relayoutFrame = requestAnimationFrame(() => layout(scene));
+  };
   window.addEventListener('resize', relayout, { passive: true });
   window.visualViewport?.addEventListener?.('resize', relayout, { passive: true });
+  window.visualViewport?.addEventListener?.('scroll', relayout, { passive: true });
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    cancelAnimationFrame(relayoutFrame);
     window.removeEventListener('resize', relayout);
     window.visualViewport?.removeEventListener?.('resize', relayout);
+    window.visualViewport?.removeEventListener?.('scroll', relayout);
   });
 
-  document.documentElement.dataset.wreckmarchMobileHud = 'compact-v1';
+  document.documentElement.dataset.wreckmarchMobileHud = 'compact-v2';
   return scene.__mobileHudPolish;
 }

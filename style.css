@@ -2,205 +2,130 @@
   background: #090d13;
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-text-size-adjust: 100%;
 }
 * { box-sizing: border-box; }
-html, body { width: 100%; height: 100%; min-height: 100%; margin: 0; overflow: hidden; background: #090d13; }
-body { position: fixed; inset: 0; touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
-#game-shell {
-  position: fixed;
-  inset: 0;
-  width: auto;
-  height: auto;
-  min-width: 100%;
-  min-height: 100%;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background: radial-gradient(circle at 50% 10%, rgba(230,159,65,.1), transparent 44%), #090d13;
+html, body {
+  width: 100%; height: 100%; min-height: 100%; margin: 0; overflow: hidden;
+  background: #090d13;
 }
+body {
+  position: fixed; inset: 0;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button, summary { -webkit-tap-highlight-color: transparent; }
+
 #game {
-  width: 100%; height: 100%; position: relative;
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
   opacity: 0; pointer-events: none;
+  background: #090d13;
+  transition: opacity .22s ease;
 }
 body.visual-ready #game { opacity: 1; pointer-events: auto; }
 #game canvas {
   display: block;
-  width: 100% !important;
-  height: 100% !important;
-  max-width: none !important;
-  max-height: none !important;
+  width: 100% !important; height: 100% !important;
+  max-width: none !important; max-height: none !important;
+  outline: 0;
 }
-/* Phase C.2 resizes the Phaser game itself to the live browser viewport ratio,
-   so Safari no longer needs a boxed 16:9 fallback. */
-body.browser-fit-mode #game { padding: 0; }
-body.browser-fit-mode #game canvas { width: 100% !important; height: 100% !important; }
+
 #boot {
-  position: fixed; z-index: 10020; inset: 0; display: grid; place-content: center; text-align: center;
-  pointer-events: none; letter-spacing: .16em; font-weight: 900;
-  font-size: clamp(26px, 7vw, 48px); color: #f2d19b; background: #0c1017;
-  transition: opacity .35s ease, visibility 0s linear .35s;
+  position: fixed; z-index: 10020; inset: 0;
+  display: grid; place-content: center; text-align: center;
+  padding: calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
+  pointer-events: none;
+  letter-spacing: .16em; font-weight: 900;
+  font-size: clamp(26px, 7vw, 48px); color: #f2d19b;
+  background: radial-gradient(circle at 50% 42%, #141d25 0%, #0c1017 54%, #090d13 100%);
+  transition: opacity .28s ease, visibility 0s linear .28s;
 }
-#boot strong { display: block; }
-#boot span { margin-top: .65rem; font-size: .28em; letter-spacing: .24em; color: #9aa7b5; }
-#boot small { margin-top: 1.4rem; font-size: 10px; letter-spacing: .18em; color: #6f7a86; }
+#boot strong { display: block; text-shadow: 0 8px 32px rgba(0,0,0,.35); }
+#boot span { display: block; margin-top: .7rem; font-size: .28em; letter-spacing: .24em; color: #9aa7b5; }
+#boot small {
+  display: block; margin-top: 1.35rem;
+  font: 800 10px/1.25 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: .18em; color: #6f7a86;
+}
 #boot small.error { color: #e77b62; }
 body.visual-ready #boot { opacity: 0; visibility: hidden; }
-body.boot-error #boot { background: #0c1017; }
-/* Current shell IDs used by index.html. Keep every shell control out of document flow
-   so the fixed full-bleed game cannot create page scrollbars. */
+body.boot-error #boot { opacity: 1; visibility: visible; }
+
 #rotate {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 10010;
+  display: none; position: fixed; inset: 0; z-index: 10030;
   background: radial-gradient(circle at 50% 40%, #17232a, #090d13 70%);
   color: #f2d19b;
-  align-content: center;
-  justify-items: center;
-  text-align: center;
+  align-content: center; justify-items: center; text-align: center;
   gap: 10px;
-  padding: 28px;
+  padding: calc(28px + env(safe-area-inset-top)) calc(28px + env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) calc(28px + env(safe-area-inset-left));
   letter-spacing: .08em;
 }
 #rotate strong { font: 900 22px/1.1 ui-sans-serif, system-ui; }
 #rotate span { max-width: 320px; color: #93a0aa; font-size: 13px; letter-spacing: .03em; }
 
 #fs-btn {
-  position: fixed;
-  z-index: 10001;
-  right: calc(12px + env(safe-area-inset-right, 0px));
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  position: fixed; z-index: 10001;
+  right: calc(12px + env(safe-area-inset-right));
+  bottom: calc(12px + env(safe-area-inset-bottom));
   min-width: 112px;
-  border: 1px solid rgba(242,209,155,.5);
-  border-radius: 11px;
+  border: 1px solid rgba(242,209,155,.46); border-radius: 11px;
   padding: 9px 12px;
-  background: rgba(8,12,17,.9);
-  color: #f2d19b;
+  background: rgba(8,12,17,.88); color: #f2d19b;
   box-shadow: 0 6px 20px rgba(0,0,0,.28);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   font: 800 10px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  letter-spacing: .08em;
-  touch-action: manipulation;
+  letter-spacing: .08em; touch-action: manipulation;
 }
+body.standalone-mode #fs-btn, #fs-btn[hidden] { display: none !important; }
 
 #debug {
-  position: fixed;
-  z-index: 10000;
-  right: calc(10px + env(safe-area-inset-right, 0px));
-  bottom: calc(52px + env(safe-area-inset-bottom, 0px));
-  width: min(520px, calc(100vw - 20px));
-  margin: 0;
+  display: none;
+  position: fixed; z-index: 10000;
+  right: calc(10px + env(safe-area-inset-right));
+  bottom: calc(52px + env(safe-area-inset-bottom));
+  width: min(520px, calc(100vw - 20px)); margin: 0;
   color: #8ff0a4;
   font: 11px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
+body.debug-enabled #debug { display: block; }
 #debug > summary {
-  width: max-content;
-  margin-left: auto;
-  border: 1px solid rgba(143,240,164,.38);
-  border-radius: 10px;
-  padding: 7px 10px;
-  background: rgba(0,0,0,.88);
-  cursor: pointer;
-  list-style: none;
+  width: max-content; margin-left: auto;
+  border: 1px solid rgba(143,240,164,.34); border-radius: 10px;
+  padding: 7px 10px; background: rgba(0,0,0,.84);
+  cursor: pointer; list-style: none; touch-action: manipulation;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
 #debug > summary::-webkit-details-marker { display: none; }
-#debug > button { margin: 6px 0 0 auto; display: block; }
-#debug > pre {
-  margin: 6px 0 0;
-  max-height: 50vh;
-  overflow: auto;
-  padding: 10px 12px;
-  background: rgba(0,0,0,.92);
-  border: 1px solid rgba(143,240,164,.35);
-  white-space: pre-wrap;
-  pointer-events: auto;
-}
-
-#rotate-device {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 10010;
-  background: radial-gradient(circle at 50% 40%, #17232a, #090d13 70%);
-  color: #f2d19b;
-  align-content: center;
-  justify-items: center;
-  text-align: center;
-  gap: 10px;
-  padding: 28px;
-  letter-spacing: .08em;
-}
-#rotate-device .rotate-icon { font-size: 64px; color: #57d7e5; line-height: 1; transform: rotate(-35deg); }
-#rotate-device strong { font: 900 22px/1.1 ui-sans-serif, system-ui; }
-#rotate-device span { max-width: 320px; color: #93a0aa; font-size: 13px; letter-spacing: .03em; }
-
-#fullscreen-toggle {
-  display: none;
-  position: fixed;
-  z-index: 10001;
-  right: calc(12px + env(safe-area-inset-right, 0px));
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  min-width: 112px;
-  border: 1px solid rgba(242,209,155,.5);
-  border-radius: 11px;
-  padding: 9px 12px;
-  background: rgba(8,12,17,.9);
-  color: #f2d19b;
-  box-shadow: 0 6px 20px rgba(0,0,0,.28);
-  font: 800 10px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  letter-spacing: .08em;
-  touch-action: manipulation;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-body.browser-shell #fullscreen-toggle { display: block; }
-body.debug-enabled.browser-shell #debug-toggle { bottom: calc(54px + env(safe-area-inset-bottom, 0px)); }
-body.is-fullscreen #fullscreen-toggle { opacity: .72; }
-#debug-toggle {
-  display: none;
-  position: fixed;
-  z-index: 10000;
-  right: calc(10px + env(safe-area-inset-right, 0px));
-  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  border: 1px solid rgba(143,240,164,.38);
-  border-radius: 10px;
-  padding: 7px 10px;
-  background: rgba(0,0,0,.88);
-  color: #8ff0a4;
+#debug > button {
+  margin: 6px 0 0 auto; display: block;
+  border: 1px solid rgba(143,240,164,.32); border-radius: 8px;
+  padding: 7px 9px; background: rgba(0,0,0,.88); color: #8ff0a4;
   font: 700 10px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  letter-spacing: .08em;
-  touch-action: manipulation;
 }
-body.debug-enabled #debug-toggle { display: block; }
-#debug-panel {
-  display: none;
-  position: fixed;
-  z-index: 9999;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: 0;
-  max-height: 55vh;
-  overflow: auto;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0));
-  background: rgba(0,0,0,.92);
-  color: #8ff0a4;
-  border-top: 1px solid rgba(143,240,164,.35);
-  font: 11px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  white-space: pre-wrap;
-  pointer-events: auto;
-  transition: max-height .18s ease, opacity .18s ease, padding .18s ease;
+#debug > pre {
+  margin: 6px 0 0; max-height: 50vh; overflow: auto;
+  padding: 10px 12px;
+  background: rgba(0,0,0,.92); border: 1px solid rgba(143,240,164,.35);
+  border-radius: 10px 0 10px 10px;
+  white-space: pre-wrap; pointer-events: auto;
+  user-select: text; -webkit-user-select: text;
 }
-#debug-panel.show { display: block; }
-#debug-panel.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; border-top-color: transparent; opacity: 0; overflow: hidden; }
-body.debug-enabled:not(:has(#debug-panel.collapsed)) #debug-toggle { bottom: calc(55vh + 8px + env(safe-area-inset-bottom, 0px)); }
+
 @media (orientation: portrait) {
-  #rotate-device, #rotate { display: grid; }
+  #rotate { display: grid; }
   #game { visibility: hidden; }
-  #fullscreen-toggle, #debug-toggle, #debug-panel, #fs-btn, #debug { visibility: hidden !important; }
+  #fs-btn, #debug { visibility: hidden !important; }
 }
 @media (orientation: landscape) {
-  #rotate-device, #rotate { display: none; }
+  #rotate { display: none; }
   #game { visibility: visible; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #game, #boot { transition: none; }
 }
