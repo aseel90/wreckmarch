@@ -1,7 +1,7 @@
 /* WRECKMARCH — live enemy foundation installer */
-import { EnemyFactory } from './enemy-factory.js?v=3';
+import { EnemyFactory } from './enemy-factory.js?v=4';
 import { SpawnSystem } from './spawn-system.js?v=1';
-import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=3';
+import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=4';
 import { CombatSystem } from '../combat/combat-system.js?v=1';
 import { ProjectileSystem } from '../combat/projectile-system.js?v=1';
 import { WeaponSystem } from '../combat/weapon-system.js?v=2';

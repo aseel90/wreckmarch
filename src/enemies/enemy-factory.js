@@ -1,5 +1,5 @@
 /* WRECKMARCH — enemy construction boundary */
-import { getEnemyDefinition } from './enemy-registry.js?v=2';
+import { getEnemyDefinition } from './enemy-registry.js?v=3';
 import { getEnemyDifficultyMultipliers } from '../balance/run-balance.js?v=2';
 
 function fallbackBetween(min, max) {
@@ -23,19 +23,11 @@ export function resolveEnemySpawnStats(definition, { elite = false, runTime = 0,
 }
 
 export class EnemyFactory {
-  /**
-   * @param {any} scene
-   * @param {{ randomBetween?: (min: number, max: number) => number }} [options]
-   */
   constructor(scene, { randomBetween } = {}) {
     this.scene = scene;
     this.randomBetween = randomBetween || ((min, max) => globalThis.Phaser?.Math?.Between?.(min, max) ?? fallbackBetween(min, max));
   }
 
-  /**
-   * @param {string} enemyId
-   * @param {{ elite?: boolean, x?: number, y?: number, runTime?: number }} [options]
-   */
   create(enemyId, { elite = false, x, y, runTime = this.scene.runTime } = {}) {
     const definition = getEnemyDefinition(enemyId);
     const stats = resolveEnemySpawnStats(definition, {

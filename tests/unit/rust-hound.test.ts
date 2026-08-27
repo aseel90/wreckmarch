@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RUST_HOUND_DEFINITION } from '../../src/enemies/definitions/rust-hound.js';
-import { computeHoundPounceAim, updateHoundPounceBehavior } from '../../src/enemies/behaviors/hound-pounce.js';
+import { computeHoundSlideAim, updateHoundPounceBehavior } from '../../src/enemies/behaviors/hound-pounce.js';
 import { getEnemyPool, pickEnemyForRun } from '../../src/balance/run-balance.js';
 
 function fakeHound() {
@@ -41,12 +41,12 @@ describe('Rust Hound', () => {
   it('predicts a moving target but caps lead distance', () => {
     const hound: any = { x: 0, y: 0, behaviorConfig: RUST_HOUND_DEFINITION.behaviorConfig };
     const target: any = { x: 100, y: 0, body: { velocity: { x: 1000, y: 0 } } };
-    const aim = computeHoundPounceAim(hound, target);
-    expect(aim.leadX).toBeLessThanOrEqual(46);
+    const aim = computeHoundSlideAim(hound, target);
+    expect(aim.leadX).toBeLessThanOrEqual(28);
     expect(aim.x).toBeCloseTo(1, 6);
   });
 
-  it('telegraphs before pouncing and raises damage only during the pounce', () => {
+  it('telegraphs before a committed ground slide and raises damage only during the slide', () => {
     const enemy = fakeHound();
     const target: any = { x: 180, y: 0, body: { velocity: { x: 0, y: 0 } } };
     const scene = fakeScene(0);
@@ -64,22 +64,30 @@ describe('Rust Hound', () => {
 
     scene.time.now += cfg.telegraphMs + 1;
     updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
-    expect(enemy.__houndPhase).toBe('pounce');
-    expect(enemy.__houndPounceCount).toBe(1);
-    expect(enemy.__houndLastPounceSpeed).toBe(348);
+    expect(enemy.__houndPhase).toBe('slide');
+    expect(enemy.__houndSlideCount).toBe(1);
+    expect(enemy.__houndLastSlideSpeed).toBe(360);
     expect(enemy.__houndMotion.attackCommitted).toBe(true);
     expect(enemy.textureKey).toBe('rust-hound-pounce');
     expect(enemy.animation).toBeNull();
-    expect(enemy.damage).toBeCloseTo(17.4, 6);
+    expect(enemy.damage).toBeCloseTo(16.8, 6);
 
-    scene.time.now += cfg.pounceMs + 1;
+    const lockedAim = { x: enemy.__houndMotion.aimX, y: enemy.__houndMotion.aimY };
+    target.y = 300;
+    scene.time.now += 100;
+    updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
+    expect(enemy.__houndPhase).toBe('slide');
+    expect(enemy.__houndMotion.aimX).toBeCloseTo(lockedAim.x, 6);
+    expect(enemy.__houndMotion.aimY).toBeCloseTo(lockedAim.y, 6);
+
+    scene.time.now += cfg.slideMs + 1;
     updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
     expect(enemy.__houndPhase).toBe('recover');
     expect(enemy.__houndMotion.attackCommitted).toBe(false);
     expect(enemy.damage).toBe(12);
   });
 
-  it('peels out of point-blank range and rebuilds a readable pounce lane', () => {
+  it('peels out of point-blank range and rebuilds a readable slide lane', () => {
     const enemy = fakeHound();
     enemy.x = 105;
     enemy.y = 480;
@@ -93,7 +101,7 @@ describe('Rust Hound', () => {
       enemy.y += enemy.body.velocity.y * dt;
     }
     expect(enemy.__houndTelegraphCount).toBeGreaterThanOrEqual(1);
-    expect(enemy.__houndPounceCount).toBeGreaterThanOrEqual(1);
-    expect(enemy.__houndMotion.maxObservedSpeed).toBeCloseTo(348, 3);
+    expect(enemy.__houndSlideCount).toBeGreaterThanOrEqual(1);
+    expect(enemy.__houndMotion.maxObservedSpeed).toBeCloseTo(360, 3);
   });
 });
