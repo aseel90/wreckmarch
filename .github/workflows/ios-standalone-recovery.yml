@@ -1,0 +1,121 @@
+name: Recover iOS Standalone Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - manifest.webmanifest
+      - .github/workflows/ios-standalone-recovery.yml
+
+permissions:
+  contents: read
+  issues: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ios-standalone-pages-recovery
+  cancel-in-progress: true
+
+jobs:
+  recover-and-verify:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify iOS standalone source contract
+        run: |
+          set -euo pipefail
+          grep -Fq '<meta name="apple-mobile-web-app-capable" content="yes"' index.html
+          grep -Fq '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"' index.html
+          grep -Fq 'window.navigator.standalone===true' index.html
+          grep -Fq '(display-mode: standalone)' index.html
+          grep -Fq 'manifest.webmanifest' index.html
+          node - <<'NODE'
+          const fs = require('fs');
+          const m = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
+          if (m.display !== 'standalone') throw new Error(`manifest display=${m.display}`);
+          if (m.orientation !== 'landscape') throw new Error(`manifest orientation=${m.orientation}`);
+          if (m.start_url !== './' || m.scope !== './') throw new Error('manifest scope/start_url mismatch');
+          console.log('iOS standalone source contract OK');
+          NODE
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare current site artifact
+        run: |
+          set -euo pipefail
+          mkdir -p _site/vendor
+          cp index.html style.css manifest.webmanifest _site/
+          cp -R src _site/src
+          cp -R assets _site/assets
+          if [ -f vendor/phaser.min.js ]; then
+            cp vendor/phaser.min.js _site/vendor/phaser.min.js
+          else
+            curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o _site/vendor/phaser.min.js
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy current shell to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verify live iOS standalone response
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          PAGE='https://aseel90.github.io/wreckmarch/'
+          HTML=/tmp/wreckmarch-live.html
+          MANIFEST=/tmp/wreckmarch-live-manifest.json
+          ok=0
+          for attempt in $(seq 1 36); do
+            curl -fsSL -H 'Cache-Control: no-cache' "${PAGE}?iosrecovery=${SHA}-${attempt}" -o "$HTML" || true
+            curl -fsSL -H 'Cache-Control: no-cache' "${PAGE}manifest.webmanifest?iosrecovery=${SHA}-${attempt}" -o "$MANIFEST" || true
+            if grep -Fq '<meta name="apple-mobile-web-app-capable" content="yes"' "$HTML" \
+              && grep -Fq '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"' "$HTML" \
+              && grep -Fq 'window.navigator.standalone===true' "$HTML" \
+              && grep -Fq 'manifest.webmanifest' "$HTML" \
+              && grep -Eq '"display"[[:space:]]*:[[:space:]]*"standalone"' "$MANIFEST" \
+              && grep -Eq '"orientation"[[:space:]]*:[[:space:]]*"landscape"' "$MANIFEST"; then
+              ok=1
+              break
+            fi
+            sleep 5
+          done
+          if [ "$ok" != 1 ]; then
+            echo 'Live page did not expose the required iOS standalone contract.'
+            echo '--- HTML HEAD ---'
+            head -n 25 "$HTML" || true
+            echo '--- MANIFEST ---'
+            cat "$MANIFEST" || true
+            exit 1
+          fi
+          echo 'Live GitHub Pages iOS standalone contract OK.'
+
+      - name: Report recovery success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          gh issue comment 64 --repo "${{ github.repository }}" --body "iOS Pages recovery PASSED on \`$SHA\`: source contract validated, Pages deployment succeeded, and the LIVE site now serves apple-mobile-web-app-capable=yes + navigator.standalone + manifest display=standalone/landscape. $PAGE_URL"
+
+      - name: Report recovery failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          gh issue comment 64 --repo "${{ github.repository }}" --body "iOS Pages recovery FAILED on \`$SHA\`. Check the Recover iOS Standalone Pages workflow; source/deploy/live verification did not complete successfully."
