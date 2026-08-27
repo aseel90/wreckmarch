@@ -12,7 +12,8 @@ describe('F0 production foundation', () => {
   it('keeps the fast terrain and final road cleanup in the legacy boot chain', async () => {
     const html = await read('index.html');
     expect(html).toContain("./src/phase-e0-fast-terrain.js?v=2");
-    expect(html).toContain("./src/phase-e1-runtime.js?v=7");
+    // Cache-bust revisions change during visual/runtime releases; protect the module, not a stale query number.
+    expect(html).toMatch(/\.\/src\/phase-e1-runtime\.js\?v=\d+/);
   });
 
   it('keeps legacy boot visuals covered until D1 and E1 are complete', async () => {
