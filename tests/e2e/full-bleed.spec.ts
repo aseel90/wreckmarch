@@ -39,7 +39,7 @@ test('landscape shell and Phaser canvas cover the full browser viewport', async 
   expect(layout).not.toBeNull();
   expect(layout!.viewport).toEqual({ width: 1536, height: 709 });
   expect(layout!.bodyPosition).toBe('fixed');
-  expect(layout!.gamePosition).toBe('relative');
+  expect(layout!.gamePosition).toBe('fixed');
 
   for (const rect of [layout!.game, layout!.canvas]) {
     expect(rect.left).toBeCloseTo(0, 0);

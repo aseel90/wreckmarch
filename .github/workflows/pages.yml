@@ -129,48 +129,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Vendor Phaser locally
         run: |
           mkdir -p vendor
           curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js
       - name: Browser smoke test
         run: |
-          set -uo pipefail
+          set -euo pipefail
           export DISPLAY=:99
           Xvfb :99 -screen 0 1280x720x24 >wm-xvfb.log 2>&1 &
           XVFB_PID=$!
           python3 -m http.server 4173 --bind 127.0.0.1 >wm-http.log 2>&1 &
           HTTP_PID=$!
-          cleanup() { kill "$HTTP_PID" "$XVFB_PID" 2>/dev/null || true; }
+          google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --window-size=1280,720 --remote-debugging-port=9222 --remote-allow-origins='*' --user-data-dir=/tmp/wm-chrome-profile 'http://127.0.0.1:4173/?autotest=1&debug=1' >wm-chrome.log 2>&1 &
+          CHROME_PID=$!
+          cleanup() { kill "$CHROME_PID" "$HTTP_PID" "$XVFB_PID" 2>/dev/null || true; }
           trap cleanup EXIT
           for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
-          set +e
-          timeout 35s google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --window-size=1280,720 --enable-logging=stderr --v=0 'http://127.0.0.1:4173/?autotest=1&debug=1' >wm-chrome.log 2>&1
-          CHROME_STATUS=$?
-          set -e
-          python3 - <<'PY'
-          from pathlib import Path
-          import re, sys
-          text = Path('wm-chrome.log').read_text(errors='ignore') if Path('wm-chrome.log').exists() else ''
-          markers = {
-              'visual': 'Art pack v2 applied: Runner + production Scrap Rat + Fortress + wasteland',
-              'phase_e1': 'Phase E.1b active: persistent asphalt layer',
-              'rat': 'Production Scrap Rat active: clean baked 2-pose scuttle',
-              'terrain': 'E1 persistence test PASSED',
-          }
-          missing = [name for name, marker in markers.items() if marker not in text]
-          fatal = []
-          for line in text.splitlines():
-              if '[WRECKMARCH] ERROR:' in line or 'LOAD FAILED' in line:
-                  fatal.append(line)
-          Path('wm-smoke.log').write_text(
-              'markers=' + repr(markers) + '\nmissing=' + repr(missing) + '\nfatal=' + repr(fatal[-20:]) + '\n'
-          )
-          if missing or fatal:
-              print(Path('wm-smoke.log').read_text())
-              sys.exit(1)
-          print('Browser smoke passed:', ', '.join(markers))
-          PY
+          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:9222/json/version >/dev/null && break; sleep 1; done
+          timeout 35s node scripts/ci-smoke.mjs 2>&1 | tee wm-smoke.log
       - name: Preserve smoke diagnostics
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4

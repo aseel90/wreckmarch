@@ -98,10 +98,10 @@ test('end-run overlay uses the live landscape viewport instead of legacy portrai
   expect(result.scale).toEqual({ width: 960, height: 540 });
   expect(result.overlay).toMatchObject({ x: 480, y: 270, width: 960, height: 540, scrollFactorX: 0, scrollFactorY: 0 });
   expect(result.button.x).toBe(480);
-  expect(result.button.y).toBeCloseTo(324, 1);
+  expect(result.button.y).toBeCloseTo(342, 1);
   expect(result.titleVisible).toBe(false);
   expect(result.hudState).toBe('suppressed');
-  expect(result.endRunVersion).toBe('runtime-v1');
+  expect(result.endRunVersion).toBe('runtime-v2');
   expect(result.canvas.left).toBeCloseTo(0, 1);
   expect(result.canvas.top).toBeCloseTo(0, 1);
   expect(result.canvas.width).toBeCloseTo(960, 1);
