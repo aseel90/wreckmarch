@@ -43,6 +43,32 @@ function setAnimation(enemy, key) {
   enemy.play?.(key, true);
 }
 
+function clearTelegraphFx(state) {
+  state.telegraphTween?.stop?.();
+  state.telegraphTween = null;
+  state.telegraphFx?.destroy?.();
+  state.telegraphFx = null;
+}
+
+function createTelegraphFx(scene, enemy, state, durationMs = 280) {
+  clearTelegraphFx(state);
+  const ring = scene?.add?.ellipse?.(enemy.x, enemy.y + 20, 76, 30, 0xff321f, .10);
+  if (!ring) return;
+  ring.setStrokeStyle?.(3, 0xff3b24, .95);
+  ring.setDepth?.(Math.max(1, (Number(enemy.depth) || 13) - 1));
+  state.telegraphFx = ring;
+  state.telegraphTween = scene?.tweens?.add?.({
+    targets: ring,
+    scaleX: 1.22,
+    scaleY: 1.22,
+    alpha: .38,
+    duration: 135,
+    yoyo: true,
+    repeat: 0
+  }) || null;
+  scene?.time?.delayedCall?.(Math.max(220, durationMs + 60), () => ring.destroy?.());
+}
+
 function restoreVisualTint(enemy) {
   if (!enemy?.active) return;
   if (enemy.elite && enemy.enemyDefinition?.bootstrap?.eliteTint != null) enemy.setTint?.(enemy.enemyDefinition.bootstrap.eliteTint);
@@ -72,7 +98,7 @@ function ensureState(scene, enemy, random) {
     phase: 'chase',
     phaseStartedAt: now,
     phaseUntil: 0,
-    cooldownUntil: now + range(random, cfg.initialCooldownMinMs ?? 720, cfg.initialCooldownMaxMs ?? 980),
+    cooldownUntil: now + range(random, cfg.initialCooldownMinMs ?? 220, cfg.initialCooldownMaxMs ?? 360),
     vx: Number(enemy.body?.velocity?.x) || 0,
     vy: Number(enemy.body?.velocity?.y) || 0,
     aimX: 1,
@@ -120,16 +146,19 @@ export function computeHoundPounceAim(enemy, target, config = getConfig(enemy)) 
 }
 
 function beginTelegraph(scene, enemy, state, cfg) {
-  enterPhase(scene, enemy, state, 'telegraph', cfg.telegraphMs ?? 380);
+  enterPhase(scene, enemy, state, 'telegraph', cfg.telegraphMs ?? 280);
   enemy.damage = enemy.baseDamage ?? enemy.damage;
-  enemy.setTint?.(0xffc26f);
+  enemy.setTint?.(0xff7a45);
   enemy.setRotation?.(0);
   enemy.setTexture?.('rust-hound-crouch');
+  createTelegraphFx(scene, enemy, state, Number(cfg.telegraphMs) || 280);
   enemy.__houndTelegraphCount = (enemy.__houndTelegraphCount || 0) + 1;
   scene.spawnDust?.(enemy.x, enemy.y + 24, .55);
+  scene.playTone?.(205, .045, 'sawtooth', .008, -35);
 }
 
 function beginPounce(scene, enemy, target, state, cfg) {
+  clearTelegraphFx(state);
   const aim = computeHoundPounceAim(enemy, target, cfg);
   state.aimX = aim.x;
   state.aimY = aim.y;
@@ -147,11 +176,12 @@ function beginPounce(scene, enemy, target, state, cfg) {
 }
 
 function beginRecover(scene, enemy, state, cfg, random) {
-  enterPhase(scene, enemy, state, 'recover', cfg.recoverMs ?? 430);
+  clearTelegraphFx(state);
+  enterPhase(scene, enemy, state, 'recover', cfg.recoverMs ?? 320);
   enemy.damage = enemy.baseDamage ?? enemy.damage;
   restoreVisualTint(enemy);
   setAnimation(enemy, 'rust-hound-recover');
-  state.cooldownUntil = nowMs(scene) + range(random, cfg.cooldownMinMs ?? 1580, cfg.cooldownMaxMs ?? 2160);
+  state.cooldownUntil = nowMs(scene) + range(random, cfg.cooldownMinMs ?? 1120, cfg.cooldownMaxMs ?? 1480);
   scene.spawnDust?.(enemy.x, enemy.y + 24, .6);
 }
 
@@ -168,8 +198,8 @@ function updateChase(scene, enemy, target, state, cfg, random, dt) {
   const ny = dy / distance;
   const now = nowMs(scene);
   const ready = now >= state.cooldownUntil;
-  const minRange = Number(cfg.pounceRangeMin) || 108;
-  const maxRange = Number(cfg.pounceRangeMax) || 238;
+  const minRange = Number(cfg.pounceRangeMin) || 100;
+  const maxRange = Number(cfg.pounceRangeMax) || 280;
 
   if (ready && distance >= minRange && distance <= maxRange) {
     beginTelegraph(scene, enemy, state, cfg);
@@ -181,16 +211,13 @@ function updateChase(scene, enemy, target, state, cfg, random, dt) {
   let desiredY = ny * speed;
   let sharpness = Number(cfg.chaseSharpness) || 8.5;
 
-  const holdRange = Number(cfg.holdRange) || 132;
+  const holdRange = Number(cfg.holdRange) || 126;
   if (distance < holdRange) {
     const side = enemy.__houndOrbitSide || (enemy.__houndOrbitSide = random() < .5 ? -1 : 1);
     const tangentX = -ny * side;
     const tangentY = nx * side;
 
     if (ready && distance < minRange) {
-      // The pounce is ready but the hound overshot its launch lane.
-      // Peel away diagonally until a readable launch gap exists instead of
-      // body-hugging the player forever.
       const gap = clamp((minRange - distance) / minRange, 0, 1);
       desiredX = (tangentX * .38 - nx * (.78 + gap * .28)) * speed * .86;
       desiredY = (tangentY * .38 - ny * (.78 + gap * .28)) * speed * .86;
@@ -209,8 +236,9 @@ function updateChase(scene, enemy, target, state, cfg, random, dt) {
 }
 
 function updateTelegraph(scene, enemy, target, state, cfg, dt) {
-  const vx = damp(state.vx, 0, 15, dt);
-  const vy = damp(state.vy, 0, 15, dt);
+  const vx = damp(state.vx, 0, 18, dt);
+  const vy = damp(state.vy, 0, 18, dt);
+  if (state.telegraphFx?.active !== false) state.telegraphFx?.setPosition?.(enemy.x, enemy.y + 20);
   setMotion(enemy, state, vx, vy);
   enemy.setRotation?.(0);
   if (nowMs(scene) >= state.phaseUntil) beginPounce(scene, enemy, target, state, cfg);

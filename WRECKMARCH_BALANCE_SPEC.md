@@ -68,14 +68,15 @@ Enemy difficulty should come from different movement tools, not from making ever
 - Normal pursuit enemies should generally stay below the Runner's base speed.
 - Faster-than-player movement is allowed only as readable, short actions such as pounce, dash, charge, ambush, or projectile pressure.
 - Telegraph dangerous movement before it becomes unavoidable.
+- Rust Hound attack read: first pounce is armed within ~0.22–0.36s; at 100–280px it crouches for ~0.28s with a red ground warning, then pounces and recovers for ~0.32s.
 
 Target examples:
 
 | Enemy/action | Target speed |
 |---|---:|
 | Scrap Rat | 105–125 |
-| Rust Hound pursuit | 180–205 |
-| Rust Hound pounce | 330–360 burst |
+| Rust Hound pursuit | 200–216 |
+| Rust Hound pounce | 348 burst |
 | Sawbug movement | 165–190 |
 | Sawbug dash | 280–310 burst |
 | Wreckling | 120–145 |

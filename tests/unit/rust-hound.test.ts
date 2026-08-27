@@ -49,19 +49,23 @@ describe('Rust Hound', () => {
     const enemy = fakeHound();
     const target: any = { x: 180, y: 0, body: { velocity: { x: 0, y: 0 } } };
     const scene = fakeScene(0);
+    const cfg = RUST_HOUND_DEFINITION.behaviorConfig;
     updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
     expect(enemy.__houndPhase).toBe('chase');
-    scene.time.now = 800;
+
+    scene.time.now = cfg.initialCooldownMaxMs + 1;
     updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
     expect(enemy.__houndPhase).toBe('telegraph');
     expect(enemy.damage).toBe(12);
-    scene.time.now = 1200;
+
+    scene.time.now += cfg.telegraphMs + 1;
     updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
     expect(enemy.__houndPhase).toBe('pounce');
     expect(enemy.__houndPounceCount).toBe(1);
     expect(enemy.__houndLastPounceSpeed).toBe(348);
     expect(enemy.damage).toBeCloseTo(17.4, 6);
-    scene.time.now = 1530;
+
+    scene.time.now += cfg.pounceMs + 1;
     updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
     expect(enemy.__houndPhase).toBe('recover');
     expect(enemy.damage).toBe(12);

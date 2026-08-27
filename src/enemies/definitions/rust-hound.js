@@ -19,16 +19,16 @@ export const RUST_HOUND_DEFINITION = Object.freeze({
     eliteTint: 0xf2a45f
   }),
   behaviorConfig: Object.freeze({
-    pounceRangeMin: 108,
-    pounceRangeMax: 238,
-    holdRange: 132,
-    initialCooldownMinMs: 720,
-    initialCooldownMaxMs: 980,
-    cooldownMinMs: 1580,
-    cooldownMaxMs: 2160,
-    telegraphMs: 380,
+    pounceRangeMin: 100,
+    pounceRangeMax: 280,
+    holdRange: 126,
+    initialCooldownMinMs: 220,
+    initialCooldownMaxMs: 360,
+    cooldownMinMs: 1120,
+    cooldownMaxMs: 1480,
+    telegraphMs: 280,
     pounceMs: 310,
-    recoverMs: 430,
+    recoverMs: 320,
     pounceSpeed: 348,
     pounceDamageMultiplier: 1.45,
     predictionSeconds: .16,
@@ -42,16 +42,16 @@ export const RUST_HOUND_DEFINITION = Object.freeze({
     normal: Object.freeze({
       hpBase: 92,
       hpPerSecond: 1.5,
-      speedMin: 182,
-      speedMax: 198,
+      speedMin: 200,
+      speedMax: 216,
       contactDamage: 12,
       scrapDrop: 2
     }),
     elite: Object.freeze({
       hpBase: 230,
       hpPerSecond: 3,
-      speedMin: 190,
-      speedMax: 208,
+      speedMin: 208,
+      speedMax: 224,
       contactDamage: 19,
       scrapDrop: 5
     })
