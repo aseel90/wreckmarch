@@ -237,7 +237,15 @@ jobs:
     permissions:
       contents: read
       issues: write
+      actions: read
     steps:
+      - name: Download quality diagnostics
+        if: needs.quality.result == 'failure'
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-quality
+          path: /tmp/ci-quality
+
       - name: Bridge main CI state to issue
         env:
           GH_TOKEN: ${{ github.token }}
@@ -260,11 +268,26 @@ jobs:
           fi
 
           RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
-          BODY="CI failed on \`$SHA\`.\n\n- quality: **$QUALITY**\n- e2e: **$E2E**\n- smoke: **$SMOKE**\n\nRun: $RUN_URL"
+          {
+            printf 'CI failed on `%s`.\n\n' "$SHA"
+            printf -- '- quality: **%s**\n- e2e: **%s**\n- smoke: **%s**\n\n' "$QUALITY" "$E2E" "$SMOKE"
+            printf 'Run: %s\n' "$RUN_URL"
+
+            if [ "$QUALITY" != 'success' ]; then
+              for LOG in /tmp/ci-quality/wm-quality-check.log /tmp/ci-quality/wm-quality-install.log; do
+                if [ -s "$LOG" ]; then
+                  printf '\n### %s\n```text\n' "$(basename "$LOG")"
+                  tail -n 80 "$LOG"
+                  printf '\n```\n'
+                fi
+              done
+            fi
+          } > /tmp/wm-ci-issue.md
+
           if [ -n "$ISSUE_NUMBER" ]; then
-            gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$BODY"
+            gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file /tmp/wm-ci-issue.md
           else
-            gh issue create --repo "$REPO" --title "$TITLE" --body "$BODY" --label ci-failure
+            gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/wm-ci-issue.md --label ci-failure
           fi
 
   deploy:
