@@ -42,7 +42,7 @@ describe('Rust Hound', () => {
     const hound: any = { x: 0, y: 0, behaviorConfig: RUST_HOUND_DEFINITION.behaviorConfig };
     const target: any = { x: 100, y: 0, body: { velocity: { x: 1000, y: 0 } } };
     const aim = computeHoundSlideAim(hound, target);
-    expect(aim.leadX).toBeLessThanOrEqual(28);
+    expect(Math.hypot(aim.leadX, aim.leadY)).toBeCloseTo(28, 10);
     expect(aim.x).toBeCloseTo(1, 6);
   });
 
