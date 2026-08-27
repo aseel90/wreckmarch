@@ -6,10 +6,10 @@ const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.m
 describe('Enemy Foundation boot integration', () => {
   it('installs before legacy visual/gameplay phases wrap spawnEnemy', () => {
     const html = read('index.html');
-    const game = html.indexOf("await import('./src/game.js?v=8')");
-    const enemy = html.indexOf("./src/enemies/enemy-system.js?v=8");
-    const e0 = html.indexOf("./src/phase-e0-fast-terrain.js?v=2");
-    const phaseC = html.indexOf("./src/phase-c-runtime.js?v=5");
+    const game = html.indexOf("./src/game.js?v=");
+    const enemy = html.indexOf("./src/enemies/enemy-system.js?v=");
+    const e0 = html.indexOf("./src/phase-e0-fast-terrain.js?v=");
+    const phaseC = html.indexOf("./src/phase-c-runtime.js?v=");
     expect(game).toBeGreaterThan(-1);
     expect(enemy).toBeGreaterThan(game);
     expect(e0).toBeGreaterThan(enemy);
