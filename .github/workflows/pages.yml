@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Typecheck, unit tests and build
+    name: Quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -36,43 +36,42 @@ jobs:
       - name: Install dependencies
         run: |
           set -o pipefail
-          pnpm install --prefer-offline --no-frozen-lockfile 2>&1 | tee /tmp/wm-quality-install.log
+          pnpm install --frozen-lockfile 2>&1 | tee wm-quality-install.log
       - name: Typecheck, unit tests and static build
         run: |
           set -o pipefail
-          pnpm check 2>&1 | tee /tmp/wm-quality-check.log
+          pnpm check 2>&1 | tee wm-quality-check.log
       - name: Comment quality diagnostics
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          sections=[]
-          for title,path in [
-              ('pnpm install', '/tmp/wm-quality-install.log'),
-              ('typecheck / unit / build', '/tmp/wm-quality-check.log'),
-          ]:
-              p=Path(path)
-              if p.exists():
-                  text=p.read_text(errors='replace')[-12000:]
-                  sections.append(f'### {title}\n```text\n{text}\n```')
-          Path('/tmp/wm-quality-diagnostic.md').write_text('## Quality diagnostic\n\n' + '\n\n'.join(sections))
-          PY
-          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-quality-diagnostic.md
+          {
+            echo 'Quality checks failed.'
+            echo
+            for LOG in wm-quality-check.log wm-quality-install.log; do
+              [ -f "$LOG" ] || continue
+              echo "### $LOG"
+              echo '```text'
+              tail -c 12000 "$LOG"
+              echo
+              echo '```'
+            done
+          } > /tmp/wm-quality-comment.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-quality-comment.md
       - name: Preserve quality diagnostics
-        if: always()
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: ci-quality
-          path: |
-            /tmp/wm-quality-install.log
-            /tmp/wm-quality-check.log
           if-no-files-found: ignore
-          retention-days: 7
+          path: |
+            wm-quality-check.log
+            wm-quality-install.log
 
   e2e:
-    name: Playwright browser tests
+    name: E2E
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -89,150 +88,112 @@ jobs:
       - name: Install dependencies
         run: |
           set -o pipefail
-          pnpm install --prefer-offline --no-frozen-lockfile 2>&1 | tee /tmp/wm-e2e-install.log
+          pnpm install --frozen-lockfile 2>&1 | tee wm-e2e-install.log
       - name: Install Playwright Chromium
         run: |
           set -o pipefail
-          pnpm exec playwright install --with-deps chromium 2>&1 | tee /tmp/wm-e2e-playwright-install.log
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-e2e-playwright-install.log
       - name: Run Playwright tests
         run: |
           set -o pipefail
-          pnpm test:e2e 2>&1 | tee /tmp/wm-e2e.log
+          pnpm test:e2e 2>&1 | tee wm-e2e.log
       - name: Comment Playwright diagnostics
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          sections=[]
-          for title,path in [
-              ('pnpm install', '/tmp/wm-e2e-install.log'),
-              ('Playwright install', '/tmp/wm-e2e-playwright-install.log'),
-              ('Playwright E2E', '/tmp/wm-e2e.log'),
-          ]:
-              p=Path(path)
-              if p.exists():
-                  text=p.read_text(errors='replace')[-12000:]
-                  sections.append(f'### {title}\n```text\n{text}\n```')
-          Path('/tmp/wm-e2e-diagnostic.md').write_text('## Playwright diagnostic\n\n' + '\n\n'.join(sections))
-          PY
-          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/wm-e2e-diagnostic.md
+          {
+            echo 'Playwright E2E failed.'
+            echo
+            for LOG in wm-e2e.log wm-e2e-playwright-install.log wm-e2e-install.log; do
+              [ -f "$LOG" ] || continue
+              echo "### $LOG"
+              echo '```text'
+              tail -c 12000 "$LOG"
+              echo
+              echo '```'
+            done
+          } > /tmp/wm-e2e-comment.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
       - name: Preserve Playwright diagnostics
-        if: always()
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: ci-e2e
-          path: |
-            /tmp/wm-e2e-install.log
-            /tmp/wm-e2e-playwright-install.log
-            /tmp/wm-e2e.log
           if-no-files-found: ignore
-          retention-days: 7
+          path: |
+            wm-e2e.log
+            wm-e2e-install.log
+            wm-e2e-playwright-install.log
+            test-results/**
+            playwright-report/**
 
   smoke:
-    name: Production browser smoke
+    name: Smoke
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Vendor Phaser locally
         run: |
-          set -o pipefail
           mkdir -p vendor
           curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js
       - name: Browser smoke test
         run: |
-          set -Eeuo pipefail
-          exec > >(tee /tmp/wm-smoke.log) 2>&1
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/wm-http.log 2>&1 &
+          set -uo pipefail
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1280x720x24 >wm-xvfb.log 2>&1 &
+          XVFB_PID=$!
+          python3 -m http.server 4173 --bind 127.0.0.1 >wm-http.log 2>&1 &
           HTTP_PID=$!
-          trap 'kill $HTTP_PID >/dev/null 2>&1 || true; kill ${CHROME_PID:-} >/dev/null 2>&1 || true' EXIT
-          for i in $(seq 1 30); do
-            curl -fsS http://127.0.0.1:4173/ >/dev/null && break
-            sleep .25
-          done
-          CHROME="$(command -v chromium-browser || command -v chromium || command -v google-chrome || true)"
-          if [ -z "$CHROME" ]; then
-            echo "No Chromium/Chrome executable found" >&2
-            exit 1
-          fi
-          "$CHROME" \
-            --headless=new \
-            --no-sandbox \
-            --disable-gpu \
-            --disable-dev-shm-usage \
-            --remote-debugging-port=9222 \
-            --user-data-dir=/tmp/wm-chrome-profile \
-            'http://127.0.0.1:4173/?autotest=1' >/tmp/wm-chrome.log 2>&1 &
-          CHROME_PID=$!
-          for i in $(seq 1 80); do
-            curl -fsS http://127.0.0.1:9222/json/version >/dev/null && break
-            sleep .25
-          done
-          TARGET="$(curl -fsS http://127.0.0.1:9222/json | python3 -c "import json,sys; pages=json.load(sys.stdin); print(next(p['webSocketDebuggerUrl'] for p in pages if p.get('type')=='page'))")"
-          python3 - "$TARGET" <<'PY'
-          import asyncio, json, sys, urllib.request
-          target=sys.argv[1]
-          import websockets
-          async def main():
-              async with websockets.connect(target, max_size=16*1024*1024) as ws:
-                  seq=0
-                  async def call(method, params=None):
-                      nonlocal seq
-                      seq+=1
-                      ident=seq
-                      await ws.send(json.dumps({'id':ident,'method':method,'params':params or {}}))
-                      while True:
-                          msg=json.loads(await ws.recv())
-                          if msg.get('id')==ident:
-                              return msg
-                  await call('Runtime.enable')
-                  await asyncio.sleep(14)
-                  expr="""JSON.stringify({
-                    ready:document.documentElement.dataset.wreckmarchVisualReady,
-                    e1:document.documentElement.dataset.wreckmarchE1SelfTest,
-                    persist:document.documentElement.dataset.wreckmarchE1Persistence,
-                    hound:document.documentElement.dataset.wreckmarchRustHoundVisual,
-                    rat:document.documentElement.dataset.wreckmarchScrapRatVisual,
-                    body:document.body.className,
-                    log:(window.__WM_E1_ROAD_WATCH__||null),
-                    errors:Array.from(document.querySelectorAll('#log')).map(x=>x.textContent).join('\\n')
-                  })"""
-                  res=await call('Runtime.evaluate',{'expression':expr,'returnByValue':True})
-                  value=res.get('result',{}).get('result',{}).get('value','{}')
-                  print(value)
-                  data=json.loads(value)
-                  ok=(data.get('ready')=='current' and data.get('e1')=='passed' and data.get('persist')=='passed')
-                  if not ok:
-                      raise SystemExit('Smoke self-test failed: '+json.dumps(data))
-                  dom=await call('Runtime.evaluate',{'expression':'document.documentElement.outerHTML','returnByValue':True})
-                  open('/tmp/wm-dom.html','w').write(dom.get('result',{}).get('result',{}).get('value',''))
-          asyncio.run(main())
+          cleanup() { kill "$HTTP_PID" "$XVFB_PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          set +e
+          timeout 35s google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --window-size=1280,720 --enable-logging=stderr --v=0 'http://127.0.0.1:4173/?autotest=1&debug=1' >wm-chrome.log 2>&1
+          CHROME_STATUS=$?
+          set -e
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, sys
+          text = Path('wm-chrome.log').read_text(errors='ignore') if Path('wm-chrome.log').exists() else ''
+          markers = {
+              'visual': 'Current visual stack revealed',
+              'phase_e1': 'Phase E.1 clean road renderer active',
+              'rat': 'Production Scrap Rat locked after final runtime',
+              'terrain': 'E1 persistence test PASSED',
+          }
+          missing = [name for name, marker in markers.items() if marker not in text]
+          fatal = []
+          for line in text.splitlines():
+              if '[WRECKMARCH] ERROR:' in line or 'LOAD FAILED' in line:
+                  fatal.append(line)
+          Path('wm-smoke.log').write_text(
+              'markers=' + repr(markers) + '\nmissing=' + repr(missing) + '\nfatal=' + repr(fatal[-20:]) + '\n'
+          )
+          if missing or fatal:
+              print(Path('wm-smoke.log').read_text())
+              sys.exit(1)
+          print('Browser smoke passed:', ', '.join(markers))
           PY
-          cp /tmp/wm-dom.html /tmp/wm-smoke-dom.html
       - name: Preserve smoke diagnostics
-        if: always()
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: ci-smoke
-          path: |
-            /tmp/wm-smoke.log
-            /tmp/wm-chrome.log
-            /tmp/wm-http.log
-            /tmp/wm-smoke-dom.html
           if-no-files-found: ignore
-          retention-days: 7
+          path: |
+            wm-smoke.log
+            wm-chrome.log
+            wm-http.log
+            wm-xvfb.log
 
   ci-bridge:
-    name: CI failure bridge
+    name: CI issue bridge
     needs: [quality, e2e, smoke]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      issues: write
-      contents: read
     steps:
       - name: Download quality diagnostics
         if: needs.quality.result == 'failure'
@@ -307,8 +268,10 @@ jobs:
 
   deploy:
     name: Deploy GitHub Pages
+    # Publish after the fast correctness gates. E2E still runs and is reported by ci-bridge,
+    # but a superseded/cancelled Playwright run must not leave Pages serving stale PWA metadata.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [quality, e2e, smoke]
+    needs: [quality, smoke]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
