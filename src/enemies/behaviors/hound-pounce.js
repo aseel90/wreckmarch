@@ -105,7 +105,8 @@ function ensureState(scene, enemy, random) {
     aimY: 0,
     pounceCount: 0,
     maxObservedSpeed: 0,
-    lastDistance: Infinity
+    lastDistance: Infinity,
+    attackCommitted: false
   };
   enemy.__houndMotion = state;
   enemy.__houndPhase = state.phase;
@@ -146,9 +147,11 @@ export function computeHoundPounceAim(enemy, target, config = getConfig(enemy)) 
 }
 
 function beginTelegraph(scene, enemy, state, cfg) {
+  state.attackCommitted = true;
   enterPhase(scene, enemy, state, 'telegraph', cfg.telegraphMs ?? 280);
   enemy.damage = enemy.baseDamage ?? enemy.damage;
   enemy.setTint?.(0xff7a45);
+  enemy.stop?.();
   enemy.setRotation?.(0);
   enemy.setTexture?.('rust-hound-crouch');
   createTelegraphFx(scene, enemy, state, Number(cfg.telegraphMs) || 280);
@@ -158,6 +161,7 @@ function beginTelegraph(scene, enemy, state, cfg) {
 }
 
 function beginPounce(scene, enemy, target, state, cfg) {
+  state.attackCommitted = true;
   clearTelegraphFx(state);
   const aim = computeHoundPounceAim(enemy, target, cfg);
   state.aimX = aim.x;
@@ -165,6 +169,7 @@ function beginPounce(scene, enemy, target, state, cfg) {
   const speed = Number(cfg.pounceSpeed) || 348;
   enterPhase(scene, enemy, state, 'pounce', cfg.pounceMs ?? 310);
   restoreVisualTint(enemy);
+  enemy.stop?.();
   enemy.setTexture?.('rust-hound-pounce');
   enemy.damage = (enemy.baseDamage ?? enemy.damage ?? 0) * (Number(cfg.pounceDamageMultiplier) || 1.45);
   state.pounceCount += 1;
@@ -176,6 +181,7 @@ function beginPounce(scene, enemy, target, state, cfg) {
 }
 
 function beginRecover(scene, enemy, state, cfg, random) {
+  state.attackCommitted = false;
   clearTelegraphFx(state);
   enterPhase(scene, enemy, state, 'recover', cfg.recoverMs ?? 320);
   enemy.damage = enemy.baseDamage ?? enemy.damage;
@@ -186,6 +192,15 @@ function beginRecover(scene, enemy, state, cfg, random) {
 }
 
 function updateChase(scene, enemy, target, state, cfg, random, dt) {
+  // Once the warning ring has started, the hound must finish the attack cycle.
+  // This guard also protects against any external/runtime phase reset.
+  if (state.attackCommitted) {
+    if (state.phase === 'pounce') return updatePounce(scene, enemy, target, state, cfg, random, dt);
+    if (state.phase === 'recover') return updateRecover(scene, enemy, state, cfg, dt);
+    if (state.phase !== 'telegraph') enterPhase(scene, enemy, state, 'telegraph', cfg.telegraphMs ?? 280);
+    return updateTelegraph(scene, enemy, target, state, cfg, dt);
+  }
+
   enemy.damage = enemy.baseDamage ?? enemy.damage;
   restoreVisualTint(enemy);
   setAnimation(enemy, 'rust-hound-run');
@@ -236,6 +251,9 @@ function updateChase(scene, enemy, target, state, cfg, random, dt) {
 }
 
 function updateTelegraph(scene, enemy, target, state, cfg, dt) {
+  state.attackCommitted = true;
+  enemy.stop?.();
+  enemy.setTexture?.('rust-hound-crouch');
   const vx = damp(state.vx, 0, 18, dt);
   const vy = damp(state.vy, 0, 18, dt);
   if (state.telegraphFx?.active !== false) state.telegraphFx?.setPosition?.(enemy.x, enemy.y + 20);
@@ -245,6 +263,9 @@ function updateTelegraph(scene, enemy, target, state, cfg, dt) {
 }
 
 function updatePounce(scene, enemy, target, state, cfg, random, dt) {
+  state.attackCommitted = true;
+  enemy.stop?.();
+  enemy.setTexture?.('rust-hound-pounce');
   const speed = Number(cfg.pounceSpeed) || 348;
   const progress = clamp((nowMs(scene) - state.phaseStartedAt) / Math.max(1, Number(cfg.pounceMs) || 310), 0, 1);
   if (progress < .48) {

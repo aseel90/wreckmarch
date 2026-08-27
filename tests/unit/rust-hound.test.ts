@@ -20,6 +20,7 @@ function fakeHound() {
     setTint(value: number) { this.tint = value; return this; },
     clearTint() { this.tint = null; return this; },
     setTexture(value: string) { this.textureKey = value; return this; },
+    stop() { this.animation = null; this.stopCount = (this.stopCount || 0) + 1; return this; },
     play(value: string) { this.animation = value; return this; },
     anims: { currentAnim: null, isPlaying: false }
   };
@@ -56,6 +57,9 @@ describe('Rust Hound', () => {
     scene.time.now = cfg.initialCooldownMaxMs + 1;
     updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
     expect(enemy.__houndPhase).toBe('telegraph');
+    expect(enemy.__houndMotion.attackCommitted).toBe(true);
+    expect(enemy.textureKey).toBe('rust-hound-crouch');
+    expect(enemy.animation).toBeNull();
     expect(enemy.damage).toBe(12);
 
     scene.time.now += cfg.telegraphMs + 1;
@@ -63,11 +67,15 @@ describe('Rust Hound', () => {
     expect(enemy.__houndPhase).toBe('pounce');
     expect(enemy.__houndPounceCount).toBe(1);
     expect(enemy.__houndLastPounceSpeed).toBe(348);
+    expect(enemy.__houndMotion.attackCommitted).toBe(true);
+    expect(enemy.textureKey).toBe('rust-hound-pounce');
+    expect(enemy.animation).toBeNull();
     expect(enemy.damage).toBeCloseTo(17.4, 6);
 
     scene.time.now += cfg.pounceMs + 1;
     updateHoundPounceBehavior({ scene, enemy, target, random: () => 0 });
     expect(enemy.__houndPhase).toBe('recover');
+    expect(enemy.__houndMotion.attackCommitted).toBe(false);
     expect(enemy.damage).toBe(12);
   });
 
