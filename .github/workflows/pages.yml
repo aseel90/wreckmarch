@@ -145,11 +145,15 @@ jobs:
           XVFB_PID=$!
           python3 -m http.server 4173 --bind 127.0.0.1 >wm-http.log 2>&1 &
           HTTP_PID=$!
-          google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --window-size=1280,720 --remote-debugging-port=9222 --remote-allow-origins='*' --user-data-dir=/tmp/wm-chrome-profile 'http://127.0.0.1:4173/?autotest=1&debug=1' >wm-chrome.log 2>&1 &
-          CHROME_PID=$!
-          cleanup() { kill "$CHROME_PID" "$HTTP_PID" "$XVFB_PID" 2>/dev/null || true; }
+          CHROME_PID=''
+          cleanup() {
+            if [ -n "$CHROME_PID" ]; then kill "$CHROME_PID" 2>/dev/null || true; fi
+            kill "$HTTP_PID" "$XVFB_PID" 2>/dev/null || true
+          }
           trap cleanup EXIT
           for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --window-size=1280,720 --remote-debugging-port=9222 --remote-allow-origins='*' --user-data-dir=/tmp/wm-chrome-profile 'http://127.0.0.1:4173/?autotest=1&debug=1' >wm-chrome.log 2>&1 &
+          CHROME_PID=$!
           for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:9222/json/version >/dev/null && break; sleep 1; done
           timeout 35s node scripts/ci-smoke.mjs 2>&1 | tee wm-smoke.log
       - name: Preserve smoke diagnostics
