@@ -24,8 +24,8 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
     threat: true,
     shots: true,
     projectileRuntime: true,
-    acidSpawned: true,
     projectileSpeed: true
   });
+  expect(Number(state.acidSpawned)).toBeGreaterThanOrEqual(1);
   expect(await page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest)).toBe('passed');
 });
