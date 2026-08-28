@@ -60,15 +60,17 @@ Current Runner base movement speed is **255** and remains the tuning baseline.
 
 Approximate Fleet Feet path: 255 → 270 → 287 → 304.
 
-## 4. Enemy movement rules
+## 4. Enemy movement and attack-read rules
 
-Enemy difficulty should come from different movement tools, not from making every enemy permanently faster than the player.
+Enemy difficulty should come from different movement/attack tools, not from making every enemy permanently faster than the player.
 
 - Global enemy speed scaling from Wave 1 to Wave 10 is capped around **+9%**.
 - Normal pursuit enemies should generally stay below the Runner's base speed.
-- Faster-than-player movement is allowed only as readable, short actions such as pounce, dash, charge, ambush, or projectile pressure.
-- Telegraph dangerous movement before it becomes unavoidable.
+- Faster-than-player movement is allowed only as readable, short actions such as pounce, charge or ambush.
+- Telegraph dangerous movement or attacks before they become unavoidable.
 - Rust Hound attack read: first pounce is armed within ~0.22–0.36s; at 100–280px it crouches for ~0.28s with a red ground warning, then pounces and recovers for ~0.32s.
+- **Sawbug has no dash attack.** Its accepted role is mobile ranged acid pressure: it repositions on its legs, telegraphs a spit, fires a separate acid projectile, then recovers before the next shot.
+- Sawbug projectile speed, damage, cooldown and splash lifetime remain explicit tuning values to lock during E03 implementation; do not infer them from the old dash prototype.
 
 Target examples:
 
@@ -78,7 +80,6 @@ Target examples:
 | Rust Hound pursuit | 200–216 |
 | Rust Hound pounce | 348 burst |
 | Sawbug movement | 165–190 |
-| Sawbug dash | 280–310 burst |
 | Wreckling | 120–145 |
 | Hook Raider charge | 330–370 burst |
 | Rivet Brute | 85–105 |
@@ -151,6 +152,8 @@ For the first 10-minute slice, tune toward roughly **10–14 total upgrade choic
 12. The Scrap Marshal boss
 
 The first validation milestone is a 3–4 minute run with **Scrap Rat + Rust Hound + Sawbug + Wreckling** and visibly different combat decisions.
+
+Enemy art/animation production for this roster follows **[WRECKMARCH_ENEMY_PRODUCTION_GUIDE.md](./WRECKMARCH_ENEMY_PRODUCTION_GUIDE.md)**.
 
 ## 10. Engineering rules
 

@@ -2,11 +2,13 @@
 
 This roster is intentionally diverse. **Scrap Rat is the only core rat archetype**; the game world also contains mutant beasts, scrap insects, scavengers and machines.
 
+Production rule for all new enemies: follow **[WRECKMARCH_ENEMY_PRODUCTION_GUIDE.md](./WRECKMARCH_ENEMY_PRODUCTION_GUIDE.md)** before generating or integrating final animation frames.
+
 | ID | Enemy | Family | Role | Core read |
 |---|---|---|---|---|
 | E01 | Scrap Rat | Mutant beast | Swarm melee | Current small scrap-armored rat baseline |
-| E02 | Rust Hound | Mutant beast | Fast hunter | Lean wasteland hound; short pounce |
-| E03 | Sawbug | Scrap insect | Swarm flanker | Six-legged beetle with spinning saw shell |
+| E02 | Rust Hound | Mutant beast | Fast hunter | Lean wasteland hound; readable pounce |
+| E03 | Sawbug | Scrap insect | Ranged pressure | Six-legged hazard beetle with acid reservoir and spit nozzle; no dash |
 | E04 | Wreckling | Scavenger | Basic ranged | Small masked scavenger with scrap pistol |
 | E05 | Fuse Tick | Scrap insect | Kamikaze | Tiny mechanical tick with glowing explosive battery |
 | E06 | Scrap Drone | Machine | Flying harasser | Asymmetric airborne junk drone |
@@ -18,3 +20,10 @@ This roster is intentionally diverse. **Scrap Rat is the only core rat archetype
 | B01 | The Scrap Marshal | Scavenger mech | Multi-phase boss | Warlord inside a welded asymmetrical exosuit |
 
 Visual concepts are references, not final production sprites. Each enemy must remain identifiable by silhouette before color/detail.
+
+## Current production state
+
+- **E01 Scrap Rat:** production baseline.
+- **E02 Rust Hound:** production enemy with dedicated animation/attack pipeline.
+- **E03 Sawbug:** current production target. Accepted direction is a hazard-yellow acid-spitting scrap insect with a minimal frame set and separate projectile/splash FX.
+- **E04+**: follow the production guide; do not assume roster concept art is final sprite art.
