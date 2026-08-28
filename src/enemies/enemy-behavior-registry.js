@@ -1,7 +1,7 @@
 /* WRECKMARCH — enemy behavior registry */
 import { updateChaseBehavior } from './behaviors/chase.js';
 import { updateHoundPounceBehavior } from './behaviors/hound-pounce.js?v=3';
-import { updateAcidSpitterBehavior } from './behaviors/acid-spitter.js?v=2';
+import { updateAcidSpitterBehavior } from './behaviors/acid-spitter.js?v=3';
 
 const ENEMY_BEHAVIORS = new Map([
   ['chase', updateChaseBehavior],
