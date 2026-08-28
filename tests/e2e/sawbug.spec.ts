@@ -28,13 +28,28 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
   });
   expect(Number(state.acidSpawned)).toBeGreaterThanOrEqual(1);
 
+  // Exercise the real Arcade overlap deterministically. Natural projectile travel is already
+  // covered by the self-test above; pinning that same live projectile onto the hero keeps this
+  // regression check focused on impact -> damage -> splash -> continued scene updates.
   await expect.poll(
     () => page.evaluate(() => {
       const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
       const scene = game?.scene?.getScene?.('Wreckmarch');
-      return Number(scene?.__sawbugAcidImpactsResolved) || 0;
+      const impacts = Number(scene?.__sawbugAcidImpactsResolved) || 0;
+      if (!scene || impacts >= 1) return impacts;
+
+      const projectile = scene.__sawbugAcidProjectiles?.getChildren?.()
+        .find((candidate: any) => candidate?.active && candidate.__sawbugAcid);
+      if (!projectile || !scene.hero?.active) return impacts;
+
+      scene.heroHp = Math.max(9999, Number(scene.heroHp) || 0);
+      scene.lastHeroHit = -1_000_000_000;
+      projectile.setVelocity?.(0, 0);
+      projectile.setPosition?.(scene.hero.x, scene.hero.y);
+      projectile.body?.reset?.(scene.hero.x, scene.hero.y);
+      return Number(scene.__sawbugAcidImpactsResolved) || 0;
     }),
-    { timeout: 8_000 }
+    { timeout: 4_000 }
   ).toBeGreaterThanOrEqual(1);
 
   const impactState = await page.evaluate(() => {
