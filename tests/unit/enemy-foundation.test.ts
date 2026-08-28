@@ -14,12 +14,14 @@ function fakeEnemy() {
 }
 
 describe('enemy foundation', () => {
-  it('registers Scrap Rat and Rust Hound as canonical enemies', () => {
+  it('registers Scrap Rat, Rust Hound and Sawbug as canonical enemies', () => {
     const definitions = listEnemyDefinitions();
-    expect(definitions.map(definition => definition.id)).toEqual(['scrap-rat', 'rust-hound']);
+    expect(definitions.map(definition => definition.id)).toEqual(['scrap-rat', 'rust-hound', 'sawbug']);
     expect(getEnemyDefinition('scrap-rat').behavior).toBe('chase');
     expect(getEnemyDefinition('rust-hound').behavior).toBe('hound-pounce');
     expect(getEnemyDefinition('rust-hound').threatValue).toBe(2);
+    expect(getEnemyDefinition('sawbug').behavior).toBe('acid-spitter');
+    expect(getEnemyDefinition('sawbug').threatValue).toBe(2);
     expect(() => getEnemyDefinition('missing')).toThrow('Unknown enemy definition: missing');
   });
 

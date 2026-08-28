@@ -1,5 +1,5 @@
 /* WRECKMARCH — time-driven Wave + Threat Budget director */
-import { RUN_BALANCE, getPressurePhase, getPressureStep, getWaveBalance, getWaveNumber, pickEnemyForRun } from './run-balance.js?v=3';
+import { RUN_BALANCE, getPressurePhase, getPressureStep, getWaveBalance, getWaveNumber, pickEnemyForRun } from './run-balance.js?v=4';
 
 function enemyThreat(enemy) {
   if (!enemy?.active) return 0;
@@ -10,7 +10,7 @@ function enemyThreat(enemy) {
 export function applyRunEnemyRoleProfile(enemy, enemyId) {
   const profile = RUN_BALANCE.enemyRoles?.[enemyId];
   if (!enemy?.active || !profile) return enemy;
-  if (enemy.__runRoleProfile === 'balance-v3') return enemy;
+  if (enemy.__runRoleProfile === 'balance-v4') return enemy;
 
   const speedMultiplier = Number(profile.chaseSpeedMultiplier) || 1;
   const currentSpeed = Number(enemy.speed) || 0;
@@ -20,7 +20,7 @@ export function applyRunEnemyRoleProfile(enemy, enemyId) {
   enemy.threatValue = Number(profile.threat) || enemy.threatValue;
   enemy.behaviorConfig = { ...(enemy.behaviorConfig || {}), ...(profile.behaviorConfig || {}) };
   enemy.__runRole = profile.role;
-  enemy.__runRoleProfile = 'balance-v3';
+  enemy.__runRoleProfile = 'balance-v4';
   return enemy;
 }
 
@@ -112,13 +112,13 @@ export function applyRunDirector(scene) {
     scene.__runDirectorState = state;
     document.documentElement.dataset.wreckmarchWave = String(state.wave);
     document.documentElement.dataset.wreckmarchPressure = state.pressurePhase;
-    window.__WM_RUN_DIRECTOR__ = { active: true, version: 'balance-v3', ...state, activeThreat: director.getActiveThreat() };
+    window.__WM_RUN_DIRECTOR__ = { active: true, version: 'balance-v4', ...state, activeThreat: director.getActiveThreat() };
   };
   syncDirector();
   scene.__runDirectorTick = scene.time.addEvent({ delay: 1000, loop: true, callback: syncDirector });
   const state = director.getState();
-  document.documentElement.dataset.wreckmarchRunDirector = 'balance-v3';
-  window.__WM_LOG__?.(`Run Director active: LULL > BUILD > SURGE > BREATHER + Threat Budget + hunter-weighted Rust Hound pressure (wave=${state.wave}, budget=${state.threatBudget}, cap=${state.activeCap})`);
+  document.documentElement.dataset.wreckmarchRunDirector = 'balance-v4';
+  window.__WM_LOG__?.(`Run Director active: LULL > BUILD > SURGE > BREATHER + Threat Budget + Rust Hound hunter + Sawbug ranged pressure (wave=${state.wave}, budget=${state.threatBudget}, cap=${state.activeCap})`);
   scene.__runDirectorReady = true;
   return true;
 }

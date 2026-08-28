@@ -1,18 +1,19 @@
 /* WRECKMARCH — canonical run balance foundation */
 
-const pool = (wave, ratWeight, houndWeight = 0) => Object.freeze({
+const pool = (wave, ratWeight, houndWeight = 0, sawbugWeight = 0) => Object.freeze({
   wave,
   entries: Object.freeze([
     Object.freeze({ id: 'scrap-rat', weight: ratWeight, threat: 1 }),
-    ...(houndWeight > 0 ? [Object.freeze({ id: 'rust-hound', weight: houndWeight, threat: 3 })] : [])
+    ...(houndWeight > 0 ? [Object.freeze({ id: 'rust-hound', weight: houndWeight, threat: 3 })] : []),
+    ...(sawbugWeight > 0 ? [Object.freeze({ id: 'sawbug', weight: sawbugWeight, threat: 2 })] : [])
   ])
 });
 
 export const PRESSURE_PHASES = Object.freeze([
-  Object.freeze({ key: 'lull', label: 'LULL', threatBudgetMultiplier: .82, spawnIntervalMultiplier: 1.18, activeCapDelta: -4, houndWeightMultiplier: .55 }),
-  Object.freeze({ key: 'build', label: 'BUILD', threatBudgetMultiplier: 1.00, spawnIntervalMultiplier: 1.00, activeCapDelta: -1, houndWeightMultiplier: .85 }),
-  Object.freeze({ key: 'surge', label: 'SURGE', threatBudgetMultiplier: 1.22, spawnIntervalMultiplier: .80, activeCapDelta: 2, houndWeightMultiplier: 1.30 }),
-  Object.freeze({ key: 'breather', label: 'BREATHER', threatBudgetMultiplier: .88, spawnIntervalMultiplier: 1.14, activeCapDelta: -5, houndWeightMultiplier: .60 })
+  Object.freeze({ key: 'lull', label: 'LULL', threatBudgetMultiplier: .82, spawnIntervalMultiplier: 1.18, activeCapDelta: -4, houndWeightMultiplier: .55, sawbugWeightMultiplier: .65 }),
+  Object.freeze({ key: 'build', label: 'BUILD', threatBudgetMultiplier: 1.00, spawnIntervalMultiplier: 1.00, activeCapDelta: -1, houndWeightMultiplier: .85, sawbugWeightMultiplier: .95 }),
+  Object.freeze({ key: 'surge', label: 'SURGE', threatBudgetMultiplier: 1.22, spawnIntervalMultiplier: .80, activeCapDelta: 2, houndWeightMultiplier: 1.30, sawbugWeightMultiplier: 1.15 }),
+  Object.freeze({ key: 'breather', label: 'BREATHER', threatBudgetMultiplier: .88, spawnIntervalMultiplier: 1.14, activeCapDelta: -5, houndWeightMultiplier: .60, sawbugWeightMultiplier: .55 })
 ]);
 
 export const RUN_BALANCE = Object.freeze({
@@ -37,6 +38,21 @@ export const RUN_BALANCE = Object.freeze({
         recoverMs: 360,
         chaseSharpness: 7.2
       })
+    }),
+    'sawbug': Object.freeze({
+      role: 'ranged-spitter',
+      threat: 2,
+      chaseSpeedMultiplier: 1,
+      behaviorConfig: Object.freeze({
+        preferredRangeMin: 205,
+        preferredRangeMax: 315,
+        retreatRange: 165,
+        cooldownMinMs: 1750,
+        cooldownMaxMs: 2250,
+        telegraphMs: 340,
+        projectileSpeed: 275,
+        projectileDamage: 11
+      })
     })
   }),
   player: Object.freeze({ baseMoveSpeed: 255, fleetFeetPercent: .06, fleetFeetMaxLevel: 3, moveSpeedHardCap: 310 }),
@@ -53,8 +69,16 @@ export const RUN_BALANCE = Object.freeze({
     Object.freeze({ wave: 10, threatBudget: 51, activeCap: 50, spawnIntervalMs: 390, hpMultiplier: 1.90, damageMultiplier: 1.36, speedMultiplier: 1.09 })
   ]),
   enemyPools: Object.freeze([
-    pool(1, 1.00), pool(2, .78, .22), pool(3, .72, .28), pool(4, .68, .32), pool(5, .67, .33),
-    pool(6, .66, .34), pool(7, .65, .35), pool(8, .64, .36), pool(9, .63, .37), pool(10, .62, .38)
+    pool(1, 1.00),
+    pool(2, .78, .22),
+    pool(3, .62, .22, .16),
+    pool(4, .58, .24, .18),
+    pool(5, .56, .24, .20),
+    pool(6, .54, .25, .21),
+    pool(7, .52, .26, .22),
+    pool(8, .50, .27, .23),
+    pool(9, .48, .28, .24),
+    pool(10, .46, .29, .25)
   ]),
   eliteRewards: Object.freeze({ guaranteedAtSeconds: Object.freeze([270, 450]), bonusWindowStartSeconds: 540, choices: 3, minimumRarity: 'RARE' })
 });
@@ -81,7 +105,11 @@ export function pickEnemyForRun(runTimeSeconds = 0, random = Math.random) {
   const phase = getPressurePhase(runTimeSeconds);
   const entries = getEnemyPool(runTimeSeconds).entries.map(entry => ({
     ...entry,
-    weight: entry.id === 'rust-hound' ? entry.weight * phase.houndWeightMultiplier : entry.weight
+    weight: entry.id === 'rust-hound'
+      ? entry.weight * phase.houndWeightMultiplier
+      : entry.id === 'sawbug'
+        ? entry.weight * phase.sawbugWeightMultiplier
+        : entry.weight
   }));
   const roll = Math.max(0, Math.min(.999999, Number(random?.()) || 0));
   const total = entries.reduce((sum, entry) => sum + entry.weight, 0) || 1;

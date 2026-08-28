@@ -47,6 +47,19 @@ describe('Wreckmarch run balance', () => {
     expect(pickEnemyForRun(105, () => .8).id).toBe('scrap-rat');
   });
 
+  it('introduces Sawbug in wave 3 as a threat-2 ranged spitter', () => {
+    expect(RUN_BALANCE.enemyPools[0].entries.map(entry => entry.id)).toEqual(['scrap-rat']);
+    expect(RUN_BALANCE.enemyPools[1].entries.map(entry => entry.id)).toEqual(['scrap-rat', 'rust-hound']);
+    expect(RUN_BALANCE.enemyPools[2].entries.map(entry => entry.id)).toEqual(['scrap-rat', 'rust-hound', 'sawbug']);
+    const sawbug = RUN_BALANCE.enemyPools[2].entries.find(entry => entry.id === 'sawbug');
+    expect(sawbug).toMatchObject({ id: 'sawbug', threat: 2 });
+    expect(RUN_BALANCE.enemyRoles.sawbug).toMatchObject({
+      role: 'ranged-spitter',
+      threat: 2,
+      behaviorConfig: { projectileSpeed: 275, projectileDamage: 11, telegraphMs: 340 }
+    });
+  });
+
   it('turns a run Rust Hound into a readable hunter instead of a constant-speed chaser', () => {
     const hound: any = {
       active: true,
