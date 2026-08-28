@@ -32,18 +32,18 @@ export const RUNNER_CHARACTER = Object.freeze({
     originX: .5,
     originY: .52,
     scale: .78,
-    idleTexture: 'art-hero-idle-0'
+    idleTexture: 'hunter-idle-0'
   }),
   animations: Object.freeze({
     idle: Object.freeze({
       key: 'character-runner-idle',
-      frames: Object.freeze(['art-hero-idle-0', 'art-hero-idle-1']),
+      frames: Object.freeze(['hunter-idle-0', 'hunter-idle-1']),
       frameRate: 2
     }),
     run: Object.freeze({
       key: 'character-runner-run',
-      frames: Object.freeze(['runner-run-0', 'runner-run-1', 'runner-run-2', 'runner-run-3']),
-      frameRate: 12
+      frames: Object.freeze(['hunter-run-0', 'hunter-run-1', 'hunter-run-2', 'hunter-run-3', 'hunter-run-4', 'hunter-run-5']),
+      frameRate: 13
     })
   }),
   locomotion: Object.freeze({
