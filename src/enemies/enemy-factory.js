@@ -1,5 +1,5 @@
 /* WRECKMARCH — enemy construction boundary */
-import { getEnemyDefinition } from './enemy-registry.js?v=3';
+import { getEnemyDefinition } from './enemy-registry.js?v=4';
 import { getEnemyDifficultyMultipliers } from '../balance/run-balance.js?v=2';
 
 function fallbackBetween(min, max) {
