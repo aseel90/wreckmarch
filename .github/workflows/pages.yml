@@ -104,12 +104,12 @@ jobs:
               [ -f "$LOG" ] || continue
               echo "### $LOG"
               echo '```text'
-              tail -c 12000 "$LOG"
+              tail -c 16000 "$LOG"
               echo
               echo '```'
             done
           } > /tmp/wm-e2e-comment.md
-          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md || true
       - name: Preserve Playwright diagnostics
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
@@ -152,6 +152,25 @@ jobs:
           trap cleanup EXIT
           for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
           timeout 40s node scripts/ci-smoke.mjs 2>&1 | tee wm-smoke.log
+      - name: Comment smoke diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo 'Browser smoke failed.'
+            echo
+            for LOG in wm-smoke.log wm-http.log wm-smoke-install.log; do
+              [ -f "$LOG" ] || continue
+              echo "### $LOG"
+              echo '```text'
+              tail -c 16000 "$LOG"
+              echo
+              echo '```'
+            done
+          } > /tmp/wm-smoke-comment.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-smoke-comment.md || true
       - name: Preserve smoke diagnostics
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
@@ -242,8 +261,6 @@ jobs:
 
   deploy:
     name: Deploy GitHub Pages
-    # Publish after the fast correctness gates. E2E still runs and is reported by ci-bridge,
-    # but a superseded/cancelled Playwright run must not leave Pages serving stale PWA metadata.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [quality, smoke]
     runs-on: ubuntu-latest

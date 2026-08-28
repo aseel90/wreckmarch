@@ -9,8 +9,16 @@ const browser = await chromium.launch({
   args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
 });
 
+let page;
+const browserEvents = [];
+
 try {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  page.on('console', msg => {
+    if (msg.type() === 'error' || msg.type() === 'warning') browserEvents.push(`console:${msg.type()}: ${msg.text()}`);
+  });
+  page.on('pageerror', error => browserEvents.push(`pageerror: ${error?.stack || error}`));
+  page.on('requestfailed', request => browserEvents.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
   await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 15_000 });
 
   const readState = () => page.evaluate(() => {
@@ -33,6 +41,10 @@ try {
       phaseE1: document.documentElement.dataset.wreckmarchPhaseE1 || null,
       e1SelfTest: document.documentElement.dataset.wreckmarchE1SelfTest || null,
       e1Persistence: document.documentElement.dataset.wreckmarchE1Persistence || null,
+      sawbugVisual: document.documentElement.dataset.wreckmarchSawbugVisual || null,
+      bootStatus: document.querySelector('#boot-status')?.textContent || null,
+      bootError: document.body.classList.contains('boot-error'),
+      debugTail: document.querySelector('#log')?.textContent?.slice(-4000) || '',
       viewport: { width: window.innerWidth, height: window.innerHeight },
       canvasRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null
     };
@@ -58,6 +70,33 @@ try {
   console.log(JSON.stringify({ ok: true, state }, null, 2));
 } catch (error) {
   console.error(error?.stack || String(error));
+  try {
+    const state = await page?.evaluate?.(() => {
+      const game = window.__WM_GAME__;
+      const scene = game?.scene?.getScene?.('Wreckmarch');
+      const canvas = document.querySelector('#game canvas');
+      const rect = canvas?.getBoundingClientRect?.();
+      return {
+        visualReady: document.body.classList.contains('visual-ready'),
+        bootError: document.body.classList.contains('boot-error'),
+        bootStatus: document.querySelector('#boot-status')?.textContent || null,
+        gameReady: !!game,
+        sceneActive: !!scene?.sys?.isActive?.(),
+        sawbugVisual: document.documentElement.dataset.wreckmarchSawbugVisual || null,
+        phaseE1: document.documentElement.dataset.wreckmarchPhaseE1 || null,
+        e1SelfTest: document.documentElement.dataset.wreckmarchE1SelfTest || null,
+        e1Persistence: document.documentElement.dataset.wreckmarchE1Persistence || null,
+        finalPolish: document.documentElement.dataset.wreckmarchFinalPolish || null,
+        mobileHud: document.documentElement.dataset.wreckmarchMobileHud || null,
+        canvasRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null,
+        debugTail: document.querySelector('#log')?.textContent?.slice(-8000) || ''
+      };
+    });
+    console.error('SMOKE_STATE ' + JSON.stringify(state, null, 2));
+    console.error('BROWSER_EVENTS ' + JSON.stringify(browserEvents.slice(-40), null, 2));
+  } catch (stateError) {
+    console.error('SMOKE_STATE_READ_FAILED ' + (stateError?.stack || stateError));
+  }
   process.exitCode = 1;
 } finally {
   await browser.close();
