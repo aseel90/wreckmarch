@@ -26,6 +26,13 @@ describe('Sawbug production frames', () => {
     }
   });
 
+  it('canonicalizes baked frame base64 before browser decoding', () => {
+    const source = fs.readFileSync(path.join(root, 'src/enemies/sawbug-visuals.js'), 'utf8');
+    expect(source).toContain('canonicalizeBakedDataUrl');
+    expect(source).toContain("replace(/=+$/, '')");
+    expect(source).toContain("image.src = canonicalizeBakedDataUrl(source)");
+  });
+
   it('keeps projectile and splash animation separate from the body animation', () => {
     const source = fs.readFileSync(path.join(root, 'src/enemies/sawbug-visuals.js'), 'utf8');
     expect(source).toContain("replaceAnimation(scene, 'sawbug-walk', WALK_KEYS, 8, -1)");

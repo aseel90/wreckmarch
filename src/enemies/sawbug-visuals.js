@@ -39,12 +39,22 @@ const FRAME_SOURCES = Object.freeze({
 const FRAME_KEYS = Object.freeze(Object.keys(FRAME_SOURCES));
 const VISUAL_VERSION = 'production-v1-acid-alpha';
 
+export function canonicalizeBakedDataUrl(source) {
+  if (typeof source !== 'string') return source;
+  const comma = source.indexOf(',');
+  if (comma < 0 || !source.slice(0, comma).includes(';base64')) return source;
+  const prefix = source.slice(0, comma + 1);
+  const payload = source.slice(comma + 1).replace(/=+$/, '');
+  const padding = (4 - (payload.length % 4)) % 4;
+  return `${prefix}${payload}${'='.repeat(padding)}`;
+}
+
 function loadImageSource(source) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error('Sawbug transparent master image failed to decode'));
-    image.src = source;
+    image.src = canonicalizeBakedDataUrl(source);
   });
 }
 
