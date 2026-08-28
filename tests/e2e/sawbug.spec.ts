@@ -8,35 +8,6 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
   ).toBe(true);
 
   await expect.poll(
-    () => page.evaluate(() => {
-      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-      const scene = game?.scene?.getScene?.('Wreckmarch');
-      const sawbug = scene?.enemies?.getChildren?.().find((enemy: any) => enemy?.active && enemy.enemyId === 'sawbug');
-      if (!scene || !sawbug) return false;
-      scene.hero?.setPosition?.(360, 480);
-      scene.hero?.setVelocity?.(0, 0);
-      sawbug.setPosition?.(130, 480);
-      sawbug.setVelocity?.(0, 0);
-      sawbug.speed = 0;
-      sawbug.behaviorConfig = {
-        ...(sawbug.behaviorConfig || {}),
-        initialCooldownMinMs: 0,
-        initialCooldownMaxMs: 0,
-        strafeSpeedMultiplier: 0,
-        approachSpeedMultiplier: 0,
-        retreatSpeedMultiplier: 0
-      };
-      if (sawbug.__sawbugState) {
-        sawbug.__sawbugState.phase = 'move';
-        sawbug.__sawbugState.cooldownUntil = Number(scene.time?.now) || 0;
-        sawbug.__sawbugPhase = 'move';
-      }
-      return true;
-    }),
-    { timeout: 5_000 }
-  ).toBe(true);
-
-  await expect.poll(
     () => page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest || ''),
     { timeout: 12_000 }
   ).toMatch(/^(passed|failed)$/);
@@ -56,5 +27,40 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
     projectileSpeed: true
   });
   expect(Number(state.acidSpawned)).toBeGreaterThanOrEqual(1);
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      const scene = game?.scene?.getScene?.('Wreckmarch');
+      return Number(scene?.__sawbugAcidImpactsResolved) || 0;
+    }),
+    { timeout: 8_000 }
+  ).toBeGreaterThanOrEqual(1);
+
+  const impactState = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    return {
+      hp: scene.heroHp,
+      gameOver: scene.gameOver,
+      errors: Number(scene.__sawbugAcidImpactErrors) || 0,
+      impacts: Number(scene.__sawbugAcidImpactsResolved) || 0,
+      splashes: Number(scene.__sawbugAcidSplashesSpawned) || 0,
+      runTime: scene.runTime
+    };
+  });
+  expect(impactState.hp).toBeLessThan(9999);
+  expect(impactState.gameOver).toBe(false);
+  expect(impactState.errors).toBe(0);
+  expect(impactState.impacts).toBeGreaterThanOrEqual(1);
+  expect(impactState.splashes).toBeGreaterThanOrEqual(1);
+
+  await page.waitForTimeout(350);
+  const laterRunTime = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    return game.scene.getScene('Wreckmarch').runTime;
+  });
+  expect(laterRunTime).toBeGreaterThan(impactState.runTime + .15);
+
   expect(await page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest)).toBe('passed');
 });
