@@ -37,7 +37,7 @@ const FRAME_SOURCES = Object.freeze({
 });
 
 const FRAME_KEYS = Object.freeze(Object.keys(FRAME_SOURCES));
-const VISUAL_VERSION = 'production-v2-acid-pressure';
+const VISUAL_VERSION = 'production-v3-safe-windup';
 
 export function canonicalizeBakedDataUrl(source) {
   if (typeof source !== 'string') return source;
@@ -81,7 +81,8 @@ function replaceAnimation(scene, key, frames, frameRate, repeat = -1) {
 function installAnimations(scene) {
   replaceAnimation(scene, 'sawbug-idle', IDLE_KEYS, 3, -1);
   replaceAnimation(scene, 'sawbug-walk', WALK_KEYS, 8, -1);
-  replaceAnimation(scene, 'sawbug-acid-attack', ATTACK_KEYS, 8, 0);
+  // attack-1 and attack-2 contain corrupted pixels; keep windup on the verified clean attack-0 pose.
+  replaceAnimation(scene, 'sawbug-acid-attack', [ATTACK_KEYS[0]], 1, 0);
   replaceAnimation(scene, 'sawbug-acid-flight', PROJECTILE_KEYS, 10, -1);
   replaceAnimation(scene, 'sawbug-acid-splash', SPLASH_KEYS, 12, 0);
 }
@@ -191,7 +192,7 @@ export async function installSawbugVisuals(scene) {
   scene.__sawbugVisualVersion = VISUAL_VERSION;
   window.__WM_SAWBUG_VISUAL__ = true;
   document.documentElement.dataset.wreckmarchSawbugVisual = VISUAL_VERSION;
-  window.__WM_LOG__?.('Sawbug active: 2 idle + 4 walk + 3 acid-spit frames, separate 2-frame projectile and 2-frame splash');
+  window.__WM_LOG__?.('Sawbug active: 2 idle + 4 walk + safe 1-frame acid windup, separate 2-frame projectile and 2-frame splash');
   runBrowserSelfTest(scene);
   return true;
 }
