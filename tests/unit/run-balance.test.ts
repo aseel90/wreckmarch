@@ -56,7 +56,7 @@ describe('Wreckmarch run balance', () => {
     expect(RUN_BALANCE.enemyRoles.sawbug).toMatchObject({
       role: 'ranged-spitter',
       threat: 2,
-      behaviorConfig: { projectileSpeed: 275, projectileDamage: 11, telegraphMs: 340 }
+      behaviorConfig: { preferredRangeMax: 380, stationaryFireRangeMax: 430, projectileSpeed: 275, projectileDamage: 11, telegraphMs: 320 }
     });
   });
 
