@@ -67,7 +67,9 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
       errors: Number(scene.__sawbugAcidImpactErrors) || 0,
       impacts: Number(scene.__sawbugAcidImpactsResolved) || 0,
       splashes: Number(scene.__sawbugAcidSplashesSpawned) || 0,
-      runTime: scene.runTime
+      runTime: scene.runTime,
+      heroActive: scene.hero?.active === true,
+      heroBodyPresent: Boolean(scene.hero?.body)
     };
   });
   expect(impactState.hp).toBeLessThan(9999);
@@ -75,26 +77,46 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
   expect(impactState.errors).toBe(0);
   expect(impactState.impacts).toBeGreaterThanOrEqual(1);
   expect(impactState.splashes).toBeGreaterThanOrEqual(1);
+  expect(impactState.heroActive).toBe(true);
+  expect(impactState.heroBodyPresent).toBe(true);
 
-  await page.waitForTimeout(350);
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      return game.scene.getScene('Wreckmarch').runTime;
+    }),
+    { timeout: 2_000 }
+  ).toBeGreaterThan(impactState.runTime + .05);
+
   const laterState = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     return {
       runTime: scene.runTime,
-      timeNow: scene.time?.now,
       gameOver: scene.gameOver,
       sceneActive: scene.sys?.isActive?.(),
       scenePaused: scene.sys?.isPaused?.(),
       physicsPaused: scene.physics?.world?.isPaused,
       loopRunning: game.loop?.running,
+      heroActive: scene.hero?.active === true,
+      heroBodyPresent: Boolean(scene.hero?.body),
       impacts: Number(scene.__sawbugAcidImpactsResolved) || 0,
       impactErrors: Number(scene.__sawbugAcidImpactErrors) || 0
     };
   });
   console.log('SAWBUG_POST_IMPACT_STATE', JSON.stringify(laterState));
   console.log('SAWBUG_PAGE_ERRORS', JSON.stringify(pageErrors));
-  expect(laterState.runTime, JSON.stringify({ laterState, pageErrors })).toBeGreaterThan(impactState.runTime + .15);
+  expect(pageErrors).toEqual([]);
+  expect(laterState).toMatchObject({
+    gameOver: false,
+    sceneActive: true,
+    scenePaused: false,
+    physicsPaused: false,
+    loopRunning: true,
+    heroActive: true,
+    heroBodyPresent: true,
+    impactErrors: 0
+  });
 
   expect(await page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest)).toBe('passed');
 });
