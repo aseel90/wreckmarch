@@ -48,9 +48,53 @@ function hunterSvg({ stride = 0, idle = 0 } = {}) {
   </g></svg>`;
 }
 
+function installNormalizedIdleTexture(scene, sourceKey, targetKey) {
+  if (scene.textures.exists(targetKey)) scene.textures.remove(targetKey);
+  const sourceTexture = scene.textures.get(sourceKey);
+  const image = sourceTexture?.getSourceImage?.();
+  if (!image) throw new Error(`Hunter idle source unavailable: ${sourceKey}`);
+
+  const scan = document.createElement('canvas');
+  scan.width = image.width;
+  scan.height = image.height;
+  const scanCtx = scan.getContext('2d', { willReadFrequently: true });
+  scanCtx.drawImage(image, 0, 0);
+  const pixels = scanCtx.getImageData(0, 0, scan.width, scan.height).data;
+
+  let minX = scan.width, minY = scan.height, maxX = -1, maxY = -1;
+  for (let y = 0; y < scan.height; y += 2) {
+    for (let x = 0; x < scan.width; x += 2) {
+      if (pixels[(y * scan.width + x) * 4 + 3] < 10) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (maxX < minX || maxY < minY) throw new Error(`Hunter idle source is fully transparent: ${sourceKey}`);
+
+  // Match the production Hunter silhouette used by the run frames (128x148 SVG).
+  const sourceW = maxX - minX + 1;
+  const sourceH = maxY - minY + 1;
+  const maxBodyW = 104;
+  const maxBodyH = 132;
+  const scale = Math.min(maxBodyW / sourceW, maxBodyH / sourceH);
+  const drawW = Math.max(1, Math.round(sourceW * scale));
+  const drawH = Math.max(1, Math.round(sourceH * scale));
+  const drawX = Math.round((128 - drawW) / 2);
+  const drawY = 140 - drawH;
+
+  const texture = scene.textures.createCanvas(targetKey, 128, 148);
+  const ctx = texture.getContext();
+  ctx.clearRect(0, 0, 128, 148);
+  ctx.drawImage(image, minX, minY, sourceW, sourceH, drawX, drawY, drawW, drawH);
+  texture.refresh();
+}
+
 export function loadRunnerLocomotionArt(scene) {
   const idleFrames = [0, 1];
   const runStrides = [-1, -.58, -.18, .18, .58, 1];
+  const idleSourceKeys = idleFrames.map(index => `hunter-idle-source-${index}`);
   const keys = [
     ...idleFrames.map(index => `hunter-idle-${index}`),
     ...runStrides.map((_, index) => `hunter-run-${index}`)
@@ -69,13 +113,17 @@ export function loadRunnerLocomotionArt(scene) {
     scene.load.once('complete', () => {
       scene.load.off('loaderror', fail);
       urls.forEach(URL.revokeObjectURL);
-      if (!failed) resolve();
+      if (failed) return;
+      try {
+        idleSourceKeys.forEach((sourceKey, index) => installNormalizedIdleTexture(scene, sourceKey, `hunter-idle-${index}`));
+        idleSourceKeys.forEach(key => scene.textures.remove(key));
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
     });
-    idleFrames.forEach((idle, index) => {
-      const url = URL.createObjectURL(new Blob([hunterSvg({ idle })], { type: 'image/svg+xml' }));
-      urls.push(url);
-      scene.load.svg(`hunter-idle-${index}`, url);
-    });
+    scene.load.image(idleSourceKeys[0], 'assets/hero/idle-gun/idle_gun_01.png.png');
+    scene.load.image(idleSourceKeys[1], 'assets/hero/idle-gun/idle_gun_02.png.png');
     runStrides.forEach((stride, index) => {
       const url = URL.createObjectURL(new Blob([hunterSvg({ stride })], { type: 'image/svg+xml' }));
       urls.push(url);
