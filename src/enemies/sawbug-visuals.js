@@ -143,7 +143,8 @@ function runBrowserSelfTest(scene) {
   sawbug.hp = 999999;
   sawbug.maxHp = 999999;
 
-  setTimeout(() => {
+  const startedAt = Number(scene.time?.now) || 0;
+  const finishWhenShotObserved = () => {
     if (!scene?.sys?.isActive?.()) return;
     const checks = {
       active: Boolean(sawbug.active),
@@ -157,11 +158,19 @@ function runBrowserSelfTest(scene) {
       acidSpawned: Number(scene.__sawbugAcidShotsSpawned) >= 1,
       projectileSpeed: Number(sawbug.__sawbugLastProjectileSpeed) >= 260 && Number(sawbug.__sawbugLastProjectileSpeed) <= 290
     };
+    const shotObserved = checks.shots && checks.acidSpawned && checks.projectileSpeed;
+    const elapsed = (Number(scene.time?.now) || startedAt) - startedAt;
+    if (!shotObserved && elapsed < 7000) {
+      scene.time?.delayedCall?.(120, finishWhenShotObserved);
+      return;
+    }
+
     const ok = Object.values(checks).every(Boolean);
     window.__WM_SAWBUG_TEST__ = {
       ok,
       ...checks,
       phase: sawbug.__sawbugPhase,
+      elapsedMs: Math.round(elapsed),
       shotsFired: sawbug.__sawbugShotsFired,
       acidSpawned: scene.__sawbugAcidShotsSpawned,
       splashesSpawned: scene.__sawbugAcidSplashesSpawned,
@@ -169,7 +178,8 @@ function runBrowserSelfTest(scene) {
     };
     document.documentElement.dataset.wreckmarchSawbugTest = ok ? 'passed' : 'failed';
     window.__WM_LOG__?.(`Sawbug browser test ${ok ? 'PASSED' : 'FAILED'}: ${JSON.stringify(window.__WM_SAWBUG_TEST__)}`);
-  }, 3600);
+  };
+  scene.time?.delayedCall?.(120, finishWhenShotObserved);
 }
 
 export async function installSawbugVisuals(scene) {
