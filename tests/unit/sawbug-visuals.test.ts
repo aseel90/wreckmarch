@@ -1,0 +1,36 @@
+import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = path.resolve(import.meta.dirname, '../..');
+const assetsDir = path.join(root, 'src/enemies/assets');
+
+describe('Sawbug production frames', () => {
+  it('ships exactly the minimal approved body and acid frame set', () => {
+    const files = fs.readdirSync(assetsDir).filter(name => name.startsWith('sawbug-') && name.endsWith('.js'));
+    const expected = [
+      'sawbug-idle-0.js', 'sawbug-idle-1.js',
+      'sawbug-walk-0.js', 'sawbug-walk-1.js', 'sawbug-walk-2.js', 'sawbug-walk-3.js',
+      'sawbug-attack-0.js', 'sawbug-attack-1.js', 'sawbug-attack-2.js',
+      'sawbug-projectile-0.js', 'sawbug-projectile-1.js',
+      'sawbug-splash-0.js', 'sawbug-splash-1.js'
+    ];
+    expect(files.sort()).toEqual(expected.sort());
+  });
+
+  it('embeds transparent WebP master frames instead of external backgrounds', () => {
+    for (const name of fs.readdirSync(assetsDir).filter(name => name.startsWith('sawbug-') && name.endsWith('.js'))) {
+      const source = fs.readFileSync(path.join(assetsDir, name), 'utf8');
+      expect(source).toContain('data:image/webp;base64,');
+      expect(source).toContain('transparent baked Sawbug frame');
+    }
+  });
+
+  it('keeps projectile and splash animation separate from the body animation', () => {
+    const source = fs.readFileSync(path.join(root, 'src/enemies/sawbug-visuals.js'), 'utf8');
+    expect(source).toContain("replaceAnimation(scene, 'sawbug-walk', WALK_KEYS, 8, -1)");
+    expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-attack', ATTACK_KEYS, 8, 0)");
+    expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-flight', PROJECTILE_KEYS, 10, -1)");
+    expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-splash', SPLASH_KEYS, 12, 0)");
+  });
+});
