@@ -1,5 +1,5 @@
 /* WRECKMARCH — enemy behavior dispatch boundary */
-import { getEnemyBehavior } from './enemy-behavior-registry.js?v=5';
+import { getEnemyBehavior } from './enemy-behavior-registry.js?v=6';
 
 export class EnemyBehaviorSystem {
   constructor(scene, { random = Math.random } = {}) {
