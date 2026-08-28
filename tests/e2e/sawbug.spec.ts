@@ -8,13 +8,15 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
   ).toBe(true);
 
   await expect.poll(
-    () => page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest),
+    () => page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest || ''),
     { timeout: 8_000 }
-  ).toBe('passed');
+  ).toMatch(/^(passed|failed)$/);
 
   const state = await page.evaluate(() => (window as typeof window & { __WM_SAWBUG_TEST__?: any }).__WM_SAWBUG_TEST__);
-  expect(state).toMatchObject({
+  console.log('SAWBUG_SELF_TEST_STATE', JSON.stringify(state));
+  expect(state, JSON.stringify(state)).toMatchObject({
     ok: true,
+    active: true,
     visual: true,
     bakedFrames: true,
     transparentMaster: true,
@@ -25,4 +27,5 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
     acidSpawned: true,
     projectileSpeed: true
   });
+  expect(await page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest)).toBe('passed');
 });
