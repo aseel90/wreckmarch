@@ -150,7 +150,7 @@ function installRigSystem(s){
   return s.rigSystem;
 }
 
-function debugVisuals(s){if(!window.__WM_DEBUG__) return;s.__c4Debug=s.add.graphics().setDepth(1000);s.__c4DebugText=s.add.text(12,74,'SOCKET DEBUG',{fontFamily:'monospace',fontSize:'10px',color:'#73ff8d',backgroundColor:'#061109'}).setScrollFactor(0).setDepth(1001);}
+function debugVisuals(s){const enabled=new URLSearchParams(location.search).get('socketdebug')==='1';if(!enabled){s.__c4Debug?.destroy?.();s.__c4DebugText?.destroy?.();s.__c4Debug=null;s.__c4DebugText=null;return;}s.__c4Debug=s.add.graphics().setDepth(1000);s.__c4DebugText=s.add.text(12,74,'SOCKET DEBUG',{fontFamily:'monospace',fontSize:'10px',color:'#73ff8d',backgroundColor:'#061109'}).setScrollFactor(0).setDepth(1001);}
 function updateDebug(s){const g=s.__c4Debug;if(!g)return;g.clear();g.lineStyle(2,0x65ff83,.9);g.strokeCircle(s.__c4Grip.x,s.__c4Grip.y,5);g.lineStyle(2,0xffcb58,.9);g.strokeCircle(s.__c4Muzzle.x,s.__c4Muzzle.y,5);g.lineBetween(s.__c4Grip.x,s.__c4Grip.y,s.__c4Muzzle.x,s.__c4Muzzle.y);if(s.__c4RigState&&s.rigSummoned){g.lineStyle(2,0x62d8ff,.8);g.strokeCircle(s.__c4RigState.goal.x,s.__c4RigState.goal.y,11);g.lineBetween(s.cart.x,s.cart.y,s.__c4RigState.goal.x,s.__c4RigState.goal.y)}}
 function installLoop(s){const old=(s.sys?.sceneUpdate||s.update).bind(s);const up=function(t,d){const rig=!!this.rigSummoned;if(rig)this.rigSummoned=false;old(t,d);if(rig)this.rigSummoned=true;this.updateWeaponPose?.();if(!this.gameOver&&!this.upgradeOpen) this.rigSystem?.update(t,d);updateDebug(this);};s.update=up;if(s.sys)s.sys.sceneUpdate=up;}
 function selfTest(s){
