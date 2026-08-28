@@ -40,20 +40,54 @@ function spawnSplash(scene, x, y) {
   return splash;
 }
 
+function resolveAcidImpact(scene, projectile, hero) {
+  if (!projectile?.active || !hero?.active || projectile.__sawbugImpactResolved) return null;
+  projectile.__sawbugImpactResolved = true;
+
+  const x = Number(projectile.x) || 0;
+  const y = Number(projectile.y) || 0;
+  const damage = Math.max(1, Number(projectile.damage) || 1);
+
+  projectile.setVelocity?.(0, 0);
+  if (projectile.body) projectile.body.enable = false;
+  projectile.setActive?.(false);
+  projectile.setVisible?.(false);
+
+  const damageSource = {
+    active: true,
+    damage,
+    x,
+    y,
+    __sawbugAcidImpact: true
+  };
+
+  let result = null;
+  try {
+    result = scene.playerDamageSystem?.hitByContact?.(hero, damageSource) ?? null;
+  } catch (error) {
+    scene.__sawbugAcidImpactErrors = (scene.__sawbugAcidImpactErrors || 0) + 1;
+    globalThis.__WM_LOG__?.(`Sawbug acid impact recovered from damage error: ${error?.stack || error}`);
+  }
+
+  scene.__sawbugAcidImpactsResolved = (scene.__sawbugAcidImpactsResolved || 0) + 1;
+  spawnSplash(scene, x, y);
+
+  if (scene.time?.delayedCall) scene.time.delayedCall(1, () => projectile?.destroy?.());
+  else projectile.destroy?.();
+  return result;
+}
+
 function ensureProjectileRuntime(scene) {
   if (scene.__sawbugAcidProjectiles) return scene.__sawbugAcidProjectiles;
   const group = scene.physics.add.group({ allowGravity: false });
   scene.__sawbugAcidProjectiles = group;
   scene.__sawbugAcidShotsSpawned = scene.__sawbugAcidShotsSpawned || 0;
   scene.__sawbugAcidSplashesSpawned = scene.__sawbugAcidSplashesSpawned || 0;
+  scene.__sawbugAcidImpactsResolved = scene.__sawbugAcidImpactsResolved || 0;
+  scene.__sawbugAcidImpactErrors = scene.__sawbugAcidImpactErrors || 0;
 
   scene.physics.add.overlap(group, scene.hero, (projectile, hero) => {
-    if (!projectile?.active || !hero?.active) return;
-    const x = projectile.x;
-    const y = projectile.y;
-    scene.playerDamageSystem?.hitByContact?.(hero, projectile);
-    projectile.destroy();
-    spawnSplash(scene, x, y);
+    resolveAcidImpact(scene, projectile, hero);
   });
 
   return group;
@@ -95,6 +129,7 @@ function fireAcid(scene, enemy, target, state, config) {
   projectile.body && (projectile.body.allowGravity = false);
   projectile.damage = Number(config.projectileDamage) || 11;
   projectile.__sawbugAcid = true;
+  projectile.__sawbugImpactResolved = false;
   projectile.__expireAt = nowMs(scene) + (Number(config.projectileLifeMs) || 1900);
   projectile.setVelocity(
     aim.x * (Number(config.projectileSpeed) || 275),
@@ -107,9 +142,12 @@ function fireAcid(scene, enemy, target, state, config) {
   enemy.__sawbugLastProjectileSpeed = Number(config.projectileSpeed) || 275;
 
   scene.time?.delayedCall?.(Number(config.projectileLifeMs) || 1900, () => {
-    if (!projectile?.active) return;
+    if (!projectile?.active || projectile.__sawbugImpactResolved) return;
+    projectile.__sawbugImpactResolved = true;
     const x = projectile.x;
     const y = projectile.y;
+    projectile.setVelocity?.(0, 0);
+    if (projectile.body) projectile.body.enable = false;
     projectile.destroy();
     spawnSplash(scene, x, y);
   });
@@ -124,7 +162,8 @@ function ensureState(scene, enemy, random) {
     phase: 'move',
     phaseUntil: 0,
     cooldownUntil: now + range(random, cfg.initialCooldownMinMs ?? 520, cfg.initialCooldownMaxMs ?? 760),
-    strafeSide: random() < .5 ? -1 : 1
+    strafeSide: random() < .5 ? -1 : 1,
+    stationaryTarget: false
   };
   enemy.__sawbugState = state;
   enemy.__sawbugPhase = 'move';
@@ -145,8 +184,12 @@ function beginWindup(scene, enemy, state, cfg) {
 
 function beginRecover(scene, enemy, state, cfg, random) {
   state.phase = 'recover';
-  state.phaseUntil = nowMs(scene) + (Number(cfg.recoverMs) || 280);
-  state.cooldownUntil = state.phaseUntil + range(random, cfg.cooldownMinMs ?? 1750, cfg.cooldownMaxMs ?? 2250);
+  state.phaseUntil = nowMs(scene) + (Number(cfg.recoverMs) || 260);
+  const cooldown = range(random, cfg.cooldownMinMs ?? 1550, cfg.cooldownMaxMs ?? 1950);
+  const cooldownMultiplier = state.stationaryTarget
+    ? (Number(cfg.stationaryCooldownMultiplier) || 1)
+    : 1;
+  state.cooldownUntil = state.phaseUntil + cooldown * cooldownMultiplier;
   enemy.__sawbugPhase = 'recover';
   restoreVisualTint(enemy);
   enemy.setVelocity?.(0, 0);
@@ -164,9 +207,13 @@ function updateMovement(scene, enemy, target, state, cfg) {
   const tx = -ny * state.strafeSide;
   const ty = nx * state.strafeSide;
   const speed = Number(enemy.speed) || 0;
-  const retreatRange = Number(cfg.retreatRange) || 165;
-  const preferredMin = Number(cfg.preferredRangeMin) || 205;
-  const preferredMax = Number(cfg.preferredRangeMax) || 315;
+  const retreatRange = Number(cfg.retreatRange) || 205;
+  const preferredMin = Number(cfg.preferredRangeMin) || 250;
+  const preferredMax = Number(cfg.preferredRangeMax) || 380;
+  const targetSpeed = Math.hypot(Number(target?.body?.velocity?.x) || 0, Number(target?.body?.velocity?.y) || 0);
+  const stationaryTarget = targetSpeed <= (Number(cfg.stationaryTargetSpeedThreshold) || 24);
+  const stationaryFireRangeMax = Number(cfg.stationaryFireRangeMax) || 430;
+  const fireRangeMax = stationaryTarget ? Math.max(preferredMax, stationaryFireRangeMax) : preferredMax * 1.12;
 
   let vx = tx * speed * (Number(cfg.strafeSpeedMultiplier) || .64);
   let vy = ty * speed * (Number(cfg.strafeSpeedMultiplier) || .64);
@@ -188,7 +235,8 @@ function updateMovement(scene, enemy, target, state, cfg) {
   enemy.setFlipX?.(vx < -1);
   enemy.setRotation?.(clamp((vy / Math.max(1, Math.hypot(vx, vy))) * .045, -.045, .045));
 
-  if (nowMs(scene) >= state.cooldownUntil && distance >= preferredMin * .82 && distance <= preferredMax * 1.12) {
+  if (nowMs(scene) >= state.cooldownUntil && distance >= preferredMin * .82 && distance <= fireRangeMax) {
+    state.stationaryTarget = stationaryTarget;
     beginWindup(scene, enemy, state, cfg);
   }
 }
