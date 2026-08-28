@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { RUN_BALANCE, getEnemyDifficultyMultipliers, getPlayerMoveSpeed, getPressureStep, getWaveNumber } from '../../src/balance/run-balance.js';
-import { RunDirector } from '../../src/balance/run-director.js';
+import { RUN_BALANCE, getEnemyDifficultyMultipliers, getPlayerMoveSpeed, getPressurePhase, getPressureStep, getWaveNumber, pickEnemyForRun } from '../../src/balance/run-balance.js';
+import { applyRunEnemyRoleProfile, RunDirector } from '../../src/balance/run-director.js';
 import { getEnemyDefinition } from '../../src/enemies/enemy-registry.js';
 import { resolveEnemySpawnStats } from '../../src/enemies/enemy-factory.js';
 
 describe('Wreckmarch run balance', () => {
-  it('uses 60-second waves with four 15-second pressure steps', () => {
+  it('uses 60-second waves with four readable 15-second pressure phases', () => {
     expect(RUN_BALANCE.waveDurationSeconds).toBe(60);
     expect(RUN_BALANCE.pressureStepSeconds).toBe(15);
     expect(getWaveNumber(0)).toBe(1);
@@ -16,6 +16,53 @@ describe('Wreckmarch run balance', () => {
     expect(getPressureStep(15)).toBe(1);
     expect(getPressureStep(30)).toBe(2);
     expect(getPressureStep(45)).toBe(3);
+    expect([0, 15, 30, 45].map(getPressurePhase).map(phase => phase.key)).toEqual(['lull', 'build', 'surge', 'breather']);
+  });
+
+  it('creates a real surge followed by a breather instead of monotonic spawn pressure', () => {
+    const scene: any = {
+      runTime: 0,
+      gameOver: false,
+      enemies: { children: { iterate() {} }, countActive: () => 0 }
+    };
+    const director = new RunDirector(scene);
+    const lull = director.getState(0);
+    const build = director.getState(15);
+    const surge = director.getState(30);
+    const breather = director.getState(45);
+
+    expect(lull.pressurePhase).toBe('lull');
+    expect(surge.pressurePhase).toBe('surge');
+    expect(breather.pressurePhase).toBe('breather');
+    expect(lull.threatBudget).toBeLessThan(build.threatBudget);
+    expect(surge.threatBudget).toBeGreaterThan(build.threatBudget);
+    expect(surge.spawnIntervalMs).toBeLessThan(build.spawnIntervalMs);
+    expect(breather.threatBudget).toBeLessThan(surge.threatBudget);
+    expect(breather.spawnIntervalMs).toBeGreaterThan(surge.spawnIntervalMs);
+  });
+
+  it('weights Rust Hounds toward surge windows and away from lull windows', () => {
+    expect(pickEnemyForRun(60, () => .8).id).toBe('scrap-rat');
+    expect(pickEnemyForRun(90, () => .8)).toMatchObject({ id: 'rust-hound', threat: 3 });
+    expect(pickEnemyForRun(105, () => .8).id).toBe('scrap-rat');
+  });
+
+  it('turns a run Rust Hound into a readable hunter instead of a constant-speed chaser', () => {
+    const hound: any = {
+      active: true,
+      speed: 210,
+      baseSpeed: 210,
+      threatValue: 2,
+      behaviorConfig: { slideSpeed: 360, telegraphMs: 220, cooldownMinMs: 1050 }
+    };
+    applyRunEnemyRoleProfile(hound, 'rust-hound');
+    expect(hound.__runRole).toBe('hunter');
+    expect(hound.threatValue).toBe(3);
+    expect(hound.speed).toBeCloseTo(151.2, 6);
+    expect(hound.baseSpeed).toBeCloseTo(151.2, 6);
+    expect(hound.behaviorConfig.slideSpeed).toBe(360);
+    expect(hound.behaviorConfig.telegraphMs).toBe(300);
+    expect(hound.behaviorConfig.cooldownMinMs).toBe(1450);
   });
 
   it('caps Fleet Feet at three +6% levels and below the 310 hard cap', () => {
@@ -32,8 +79,8 @@ describe('Wreckmarch run balance', () => {
     expect(getEnemyDifficultyMultipliers(599)).toEqual({ hp: 1.9, damage: 1.36, speed: 1.09 });
   });
 
-  it('blocks spawns by threat budget as well as active count', () => {
-    const active = [{ active: true, threatValue: 8 }, { active: true, threatValue: 7 }];
+  it('blocks spawns by the current pressure budget as well as active count', () => {
+    const active = [{ active: true, threatValue: 6 }, { active: true, threatValue: 6 }];
     const scene: any = {
       runTime: 0,
       gameOver: false,
@@ -43,7 +90,7 @@ describe('Wreckmarch run balance', () => {
       }
     };
     const director = new RunDirector(scene);
-    expect(director.getState().threatBudget).toBe(16);
+    expect(director.getState().threatBudget).toBe(13);
     expect(director.canSpawn(1)).toBe(true);
     expect(director.canSpawn(2)).toBe(false);
   });

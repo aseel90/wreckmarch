@@ -32,10 +32,10 @@ function fakeScene(now = 0) {
 }
 
 describe('Rust Hound', () => {
-  it('enters the run pool in wave 2 with threat 2', () => {
+  it('enters the run pool in wave 2 with run threat 3', () => {
     expect(getEnemyPool(0).entries.map(entry => entry.id)).toEqual(['scrap-rat']);
     expect(getEnemyPool(60).entries.map(entry => entry.id)).toEqual(['scrap-rat', 'rust-hound']);
-    expect(pickEnemyForRun(60, () => .99)).toMatchObject({ id: 'rust-hound', threat: 2 });
+    expect(pickEnemyForRun(60, () => .99)).toMatchObject({ id: 'rust-hound', threat: 3 });
   });
 
   it('predicts a moving target but caps lead distance', () => {

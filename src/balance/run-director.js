@@ -1,10 +1,27 @@
 /* WRECKMARCH — time-driven Wave + Threat Budget director */
-import { RUN_BALANCE, getPressureStep, getWaveBalance, getWaveNumber, pickEnemyForRun } from './run-balance.js?v=2';
+import { RUN_BALANCE, getPressurePhase, getPressureStep, getWaveBalance, getWaveNumber, pickEnemyForRun } from './run-balance.js?v=3';
 
 function enemyThreat(enemy) {
   if (!enemy?.active) return 0;
   if (Number.isFinite(enemy.threatValue)) return Math.max(0, enemy.threatValue);
   return enemy.elite ? 4 : 1;
+}
+
+export function applyRunEnemyRoleProfile(enemy, enemyId) {
+  const profile = RUN_BALANCE.enemyRoles?.[enemyId];
+  if (!enemy?.active || !profile) return enemy;
+  if (enemy.__runRoleProfile === 'balance-v3') return enemy;
+
+  const speedMultiplier = Number(profile.chaseSpeedMultiplier) || 1;
+  const currentSpeed = Number(enemy.speed) || 0;
+  const currentBaseSpeed = Number(enemy.baseSpeed) || currentSpeed;
+  enemy.speed = currentSpeed * speedMultiplier;
+  enemy.baseSpeed = currentBaseSpeed * speedMultiplier;
+  enemy.threatValue = Number(profile.threat) || enemy.threatValue;
+  enemy.behaviorConfig = { ...(enemy.behaviorConfig || {}), ...(profile.behaviorConfig || {}) };
+  enemy.__runRole = profile.role;
+  enemy.__runRoleProfile = 'balance-v3';
+  return enemy;
 }
 
 export class RunDirector {
@@ -13,10 +30,20 @@ export class RunDirector {
   getState(runTime = this.scene.runTime || 0) {
     const wave = getWaveNumber(runTime);
     const pressureStep = getPressureStep(runTime);
+    const pressurePhase = getPressurePhase(runTime);
     const balance = getWaveBalance(runTime);
-    const pressureBudget = RUN_BALANCE.pressureBudgetMultipliers[pressureStep] || 1;
-    const pressureSpawn = RUN_BALANCE.pressureSpawnMultipliers[pressureStep] || 1;
-    return { wave, pressureStep, threatBudget: Math.round(balance.threatBudget * pressureBudget), activeCap: balance.activeCap, spawnIntervalMs: Math.max(300, Math.round(balance.spawnIntervalMs * pressureSpawn)), hpMultiplier: balance.hpMultiplier, damageMultiplier: balance.damageMultiplier, speedMultiplier: balance.speedMultiplier };
+    return {
+      wave,
+      pressureStep,
+      pressurePhase: pressurePhase.key,
+      pressureLabel: pressurePhase.label,
+      threatBudget: Math.max(1, Math.round(balance.threatBudget * pressurePhase.threatBudgetMultiplier)),
+      activeCap: Math.max(4, balance.activeCap + pressurePhase.activeCapDelta),
+      spawnIntervalMs: Math.max(300, Math.round(balance.spawnIntervalMs * pressurePhase.spawnIntervalMultiplier)),
+      hpMultiplier: balance.hpMultiplier,
+      damageMultiplier: balance.damageMultiplier,
+      speedMultiplier: balance.speedMultiplier
+    };
   }
 
   chooseEnemy(runTime = this.scene.runTime || 0) { return pickEnemyForRun(runTime, this.random); }
@@ -36,10 +63,11 @@ export class RunDirector {
   }
 }
 
-function tagNewEnemies(scene, before, threat) {
+function tagNewEnemies(scene, before, enemyId, threat) {
   scene.enemies?.children?.iterate?.(enemy => {
     if (!enemy?.active || before.has(enemy)) return;
-    if (!Number.isFinite(enemy.threatValue)) enemy.threatValue = threat;
+    applyRunEnemyRoleProfile(enemy, enemyId);
+    enemy.threatValue = threat;
   });
 }
 
@@ -56,7 +84,7 @@ export function applyRunDirector(scene) {
     if (!this.runDirector.canSpawn(threat)) return null;
     const before = new Set(this.enemies?.getChildren?.() || []);
     const result = choice.id === 'scrap-rat' ? previousSpawnEnemy(elite) : this.spawnSystem?.spawn?.(choice.id, { elite: false });
-    tagNewEnemies(this, before, threat);
+    tagNewEnemies(this, before, choice.id, threat);
     return result;
   };
 
@@ -74,15 +102,23 @@ export function applyRunDirector(scene) {
     const state = director.getState();
     if (scene.spawnEvent) scene.spawnEvent.delay = state.spawnIntervalMs;
     scene.waveText?.setText?.(`WAVE ${state.wave}`);
+
+    const previousPhase = scene.__runDirectorPressurePhase;
+    if (previousPhase && previousPhase !== state.pressurePhase) {
+      if (state.pressurePhase === 'surge') scene.showBanner?.('PRESSURE SURGE');
+      else if (state.pressurePhase === 'breather') scene.showBanner?.('BREATHER');
+    }
+    scene.__runDirectorPressurePhase = state.pressurePhase;
     scene.__runDirectorState = state;
     document.documentElement.dataset.wreckmarchWave = String(state.wave);
-    window.__WM_RUN_DIRECTOR__ = { active: true, version: 'balance-v2', ...state, activeThreat: director.getActiveThreat() };
+    document.documentElement.dataset.wreckmarchPressure = state.pressurePhase;
+    window.__WM_RUN_DIRECTOR__ = { active: true, version: 'balance-v3', ...state, activeThreat: director.getActiveThreat() };
   };
   syncDirector();
   scene.__runDirectorTick = scene.time.addEvent({ delay: 1000, loop: true, callback: syncDirector });
   const state = director.getState();
-  document.documentElement.dataset.wreckmarchRunDirector = 'balance-v2';
-  window.__WM_LOG__?.(`Run Director active: 60s waves + 15s pressure steps + Threat Budget + Rust Hound pool (wave=${state.wave}, budget=${state.threatBudget}, cap=${state.activeCap})`);
+  document.documentElement.dataset.wreckmarchRunDirector = 'balance-v3';
+  window.__WM_LOG__?.(`Run Director active: LULL > BUILD > SURGE > BREATHER + Threat Budget + hunter-weighted Rust Hound pressure (wave=${state.wave}, budget=${state.threatBudget}, cap=${state.activeCap})`);
   scene.__runDirectorReady = true;
   return true;
 }

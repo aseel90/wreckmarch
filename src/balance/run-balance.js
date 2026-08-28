@@ -4,16 +4,41 @@ const pool = (wave, ratWeight, houndWeight = 0) => Object.freeze({
   wave,
   entries: Object.freeze([
     Object.freeze({ id: 'scrap-rat', weight: ratWeight, threat: 1 }),
-    ...(houndWeight > 0 ? [Object.freeze({ id: 'rust-hound', weight: houndWeight, threat: 2 })] : [])
+    ...(houndWeight > 0 ? [Object.freeze({ id: 'rust-hound', weight: houndWeight, threat: 3 })] : [])
   ])
 });
+
+export const PRESSURE_PHASES = Object.freeze([
+  Object.freeze({ key: 'lull', label: 'LULL', threatBudgetMultiplier: .82, spawnIntervalMultiplier: 1.18, activeCapDelta: -4, houndWeightMultiplier: .55 }),
+  Object.freeze({ key: 'build', label: 'BUILD', threatBudgetMultiplier: 1.00, spawnIntervalMultiplier: 1.00, activeCapDelta: -1, houndWeightMultiplier: .85 }),
+  Object.freeze({ key: 'surge', label: 'SURGE', threatBudgetMultiplier: 1.22, spawnIntervalMultiplier: .80, activeCapDelta: 2, houndWeightMultiplier: 1.30 }),
+  Object.freeze({ key: 'breather', label: 'BREATHER', threatBudgetMultiplier: .88, spawnIntervalMultiplier: 1.14, activeCapDelta: -5, houndWeightMultiplier: .60 })
+]);
 
 export const RUN_BALANCE = Object.freeze({
   runDurationSeconds: 600,
   waveDurationSeconds: 60,
   pressureStepSeconds: 15,
-  pressureBudgetMultipliers: Object.freeze([1, 1.08, 1.16, 1.24]),
-  pressureSpawnMultipliers: Object.freeze([1, .94, .88, .82]),
+  pressurePhases: PRESSURE_PHASES,
+  enemyRoles: Object.freeze({
+    'rust-hound': Object.freeze({
+      role: 'hunter',
+      threat: 3,
+      chaseSpeedMultiplier: .72,
+      behaviorConfig: Object.freeze({
+        slideRangeMin: 100,
+        slideRangeMax: 270,
+        holdRange: 130,
+        initialCooldownMinMs: 350,
+        initialCooldownMaxMs: 550,
+        cooldownMinMs: 1450,
+        cooldownMaxMs: 1850,
+        telegraphMs: 300,
+        recoverMs: 360,
+        chaseSharpness: 7.2
+      })
+    })
+  }),
   player: Object.freeze({ baseMoveSpeed: 255, fleetFeetPercent: .06, fleetFeetMaxLevel: 3, moveSpeedHardCap: 310 }),
   waves: Object.freeze([
     Object.freeze({ wave: 1, threatBudget: 16, activeCap: 28, spawnIntervalMs: 690, hpMultiplier: 1.00, damageMultiplier: 1.00, speedMultiplier: 1.00 }),
@@ -42,22 +67,30 @@ export function getWaveNumber(runTimeSeconds = 0) {
 export function getPressureStep(runTimeSeconds = 0) {
   const elapsed = Math.max(0, Number(runTimeSeconds) || 0);
   const withinWave = elapsed % RUN_BALANCE.waveDurationSeconds;
-  return Math.min(3, Math.floor(withinWave / RUN_BALANCE.pressureStepSeconds));
+  return Math.min(PRESSURE_PHASES.length - 1, Math.floor(withinWave / RUN_BALANCE.pressureStepSeconds));
+}
+
+export function getPressurePhase(runTimeSeconds = 0) {
+  return PRESSURE_PHASES[getPressureStep(runTimeSeconds)];
 }
 
 export function getWaveBalance(runTimeSeconds = 0) { return RUN_BALANCE.waves[getWaveNumber(runTimeSeconds) - 1]; }
 export function getEnemyPool(runTimeSeconds = 0) { return RUN_BALANCE.enemyPools[getWaveNumber(runTimeSeconds) - 1]; }
 
 export function pickEnemyForRun(runTimeSeconds = 0, random = Math.random) {
-  const entries = getEnemyPool(runTimeSeconds).entries;
+  const phase = getPressurePhase(runTimeSeconds);
+  const entries = getEnemyPool(runTimeSeconds).entries.map(entry => ({
+    ...entry,
+    weight: entry.id === 'rust-hound' ? entry.weight * phase.houndWeightMultiplier : entry.weight
+  }));
   const roll = Math.max(0, Math.min(.999999, Number(random?.()) || 0));
   const total = entries.reduce((sum, entry) => sum + entry.weight, 0) || 1;
   let cursor = roll * total;
   for (const entry of entries) {
     cursor -= entry.weight;
-    if (cursor < 0) return entry;
+    if (cursor < 0) return Object.freeze(entry);
   }
-  return entries[entries.length - 1];
+  return Object.freeze(entries[entries.length - 1]);
 }
 
 export function getEnemyDifficultyMultipliers(runTimeSeconds = 0) {
