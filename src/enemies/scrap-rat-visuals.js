@@ -17,7 +17,7 @@ export const SCRAP_RAT_VISUAL = Object.freeze({
 });
 
 function loadMasterRunFrames(scene) {
-  if (scene.__scrapRatMasterAssetVersion !== 'production-v5') {
+  if (scene.__scrapRatMasterAssetVersion !== 'production-v6') {
     RUN_TEXTURES.forEach(key => {
       if (scene.textures.exists(key)) scene.textures.remove(key);
     });
@@ -68,8 +68,19 @@ function installAnimations(scene) {
   replaceTextureAnimation(scene, 'rat-run', RUN_TEXTURES, 8, -1);
 }
 
+function isScrapRatCandidate(enemy) {
+  if (!enemy?.active) return false;
+  if (enemy.enemyId === 'scrap-rat') return true;
+  const name = String(enemy.name || '');
+  const textureKey = String(enemy.texture?.key || '');
+  return name.startsWith('scraprat-') || textureKey.startsWith('rat-run-');
+}
+
 export function tuneScrapRatVisual(enemy) {
-  if (!enemy?.active || enemy.enemyId !== 'scrap-rat') return enemy;
+  if (!isScrapRatCandidate(enemy)) return enemy;
+  // Migrate any bootstrap rat that spawned before Enemy Foundation finished installing.
+  // This prevents a single legacy procedural rat from surviving into the production run.
+  enemy.enemyId = 'scrap-rat';
   const elite = Boolean(enemy.elite);
   enemy.__scrapRatStrideTween?.stop?.();
   enemy.__scrapRatStrideTween = null;
@@ -79,7 +90,7 @@ export function tuneScrapRatVisual(enemy) {
   enemy.setTexture(RUN_TEXTURES[0]);
   enemy.setOrigin(.5, .58).setScale(elite ? SCRAP_RAT_VISUAL.scale.elite : SCRAP_RAT_VISUAL.scale.normal);
   enemy.__scrapRatVisual = true;
-  enemy.__scrapRatVisualVersion = 'production-v5';
+  enemy.__scrapRatVisualVersion = 'production-v6';
   enemy.__scrapRatStaticMaster = true;
   enemy.play(SCRAP_RAT_VISUAL.animations.run, true);
   return enemy;
@@ -87,24 +98,24 @@ export function tuneScrapRatVisual(enemy) {
 
 function installSpawnVisuals(scene) {
   const currentSpawn = scene.spawnEnemy;
-  if (currentSpawn?.__scrapRatVisualWrapperVersion === 'static-master-v5') return;
+  if (currentSpawn?.__scrapRatVisualWrapperVersion === 'static-master-v6') return;
   const baseSpawn = currentSpawn.bind(scene);
   const wrappedSpawn = function(elite = false) {
     const before = new Set(this.enemies.getChildren());
     const result = baseSpawn(elite);
     this.enemies.children.iterate(enemy => {
-      if (enemy?.active && !before.has(enemy) && enemy.enemyId === 'scrap-rat') tuneScrapRatVisual(enemy);
+      if (enemy?.active && !before.has(enemy) && isScrapRatCandidate(enemy)) tuneScrapRatVisual(enemy);
     });
     return result;
   };
   wrappedSpawn.__scrapRatVisualWrapper = true;
-  wrappedSpawn.__scrapRatVisualWrapperVersion = 'static-master-v5';
+  wrappedSpawn.__scrapRatVisualWrapperVersion = 'static-master-v6';
   scene.spawnEnemy = wrappedSpawn;
 }
 
 export async function installScrapRatVisuals(scene) {
   await loadMasterRunFrames(scene);
-  scene.__scrapRatMasterAssetVersion = 'production-v5';
+  scene.__scrapRatMasterAssetVersion = 'production-v6';
   installAnimations(scene);
   scene.enemies.children.iterate(tuneScrapRatVisual);
   installSpawnVisuals(scene);
