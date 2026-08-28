@@ -44,14 +44,17 @@ export const RUN_BALANCE = Object.freeze({
       threat: 2,
       chaseSpeedMultiplier: 1,
       behaviorConfig: Object.freeze({
-        preferredRangeMin: 205,
-        preferredRangeMax: 315,
-        retreatRange: 165,
-        cooldownMinMs: 1750,
-        cooldownMaxMs: 2250,
-        telegraphMs: 340,
+        preferredRangeMin: 250,
+        preferredRangeMax: 380,
+        retreatRange: 205,
+        cooldownMinMs: 1550,
+        cooldownMaxMs: 1950,
+        telegraphMs: 320,
         projectileSpeed: 275,
-        projectileDamage: 11
+        projectileDamage: 11,
+        stationaryTargetSpeedThreshold: 24,
+        stationaryFireRangeMax: 430,
+        stationaryCooldownMultiplier: .78
       })
     })
   }),
