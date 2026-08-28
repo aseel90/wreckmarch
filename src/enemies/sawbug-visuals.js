@@ -39,31 +39,23 @@ const FRAME_SOURCES = Object.freeze({
 const FRAME_KEYS = Object.freeze(Object.keys(FRAME_SOURCES));
 const VISUAL_VERSION = 'production-v1-acid-alpha';
 
-function loadFrames(scene) {
-  const missing = FRAME_KEYS.filter(key => !scene.textures.exists(key));
-  if (!missing.length) return Promise.resolve();
-
+function loadImageSource(source) {
   return new Promise((resolve, reject) => {
-    let settled = false;
-    const keys = new Set(missing);
-    const fail = file => {
-      if (settled || !keys.has(file?.key)) return;
-      settled = true;
-      scene.load.off('complete', complete);
-      reject(new Error(`Sawbug master frame failed to load: ${file.key}`));
-    };
-    const complete = () => {
-      if (settled) return;
-      settled = true;
-      scene.load.off('loaderror', fail);
-      resolve();
-    };
-
-    scene.load.once('loaderror', fail);
-    scene.load.once('complete', complete);
-    missing.forEach(key => scene.load.image(key, FRAME_SOURCES[key]));
-    scene.load.start();
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Sawbug transparent master image failed to decode'));
+    image.src = source;
   });
+}
+
+async function loadFrames(scene) {
+  const missing = FRAME_KEYS.filter(key => !scene.textures.exists(key));
+  if (!missing.length) return;
+
+  await Promise.all(missing.map(async key => {
+    const image = await loadImageSource(FRAME_SOURCES[key]);
+    if (!scene.textures.exists(key)) scene.textures.addImage(key, image);
+  }));
 }
 
 function replaceAnimation(scene, key, frames, frameRate, repeat = -1) {
