@@ -9,9 +9,12 @@ describe('Sawbug acid spitter', () => {
     expect(SAWBUG_DEFINITION.threatValue).toBe(2);
     expect(listEnemyBehaviorKeys()).toContain('acid-spitter');
     expect(SAWBUG_DEFINITION.behaviorConfig).toMatchObject({
-      preferredRangeMin: 205,
-      preferredRangeMax: 315,
-      telegraphMs: 340,
+      preferredRangeMin: 250,
+      preferredRangeMax: 380,
+      retreatRange: 205,
+      stationaryFireRangeMax: 430,
+      stationaryCooldownMultiplier: .78,
+      telegraphMs: 320,
       projectileSpeed: 275,
       projectileDamage: 11
     });
