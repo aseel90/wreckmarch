@@ -1,0 +1,53 @@
+name: Temporary Sawbug E2E Diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sawbug-diagnostic:
+    name: Sawbug Diagnostic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run Sawbug E2E
+        id: sawbug
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          pnpm exec playwright test tests/e2e/sawbug.spec.ts --project=chromium 2>&1 | tee wm-sawbug-e2e.log
+      - name: Publish temporary diagnostic issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OUTCOME: ${{ steps.sawbug.outcome }}
+        run: |
+          {
+            echo "Sawbug-only E2E diagnostic for PR #$PR_NUMBER."
+            echo
+            echo "Outcome: **$OUTCOME**"
+            echo
+            echo '```text'
+            tail -c 12000 wm-sawbug-e2e.log || true
+            echo
+            echo '```'
+          } > /tmp/sawbug-diagnostic.md
+          gh issue create --repo "$REPO" --title "[TEMP Sawbug E2E] PR #$PR_NUMBER" --body-file /tmp/sawbug-diagnostic.md
+          test "$OUTCOME" = success
