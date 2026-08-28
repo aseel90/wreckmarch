@@ -42,6 +42,7 @@ function spawnSplash(scene, x, y) {
 
 function resolveAcidImpact(scene, projectile, hero) {
   if (!projectile?.active || !hero?.active || projectile.__sawbugImpactResolved) return null;
+  if (projectile.__sawbugAcid !== true || hero !== scene.hero) return null;
   projectile.__sawbugImpactResolved = true;
 
   const x = Number(projectile.x) || 0;
@@ -86,7 +87,14 @@ function ensureProjectileRuntime(scene) {
   scene.__sawbugAcidImpactsResolved = scene.__sawbugAcidImpactsResolved || 0;
   scene.__sawbugAcidImpactErrors = scene.__sawbugAcidImpactErrors || 0;
 
-  scene.physics.add.overlap(group, scene.hero, (projectile, hero) => {
+  scene.physics.add.overlap(group, scene.hero, (objectA, objectB) => {
+    const projectile = objectA?.__sawbugAcid === true
+      ? objectA
+      : objectB?.__sawbugAcid === true
+        ? objectB
+        : null;
+    if (!projectile) return;
+    const hero = projectile === objectA ? objectB : objectA;
     resolveAcidImpact(scene, projectile, hero);
   });
 
