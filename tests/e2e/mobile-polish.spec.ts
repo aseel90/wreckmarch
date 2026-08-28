@@ -73,6 +73,6 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
 
   expect(observed.animation).toBe('character-runner-run');
   expect(observed.isPlaying).toBe(true);
-  expect(new Set(observed.frameTextureKeys.filter(key => key.startsWith('runner-run-'))).size).toBeGreaterThanOrEqual(3);
+  expect(new Set(observed.frameTextureKeys.filter(key => key.startsWith('hunter-run-'))).size).toBeGreaterThanOrEqual(3);
   expect(new Set(observed.frameIndexes).size).toBeGreaterThanOrEqual(3);
 });

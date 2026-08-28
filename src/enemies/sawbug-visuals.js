@@ -143,6 +143,14 @@ function runBrowserSelfTest(scene) {
   tuneSawbugVisual(sawbug);
   sawbug.hp = 999999;
   sawbug.maxHp = 999999;
+  // Keep the browser regression deterministic: remove the normal opening cooldown
+  // only for ?sawbugtest=1 so CI validates the real windup/fire path promptly.
+  sawbug.behaviorConfig = {
+    ...sawbug.behaviorConfig,
+    initialCooldownMinMs: 0,
+    initialCooldownMaxMs: 0,
+    telegraphMs: 120
+  };
 
   const startedAt = Number(scene.time?.now) || 0;
   const finishWhenShotObserved = () => {

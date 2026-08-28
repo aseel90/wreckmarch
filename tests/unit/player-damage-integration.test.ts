@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
+import { CharacterSystem } from '../../src/characters/character-system.js';
 
 const game = fs.readFileSync(new URL('../../src/game.js', import.meta.url), 'utf8');
 const enemySystem = fs.readFileSync(new URL('../../src/enemies/enemy-system.js', import.meta.url), 'utf8');
 const combat = fs.readFileSync(new URL('../../src/combat/combat-system.js', import.meta.url), 'utf8');
-const characterSystem = fs.readFileSync(new URL('../../src/characters/character-system.js', import.meta.url), 'utf8');
 const runner = fs.readFileSync(new URL('../../src/characters/definitions/runner.js', import.meta.url), 'utf8');
 
 describe('live PlayerDamageSystem integration', () => {
@@ -24,7 +24,10 @@ describe('live PlayerDamageSystem integration', () => {
     expect(runner).toContain('invulnerabilityMs: 450');
     expect(runner).toContain('contactKnockbackStrength: 190');
     expect(runner).toContain('contactKnockbackDurationMs: 140');
-    expect(characterSystem).toContain('scene.playerCombatProfile = definition.combat || scene.playerCombatProfile');
-    expect(characterSystem).toContain('scene.heroInvulnMs = definition.combat.invulnerabilityMs');
+    const scene: any = { heroHp: Number.NaN, hero: { body: { setCircle() {} } } };
+    const system = new CharacterSystem(scene, 'runner');
+    system.applyGameplayDefaults({ resetHealth: true });
+    expect(scene.playerCombatProfile).toEqual(system.definition.combat);
+    expect(scene.heroInvulnMs).toBe(450);
   });
 });
