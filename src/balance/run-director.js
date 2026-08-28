@@ -1,5 +1,5 @@
 /* WRECKMARCH — time-driven Wave + Threat Budget director */
-import { RUN_BALANCE, getPressurePhase, getPressureStep, getWaveBalance, getWaveNumber, pickEnemyForRun } from './run-balance.js?v=4';
+import { RUN_BALANCE, getPressurePhase, getPressureStep, getWaveBalance, getWaveNumber, pickEnemyForRun } from './run-balance.js?v=5';
 
 function enemyThreat(enemy) {
   if (!enemy?.active) return 0;

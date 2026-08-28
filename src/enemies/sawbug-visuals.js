@@ -37,7 +37,7 @@ const FRAME_SOURCES = Object.freeze({
 });
 
 const FRAME_KEYS = Object.freeze(Object.keys(FRAME_SOURCES));
-const VISUAL_VERSION = 'production-v1-acid-alpha';
+const VISUAL_VERSION = 'production-v2-acid-pressure';
 
 export function canonicalizeBakedDataUrl(source) {
   if (typeof source !== 'string') return source;
@@ -156,7 +156,7 @@ function runBrowserSelfTest(scene) {
       shots: Number(sawbug.__sawbugShotsFired) >= 1,
       projectileRuntime: Boolean(scene.__sawbugAcidProjectiles),
       acidSpawned: Number(scene.__sawbugAcidShotsSpawned) >= 1,
-      projectileSpeed: Number(sawbug.__sawbugLastProjectileSpeed) >= 260 && Number(sawbug.__sawbugLastProjectileSpeed) <= 290
+      projectileSpeed: Math.abs(Number(sawbug.__sawbugLastProjectileSpeed) - Number(sawbug.behaviorConfig?.projectileSpeed)) <= 1
     };
     const shotObserved = checks.shots && checks.acidSpawned && checks.projectileSpeed;
     const elapsed = (Number(scene.time?.now) || startedAt) - startedAt;
