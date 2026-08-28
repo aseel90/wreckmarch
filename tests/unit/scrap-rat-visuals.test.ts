@@ -21,7 +21,7 @@ describe('production Scrap Rat visuals', () => {
     const visuals = read('src/enemies/scrap-rat-visuals.js');
     expect(visuals).toContain('scrap-rat-run-master-');
     expect(visuals).toContain('replaceTextureAnimation(scene, SCRAP_RAT_VISUAL.animations.run, RUN_TEXTURES, 8, -1)');
-    expect(visuals).toContain("__scrapRatVisualVersion = 'production-v5'");
+    expect(visuals).toContain("__scrapRatVisualVersion = 'production-v6'");
     expect(visuals).toContain('__scrapRatStaticMaster = true');
   });
 

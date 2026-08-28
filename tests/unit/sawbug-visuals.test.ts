@@ -36,7 +36,7 @@ describe('Sawbug production frames', () => {
   it('keeps projectile and splash animation separate from the body animation', () => {
     const source = fs.readFileSync(path.join(root, 'src/enemies/sawbug-visuals.js'), 'utf8');
     expect(source).toContain("replaceAnimation(scene, 'sawbug-walk', WALK_KEYS, 8, -1)");
-    expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-attack', ATTACK_KEYS, 8, 0)");
+    expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-attack', [ATTACK_KEYS[0]], 1, 0)");
     expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-flight', PROJECTILE_KEYS, 10, -1)");
     expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-splash', SPLASH_KEYS, 12, 0)");
   });
