@@ -18,14 +18,14 @@ const RARITY_STYLE={
 const CARD_IDS=['heavy-rivets','overclock','long-barrel','twin-riveter','fleet-feet','scrap-magnet','armor-plate','call-rig','rig-overdrive','twin-cannon'];
 const GUN_FRAMES=['gun_e.png','gun_se.png','gun_s.png','gun_sw.png','gun_w.png','gun_nw.png','gun_n.png','gun_ne.png'];
 const GUN_POSES=[
-  {frame:'gun_e.png', w:66,h:48,ox:.17,oy:.53,depth:31},
-  {frame:'gun_se.png',w:62,h:55,ox:.20,oy:.39,depth:31},
-  {frame:'gun_s.png', w:43,h:64,ox:.50,oy:.22,depth:31},
-  {frame:'gun_sw.png',w:62,h:55,ox:.80,oy:.39,depth:19},
-  {frame:'gun_w.png', w:66,h:48,ox:.83,oy:.53,depth:19},
-  {frame:'gun_nw.png',w:62,h:55,ox:.80,oy:.63,depth:19},
-  {frame:'gun_n.png', w:43,h:64,ox:.50,oy:.78,depth:19},
-  {frame:'gun_ne.png',w:62,h:55,ox:.20,oy:.63,depth:31}
+  {frame:'gun_e.png', w:58,h:42,ox:.17,oy:.53,depth:31},
+  {frame:'gun_se.png',w:55,h:49,ox:.20,oy:.39,depth:31},
+  {frame:'gun_s.png', w:38,h:57,ox:.50,oy:.22,depth:31},
+  {frame:'gun_sw.png',w:55,h:49,ox:.80,oy:.39,depth:31},
+  {frame:'gun_w.png', w:58,h:42,ox:.83,oy:.53,depth:31},
+  {frame:'gun_nw.png',w:55,h:49,ox:.80,oy:.63,depth:31},
+  {frame:'gun_n.png', w:38,h:57,ox:.50,oy:.78,depth:31},
+  {frame:'gun_ne.png',w:55,h:49,ox:.20,oy:.63,depth:31}
 ];
 const CARD_FRAME=id=>`icon_${id}.png`;
 const WRECK_FRAMES={sedan:'wreck_a.png',overturned:'wreck_c.png',van:'wreck_b.png',truck:'wreck_d.png'};
@@ -158,7 +158,7 @@ function installPremiumCards(s){
 function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='1')return;
   const runFrames=s.anims.get(s.characterDefinition?.animations?.run?.key)?.frames?.length||0,hdSheet=s.textures.get('c5-upgrade-sheet'),allHdCards=CARD_IDS.every(id=>s.textures.get('c3-atlas')?.has?.(CARD_FRAME(id))),rarities=new Set(Object.values(s.__d1CardRarity||{})),roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
   const probe=s.add.image(-9999,-9999,'c3-atlas',CARD_FRAME('overclock'));fit(probe,112,96);
-  const checks={animatedLegs:runFrames===3&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allHdCards&&probe.texture?.key==='c3-atlas'&&probe.displayWidth>=80,rarityCards:['COMMON','RARE','EPIC','LEGENDARY'].every(r=>rarities.has(r)),roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth,characterSystem:s.characterId==='runner'&&s.characterDefinition?.id==='runner'&&s.__characterSystemReady===true};probe.destroy();
+  const checks={animatedLegs:runFrames===3&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),weaponFront:s.weaponV3Gun.depth>s.hero.depth,weaponScale:s.weaponV3Gun.displayWidth<=60&&s.weaponV3Gun.displayHeight<=60,noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allHdCards&&probe.texture?.key==='c3-atlas'&&probe.displayWidth>=80,rarityCards:['COMMON','RARE','EPIC','LEGENDARY'].every(r=>rarities.has(r)),roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth,characterSystem:s.characterId==='runner'&&s.characterDefinition?.id==='runner'&&s.__characterSystemReady===true};probe.destroy();
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_D1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchD1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`D1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase D.1 self-test failed: '+detail)
 }
 

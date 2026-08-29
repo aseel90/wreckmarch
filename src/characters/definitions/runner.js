@@ -57,11 +57,11 @@ export const RUNNER_CHARACTER = Object.freeze({
     maxTimeScale: 1.32
   }),
   weapon: Object.freeze({
-    socketOffsetX: 13,
-    socketOffsetY: -4,
+    socketOffsetX: 10,
+    socketOffsetY: 3,
     leftFacingMinIndex: 3,
     leftFacingMaxIndex: 5,
-    muzzleReachStraight: 59,
-    muzzleReachDiagonal: 56
+    muzzleReachStraight: 52,
+    muzzleReachDiagonal: 49
   })
 });

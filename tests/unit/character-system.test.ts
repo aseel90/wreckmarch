@@ -34,9 +34,9 @@ describe('CharacterSystem', () => {
   it('owns Runner weapon socket and muzzle geometry', () => {
     const scene = makeScene();
     const system = new CharacterSystem(scene, 'runner');
-    expect(system.getWeaponSocket(0)).toEqual({ x: 113, y: 196 });
-    expect(system.getWeaponSocket(4)).toEqual({ x: 87, y: 196 });
-    expect(system.getMuzzleReach(0)).toBe(59);
-    expect(system.getMuzzleReach(1)).toBe(56);
+    expect(system.getWeaponSocket(0)).toEqual({ x: 110, y: 203 });
+    expect(system.getWeaponSocket(4)).toEqual({ x: 90, y: 203 });
+    expect(system.getMuzzleReach(0)).toBe(52);
+    expect(system.getMuzzleReach(1)).toBe(49);
   });
 });
