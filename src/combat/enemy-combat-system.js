@@ -2,7 +2,18 @@
 import { resolveEnemyProjectileHit, resolveEnemyScrapDropCount } from './enemy-combat-rules.js?v=1';
 
 const SCRAP_RAT_ID = 'scrap-rat';
+const SAWBUG_ID = 'sawbug';
+const RUST_HOUND_ID = 'rust-hound';
+
 const SCRAP_RAT_HIT_TINT = 0xffc58f;
+const SAWBUG_HIT_TINT = 0xd9e78d;
+const RUST_HOUND_HIT_TINT = 0xf0b07b;
+
+const DEATH_BURST_COLORS = Object.freeze({
+  [SCRAP_RAT_ID]: 0xd8954f,
+  [SAWBUG_ID]: 0x9eb54e,
+  [RUST_HOUND_ID]: 0xb9683f
+});
 
 export class EnemyCombatSystem {
   /** @param {any} scene */
@@ -24,21 +35,27 @@ export class EnemyCombatSystem {
 
     bullet.destroy();
     enemy.hp = result.nextHp;
-    const isScrapRat = enemy.enemyId === SCRAP_RAT_ID;
+
+    const enemyId = enemy.enemyId;
+    const isScrapRat = enemyId === SCRAP_RAT_ID;
+    const isSawbug = enemyId === SAWBUG_ID;
+    const isRustHound = enemyId === RUST_HOUND_ID;
     const hitFlashMs = Math.max(0, Number(enemy.combatProfile?.hitFlashMs) || 55);
 
     if (isScrapRat) {
-      // Preserve the production Rat texture: a warm multiplicative tint reads as impact
-      // without replacing its artwork with a flat white silhouette.
-      enemy.setTint(SCRAP_RAT_HIT_TINT);
-      this.scene.time.delayedCall(Math.min(hitFlashMs, 46), () => {
-        if (!enemy?.active) return;
-        const eliteTint = enemy.enemyDefinition?.bootstrap?.eliteTint;
-        if (enemy.elite && eliteTint != null) enemy.setTint(eliteTint);
-        else enemy.clearTint();
-      });
-      this.applyScrapRatKnockback(enemy, velocityX, velocityY);
+      this.applyTexturePreservingHitTint(enemy, SCRAP_RAT_HIT_TINT, Math.min(hitFlashMs, 46));
+      this.applyDirectionalNudge(enemy, velocityX, velocityY, enemy.elite ? 3 : 4);
       this.spawnScrapRatHitFx(enemy.x, enemy.y, velocityX, velocityY);
+    } else if (isSawbug) {
+      this.applyTexturePreservingHitTint(enemy, SAWBUG_HIT_TINT, Math.min(hitFlashMs, 48));
+      // Sawbug should react clearly while keeping its ranged spacing readable.
+      this.applyDirectionalNudge(enemy, velocityX, velocityY, enemy.elite ? 1.5 : 2.5);
+      this.spawnSawbugHitFx(enemy.x, enemy.y, velocityX, velocityY);
+    } else if (isRustHound) {
+      this.applyTexturePreservingHitTint(enemy, RUST_HOUND_HIT_TINT, Math.min(hitFlashMs, 52));
+      // The Hound is heavier than the Rat, so the visual nudge stays restrained.
+      this.applyDirectionalNudge(enemy, velocityX, velocityY, enemy.elite ? 1 : 2);
+      this.spawnRustHoundHitFx(enemy.x, enemy.y, velocityX, velocityY);
     } else {
       enemy.setTintFill(0xffffff);
       this.scene.time.delayedCall(hitFlashMs, () => enemy?.active && enemy.clearTint());
@@ -55,10 +72,20 @@ export class EnemyCombatSystem {
     return result;
   }
 
-  applyScrapRatKnockback(enemy, velocityX, velocityY) {
+  applyTexturePreservingHitTint(enemy, tint, durationMs) {
+    if (!enemy?.active) return;
+    enemy.setTint(tint);
+    this.scene.time.delayedCall(durationMs, () => {
+      if (!enemy?.active) return;
+      const eliteTint = enemy.enemyDefinition?.bootstrap?.eliteTint;
+      if (enemy.elite && eliteTint != null) enemy.setTint(eliteTint);
+      else enemy.clearTint();
+    });
+  }
+
+  applyDirectionalNudge(enemy, velocityX, velocityY, nudgePx) {
     const magnitude = Math.hypot(velocityX, velocityY);
-    if (!magnitude || !enemy?.active) return;
-    const nudgePx = enemy.elite ? 3 : 4;
+    if (!magnitude || !enemy?.active || !nudgePx) return;
     enemy.setPosition(
       enemy.x + (velocityX / magnitude) * nudgePx,
       enemy.y + (velocityY / magnitude) * nudgePx
@@ -96,6 +123,78 @@ export class EnemyCombatSystem {
     }
   }
 
+  spawnSawbugHitFx(x, y, velocityX, velocityY) {
+    const scene = this.scene;
+    const impactAngle = Math.atan2(velocityY, velocityX) + Math.PI;
+    const ring = scene.add.circle(x, y, 4.5, 0xc7d96f, .06)
+      .setStrokeStyle(1, 0xdce98d, .68)
+      .setDepth(30);
+    scene.tweens.add({
+      targets: ring,
+      scale: 1.7,
+      alpha: 0,
+      duration: 90,
+      onComplete: () => ring.destroy()
+    });
+
+    for (let i = 0; i < 4; i += 1) {
+      const droplet = scene.add.circle(
+        x,
+        y,
+        i === 0 ? 1.9 : 1.25,
+        i % 2 ? 0x70873b : 0xc6d76a,
+        .88
+      ).setDepth(30);
+      const angle = impactAngle + Phaser.Math.FloatBetween(-.65, .65);
+      const distance = Phaser.Math.Between(7, 15);
+      scene.tweens.add({
+        targets: droplet,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        alpha: 0,
+        scale: .2,
+        duration: Phaser.Math.Between(85, 120),
+        onComplete: () => droplet.destroy()
+      });
+    }
+  }
+
+  spawnRustHoundHitFx(x, y, velocityX, velocityY) {
+    const scene = this.scene;
+    const impactAngle = Math.atan2(velocityY, velocityX) + Math.PI;
+    const ring = scene.add.circle(x, y, 5.5, 0xc8794a, .06)
+      .setStrokeStyle(1, 0xe6a36f, .7)
+      .setDepth(30);
+    scene.tweens.add({
+      targets: ring,
+      scale: 1.65,
+      alpha: 0,
+      duration: 100,
+      onComplete: () => ring.destroy()
+    });
+
+    for (let i = 0; i < 4; i += 1) {
+      const spark = scene.add.circle(
+        x,
+        y,
+        i < 2 ? 1.8 : 1.2,
+        i % 2 ? 0x7b4636 : 0xe0a06b,
+        .92
+      ).setDepth(30);
+      const angle = impactAngle + Phaser.Math.FloatBetween(-.5, .5);
+      const distance = Phaser.Math.Between(9, 18);
+      scene.tweens.add({
+        targets: spark,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        alpha: 0,
+        scale: .2,
+        duration: Phaser.Math.Between(100, 135),
+        onComplete: () => spark.destroy()
+      });
+    }
+  }
+
   spawnScrapRatDeathFx(x, y, elite) {
     const scene = this.scene;
     const count = elite ? 7 : 5;
@@ -115,12 +214,65 @@ export class EnemyCombatSystem {
     }
   }
 
+  spawnSawbugDeathFx(x, y, elite) {
+    const scene = this.scene;
+    const count = elite ? 8 : 6;
+    for (let i = 0; i < count; i += 1) {
+      const droplet = scene.add.circle(
+        x,
+        y,
+        i % 3 === 0 ? 2.4 : 1.55,
+        i % 2 ? 0x6f8739 : 0xb8c95d,
+        .88
+      ).setDepth(30);
+      const angle = (Math.PI * 2 * i) / count + Phaser.Math.FloatBetween(-.22, .22);
+      const distance = Phaser.Math.Between(elite ? 20 : 14, elite ? 32 : 25);
+      scene.tweens.add({
+        targets: droplet,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        alpha: 0,
+        scale: .16,
+        duration: Phaser.Math.Between(140, 205),
+        onComplete: () => droplet.destroy()
+      });
+    }
+  }
+
+  spawnRustHoundDeathFx(x, y, elite) {
+    const scene = this.scene;
+    const count = elite ? 10 : 7;
+    for (let i = 0; i < count; i += 1) {
+      const shard = scene.add.circle(
+        x,
+        y,
+        i % 3 === 0 ? 2.6 : 1.7,
+        i % 2 ? 0x744235 : 0xc9784c,
+        .92
+      ).setDepth(30);
+      const angle = (Math.PI * 2 * i) / count + Phaser.Math.FloatBetween(-.18, .18);
+      const distance = Phaser.Math.Between(elite ? 23 : 16, elite ? 38 : 29);
+      scene.tweens.add({
+        targets: shard,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        alpha: 0,
+        scale: .16,
+        duration: Phaser.Math.Between(150, 220),
+        onComplete: () => shard.destroy()
+      });
+    }
+  }
+
   killEnemy(enemy) {
     if (!enemy?.active) return null;
     const x = enemy.x;
     const y = enemy.y;
     const elite = Boolean(enemy.elite);
-    const isScrapRat = enemy.enemyId === SCRAP_RAT_ID;
+    const enemyId = enemy.enemyId;
+    const isScrapRat = enemyId === SCRAP_RAT_ID;
+    const isSawbug = enemyId === SAWBUG_ID;
+    const isRustHound = enemyId === RUST_HOUND_ID;
 
     enemy.body.enable = false;
     enemy.setVelocity(0, 0);
@@ -138,9 +290,14 @@ export class EnemyCombatSystem {
       onComplete: () => enemy.destroy()
     });
 
-    const burst = this.scene.add.circle(x, y, elite ? 28 : 18, 0xd8954f, .55).setDepth(13);
-    this.scene.tweens.add({ targets: burst, scale: 2.4, alpha: 0, duration: 180, onComplete: () => burst.destroy() });
+    const burstColor = DEATH_BURST_COLORS[enemyId] ?? 0xd8954f;
+    const burstRadius = isRustHound ? (elite ? 31 : 22) : isSawbug ? (elite ? 27 : 19) : (elite ? 28 : 18);
+    const burst = this.scene.add.circle(x, y, burstRadius, burstColor, .52).setDepth(13);
+    this.scene.tweens.add({ targets: burst, scale: 2.3, alpha: 0, duration: 180, onComplete: () => burst.destroy() });
+
     if (isScrapRat) this.spawnScrapRatDeathFx(x, y, elite);
+    else if (isSawbug) this.spawnSawbugDeathFx(x, y, elite);
+    else if (isRustHound) this.spawnRustHoundDeathFx(x, y, elite);
 
     const dropCount = resolveEnemyScrapDropCount(enemy);
     for (let i = 0; i < dropCount; i += 1) {

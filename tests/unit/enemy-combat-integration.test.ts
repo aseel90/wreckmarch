@@ -12,7 +12,7 @@ describe('authoritative CombatSystem integration', () => {
     expect(game).not.toContain('this.physics.add.overlap(this.bullets, this.enemies');
     expect(game).not.toContain('onBulletHit(bullet, enemy)');
     expect(game).not.toContain('killEnemy(enemy)');
-    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=3'");
+    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=4'");
     expect(system).toContain('scene.combatSystem = new CombatSystem(scene)');
     expect(system).toContain('scene.combatSystem.installOverlaps()');
     expect(system).not.toContain('scene.onBulletHit');
@@ -28,11 +28,18 @@ describe('authoritative CombatSystem integration', () => {
     expect(projectileSystem).not.toContain('this.onBulletHit(bullet, enemy)');
   });
 
-  it('gives Scrap Rat a texture-preserving hit flash, light nudge, and distinct death burst', () => {
+  it('gives all three live enemies texture-preserving hit and death feedback', () => {
     expect(enemyCombat).toContain("const SCRAP_RAT_ID = 'scrap-rat'");
-    expect(enemyCombat).toContain('enemy.setTint(SCRAP_RAT_HIT_TINT)');
-    expect(enemyCombat).toContain('this.applyScrapRatKnockback(enemy, velocityX, velocityY)');
+    expect(enemyCombat).toContain("const SAWBUG_ID = 'sawbug'");
+    expect(enemyCombat).toContain("const RUST_HOUND_ID = 'rust-hound'");
+    expect(enemyCombat).toContain('this.applyTexturePreservingHitTint(enemy, SCRAP_RAT_HIT_TINT');
+    expect(enemyCombat).toContain('this.applyTexturePreservingHitTint(enemy, SAWBUG_HIT_TINT');
+    expect(enemyCombat).toContain('this.applyTexturePreservingHitTint(enemy, RUST_HOUND_HIT_TINT');
     expect(enemyCombat).toContain('this.spawnScrapRatHitFx(enemy.x, enemy.y, velocityX, velocityY)');
+    expect(enemyCombat).toContain('this.spawnSawbugHitFx(enemy.x, enemy.y, velocityX, velocityY)');
+    expect(enemyCombat).toContain('this.spawnRustHoundHitFx(enemy.x, enemy.y, velocityX, velocityY)');
     expect(enemyCombat).toContain('if (isScrapRat) this.spawnScrapRatDeathFx(x, y, elite)');
+    expect(enemyCombat).toContain('else if (isSawbug) this.spawnSawbugDeathFx(x, y, elite)');
+    expect(enemyCombat).toContain('else if (isRustHound) this.spawnRustHoundDeathFx(x, y, elite)');
   });
 });
