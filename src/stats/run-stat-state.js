@@ -14,29 +14,38 @@ export const RUN_STAT_DOMAINS = Object.freeze({
  */
 
 /** @typedef {Record<string, StatModifier[]>} StatModifierMap */
+/** @typedef {{ min?: number, max?: number }} StatCap */
+/** @typedef {Record<string, StatCap>} StatCapMap */
 
-function clonePlain(value) {
-  return Object.fromEntries(Object.entries(value || {}).map(([key, item]) => [key, Number(item)]));
-}
-
+/**
+ * @param {{
+ *   characterBase?: Record<string, number>,
+ *   weaponBase?: Record<string, number>,
+ *   caps?: { character?: StatCapMap, weapon?: StatCapMap }
+ * }} [options]
+ */
 export function createRunStatState({ characterBase = {}, weaponBase = {}, caps = {} } = {}) {
   /** @type {StatModifierMap} */
   const characterModifiers = {};
   /** @type {StatModifierMap} */
   const weaponModifiers = {};
+  /** @type {StatCapMap} */
+  const characterCaps = caps.character || {};
+  /** @type {StatCapMap} */
+  const weaponCaps = caps.weapon || {};
 
   const state = {
     base: {
-      character: Object.freeze(clonePlain(characterBase)),
-      weapon: Object.freeze(clonePlain(weaponBase))
+      character: Object.freeze({ ...characterBase }),
+      weapon: Object.freeze({ ...weaponBase })
     },
     modifiers: {
       character: characterModifiers,
       weapon: weaponModifiers
     },
     caps: {
-      character: caps.character || {},
-      weapon: caps.weapon || {}
+      character: characterCaps,
+      weapon: weaponCaps
     }
   };
 
