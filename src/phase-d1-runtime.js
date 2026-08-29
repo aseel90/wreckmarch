@@ -55,8 +55,10 @@ function installRunnerAndMechanicalArm(s){
     arm.setPosition(socketX-u.x*recoil*2.4,socketY-u.y*recoil*2.4).setDepth(pose.depth);
     this.__d1ArmJoint.setPosition(socketX,socketY).setDepth(pose.depth-1).setVisible(false);
     const reach=this.characterSystem.getMuzzleReach(q);this.__d1Muzzle.set(socketX+u.x*reach,socketY+u.y*reach);
-    const faceLeft=q>=this.characterSystem.definition.weapon.leftFacingMinIndex&&q<=this.characterSystem.definition.weapon.leftFacingMaxIndex;
-    this.hero?.setFlipX?.(faceLeft);
+    const weaponDef=this.characterSystem.definition.weapon;
+    const faceLeft=q>=weaponDef.leftFacingMinIndex&&q<=weaponDef.leftFacingMaxIndex;
+    if(faceLeft)this.hero?.setFlipX?.(true);
+    else if(q===0||q===1||q===7)this.hero?.setFlipX?.(false);
     this.visualAimAngle=a;this.weaponV3Recoil*=.7;
     this.__c4Grip?.copy?.(this.__d1Socket);this.__c4Muzzle?.copy?.(this.__d1Muzzle);
   };
