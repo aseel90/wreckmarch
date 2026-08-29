@@ -36,12 +36,14 @@ export class PlayerDamageSystem {
     scene.heroKnockback.set(result.knockbackX, result.knockbackY);
     scene.heroKnockbackUntil = result.knockbackUntil;
 
-    const hitFlashColor = Number.isFinite(Number(profile.hitFlashColor)) ? Number(profile.hitFlashColor) : DEFAULT_PLAYER_COMBAT_PROFILE.hitFlashColor;
-    const hitFlashAlpha = Number.isFinite(Number(profile.hitFlashAlpha)) ? Number(profile.hitFlashAlpha) : DEFAULT_PLAYER_COMBAT_PROFILE.hitFlashAlpha;
-    const hitFlashDurationMs = Math.max(0, Number.isFinite(Number(profile.hitFlashDurationMs)) ? Number(profile.hitFlashDurationMs) : DEFAULT_PLAYER_COMBAT_PROFILE.hitFlashDurationMs);
-    const hitFlashRepeats = Math.max(0, Math.round(Number.isFinite(Number(profile.hitFlashRepeats)) ? Number(profile.hitFlashRepeats) : DEFAULT_PLAYER_COMBAT_PROFILE.hitFlashRepeats));
+    // Damage feedback should read as a quick hit, not replace the Hunter art with a solid red silhouette.
+    const requestedFlashDurationMs = Number.isFinite(Number(profile.hitFlashDurationMs)) ? Number(profile.hitFlashDurationMs) : DEFAULT_PLAYER_COMBAT_PROFILE.hitFlashDurationMs;
+    const hitFlashColor = 0xff9a8c;
+    const hitFlashAlpha = .88;
+    const hitFlashDurationMs = Phaser.Math.Clamp(requestedFlashDurationMs, 35, 50);
+    const hitFlashRepeats = 0;
 
-    hero.setTintFill(hitFlashColor);
+    hero.setTint(hitFlashColor);
     scene.tweens.add({
       targets: hero,
       alpha: hitFlashAlpha,

@@ -6,6 +6,7 @@ const game = fs.readFileSync(new URL('../../src/game.js', import.meta.url), 'utf
 const enemySystem = fs.readFileSync(new URL('../../src/enemies/enemy-system.js', import.meta.url), 'utf8');
 const combat = fs.readFileSync(new URL('../../src/combat/combat-system.js', import.meta.url), 'utf8');
 const runner = fs.readFileSync(new URL('../../src/characters/definitions/runner.js', import.meta.url), 'utf8');
+const playerDamage = fs.readFileSync(new URL('../../src/combat/player-damage-system.js', import.meta.url), 'utf8');
 
 describe('live PlayerDamageSystem integration', () => {
   it('owns hero/enemy contact through CombatSystem instead of the base scene', () => {
@@ -29,5 +30,13 @@ describe('live PlayerDamageSystem integration', () => {
     system.applyGameplayDefaults({ resetHealth: true });
     expect(scene.playerCombatProfile).toEqual(system.definition.combat);
     expect(scene.heroInvulnMs).toBe(450);
+  });
+
+  it('uses a brief detail-preserving hit tint instead of a solid red fill', () => {
+    expect(playerDamage).toContain('const hitFlashColor = 0xff9a8c');
+    expect(playerDamage).toContain('const hitFlashAlpha = .88');
+    expect(playerDamage).toContain('const hitFlashRepeats = 0');
+    expect(playerDamage).toContain('hero.setTint(hitFlashColor)');
+    expect(playerDamage).not.toContain('hero.setTintFill(hitFlashColor)');
   });
 });
