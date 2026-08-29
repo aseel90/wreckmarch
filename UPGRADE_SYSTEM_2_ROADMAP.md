@@ -5,6 +5,21 @@
 > **Rule:** This document is the implementation checklist. A checkbox becomes `[x]` only after the feature is implemented **and tested in the actual game**.
 
 ---
+## Status legend
+
+Every checklist item carries a current implementation state:
+
+- **✅ DONE** — completed and verified at the level required for that task.
+- **🟡 IMPLEMENTED / LIVE VERIFY** — code is on `main` and automated checks passed, but the deployed build still needs a confirmed Live Chromium pass before the milestone is closed.
+- **🔵 IN PROGRESS** — partially implemented or intentionally transitional.
+- **⚪ NOT STARTED** — planned but implementation has not started.
+- **⏸️ DEFERRED** — intentionally outside the current active phase.
+- **🧭 ACTIVE POLICY** — an architectural rule currently enforced during development; it remains visible rather than being treated as a one-time feature.
+- **🧹 POST-MIGRATION** — cleanup that becomes actionable only after the replacement path is verified.
+
+> **Last status review:** 2026-08-30. Statuses describe the actual repository state on `main`; they do not count intention as completion.
+
+---
 
 ## 0. Core development rule — NO PATCH-ON-PATCH
 
@@ -14,20 +29,20 @@ Past development showed that duplicated ownership and late runtime overrides can
 
 ### Mandatory architecture rules
 
-- [ ] Every gameplay responsibility must have **one canonical owner**.
-- [ ] Do not create `*-fix`, `*-hotfix`, `*-v2`, `*-v3`, or additional phase patch files when the correct solution is to repair/refactor the canonical system.
-- [ ] New Upgrade System 2.0 logic must live in focused canonical modules, not inside new runtime monkey-patches.
-- [ ] Character identity/stats belong to `src/characters/`.
-- [ ] Weapon definitions and weapon behavior belong to the canonical combat/weapon layer.
-- [ ] Upgrade definitions and upgrade selection must have one dedicated upgrade module/folder.
-- [ ] Run-time resolved stats must have one canonical resolver/state owner.
-- [ ] UI may display state but must not secretly own gameplay values.
-- [ ] Art/animation loaders must not redefine character gameplay identity.
-- [ ] Before replacing old logic, identify all callers and migrate them; do not leave two active implementations.
-- [ ] After migration, remove/deactivate obsolete duplicated logic rather than leaving it as an active fallback.
-- [ ] Keep files focused and reasonably sized. Split by responsibility, not by chronological phase number.
-- [ ] Every architectural migration must preserve the currently playable build until the replacement is verified.
-- [ ] Regression tests must specifically protect character identity, selected character assets, weapon ownership, upgrade application, and stat resolution.
+- [ ] Every gameplay responsibility must have **one canonical owner**. — **Status:** 🧭 ACTIVE POLICY
+- [ ] Do not create `*-fix`, `*-hotfix`, `*-v2`, `*-v3`, or additional phase patch files when the correct solution is to repair/refactor the canonical system. — **Status:** 🧭 ACTIVE POLICY
+- [ ] New Upgrade System 2.0 logic must live in focused canonical modules, not inside new runtime monkey-patches. — **Status:** 🧭 ACTIVE POLICY
+- [ ] Character identity/stats belong to `src/characters/`. — **Status:** 🔵 IN PROGRESS
+- [ ] Weapon definitions and weapon behavior belong to the canonical combat/weapon layer. — **Status:** 🔵 IN PROGRESS
+- [ ] Upgrade definitions and upgrade selection must have one dedicated upgrade module/folder. — **Status:** ⚪ NOT STARTED
+- [ ] Run-time resolved stats must have one canonical resolver/state owner. — **Status:** 🔵 IN PROGRESS
+- [ ] UI may display state but must not secretly own gameplay values. — **Status:** 🔵 IN PROGRESS
+- [ ] Art/animation loaders must not redefine character gameplay identity. — **Status:** 🔵 IN PROGRESS
+- [ ] Before replacing old logic, identify all callers and migrate them; do not leave two active implementations. — **Status:** 🧭 ACTIVE POLICY
+- [ ] After migration, remove/deactivate obsolete duplicated logic rather than leaving it as an active fallback. — **Status:** 🧭 ACTIVE POLICY
+- [ ] Keep files focused and reasonably sized. Split by responsibility, not by chronological phase number. — **Status:** 🧭 ACTIVE POLICY
+- [ ] Every architectural migration must preserve the currently playable build until the replacement is verified. — **Status:** 🧭 ACTIVE POLICY
+- [ ] Regression tests must specifically protect character identity, selected character assets, weapon ownership, upgrade application, and stat resolution. — **Status:** 🔵 IN PROGRESS
 
 ### Target ownership map
 
@@ -179,14 +194,14 @@ Candidate starting balance for testing only:
 
 These values are not final until tested.
 
-- [ ] Extend character definition contract without breaking Runner.
-- [ ] Preserve Runner 100 HP / 255 base speed baseline.
-- [ ] Add starting weapon reference to character definition.
-- [ ] Add combat-stat profile support.
-- [ ] Add passive slot/config support without requiring a strong Runner passive yet.
-- [ ] Ensure character visuals cannot override selected character identity.
-- [ ] Add regression test: Runner definition always resolves to Runner assets/stats.
-- [ ] Add regression test: adding a future second character cannot mutate Runner definition.
+- [ ] Extend character definition contract without breaking Runner. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Preserve Runner 100 HP / 255 base speed baseline. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Add starting weapon reference to character definition. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Add combat-stat profile support. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Add passive slot/config support without requiring a strong Runner passive yet. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Ensure character visuals cannot override selected character identity. — **Status:** 🔵 IN PROGRESS
+- [ ] Add regression test: Runner definition always resolves to Runner assets/stats. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Add regression test: adding a future second character cannot mutate Runner definition. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -234,9 +249,9 @@ Base Character
 = Current effective state
 ```
 
-- [ ] Audit current gameplay variables and classify each as Character / Weapon / Run / World.
-- [ ] Document canonical owner for each migrated stat.
-- [ ] Remove duplicate active ownership when migration is complete.
+- [x] Audit current gameplay variables and classify each as Character / Weapon / Run / World. — **Status:** ✅ DONE
+- [ ] Document canonical owner for each migrated stat. — **Status:** 🔵 IN PROGRESS
+- [ ] Remove duplicate active ownership when migration is complete. — **Status:** 🧹 POST-MIGRATION
 
 ---
 
@@ -269,12 +284,12 @@ The exact formula must be documented and tested before migration is complete.
 
 Current upgrades can directly multiply values, e.g. repeated damage multipliers. That can be valid, but stacking must become an intentional rule rather than an accidental consequence of call order.
 
-- [ ] Inventory current direct stat mutations.
-- [ ] Define modifier ordering.
-- [ ] Implement canonical resolver or equivalent canonical calculation layer.
-- [ ] Ensure applying/removing/recalculating upgrades is deterministic.
-- [ ] Add tests for flat/additive/multiplicative ordering.
-- [ ] Add tests preventing the same upgrade from being applied twice accidentally.
+- [x] Inventory current direct stat mutations. — **Status:** ✅ DONE
+- [ ] Define modifier ordering. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Implement canonical resolver or equivalent canonical calculation layer. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Ensure applying/removing/recalculating upgrades is deterministic. — **Status:** 🔵 IN PROGRESS
+- [ ] Add tests for flat/additive/multiplicative ordering. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Add tests preventing the same upgrade from being applied twice accidentally. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -311,19 +326,19 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
 - Continue card-by-card/group-by-group.
 - Remove old duplicate implementation only when migrated behavior is verified.
 
-- [ ] Create canonical Upgrade Registry.
-- [ ] Define upgrade schema.
-- [ ] Add validation for invalid definitions.
-- [ ] Migrate Heavy Rivets as first numeric reference card.
-- [ ] Verify Heavy Rivets gameplay parity.
-- [ ] Migrate Overclock.
-- [ ] Migrate Long Barrel.
-- [ ] Migrate Twin Riveter.
-- [ ] Migrate Fleet Feet.
-- [ ] Migrate Scrap Magnet.
-- [ ] Migrate Armor Plate.
-- [ ] Decide temporary handling of Call the Rig without expanding old Rig system.
-- [ ] Remove/deactivate obsolete duplicate card definitions after migration.
+- [ ] Create canonical Upgrade Registry. — **Status:** ⚪ NOT STARTED
+- [ ] Define upgrade schema. — **Status:** ⚪ NOT STARTED
+- [ ] Add validation for invalid definitions. — **Status:** ⚪ NOT STARTED
+- [ ] Migrate Heavy Rivets as first numeric reference card. — **Status:** ⚪ NOT STARTED
+- [ ] Verify Heavy Rivets gameplay parity. — **Status:** ⚪ NOT STARTED
+- [ ] Migrate Overclock. — **Status:** ⚪ NOT STARTED
+- [ ] Migrate Long Barrel. — **Status:** ⚪ NOT STARTED
+- [ ] Migrate Twin Riveter. — **Status:** ⚪ NOT STARTED
+- [ ] Migrate Fleet Feet. — **Status:** ⚪ NOT STARTED
+- [ ] Migrate Scrap Magnet. — **Status:** ⚪ NOT STARTED
+- [ ] Migrate Armor Plate. — **Status:** ⚪ NOT STARTED
+- [ ] Decide temporary handling of Call the Rig without expanding old Rig system. — **Status:** ⚪ NOT STARTED
+- [ ] Remove/deactivate obsolete duplicate card definitions after migration. — **Status:** 🧹 POST-MIGRATION
 
 ---
 
@@ -351,11 +366,11 @@ Guideline:
 - Epic: major build-changing mechanics or advanced synergies.
 - Legendary: very rare run-defining effects; use sparingly.
 
-- [ ] Define rarity constants and weights.
-- [ ] Connect rarity to upgrade offer system.
-- [ ] Preserve/support elite minimum-rarity reward rules.
-- [ ] Prevent rarity from becoming purely cosmetic.
-- [ ] Balance rarity frequencies against a 10-minute run.
+- [ ] Define rarity constants and weights. — **Status:** ⚪ NOT STARTED
+- [ ] Connect rarity to upgrade offer system. — **Status:** ⚪ NOT STARTED
+- [ ] Preserve/support elite minimum-rarity reward rules. — **Status:** ⚪ NOT STARTED
+- [ ] Prevent rarity from becoming purely cosmetic. — **Status:** ⚪ NOT STARTED
+- [ ] Balance rarity frequencies against a 10-minute run. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -378,13 +393,13 @@ Future-compatible but not mandatory in first implementation:
 - Skip
 - Banish
 
-- [ ] Centralize upgrade-level ownership.
-- [ ] Enforce max level.
-- [ ] Remove maxed cards from standard offers.
-- [ ] Implement prerequisite-aware offers.
-- [ ] Implement scope-aware offers.
-- [ ] Add offer-quality safeguards.
-- [ ] Add deterministic seeded offer testing.
+- [ ] Centralize upgrade-level ownership. — **Status:** 🔵 IN PROGRESS
+- [ ] Enforce max level. — **Status:** 🔵 IN PROGRESS
+- [ ] Remove maxed cards from standard offers. — **Status:** 🔵 IN PROGRESS
+- [ ] Implement prerequisite-aware offers. — **Status:** ⚪ NOT STARTED
+- [ ] Implement scope-aware offers. — **Status:** ⚪ NOT STARTED
+- [ ] Add offer-quality safeguards. — **Status:** ⚪ NOT STARTED
+- [ ] Add deterministic seeded offer testing. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -413,10 +428,10 @@ Scopes:
 - `WEAPON`
 - `COMPANION` — reserved for future Robot Dog system
 
-- [ ] Implement tags.
-- [ ] Implement scopes.
-- [ ] Ensure Runner can use general + Runner-specific + compatible weapon cards.
-- [ ] Ensure incompatible future weapon cards cannot enter the offer pool.
+- [ ] Implement tags. — **Status:** ⚪ NOT STARTED
+- [ ] Implement scopes. — **Status:** ⚪ NOT STARTED
+- [ ] Ensure Runner can use general + Runner-specific + compatible weapon cards. — **Status:** ⚪ NOT STARTED
+- [ ] Ensure incompatible future weapon cards cannot enter the offer pool. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -464,16 +479,16 @@ Possible later advanced card concepts:
 
 Exact names, values, rarities and requirements require balance passes.
 
-- [ ] Finalize initial 10–12 card pool.
-- [ ] Implement first new mechanical card.
-- [ ] Implement Piercing Rivets.
-- [ ] Implement Ricochet.
-- [ ] Implement Shrapnel Impact.
-- [ ] Implement Critical Rivet + crit combat support.
-- [ ] Implement Explosive Rivet.
-- [ ] Implement advanced multishot progression.
-- [ ] Test projectile-count/performance limits.
-- [ ] Test interactions between mechanical cards.
+- [ ] Finalize initial 10–12 card pool. — **Status:** ⚪ NOT STARTED
+- [ ] Implement first new mechanical card. — **Status:** ⚪ NOT STARTED
+- [ ] Implement Piercing Rivets. — **Status:** ⚪ NOT STARTED
+- [ ] Implement Ricochet. — **Status:** ⚪ NOT STARTED
+- [ ] Implement Shrapnel Impact. — **Status:** ⚪ NOT STARTED
+- [ ] Implement Critical Rivet + crit combat support. — **Status:** ⚪ NOT STARTED
+- [ ] Implement Explosive Rivet. — **Status:** ⚪ NOT STARTED
+- [ ] Implement advanced multishot progression. — **Status:** ⚪ NOT STARTED
+- [ ] Test projectile-count/performance limits. — **Status:** ⚪ NOT STARTED
+- [ ] Test interactions between mechanical cards. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -510,9 +525,9 @@ Critical Rivet
 
 The system should encourage these patterns without making every run follow one fixed recipe.
 
-- [ ] Verify at least 3 meaningfully different viable builds.
-- [ ] Ensure no single card is mandatory for every build.
-- [ ] Ensure defensive/utility choices remain useful without overwhelming offensive progression.
+- [ ] Verify at least 3 meaningfully different viable builds. — **Status:** ⚪ NOT STARTED
+- [ ] Ensure no single card is mandatory for every build. — **Status:** ⚪ NOT STARTED
+- [ ] Ensure defensive/utility choices remain useful without overwhelming offensive progression. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -545,11 +560,11 @@ Upgrade A at required level
 → unlock Epic/Evolution card
 ```
 
-- [ ] Prerequisite schema supported.
-- [ ] Prerequisite offer filtering tested.
-- [ ] Define synergy rules after initial pool is stable.
-- [ ] Design first evolution only after normal upgrade system passes balance testing.
-- [ ] Implement evolutions in a later sub-phase.
+- [ ] Prerequisite schema supported. — **Status:** ⚪ NOT STARTED
+- [ ] Prerequisite offer filtering tested. — **Status:** ⚪ NOT STARTED
+- [ ] Define synergy rules after initial pool is stable. — **Status:** ⏸️ DEFERRED
+- [ ] Design first evolution only after normal upgrade system passes balance testing. — **Status:** ⏸️ DEFERRED
+- [ ] Implement evolutions in a later sub-phase. — **Status:** ⏸️ DEFERRED
 
 ---
 
@@ -569,12 +584,12 @@ Potential capped/safety-controlled stats:
 
 Do not invent final cap values without gameplay testing.
 
-- [ ] Centralize relevant caps.
-- [ ] Preserve current movement cap behavior.
-- [ ] Add fire-rate safety limit.
-- [ ] Add projectile-count/performance safety limit.
-- [ ] Add crit cap when crit ships.
-- [ ] Add armor/damage-reduction cap when armor model is finalized.
+- [ ] Centralize relevant caps. — **Status:** 🔵 IN PROGRESS
+- [ ] Preserve current movement cap behavior. — **Status:** 🔵 IN PROGRESS
+- [ ] Add fire-rate safety limit. — **Status:** ⚪ NOT STARTED
+- [ ] Add projectile-count/performance safety limit. — **Status:** ⚪ NOT STARTED
+- [ ] Add crit cap when crit ships. — **Status:** ⚪ NOT STARTED
+- [ ] Add armor/damage-reduction cap when armor model is finalized. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -610,13 +625,13 @@ Visual goals:
 - readable on mobile
 - no giant text blocks
 
-- [ ] Audit current card UI.
-- [ ] Finalize rarity frame language.
-- [ ] Show card level/max level.
-- [ ] Add before → after stat preview where applicable.
-- [ ] Improve art consistency.
-- [ ] Test three-card selection on target mobile viewport.
-- [ ] Ensure UI reads resolved stats rather than duplicating calculations.
+- [ ] Audit current card UI. — **Status:** ⚪ NOT STARTED
+- [ ] Finalize rarity frame language. — **Status:** ⚪ NOT STARTED
+- [ ] Show card level/max level. — **Status:** ⚪ NOT STARTED
+- [ ] Add before → after stat preview where applicable. — **Status:** ⚪ NOT STARTED
+- [ ] Improve art consistency. — **Status:** ⚪ NOT STARTED
+- [ ] Test three-card selection on target mobile viewport. — **Status:** ⚪ NOT STARTED
+- [ ] Ensure UI reads resolved stats rather than duplicating calculations. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -644,10 +659,10 @@ Pierce             1
 Ricochet           0
 ```
 
-- [ ] Add canonical read-only build/stat snapshot API.
-- [ ] Design compact run stats panel.
-- [ ] Show character and weapon stats separately.
-- [ ] Ensure displayed values match actual combat calculations.
+- [ ] Add canonical read-only build/stat snapshot API. — **Status:** ⚪ NOT STARTED
+- [ ] Design compact run stats panel. — **Status:** ⚪ NOT STARTED
+- [ ] Show character and weapon stats separately. — **Status:** ⚪ NOT STARTED
+- [ ] Ensure displayed values match actual combat calculations. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -662,8 +677,8 @@ Future effects may include:
 
 Do not implement a large status-effect system during the first Upgrade 2.0 migration unless required by an approved card.
 
-- [ ] Ensure mechanical-effect architecture does not block future status effects.
-- [ ] Defer full status-effect implementation.
+- [ ] Ensure mechanical-effect architecture does not block future status effects. — **Status:** ⚪ NOT STARTED
+- [ ] Defer full status-effect implementation. — **Status:** ⏸️ DEFERRED
 
 ---
 
@@ -673,8 +688,8 @@ Upgrade cards in this roadmap are **run progression** and reset between runs unl
 
 Future meta progression must live outside the run-upgrade system.
 
-- [ ] Keep run upgrade state isolated from future permanent progression.
-- [ ] Do not introduce permanent stat mutations through Upgrade System 2.0.
+- [ ] Keep run upgrade state isolated from future permanent progression. — **Status:** 🔵 IN PROGRESS
+- [ ] Do not introduce permanent stat mutations through Upgrade System 2.0. — **Status:** 🔵 IN PROGRESS
 
 ---
 
@@ -702,9 +717,9 @@ These are examples, not approved balance values.
 
 A future character must be addable through a definition/registration path without copying Runner runtime code or adding a patch that overrides Runner.
 
-- [ ] Prove architecture with a test-only/mock second character definition.
-- [ ] Verify character selection/creation does not mutate another character.
-- [ ] Do not ship another playable character during this phase.
+- [ ] Prove architecture with a test-only/mock second character definition. — **Status:** ⚪ NOT STARTED
+- [ ] Verify character selection/creation does not mutate another character. — **Status:** ⚪ NOT STARTED
+- [ ] Do not ship another playable character during this phase. — **Status:** ⏸️ DEFERRED
 
 ---
 
@@ -721,9 +736,9 @@ For now:
 - do not let old disabled Rig cards pollute normal upgrade offers
 - avoid architecture that assumes the companion is the player weapon
 
-- [ ] Confirm disabled legacy Rig cards cannot appear unexpectedly.
-- [ ] Reserve clean companion upgrade extension point.
-- [ ] Defer Robot Dog implementation to its own roadmap/phase.
+- [ ] Confirm disabled legacy Rig cards cannot appear unexpectedly. — **Status:** ⚪ NOT STARTED
+- [ ] Reserve clean companion upgrade extension point. — **Status:** ⚪ NOT STARTED
+- [ ] Defer Robot Dog implementation to its own roadmap/phase. — **Status:** ⏸️ DEFERRED
 
 ---
 
@@ -744,12 +759,12 @@ Upgrade balance must account for:
 
 Do not balance cards in isolation.
 
-- [ ] Record baseline no-upgrade / current-upgrade run metrics.
-- [ ] Define expected upgrade count by run end.
-- [ ] Define target timing for first meaningful build decision.
-- [ ] Tune rarity distribution.
-- [ ] Tune offensive scaling against enemy HP/wave scaling.
-- [ ] Validate at least one full 10-minute run after major balance changes.
+- [ ] Record baseline no-upgrade / current-upgrade run metrics. — **Status:** ⚪ NOT STARTED
+- [ ] Define expected upgrade count by run end. — **Status:** ⚪ NOT STARTED
+- [ ] Define target timing for first meaningful build decision. — **Status:** ⚪ NOT STARTED
+- [ ] Tune rarity distribution. — **Status:** ⚪ NOT STARTED
+- [ ] Tune offensive scaling against enemy HP/wave scaling. — **Status:** ⚪ NOT STARTED
+- [ ] Validate at least one full 10-minute run after major balance changes. — **Status:** ⚪ NOT STARTED
 
 ---
 
@@ -772,11 +787,26 @@ Required coverage:
 - Mobile upgrade UI remains usable.
 - Full game boots without old patch-order dependency.
 
-- [ ] Add/extend unit tests.
-- [ ] Add integration tests.
-- [ ] Add visual/mobile regression tests where appropriate.
-- [ ] Test a real playable build after each migration group.
-- [ ] Run full test suite before marking the phase complete.
+- [ ] Add/extend unit tests. — **Status:** 🔵 IN PROGRESS
+- [ ] Add integration tests. — **Status:** 🔵 IN PROGRESS
+- [ ] Add visual/mobile regression tests where appropriate. — **Status:** ⚪ NOT STARTED
+- [ ] Test a real playable build after each migration group. — **Status:** ⚪ NOT STARTED
+- [ ] Run full test suite before marking the phase complete. — **Status:** ⚪ NOT STARTED
+
+---
+
+# 21.1. Chromium live deployment gate
+
+This is the official production verification gate described in `TESTING_AND_DEPLOYMENT_POLICY.md`.
+
+- [x] Adopt Playwright Chromium as the canonical automated browser. — **Status:** ✅ DONE
+- [x] Run Chromium smoke in CI before deployment. — **Status:** ✅ DONE
+- [x] Run Live Chromium smoke after GitHub Pages deployment. — **Status:** ✅ DONE
+- [x] Collect `console.error`, `pageerror`, and `requestfailed`. — **Status:** ✅ DONE
+- [x] Save live-smoke diagnostics as workflow artifacts on failure. — **Status:** ✅ DONE
+- [x] Open/update one deduplicated GitHub Issue when deployed `main` fails. — **Status:** ✅ DONE
+- [x] Auto-close the live-smoke Issue after a later successful deployed `main`. — **Status:** ✅ DONE
+- [ ] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
 
 ---
 
@@ -794,71 +824,71 @@ When Upgrade System 2.0 replaces old ownership:
 - keep compatibility shims only temporarily and label them clearly
 - delete compatibility shim after all callers migrate
 
-- [ ] Produce ownership map before major migration.
-- [ ] Identify upgrade-related patch/phase ownership that can be retired.
-- [ ] Remove duplicated upgrade logic after migration.
-- [ ] Confirm script load order is no longer required to override older upgrade behavior.
-- [ ] Confirm no duplicate character identity/asset ownership exists in touched systems.
-- [ ] Confirm no new oversized monolithic runtime file was created.
+- [x] Produce ownership map before major migration. — **Status:** ✅ DONE
+- [x] Identify upgrade-related patch/phase ownership that can be retired. — **Status:** ✅ DONE
+- [ ] Remove duplicated upgrade logic after migration. — **Status:** 🧹 POST-MIGRATION
+- [ ] Confirm script load order is no longer required to override older upgrade behavior. — **Status:** 🧹 POST-MIGRATION
+- [ ] Confirm no duplicate character identity/asset ownership exists in touched systems. — **Status:** 🔵 IN PROGRESS
+- [ ] Confirm no new oversized monolithic runtime file was created. — **Status:** 🔵 IN PROGRESS
 
 ---
 
 # 23. Implementation order — DO NOT SKIP AHEAD
 
 ## Phase U0 — Audit and ownership
-- [x] Map current character/weapon/upgrade/run stat ownership. See `UPGRADE_SYSTEM_2_U0_AUDIT.md`.
-- [x] Identify duplicate/patch ownership relevant to this work. See `UPGRADE_SYSTEM_2_U0_AUDIT.md`.
-- [x] Establish regression baseline/tests. See `tests/unit/upgrade-system-u0-baseline.test.ts`.
+- [x] Map current character/weapon/upgrade/run stat ownership. See `UPGRADE_SYSTEM_2_U0_AUDIT.md`. — **Status:** ✅ DONE
+- [x] Identify duplicate/patch ownership relevant to this work. See `UPGRADE_SYSTEM_2_U0_AUDIT.md`. — **Status:** ✅ DONE
+- [x] Establish regression baseline/tests. See `tests/unit/upgrade-system-u0-baseline.test.ts`. — **Status:** ✅ DONE
 
 ## Phase U1 — Character + weapon + stat architecture
-- [ ] Extend Runner character contract safely.
-- [ ] Add starting weapon/passive/combat profile support.
-- [ ] Define Character vs Weapon vs Run stat ownership.
-- [ ] Implement deterministic stat resolution.
-- [ ] Preserve current gameplay parity.
+- [ ] Extend Runner character contract safely. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Add starting weapon/passive/combat profile support. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Define Character vs Weapon vs Run stat ownership. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Implement deterministic stat resolution. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+- [ ] Preserve current gameplay parity. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
 
 ## Phase U2 — Upgrade Registry migration
-- [ ] Create Upgrade Registry/schema.
-- [ ] Migrate existing cards incrementally.
-- [ ] Remove old duplicate ownership after verification.
+- [ ] Create Upgrade Registry/schema. — **Status:** ⚪ NOT STARTED
+- [ ] Migrate existing cards incrementally. — **Status:** ⚪ NOT STARTED
+- [ ] Remove old duplicate ownership after verification. — **Status:** 🧹 POST-MIGRATION
 
 ## Phase U3 — Rarity + levels + offer rules
-- [ ] Implement rarity.
-- [ ] Implement max-level/duplicate rules.
-- [ ] Implement tags/scopes/prerequisites.
-- [ ] Preserve elite reward guarantees.
+- [ ] Implement rarity. — **Status:** ⚪ NOT STARTED
+- [ ] Implement max-level/duplicate rules. — **Status:** ⚪ NOT STARTED
+- [ ] Implement tags/scopes/prerequisites. — **Status:** ⚪ NOT STARTED
+- [ ] Preserve elite reward guarantees. — **Status:** ⚪ NOT STARTED
 
 ## Phase U4 — New Hunter build cards
-- [ ] Finalize 10–12-card initial pool.
-- [ ] Add mechanical projectile upgrades incrementally.
-- [ ] Add crit only with combat integration/tests.
-- [ ] Verify at least 3 viable build identities.
+- [ ] Finalize 10–12-card initial pool. — **Status:** ⚪ NOT STARTED
+- [ ] Add mechanical projectile upgrades incrementally. — **Status:** ⚪ NOT STARTED
+- [ ] Add crit only with combat integration/tests. — **Status:** ⚪ NOT STARTED
+- [ ] Verify at least 3 viable build identities. — **Status:** ⚪ NOT STARTED
 
 ## Phase U5 — Card visual overhaul
-- [ ] Improve frames/art hierarchy.
-- [ ] Add rarity and level presentation.
-- [ ] Add real before→after previews.
-- [ ] Mobile visual test.
+- [ ] Improve frames/art hierarchy. — **Status:** ⚪ NOT STARTED
+- [ ] Add rarity and level presentation. — **Status:** ⚪ NOT STARTED
+- [ ] Add real before→after previews. — **Status:** ⚪ NOT STARTED
+- [ ] Mobile visual test. — **Status:** ⚪ NOT STARTED
 
 ## Phase U6 — Run stats/build panel
-- [ ] Expose resolved stats safely.
-- [ ] Implement read-only build panel.
-- [ ] Verify displayed values against combat.
+- [ ] Expose resolved stats safely. — **Status:** 🔵 IN PROGRESS
+- [ ] Implement read-only build panel. — **Status:** ⚪ NOT STARTED
+- [ ] Verify displayed values against combat. — **Status:** ⚪ NOT STARTED
 
 ## Phase U7 — Balance and cleanup
-- [ ] Full 10-minute run tests.
-- [ ] Rarity/DPS/progression tuning.
-- [ ] Remove obsolete migration shims/duplicate upgrade patches.
-- [ ] Full regression suite.
-- [ ] Update this roadmap with final completed checkboxes.
+- [ ] Full 10-minute run tests. — **Status:** ⚪ NOT STARTED
+- [ ] Rarity/DPS/progression tuning. — **Status:** ⚪ NOT STARTED
+- [ ] Remove obsolete migration shims/duplicate upgrade patches. — **Status:** 🧹 POST-MIGRATION
+- [ ] Full regression suite. — **Status:** ⚪ NOT STARTED
+- [ ] Update this roadmap with final completed checkboxes. — **Status:** 🧹 POST-MIGRATION
 
 ## Later — explicitly NOT part of current implementation
-- [ ] Synergy expansion.
-- [ ] Evolutions.
-- [ ] Additional playable characters.
-- [ ] Robot Dog companion implementation and companion cards.
-- [ ] Permanent/meta progression.
-- [ ] Large status-effect system.
+- [ ] Synergy expansion. — **Status:** ⏸️ DEFERRED
+- [ ] Evolutions. — **Status:** ⏸️ DEFERRED
+- [ ] Additional playable characters. — **Status:** ⏸️ DEFERRED
+- [ ] Robot Dog companion implementation and companion cards. — **Status:** ⏸️ DEFERRED
+- [ ] Permanent/meta progression. — **Status:** ⏸️ DEFERRED
+- [ ] Large status-effect system. — **Status:** ⏸️ DEFERRED
 
 ---
 

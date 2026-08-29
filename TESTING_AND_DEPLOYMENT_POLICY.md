@@ -2,6 +2,20 @@
 
 This document defines the browser verification gate adopted for `main`.
 
+
+## Current implementation status
+
+- [x] Playwright Chromium is the canonical automated browser. — **Status:** ✅ DONE
+- [x] Pre-deploy Chromium smoke runs in CI. — **Status:** ✅ DONE
+- [x] Post-deploy Live Chromium smoke runs after GitHub Pages deployment. — **Status:** ✅ DONE
+- [x] Live smoke collects `console.error`, `pageerror`, and `requestfailed`. — **Status:** ✅ DONE
+- [x] Failure diagnostics are preserved as workflow artifacts. — **Status:** ✅ DONE
+- [x] A deployed `main` failure opens/updates one deduplicated Issue. — **Status:** ✅ DONE
+- [x] A later successful deployed `main` closes that Issue automatically. — **Status:** ✅ DONE
+- [ ] Confirm and record the first successful Live Chromium run on the current `main`. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
+
+> **Status reviewed:** 2026-08-30.
+
 ## Required pipeline
 
 1. Run quality checks, unit tests, static build, Playwright E2E, and local Chromium smoke in GitHub Actions.
