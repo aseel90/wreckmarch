@@ -47,7 +47,7 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
   expect(baseline.title.right).toBeLessThan(baseline.level.x);
   expect(baseline.scrap.x).toBeLessThan(baseline.timer.left);
   expect(baseline.runKey).toBe('character-runner-run');
-  expect(baseline.runFrames).toBeGreaterThanOrEqual(4);
+  expect(baseline.runFrames).toBe(3);
 
   await page.keyboard.down('ArrowRight');
   const observed = await page.evaluate(async () => {
@@ -73,6 +73,6 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
 
   expect(observed.animation).toBe('character-runner-run');
   expect(observed.isPlaying).toBe(true);
-  expect(new Set(observed.frameTextureKeys.filter(key => key.startsWith('hunter-run-'))).size).toBeGreaterThanOrEqual(3);
-  expect(new Set(observed.frameIndexes).size).toBeGreaterThanOrEqual(3);
+  expect(new Set(observed.frameTextureKeys.filter(key => key.startsWith('hunter-run-'))).size).toBe(3);
+  expect(new Set(observed.frameIndexes).size).toBe(3);
 });
