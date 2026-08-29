@@ -17,6 +17,16 @@ const RARITY_STYLE={
 };
 const CARD_IDS=['heavy-rivets','overclock','long-barrel','twin-riveter','fleet-feet','scrap-magnet','armor-plate','call-rig','rig-overdrive','twin-cannon'];
 const GUN_FRAMES=['gun_e.png','gun_se.png','gun_s.png','gun_sw.png','gun_w.png','gun_nw.png','gun_n.png','gun_ne.png'];
+const GUN_POSES=[
+  {frame:'gun_e.png', w:66,h:48,ox:.17,oy:.53,depth:31},
+  {frame:'gun_se.png',w:62,h:55,ox:.20,oy:.39,depth:31},
+  {frame:'gun_s.png', w:43,h:64,ox:.50,oy:.22,depth:31},
+  {frame:'gun_sw.png',w:62,h:55,ox:.80,oy:.39,depth:19},
+  {frame:'gun_w.png', w:66,h:48,ox:.83,oy:.53,depth:19},
+  {frame:'gun_nw.png',w:62,h:55,ox:.80,oy:.63,depth:19},
+  {frame:'gun_n.png', w:43,h:64,ox:.50,oy:.78,depth:19},
+  {frame:'gun_ne.png',w:62,h:55,ox:.20,oy:.63,depth:31}
+];
 const CARD_FRAME=id=>`icon_${id}.png`;
 const WRECK_FRAMES={sedan:'wreck_a.png',overturned:'wreck_c.png',van:'wreck_b.png',truck:'wreck_d.png'};
 const VEHICLE_PROFILE={sedan:{w:246,h:166},overturned:{w:270,h:240},van:{w:292,h:214},truck:{w:356,h:302}};
@@ -33,17 +43,27 @@ function installRunnerAndMechanicalArm(s){
   if(!s.__d1ArmJoint){s.__d1ArmJoint=s.add.circle(0,0,9,0x303a3f,1).setStrokeStyle(3,0x58d7e4,.8).setDepth(30)}s.__d1ArmJoint.setVisible(false)
   const arm=s.weaponV3Gun;s.weaponModule=arm;arm.setVisible(true).clearTint?.();s.__d1Pose=-1;s.__d1Socket=new Phaser.Math.Vector2();s.__d1Muzzle=new Phaser.Math.Vector2();
   s.updateWeaponPose=function(){
-    const q=aimIndex(this.weaponAim),a=q*Math.PI/4,u=new Phaser.Math.Vector2(Math.cos(a),Math.sin(a));
-    if(q!==this.__d1Pose){this.__d1Pose=q;arm.setTexture('c3-atlas',GUN_FRAMES[q]).setCrop();fit(arm,q%2?84:90,q%2?80:74);arm.setOrigin(q===4||q===3||q===5?.82:.18,.52)}
+    const q=aimIndex(this.weaponAim),pose=GUN_POSES[q],a=q*Math.PI/4,u=new Phaser.Math.Vector2(Math.cos(a),Math.sin(a));
+    if(q!==this.__d1Pose){
+      this.__d1Pose=q;
+      arm.setTexture('c3-atlas',pose.frame).setCrop();
+      fit(arm,pose.w,pose.h);
+      arm.setOrigin(pose.ox,pose.oy);
+    }
     const socket=this.characterSystem.getWeaponSocket(q),socketX=socket.x,socketY=socket.y;
     const recoil=this.weaponV3Recoil||0;this.__d1Socket.set(socketX,socketY);
-    arm.setPosition(socketX-u.x*recoil*3.2,socketY-u.y*recoil*3.2).setDepth(q>=5?19:31);
-    this.__d1ArmJoint.setPosition(socketX,socketY).setDepth(q>=5?18:30).setVisible(false);
+    arm.setPosition(socketX-u.x*recoil*2.4,socketY-u.y*recoil*2.4).setDepth(pose.depth);
+    this.__d1ArmJoint.setPosition(socketX,socketY).setDepth(pose.depth-1).setVisible(false);
     const reach=this.characterSystem.getMuzzleReach(q);this.__d1Muzzle.set(socketX+u.x*reach,socketY+u.y*reach);
+    const faceLeft=q>=this.characterSystem.definition.weapon.leftFacingMinIndex&&q<=this.characterSystem.definition.weapon.leftFacingMaxIndex;
+    this.hero?.setFlipX?.(faceLeft);
     this.visualAimAngle=a;this.weaponV3Recoil*=.7;
     this.__c4Grip?.copy?.(this.__d1Socket);this.__c4Muzzle?.copy?.(this.__d1Muzzle);
   };
-  s.weaponSystem.setMuzzleResolver(spread=>{const a=(s.__d1Pose>=0?s.__d1Pose*Math.PI/4:s.weaponAim)+spread,reach=s.characterSystem.definition.weapon.muzzleReachStraight;return new Phaser.Math.Vector2(s.__d1Socket.x+Math.cos(a)*reach,s.__d1Socket.y+Math.sin(a)*reach)});
+  s.weaponSystem.setMuzzleResolver(spread=>{
+    const q=s.__d1Pose>=0?s.__d1Pose:aimIndex(s.weaponAim),a=q*Math.PI/4+spread,reach=s.characterSystem.getMuzzleReach(q);
+    return new Phaser.Math.Vector2(s.__d1Socket.x+Math.cos(a)*reach,s.__d1Socket.y+Math.sin(a)*reach);
+  });
   const oldMove=s.updateMovement?.bind(s);
   if(oldMove)s.updateMovement=function(time){oldMove(time);this.characterSystem.updateLocomotionVisuals();};
   s.updateWeaponPose();s.__d1MechanicalArm=true;s.__d1AnimatedRunner=true;
