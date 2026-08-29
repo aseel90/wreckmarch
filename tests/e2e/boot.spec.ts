@@ -179,12 +179,12 @@ test('boots the current game, routes movement through InputManager, and keeps as
           ) darkTailPixels += 1;
         }
       }
-      return { key, opaquePixels, darkTailPixels };
+      return { key, opaquePixels, darkTailPixels, darkTailRatio: darkTailPixels / Math.max(1, opaquePixels) };
     });
   });
   expect(runTextureMetrics).toHaveLength(2);
   for (const metrics of runTextureMetrics) {
     expect(metrics.opaquePixels).toBeGreaterThan(350);
-    expect(metrics.darkTailPixels).toBeLessThan(180);
+    expect(metrics.darkTailRatio).toBeLessThan(.06);
   }
 });

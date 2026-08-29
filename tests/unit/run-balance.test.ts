@@ -43,9 +43,9 @@ describe('Wreckmarch run balance', () => {
   });
 
   it('weights Rust Hounds toward surge windows and away from lull windows', () => {
-    expect(pickEnemyForRun(60, () => .8).id).toBe('scrap-rat');
-    expect(pickEnemyForRun(90, () => .8)).toMatchObject({ id: 'rust-hound', threat: 3 });
-    expect(pickEnemyForRun(105, () => .8).id).toBe('scrap-rat');
+    expect(pickEnemyForRun(60, () => .85).id).toBe('scrap-rat');
+    expect(pickEnemyForRun(90, () => .85)).toMatchObject({ id: 'rust-hound', threat: 3 });
+    expect(pickEnemyForRun(105, () => .85).id).toBe('scrap-rat');
   });
 
   it('introduces Sawbug in wave 3 as a threat-2 ranged spitter', () => {
