@@ -806,9 +806,9 @@ When Upgrade System 2.0 replaces old ownership:
 # 23. Implementation order — DO NOT SKIP AHEAD
 
 ## Phase U0 — Audit and ownership
-- [ ] Map current character/weapon/upgrade/run stat ownership.
-- [ ] Identify duplicate/patch ownership relevant to this work.
-- [ ] Establish regression baseline/tests.
+- [x] Map current character/weapon/upgrade/run stat ownership. See `UPGRADE_SYSTEM_2_U0_AUDIT.md`.
+- [x] Identify duplicate/patch ownership relevant to this work. See `UPGRADE_SYSTEM_2_U0_AUDIT.md`.
+- [x] Establish regression baseline/tests. See `tests/unit/upgrade-system-u0-baseline.test.ts`.
 
 ## Phase U1 — Character + weapon + stat architecture
 - [ ] Extend Runner character contract safely.
