@@ -6,6 +6,19 @@ export const RUNNER_CHARACTER = Object.freeze({
     maxHp: 100,
     moveSpeed: 255
   }),
+  combatProfile: Object.freeze({
+    armor: 0,
+    critChance: 0,
+    critDamageMultiplier: 1.5,
+    pickupRadiusMultiplier: 1
+  }),
+  startingWeapon: Object.freeze({
+    id: 'rivet-gun'
+  }),
+  passive: Object.freeze({
+    id: 'runner-baseline',
+    enabled: false
+  }),
   combat: Object.freeze({
     incomingDamageMultiplier: 1,
     contactKnockbackMultiplier: 1,

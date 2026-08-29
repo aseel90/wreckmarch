@@ -50,4 +50,13 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(d1).toContain('this.characterSystem.getWeaponSocket(q)');
     expect(d1).toContain('this.characterSystem.getMuzzleReach(q)');
   });
+
+  it('locks the U1 Runner extension to data-only identity fields', () => {
+    const runner = read('src/characters/definitions/runner.js');
+    expect(runner).toContain("id: 'rivet-gun'");
+    expect(runner).toContain('combatProfile: Object.freeze({');
+    expect(runner).toContain('critChance: 0');
+    expect(runner).toContain("id: 'runner-baseline'");
+    expect(runner).toContain('enabled: false');
+  });
 });
