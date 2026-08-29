@@ -42,8 +42,8 @@ export const RUNNER_CHARACTER = Object.freeze({
     }),
     run: Object.freeze({
       key: 'character-runner-run',
-      frames: Object.freeze(['hunter-run-0', 'hunter-run-1', 'hunter-run-2', 'hunter-run-3', 'hunter-run-4', 'hunter-run-5']),
-      frameRate: 13
+      frames: Object.freeze(['hunter-run-0', 'hunter-run-1', 'hunter-run-2']),
+      frameRate: 10
     })
   }),
   locomotion: Object.freeze({
