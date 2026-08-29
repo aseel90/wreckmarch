@@ -1,13 +1,15 @@
 import { chromium } from '@playwright/test';
 
 const URL = process.env.WM_SMOKE_URL || 'http://127.0.0.1:4173/?autotest=1&debug=1';
-const CHROME = process.env.WM_CHROME_PATH || '/usr/bin/google-chrome';
+const CHROME = process.env.WM_CHROME_PATH || null;
 
-const browser = await chromium.launch({
+const launchOptions = {
   headless: true,
-  executablePath: CHROME,
   args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
-});
+};
+if (CHROME) launchOptions.executablePath = CHROME;
+
+const browser = await chromium.launch(launchOptions);
 
 let page;
 const browserEvents = [];
@@ -15,7 +17,7 @@ const browserEvents = [];
 try {
   page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.on('console', msg => {
-    if (msg.type() === 'error' || msg.type() === 'warning') browserEvents.push(`console:${msg.type()}: ${msg.text()}`);
+    if (msg.type() === 'error') browserEvents.push(`console:error: ${msg.text()}`);
   });
   page.on('pageerror', error => browserEvents.push(`pageerror: ${error?.stack || error}`));
   page.on('requestfailed', request => browserEvents.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
@@ -67,7 +69,10 @@ try {
   }, { timeout: 30_000 });
 
   const state = await readState();
-  console.log(JSON.stringify({ ok: true, state }, null, 2));
+  if (browserEvents.length) {
+    throw new Error(`Browser emitted ${browserEvents.length} error event(s):\n${browserEvents.slice(-40).join('\n')}`);
+  }
+  console.log(JSON.stringify({ ok: true, url: URL, state, browserEvents }, null, 2));
 } catch (error) {
   console.error(error?.stack || String(error));
   try {

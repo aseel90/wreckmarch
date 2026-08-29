@@ -139,6 +139,10 @@ jobs:
         run: |
           set -o pipefail
           pnpm install --no-frozen-lockfile 2>&1 | tee wm-smoke-install.log
+      - name: Install Playwright Chromium
+        run: |
+          set -o pipefail
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-smoke-playwright-install.log
       - name: Vendor Phaser locally
         run: |
           mkdir -p vendor
@@ -161,6 +165,7 @@ jobs:
           path: |
             wm-smoke.log
             wm-smoke-install.log
+            wm-smoke-playwright-install.log
             wm-http.log
 
   ci-bridge:
@@ -226,7 +231,7 @@ jobs:
               done
             fi
             if [ "$SMOKE" = failure ]; then
-              for LOG in /tmp/ci-smoke/wm-smoke.log /tmp/ci-smoke/wm-chrome.log /tmp/ci-smoke/wm-http.log; do
+              for LOG in /tmp/ci-smoke/wm-smoke.log /tmp/ci-smoke/wm-smoke-playwright-install.log /tmp/ci-smoke/wm-http.log; do
                 [ -f "$LOG" ] || continue
                 printf '### %s\n```text\n' "$(basename "$LOG")"
                 tail -c 12000 "$LOG"
@@ -242,14 +247,14 @@ jobs:
 
   deploy:
     name: Deploy GitHub Pages
-    # Publish after the fast correctness gates. E2E still runs and is reported by ci-bridge,
-    # but a superseded/cancelled Playwright run must not leave Pages serving stale PWA metadata.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [quality, smoke]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -270,15 +275,80 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Report Pages deployment
+
+  live-smoke:
+    name: Live Chromium smoke
+    needs: [deploy]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee wm-live-install.log
+      - name: Install Playwright Chromium
+        run: |
+          set -o pipefail
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-live-playwright-install.log
+      - name: Smoke test deployed Pages build
+        id: live_smoke
+        continue-on-error: true
+        env:
+          WM_SMOKE_URL: ${{ needs.deploy.outputs.page_url }}?autotest=1&debug=1
+        run: |
+          set -o pipefail
+          timeout 45s node scripts/ci-smoke.mjs 2>&1 | tee wm-live-smoke.log
+      - name: Preserve live smoke diagnostics
+        if: steps.live_smoke.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-smoke
+          if-no-files-found: ignore
+          path: |
+            wm-live-smoke.log
+            wm-live-install.log
+            wm-live-playwright-install.log
+      - name: Open, update, or close live failure issue
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          OUTCOME: ${{ steps.live_smoke.outcome }}
         run: |
-          TITLE='[CI] main is failing'
-          ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[CI] main is failing") | .number' | head -n1)"
-          if [ -n "$ISSUE_NUMBER" ]; then
-            gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "Pages deployed $SHA successfully: $PAGE_URL"
+          set -euo pipefail
+          TITLE='[LIVE] deployed main smoke failed'
+          ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[LIVE] deployed main smoke failed") | .number' | head -n1)"
+          if [ "$OUTCOME" = success ]; then
+            if [ -n "$ISSUE_NUMBER" ]; then
+              gh issue close "$ISSUE_NUMBER" --repo "$REPO" --comment "Live Chromium smoke recovered on \`$SHA\`: $PAGE_URL"
+            fi
+            exit 0
           fi
+          {
+            printf 'Live Chromium smoke failed after GitHub Pages deployed `%s`.\n\n' "$SHA"
+            printf 'Live URL: %s\n' "$PAGE_URL"
+            printf 'Run: https://github.com/%s/actions/runs/%s\n\n' "$REPO" "${{ github.run_id }}"
+            printf 'The smoke gate treats these browser signals as failures:\n'
+            printf -- '- console.error\n- pageerror\n- requestfailed\n- boot/playability assertion timeout\n\n'
+            if [ -f wm-live-smoke.log ]; then
+              printf '### wm-live-smoke.log\n```text\n'
+              tail -c 16000 wm-live-smoke.log
+              printf '\n```\n'
+            fi
+          } > /tmp/wm-live-issue.md
+          if [ -n "$ISSUE_NUMBER" ]; then
+            gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file /tmp/wm-live-issue.md
+          else
+            gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/wm-live-issue.md --label ci-failure
+          fi
+          exit 1
