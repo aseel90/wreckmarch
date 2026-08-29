@@ -5,19 +5,34 @@ export const RUN_STAT_DOMAINS = Object.freeze({
   WEAPON: 'weapon'
 });
 
+/**
+ * @typedef {Object} StatModifier
+ * @property {string=} id
+ * @property {string} type
+ * @property {number} value
+ * @property {number=} priority
+ */
+
+/** @typedef {Record<string, StatModifier[]>} StatModifierMap */
+
 function clonePlain(value) {
   return Object.fromEntries(Object.entries(value || {}).map(([key, item]) => [key, Number(item)]));
 }
 
 export function createRunStatState({ characterBase = {}, weaponBase = {}, caps = {} } = {}) {
+  /** @type {StatModifierMap} */
+  const characterModifiers = {};
+  /** @type {StatModifierMap} */
+  const weaponModifiers = {};
+
   const state = {
     base: {
       character: Object.freeze(clonePlain(characterBase)),
       weapon: Object.freeze(clonePlain(weaponBase))
     },
     modifiers: {
-      character: {},
-      weapon: {}
+      character: characterModifiers,
+      weapon: weaponModifiers
     },
     caps: {
       character: caps.character || {},
