@@ -123,7 +123,8 @@ export function loadRunnerLocomotionArt(scene) {
 
         const runPayloads = runDataKeys.map((keys, index) => readTextParts(scene, keys, `run ${index + 1}`));
         const runImages = await Promise.all(runPayloads.map((payload, index) => imageFromBase64(payload, `run ${index + 1}`)));
-        const runScale = getFitScale(runImages[0]);
+        const resolutionRatio = idleImages[0].width / runImages[0].width;
+        const runScale = idleScale * resolutionRatio;
         runImages.forEach((image, index) => installNormalizedImage(scene, image, runKeys[index], runScale));
 
         idleSourceKeys.forEach(key => scene.textures.remove(key));
