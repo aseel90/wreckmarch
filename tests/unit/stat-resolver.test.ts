@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveStatBlock, resolveStatValue, STAT_MODIFIER_TYPES as T } from '../../src/stats/stat-resolver.js';
+import { resolveStat, resolveStatBlock, STAT_MODIFIER_TYPES as T } from '../../src/stats/stat-resolver.js';
 
 describe('Upgrade System 2.0 stat resolver', () => {
   it('resolves FLAT -> ADDITIVE_PERCENT -> MULTIPLICATIVE_PERCENT deterministically', () => {
@@ -8,8 +8,8 @@ describe('Upgrade System 2.0 stat resolver', () => {
       { id: 'flat', type: T.FLAT, value: 10 },
       { id: 'additive', type: T.ADDITIVE_PERCENT, value: .5 }
     ];
-    expect(resolveStatValue(100, modifiers)).toBe(198);
-    expect(resolveStatValue(100, modifiers.slice().reverse())).toBe(198);
+    expect(resolveStat(100, modifiers)).toBe(198);
+    expect(resolveStat(100, modifiers.slice().reverse())).toBe(198);
   });
 
   it('chooses overrides by priority rather than call order', () => {
@@ -17,13 +17,13 @@ describe('Upgrade System 2.0 stat resolver', () => {
       { id: 'low', type: T.OVERRIDE, value: 50, priority: 1 },
       { id: 'high', type: T.OVERRIDE, value: 80, priority: 10 }
     ];
-    expect(resolveStatValue(10, modifiers)).toBe(80);
-    expect(resolveStatValue(10, modifiers.slice().reverse())).toBe(80);
+    expect(resolveStat(10, modifiers)).toBe(80);
+    expect(resolveStat(10, modifiers.slice().reverse())).toBe(80);
   });
 
   it('applies caps after resolution', () => {
-    expect(resolveStatValue(255, [{ id: 'fleet', type: T.ADDITIVE_PERCENT, value: .5 }], { max: 280 })).toBe(280);
-    expect(resolveStatValue(100, [{ id: 'damage', type: T.MULTIPLICATIVE_PERCENT, value: -.95 }], { min: 10 })).toBe(10);
+    expect(resolveStat(255, [{ id: 'fleet', type: T.ADDITIVE_PERCENT, value: .5 }], { max: 280 })).toBe(280);
+    expect(resolveStat(100, [{ id: 'damage', type: T.MULTIPLICATIVE_PERCENT, value: -.95 }], { min: 10 })).toBe(10);
   });
 
   it('resolves an immutable stat block without mutating its inputs', () => {
@@ -39,7 +39,7 @@ describe('Upgrade System 2.0 stat resolver', () => {
   });
 
   it('rejects malformed modifiers and invalid caps', () => {
-    expect(() => resolveStatValue(100, [{ id: 'bad', type: 'UNKNOWN', value: 1 }])).toThrow(/Unknown modifier type/);
-    expect(() => resolveStatValue(100, [], { min: 20, max: 10 })).toThrow(/minimum cannot exceed maximum/);
+    expect(() => resolveStat(100, [{ id: 'bad', type: 'UNKNOWN', value: 1 }])).toThrow(/Invalid stat modifier type/);
+    expect(() => resolveStat(100, [], { min: 20, max: 10 })).toThrow(/min cannot be greater than max/);
   });
 });
