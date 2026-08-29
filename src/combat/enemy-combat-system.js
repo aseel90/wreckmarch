@@ -15,6 +15,12 @@ const DEATH_BURST_COLORS = Object.freeze({
   [RUST_HOUND_ID]: 0xb9683f
 });
 
+const IMPACT_ACCENT_COLORS = Object.freeze({
+  [SCRAP_RAT_ID]: 0xf1b66f,
+  [SAWBUG_ID]: 0xc7d96f,
+  [RUST_HOUND_ID]: 0xe0a06b
+});
+
 export class EnemyCombatSystem {
   /** @param {any} scene */
   constructor(scene) {
@@ -26,6 +32,8 @@ export class EnemyCombatSystem {
 
     const velocityX = Number(bullet.body?.velocity?.x) || 0;
     const velocityY = Number(bullet.body?.velocity?.y) || 0;
+    const impactX = Number.isFinite(Number(bullet.x)) ? Number(bullet.x) : Number(enemy.x) || 0;
+    const impactY = Number.isFinite(Number(bullet.y)) ? Number(bullet.y) : Number(enemy.y) || 0;
     const result = resolveEnemyProjectileHit(enemy, {
       damage: bullet.damage ?? this.scene.damage,
       fallbackDamage: this.scene.damage,
@@ -42,24 +50,26 @@ export class EnemyCombatSystem {
     const isRustHound = enemyId === RUST_HOUND_ID;
     const hitFlashMs = Math.max(0, Number(enemy.combatProfile?.hitFlashMs) || 55);
 
+    this.spawnRivetImpactFx(impactX, impactY, velocityX, velocityY, enemyId);
+
     if (isScrapRat) {
       this.applyTexturePreservingHitTint(enemy, SCRAP_RAT_HIT_TINT, Math.min(hitFlashMs, 46));
       this.applyDirectionalNudge(enemy, velocityX, velocityY, enemy.elite ? 3 : 4);
-      this.spawnScrapRatHitFx(enemy.x, enemy.y, velocityX, velocityY);
+      this.spawnScrapRatHitFx(impactX, impactY, velocityX, velocityY);
     } else if (isSawbug) {
       this.applyTexturePreservingHitTint(enemy, SAWBUG_HIT_TINT, Math.min(hitFlashMs, 48));
       // Sawbug should react clearly while keeping its ranged spacing readable.
       this.applyDirectionalNudge(enemy, velocityX, velocityY, enemy.elite ? 1.5 : 2.5);
-      this.spawnSawbugHitFx(enemy.x, enemy.y, velocityX, velocityY);
+      this.spawnSawbugHitFx(impactX, impactY, velocityX, velocityY);
     } else if (isRustHound) {
       this.applyTexturePreservingHitTint(enemy, RUST_HOUND_HIT_TINT, Math.min(hitFlashMs, 52));
       // The Hound is heavier than the Rat, so the visual nudge stays restrained.
       this.applyDirectionalNudge(enemy, velocityX, velocityY, enemy.elite ? 1 : 2);
-      this.spawnRustHoundHitFx(enemy.x, enemy.y, velocityX, velocityY);
+      this.spawnRustHoundHitFx(impactX, impactY, velocityX, velocityY);
     } else {
       enemy.setTintFill(0xffffff);
       this.scene.time.delayedCall(hitFlashMs, () => enemy?.active && enemy.clearTint());
-      this.scene.spawnHitFx(enemy.x, enemy.y, velocityX, velocityY);
+      this.scene.spawnHitFx(impactX, impactY, velocityX, velocityY);
     }
 
     if (enemy.body?.velocity) {
@@ -67,7 +77,8 @@ export class EnemyCombatSystem {
       enemy.body.velocity.y += result.knockbackY;
     }
 
-    this.scene.playTone(78, .025, 'square', .013, 35);
+    this.scene.playTone(78, .025, 'square', .012, 35);
+    this.scene.playTone(265, .012, 'triangle', .004, -95);
     if (result.killed) this.killEnemy(enemy);
     return result;
   }
@@ -91,6 +102,56 @@ export class EnemyCombatSystem {
       enemy.y + (velocityY / magnitude) * nudgePx
     );
     enemy.body?.updateFromGameObject?.();
+  }
+
+  spawnRivetImpactFx(x, y, velocityX, velocityY, enemyId) {
+    const scene = this.scene;
+    const angle = Math.atan2(velocityY, velocityX);
+    const accent = IMPACT_ACCENT_COLORS[enemyId] ?? 0xf1b66f;
+    const core = scene.add.circle(x, y, 3.1, 0xfff1c9, .96)
+      .setDepth(33)
+      .setBlendMode(Phaser.BlendModes.ADD);
+    const streak = scene.add.rectangle(x, y, 10, 1.8, accent, .9)
+      .setOrigin(.18, .5)
+      .setRotation(angle)
+      .setDepth(32)
+      .setBlendMode(Phaser.BlendModes.ADD);
+
+    scene.tweens.add({
+      targets: core,
+      scale: 1.75,
+      alpha: 0,
+      duration: 58,
+      ease: 'Quad.easeOut',
+      onComplete: () => core.destroy()
+    });
+    scene.tweens.add({
+      targets: streak,
+      x: x + Math.cos(angle) * 7,
+      y: y + Math.sin(angle) * 7,
+      scaleX: .28,
+      alpha: 0,
+      duration: 64,
+      ease: 'Quad.easeOut',
+      onComplete: () => streak.destroy()
+    });
+
+    for (let i = 0; i < 2; i += 1) {
+      const spark = scene.add.circle(x, y, 1.15, i ? accent : 0xffdf9c, .92)
+        .setDepth(32)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      const sparkAngle = angle + Math.PI + Phaser.Math.FloatBetween(-.72, .72);
+      const distance = Phaser.Math.Between(7, 13);
+      scene.tweens.add({
+        targets: spark,
+        x: x + Math.cos(sparkAngle) * distance,
+        y: y + Math.sin(sparkAngle) * distance,
+        alpha: 0,
+        scale: .2,
+        duration: Phaser.Math.Between(65, 92),
+        onComplete: () => spark.destroy()
+      });
+    }
   }
 
   spawnScrapRatHitFx(x, y, velocityX, velocityY) {

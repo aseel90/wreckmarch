@@ -57,8 +57,10 @@ describe('Weapon / Projectile ownership integration', () => {
     const d1 = read('src/phase-d1-runtime.js');
     expect(d1).toContain("g.generateTexture('hunter-rivet',18,8)");
     expect(d1).toContain('projectile:{lifeMs:1180,scale:.62,radius:4,offsetX:5,offsetY:0}');
-    expect(d1).toContain('s.weaponV3Recoil=Math.min(1.8');
-    expect(d1).toContain("setScale(.34).setAlpha(.96)");
+    expect(d1).toContain('s.weaponV3Recoil=Math.min(1.9');
+    expect(d1).toContain('this.weaponV3Recoil*=.62');
+    expect(d1).toContain("setScale(.31).setAlpha(.9).setBlendMode(Phaser.BlendModes.ADD)");
+    expect(d1).toContain("setScale(.14).setAlpha(1).setBlendMode(Phaser.BlendModes.ADD)");
     expect(d1).toContain("bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx))");
   });
 });

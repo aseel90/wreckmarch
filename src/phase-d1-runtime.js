@@ -60,7 +60,7 @@ function installRunnerAndMechanicalArm(s){
     const faceLeft=q>=weaponDef.leftFacingMinIndex&&q<=weaponDef.leftFacingMaxIndex;
     if(faceLeft)this.hero?.setFlipX?.(true);
     else if(q===0||q===1||q===7)this.hero?.setFlipX?.(false);
-    this.visualAimAngle=a;this.weaponV3Recoil*=.7;
+    this.visualAimAngle=a;this.weaponV3Recoil*=.62;
     this.__c4Grip?.copy?.(this.__d1Socket);this.__c4Muzzle?.copy?.(this.__d1Muzzle);
   };
   s.weaponSystem.setMuzzleResolver(spread=>{
@@ -71,15 +71,21 @@ function installRunnerAndMechanicalArm(s){
     projectile:{lifeMs:1180,scale:.62,radius:4,offsetX:5,offsetY:0},
     fireFeedback:({visualAngle,muzzle,shots})=>{
       const a=Number.isFinite(visualAngle)?visualAngle:s.weaponAim;
-      s.weaponV3Recoil=Math.min(1.8,(s.weaponV3Recoil||0)+1.45);
+      s.weaponV3Recoil=Math.min(1.9,(s.weaponV3Recoil||0)+1.55);
       shots.forEach(({bullet})=>{
         const vx=bullet?.body?.velocity?.x??Math.cos(a),vy=bullet?.body?.velocity?.y??Math.sin(a);
         bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx));
       });
-      const flash=s.add.image(muzzle.x,muzzle.y,'flash').setDepth(32).setRotation(a).setScale(.34).setAlpha(.96);
-      s.tweens.add({targets:flash,alpha:0,scale:.08,duration:45,ease:'Quad.easeOut',onComplete:()=>flash.destroy()});
-      s.cameras.main.shake(28,.0007);
-      s.playTone?.(150,.034,'square',.017,-46);
+      const flashAngle=a+Phaser.Math.FloatBetween(-.035,.035);
+      const flash=s.add.image(muzzle.x,muzzle.y,'flash').setDepth(32).setRotation(flashAngle).setScale(.31).setAlpha(.9).setBlendMode(Phaser.BlendModes.ADD);
+      const core=s.add.image(muzzle.x,muzzle.y,'flash').setDepth(33).setRotation(a).setScale(.14).setAlpha(1).setBlendMode(Phaser.BlendModes.ADD);
+      const glow=s.add.circle(muzzle.x,muzzle.y,7,0xffb45f,.18).setDepth(31).setBlendMode(Phaser.BlendModes.ADD);
+      s.tweens.add({targets:flash,alpha:0,scale:.07,duration:42,ease:'Quad.easeOut',onComplete:()=>flash.destroy()});
+      s.tweens.add({targets:core,alpha:0,scale:.04,duration:24,ease:'Quad.easeOut',onComplete:()=>core.destroy()});
+      s.tweens.add({targets:glow,alpha:0,scale:1.55,duration:48,ease:'Quad.easeOut',onComplete:()=>glow.destroy()});
+      s.cameras.main.shake(34,.0009);
+      s.playTone?.(148,.032,'square',.015,-48);
+      s.playTone?.(330,.016,'triangle',.005,-120);
     }
   });
   const oldMove=s.updateMovement?.bind(s);
