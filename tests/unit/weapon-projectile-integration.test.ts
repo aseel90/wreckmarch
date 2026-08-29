@@ -52,4 +52,13 @@ describe('Weapon / Projectile ownership integration', () => {
     expect(read('src/phase-c5-runtime.js')).toContain('s.weaponSystem.setMuzzleResolver(');
     expect(read('src/phase-d1-runtime.js')).toContain('s.weaponSystem.setMuzzleResolver(');
   });
+
+  it('keeps Hunter rivets compact and routes recoil through the visible D1 weapon', () => {
+    const d1 = read('src/phase-d1-runtime.js');
+    expect(d1).toContain("g.generateTexture('hunter-rivet',18,8)");
+    expect(d1).toContain('projectile:{lifeMs:1180,scale:.62,radius:4,offsetX:5,offsetY:0}');
+    expect(d1).toContain('s.weaponV3Recoil=Math.min(1.8');
+    expect(d1).toContain("setScale(.34).setAlpha(.96)");
+    expect(d1).toContain("bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx))");
+  });
 });

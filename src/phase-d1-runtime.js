@@ -42,6 +42,7 @@ function installRunnerAndMechanicalArm(s){
   [s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig,s.aimPose].forEach(o=>o?.setVisible?.(false));
   if(!s.__d1ArmJoint){s.__d1ArmJoint=s.add.circle(0,0,9,0x303a3f,1).setStrokeStyle(3,0x58d7e4,.8).setDepth(30)}s.__d1ArmJoint.setVisible(false)
   const arm=s.weaponV3Gun;s.weaponModule=arm;arm.setVisible(true).clearTint?.();s.__d1Pose=-1;s.__d1Socket=new Phaser.Math.Vector2();s.__d1Muzzle=new Phaser.Math.Vector2();
+  if(!s.textures.exists('hunter-rivet')){const g=s.make.graphics({add:false});g.fillStyle(0xff8a35,.28).fillEllipse(8,4,15,6);g.fillStyle(0xc56b32).fillRoundedRect(4,2,11,4,2);g.fillStyle(0xffd58a).fillRoundedRect(9,2.5,6,3,1.5);g.fillStyle(0x5a3425).fillTriangle(15,2,18,4,15,6);g.generateTexture('hunter-rivet',18,8);g.destroy()}
   s.updateWeaponPose=function(){
     const q=aimIndex(this.weaponAim),pose=GUN_POSES[q],a=q*Math.PI/4,u=new Phaser.Math.Vector2(Math.cos(a),Math.sin(a));
     if(q!==this.__d1Pose){
@@ -65,6 +66,21 @@ function installRunnerAndMechanicalArm(s){
   s.weaponSystem.setMuzzleResolver(spread=>{
     const q=s.__d1Pose>=0?s.__d1Pose:aimIndex(s.weaponAim),pose=GUN_POSES[q],a=q*Math.PI/4+spread,reach=pose?.muzzleReach??s.characterSystem.getMuzzleReach(q);
     return new Phaser.Math.Vector2(s.__d1Socket.x+Math.cos(a)*reach,s.__d1Socket.y+Math.sin(a)*reach);
+  });
+  s.weaponSystem.configureHero({
+    projectile:{lifeMs:1180,scale:.62,radius:4,offsetX:5,offsetY:0},
+    fireFeedback:({visualAngle,muzzle,shots})=>{
+      const a=Number.isFinite(visualAngle)?visualAngle:s.weaponAim;
+      s.weaponV3Recoil=Math.min(1.8,(s.weaponV3Recoil||0)+1.45);
+      shots.forEach(({bullet})=>{
+        const vx=bullet?.body?.velocity?.x??Math.cos(a),vy=bullet?.body?.velocity?.y??Math.sin(a);
+        bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx));
+      });
+      const flash=s.add.image(muzzle.x,muzzle.y,'flash').setDepth(32).setRotation(a).setScale(.34).setAlpha(.96);
+      s.tweens.add({targets:flash,alpha:0,scale:.08,duration:45,ease:'Quad.easeOut',onComplete:()=>flash.destroy()});
+      s.cameras.main.shake(28,.0007);
+      s.playTone?.(150,.034,'square',.017,-46);
+    }
   });
   const oldMove=s.updateMovement?.bind(s);
   if(oldMove)s.updateMovement=function(time){oldMove(time);this.characterSystem.updateLocomotionVisuals();};
