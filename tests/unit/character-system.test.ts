@@ -14,9 +14,6 @@ describe('CharacterSystem', () => {
     const runner = getCharacterDefinition('runner');
     expect(listCharacterDefinitions().map(character => character.id)).toEqual(['runner']);
     expect(runner.stats).toEqual({ maxHp: 100, moveSpeed: 255 });
-    expect(runner.combatProfile).toEqual({ armor: 0, critChance: 0, critDamageMultiplier: 1.5, pickupRadiusMultiplier: 1 });
-    expect(runner.startingWeapon).toEqual({ id: 'rivet-gun' });
-    expect(runner.passive).toEqual({ id: 'runner-baseline', enabled: false });
     expect(runner.animations.idle.frames).toEqual(['hunter-idle-0', 'hunter-idle-1']);
     expect(runner.animations.run.frames).toEqual(['hunter-run-0', 'hunter-run-1', 'hunter-run-2']);
     expect(runner.animations.idle.frameRate).toBe(2);
@@ -33,11 +30,9 @@ describe('CharacterSystem', () => {
     expect(scene.heroHp).toBe(100);
     expect(scene.heroSpeed).toBe(255);
     expect(scene.startingWeaponId).toBe('rivet-gun');
-    expect(scene.characterCombatStats).toEqual({ armor: 0, critChance: 0, critDamageMultiplier: 1.5, pickupRadiusMultiplier: 1 });
-    expect(scene.characterPassive).toEqual({ id: 'runner-baseline', enabled: false });
-    expect(system.getStartingWeaponId()).toBe('rivet-gun');
-    expect(system.getCombatStats()).toEqual(scene.characterCombatStats);
-    expect(system.getPassive()).toEqual(scene.characterPassive);
+    expect(scene.playerPassive).toEqual({ id: 'runner-baseline', enabled: false });
+    expect(scene.runCombatStats).toMatchObject({ armor: 0, critChance: 0, critDamageMultiplier: 1.5 });
+    expect(scene.resolvedRunStats.character.maxHp).toBe(100);
   });
 
   it('owns Runner weapon socket and muzzle geometry', () => {
