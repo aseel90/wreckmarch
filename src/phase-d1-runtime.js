@@ -1,5 +1,5 @@
 /* WRECKMARCH Phase D.1 — Hunter runner + integrated compact weapon + premium PNG cards + real roads + vehicle scale */
-import { CharacterSystem } from './characters/character-system.js?v=4';
+import { CharacterSystem } from './characters/character-system.js?v=5';
 import { loadRunnerLocomotionArt } from './characters/runner-locomotion-art.js?v=4';
 import { installMobileHudPolish } from './mobile-hud-polish.js?v=2';
 const WORLD_W=2200,WORLD_H=2200;

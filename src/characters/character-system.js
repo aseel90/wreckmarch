@@ -1,5 +1,5 @@
 /* WRECKMARCH F0 — stable playable-character boundary */
-import { getCharacterDefinition } from './character-registry.js?v=3';
+import { getCharacterDefinition } from './character-registry.js?v=4';
 
 export class CharacterSystem {
   constructor(scene, characterId = 'runner') { this.scene = scene; this.select(characterId); }

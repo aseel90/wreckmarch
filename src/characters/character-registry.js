@@ -1,5 +1,5 @@
 /* WRECKMARCH F0 — data-driven playable character registry */
-import { RUNNER_CHARACTER } from './definitions/runner.js?v=3';
+import { RUNNER_CHARACTER } from './definitions/runner.js?v=4';
 
 const DEFINITIONS = new Map([[RUNNER_CHARACTER.id, RUNNER_CHARACTER]]);
 
