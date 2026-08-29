@@ -14,7 +14,10 @@ describe('CharacterSystem', () => {
     const runner = getCharacterDefinition('runner');
     expect(listCharacterDefinitions().map(character => character.id)).toEqual(['runner']);
     expect(runner.stats).toEqual({ maxHp: 100, moveSpeed: 255 });
-    expect(runner.animations.run.frames).toEqual(['hunter-run-0', 'hunter-run-1', 'hunter-run-2', 'hunter-run-3', 'hunter-run-4', 'hunter-run-5']);
+    expect(runner.animations.idle.frames).toEqual(['hunter-idle-0', 'hunter-idle-1']);
+    expect(runner.animations.run.frames).toEqual(['hunter-run-0', 'hunter-run-1', 'hunter-run-2']);
+    expect(runner.animations.idle.frameRate).toBe(2);
+    expect(runner.animations.run.frameRate).toBe(10);
     expect(() => getCharacterDefinition('missing')).toThrow('Unknown character: missing');
   });
 
