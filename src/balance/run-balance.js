@@ -58,30 +58,30 @@ export const RUN_BALANCE = Object.freeze({
       })
     })
   }),
-  player: Object.freeze({ baseMoveSpeed: 255, fleetFeetPercent: .06, fleetFeetMaxLevel: 3, moveSpeedHardCap: 310 }),
+  player: Object.freeze({ baseMoveSpeed: 255, fleetFeetPercent: .03, fleetFeetMaxLevel: 3, moveSpeedHardCap: 280 }),
   waves: Object.freeze([
-    Object.freeze({ wave: 1, threatBudget: 16, activeCap: 28, spawnIntervalMs: 690, hpMultiplier: 1.00, damageMultiplier: 1.00, speedMultiplier: 1.00 }),
-    Object.freeze({ wave: 2, threatBudget: 19, activeCap: 30, spawnIntervalMs: 650, hpMultiplier: 1.10, damageMultiplier: 1.04, speedMultiplier: 1.01 }),
-    Object.freeze({ wave: 3, threatBudget: 22, activeCap: 32, spawnIntervalMs: 610, hpMultiplier: 1.20, damageMultiplier: 1.08, speedMultiplier: 1.02 }),
-    Object.freeze({ wave: 4, threatBudget: 25, activeCap: 34, spawnIntervalMs: 575, hpMultiplier: 1.30, damageMultiplier: 1.12, speedMultiplier: 1.03 }),
-    Object.freeze({ wave: 5, threatBudget: 29, activeCap: 36, spawnIntervalMs: 540, hpMultiplier: 1.40, damageMultiplier: 1.16, speedMultiplier: 1.04 }),
-    Object.freeze({ wave: 6, threatBudget: 33, activeCap: 39, spawnIntervalMs: 505, hpMultiplier: 1.50, damageMultiplier: 1.20, speedMultiplier: 1.05 }),
-    Object.freeze({ wave: 7, threatBudget: 37, activeCap: 42, spawnIntervalMs: 475, hpMultiplier: 1.60, damageMultiplier: 1.24, speedMultiplier: 1.06 }),
-    Object.freeze({ wave: 8, threatBudget: 41, activeCap: 45, spawnIntervalMs: 445, hpMultiplier: 1.70, damageMultiplier: 1.28, speedMultiplier: 1.07 }),
-    Object.freeze({ wave: 9, threatBudget: 46, activeCap: 48, spawnIntervalMs: 415, hpMultiplier: 1.80, damageMultiplier: 1.32, speedMultiplier: 1.08 }),
-    Object.freeze({ wave: 10, threatBudget: 51, activeCap: 50, spawnIntervalMs: 390, hpMultiplier: 1.90, damageMultiplier: 1.36, speedMultiplier: 1.09 })
+    Object.freeze({ wave: 1, threatBudget: 15, activeCap: 26, spawnIntervalMs: 720, hpMultiplier: 1.00, damageMultiplier: 1.00, speedMultiplier: 1.00 }),
+    Object.freeze({ wave: 2, threatBudget: 18, activeCap: 28, spawnIntervalMs: 680, hpMultiplier: 1.10, damageMultiplier: 1.04, speedMultiplier: 1.01 }),
+    Object.freeze({ wave: 3, threatBudget: 21, activeCap: 30, spawnIntervalMs: 640, hpMultiplier: 1.20, damageMultiplier: 1.08, speedMultiplier: 1.02 }),
+    Object.freeze({ wave: 4, threatBudget: 24, activeCap: 32, spawnIntervalMs: 605, hpMultiplier: 1.30, damageMultiplier: 1.12, speedMultiplier: 1.03 }),
+    Object.freeze({ wave: 5, threatBudget: 27, activeCap: 34, spawnIntervalMs: 570, hpMultiplier: 1.40, damageMultiplier: 1.16, speedMultiplier: 1.04 }),
+    Object.freeze({ wave: 6, threatBudget: 30, activeCap: 36, spawnIntervalMs: 535, hpMultiplier: 1.50, damageMultiplier: 1.20, speedMultiplier: 1.05 }),
+    Object.freeze({ wave: 7, threatBudget: 34, activeCap: 38, spawnIntervalMs: 505, hpMultiplier: 1.60, damageMultiplier: 1.24, speedMultiplier: 1.06 }),
+    Object.freeze({ wave: 8, threatBudget: 38, activeCap: 40, spawnIntervalMs: 475, hpMultiplier: 1.70, damageMultiplier: 1.28, speedMultiplier: 1.07 }),
+    Object.freeze({ wave: 9, threatBudget: 42, activeCap: 42, spawnIntervalMs: 450, hpMultiplier: 1.80, damageMultiplier: 1.32, speedMultiplier: 1.08 }),
+    Object.freeze({ wave: 10, threatBudget: 46, activeCap: 44, spawnIntervalMs: 425, hpMultiplier: 1.90, damageMultiplier: 1.36, speedMultiplier: 1.09 })
   ]),
   enemyPools: Object.freeze([
     pool(1, 1.00),
-    pool(2, .78, .22),
-    pool(3, .62, .22, .16),
-    pool(4, .58, .24, .18),
-    pool(5, .56, .24, .20),
-    pool(6, .54, .25, .21),
-    pool(7, .52, .26, .22),
-    pool(8, .50, .27, .23),
-    pool(9, .48, .28, .24),
-    pool(10, .46, .29, .25)
+    pool(2, .84, .16),
+    pool(3, .70, .18, .12),
+    pool(4, .66, .19, .15),
+    pool(5, .63, .20, .17),
+    pool(6, .60, .21, .19),
+    pool(7, .58, .22, .20),
+    pool(8, .56, .23, .21),
+    pool(9, .54, .24, .22),
+    pool(10, .52, .25, .23)
   ]),
   eliteRewards: Object.freeze({ guaranteedAtSeconds: Object.freeze([270, 450]), bonusWindowStartSeconds: 540, choices: 3, minimumRarity: 'RARE' })
 });

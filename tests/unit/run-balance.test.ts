@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { RUN_BALANCE, getEnemyDifficultyMultipliers, getPlayerMoveSpeed, getPressurePhase, getPressureStep, getWaveNumber, pickEnemyForRun } from '../../src/balance/run-balance.js';
 import { applyRunEnemyRoleProfile, RunDirector } from '../../src/balance/run-director.js';
@@ -60,6 +61,25 @@ describe('Wreckmarch run balance', () => {
     });
   });
 
+  it('keeps Rat as the roster backbone while phasing Hound and Sawbug in gradually', () => {
+    expect(RUN_BALANCE.enemyPools[1].entries).toMatchObject([
+      { id: 'scrap-rat', weight: .84 },
+      { id: 'rust-hound', weight: .16 }
+    ]);
+    expect(RUN_BALANCE.enemyPools[2].entries).toMatchObject([
+      { id: 'scrap-rat', weight: .70 },
+      { id: 'rust-hound', weight: .18 },
+      { id: 'sawbug', weight: .12 }
+    ]);
+    expect(RUN_BALANCE.enemyPools[9].entries).toMatchObject([
+      { id: 'scrap-rat', weight: .52 },
+      { id: 'rust-hound', weight: .25 },
+      { id: 'sawbug', weight: .23 }
+    ]);
+    expect(RUN_BALANCE.waves[0]).toMatchObject({ threatBudget: 15, activeCap: 26, spawnIntervalMs: 720 });
+    expect(RUN_BALANCE.waves[9]).toMatchObject({ threatBudget: 46, activeCap: 44, spawnIntervalMs: 425 });
+  });
+
   it('turns a run Rust Hound into a readable hunter instead of a constant-speed chaser', () => {
     const hound: any = {
       active: true,
@@ -78,13 +98,22 @@ describe('Wreckmarch run balance', () => {
     expect(hound.behaviorConfig.cooldownMinMs).toBe(1450);
   });
 
-  it('caps Fleet Feet at three +6% levels and below the 310 hard cap', () => {
-    expect(RUN_BALANCE.player.fleetFeetPercent).toBe(.06);
+  it('keeps Fleet Feet meaningful but capped to roughly nine percent above base speed', () => {
+    expect(RUN_BALANCE.player.fleetFeetPercent).toBe(.03);
     expect(RUN_BALANCE.player.fleetFeetMaxLevel).toBe(3);
+    expect(RUN_BALANCE.player.moveSpeedHardCap).toBe(280);
     expect(getPlayerMoveSpeed(255, 0)).toBe(255);
-    expect(getPlayerMoveSpeed(255, 1)).toBeCloseTo(270.3, 5);
-    expect(getPlayerMoveSpeed(255, 3)).toBeCloseTo(303.70908, 5);
-    expect(getPlayerMoveSpeed(255, 99)).toBeCloseTo(303.70908, 5);
+    expect(getPlayerMoveSpeed(255, 1)).toBeCloseTo(262.65, 5);
+    expect(getPlayerMoveSpeed(255, 3)).toBeCloseTo(278.645385, 5);
+    expect(getPlayerMoveSpeed(255, 99)).toBeCloseTo(278.645385, 5);
+  });
+
+  it('routes the live Fleet Feet card through the canonical movement cap', async () => {
+    const phaseC = await readFile(new URL('../../src/phase-c-runtime.js', import.meta.url), 'utf8');
+    expect(phaseC).toContain("desc: '+3% movement speed.'");
+    expect(phaseC).toContain("getPlayerMoveSpeed(scene.__baseHeroMoveSpeed, upgradeLevel(scene, 'fleet-feet'))");
+    expect(phaseC).toContain('RUN_BALANCE.player.moveSpeedHardCap');
+    expect(phaseC).not.toContain('Math.min(310, scene.heroSpeed * 1.06)');
   });
 
   it('keeps global speed scaling restrained while HP/damage grow by wave', () => {
@@ -93,7 +122,7 @@ describe('Wreckmarch run balance', () => {
   });
 
   it('blocks spawns by the current pressure budget as well as active count', () => {
-    const active = [{ active: true, threatValue: 6 }, { active: true, threatValue: 6 }];
+    const active = [{ active: true, threatValue: 6 }, { active: true, threatValue: 5 }];
     const scene: any = {
       runTime: 0,
       gameOver: false,
@@ -103,7 +132,7 @@ describe('Wreckmarch run balance', () => {
       }
     };
     const director = new RunDirector(scene);
-    expect(director.getState().threatBudget).toBe(13);
+    expect(director.getState().threatBudget).toBe(12);
     expect(director.canSpawn(1)).toBe(true);
     expect(director.canSpawn(2)).toBe(false);
   });

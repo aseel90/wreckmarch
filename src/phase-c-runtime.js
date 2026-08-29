@@ -1,3 +1,5 @@
+import { RUN_BALANCE, getPlayerMoveSpeed } from './balance/run-balance.js?v=6';
+
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
 const H = 960;
@@ -173,6 +175,7 @@ function installProgressHud(scene) {
   scene.pendingLevelUps = 0;
   scene.upgradeOpen = false;
   scene.upgradeLevels = {};
+  scene.__baseHeroMoveSpeed = Number(scene.__baseHeroMoveSpeed) || Number(scene.heroSpeed) || RUN_BALANCE.player.baseMoveSpeed;
 
   scene.levelText?.destroy?.();
   scene.xpBg?.destroy?.();
@@ -228,7 +231,7 @@ function createUpgradePool(scene) {
     { id: 'overclock', category: 'HERO', title: 'OVERCLOCK', desc: '12% faster fire rate.', weight: 1.2, available: () => upgradeLevel(scene, 'overclock') < 5, apply: () => { bumpUpgrade(scene, 'overclock'); scene.primaryWeapon.fireDelay = Math.max(145, scene.primaryWeapon.fireDelay * .88); scene.fireDelay = scene.primaryWeapon.fireDelay; } },
     { id: 'long-barrel', category: 'HERO', title: 'LONG BARREL', desc: '+18% projectile speed and +10% range.', weight: 1, available: () => upgradeLevel(scene, 'long-barrel') < 4, apply: () => { bumpUpgrade(scene, 'long-barrel'); scene.primaryWeapon.projectileSpeed *= 1.18; scene.primaryWeapon.range *= 1.1; } },
     { id: 'twin-riveter', category: 'HERO', title: 'TWIN RIVETER', desc: 'Fire an extra rivet with slight spread.', weight: .72, available: () => upgradeLevel(scene, 'twin-riveter') < 1, apply: () => { bumpUpgrade(scene, 'twin-riveter'); scene.twinShots = 2; } },
-    { id: 'fleet-feet', category: 'UTILITY', title: 'FLEET FEET', desc: '+6% movement speed.', weight: 1.05, available: () => upgradeLevel(scene, 'fleet-feet') < 3, apply: () => { bumpUpgrade(scene, 'fleet-feet'); scene.heroSpeed = Math.min(310, scene.heroSpeed * 1.06); } },
+    { id: 'fleet-feet', category: 'UTILITY', title: 'FLEET FEET', desc: '+3% movement speed.', weight: 1.05, available: () => upgradeLevel(scene, 'fleet-feet') < RUN_BALANCE.player.fleetFeetMaxLevel, apply: () => { bumpUpgrade(scene, 'fleet-feet'); scene.heroSpeed = getPlayerMoveSpeed(scene.__baseHeroMoveSpeed, upgradeLevel(scene, 'fleet-feet')); } },
     { id: 'scrap-magnet', category: 'UTILITY', title: 'SCRAP MAGNET', desc: 'Increase Scrap pickup radius by 25%.', weight: 1, available: () => upgradeLevel(scene, 'scrap-magnet') < 4, apply: () => { bumpUpgrade(scene, 'scrap-magnet'); scene.magnetRadius *= 1.25; } },
     { id: 'armor-plate', category: 'UTILITY', title: 'ARMOR PLATE', desc: '+15 max HP and restore 15 HP.', weight: .95, available: () => upgradeLevel(scene, 'armor-plate') < 4, apply: () => { bumpUpgrade(scene, 'armor-plate'); scene.heroMaxHp += 15; scene.heroHp = Math.min(scene.heroMaxHp, scene.heroHp + 15); } },
     { id: 'call-rig', category: 'FORTRESS', title: 'CALL THE RIG', desc: 'Summon the moving Fortress companion.', weight: .7, available: () => scene.level >= 2 && !scene.rigSummoned, apply: () => summonRig(scene) },
@@ -363,6 +366,7 @@ function installUpdateCoordinator(scene) {
       return;
     }
 
+    this.heroSpeed = Math.min(Number(this.heroSpeed) || RUN_BALANCE.player.baseMoveSpeed, RUN_BALANCE.player.moveSpeedHardCap);
     baseSceneUpdate(time, delta);
     if (this.gameOver) return;
     this.refreshProgressHud?.();
