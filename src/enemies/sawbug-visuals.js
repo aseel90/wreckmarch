@@ -82,7 +82,6 @@ function replaceAnimation(scene, key, frames, frameRate, repeat = -1) {
 function installAnimations(scene) {
   replaceAnimation(scene, 'sawbug-idle', IDLE_KEYS, 3, -1);
   replaceAnimation(scene, 'sawbug-walk', WALK_KEYS, 8, -1);
-  // attack-1 and attack-2 contain corrupted pixels; keep windup on the verified clean attack-0 pose.
   replaceAnimation(scene, 'sawbug-acid-attack', [ATTACK_KEYS[0]], 1, 0);
   replaceAnimation(scene, 'sawbug-acid-flight', PROJECTILE_KEYS, 10, -1);
   replaceAnimation(scene, 'sawbug-acid-splash', SPLASH_KEYS, 12, 0);
@@ -144,9 +143,6 @@ function runBrowserSelfTest(scene) {
   tuneSawbugVisual(sawbug);
   sawbug.hp = 999999;
   sawbug.maxHp = 999999;
-  // Keep the browser regression deterministic without changing production behavior:
-  // reset any state that may have been initialized during spawn, then let the real
-  // acid-spitter state machine rebuild from this test-only opening configuration.
   sawbug.behaviorConfig = {
     ...sawbug.behaviorConfig,
     initialCooldownMinMs: 0,
@@ -159,12 +155,13 @@ function runBrowserSelfTest(scene) {
   scene.__sawbugAcidShotsSpawned = 0;
   document.documentElement.dataset.wreckmarchSawbugTest = 'running';
 
-  // The observer uses wall-clock time so CI load cannot stretch the test deadline
-  // just because Phaser advances scene.time slowly. Gameplay still runs on Phaser time.
   const wallNow = () => globalThis.performance?.now?.() ?? Date.now();
   const startedAt = wallNow();
+  let completed = false;
   const finishWhenShotObserved = () => {
+    if (completed) return;
     if (!scene?.sys?.isActive?.()) {
+      completed = true;
       window.__WM_SAWBUG_TEST__ = { ok: false, status: 'failed', reason: 'scene-inactive' };
       document.documentElement.dataset.wreckmarchSawbugTest = 'failed';
       return;
@@ -184,6 +181,7 @@ function runBrowserSelfTest(scene) {
     const elapsed = wallNow() - startedAt;
     const ok = Object.values(checks).every(Boolean);
     const status = ok ? 'passed' : 'running';
+    if (ok) completed = true;
 
     window.__WM_SAWBUG_TEST__ = {
       ok,
@@ -205,8 +203,6 @@ function runBrowserSelfTest(scene) {
 
     window.__WM_LOG__?.(`Sawbug browser test ${ok ? 'PASSED' : 'FAILED'}: ${JSON.stringify(window.__WM_SAWBUG_TEST__)}`);
   };
-  // Expose a test-only refresh hook so browser E2E can synchronize immediately after
-  // it drives the real acid-spitter path, instead of waiting on timer scheduling.
   scene.__wmSawbugSelfTestRefresh = finishWhenShotObserved;
   globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS);
 }

@@ -48,9 +48,11 @@ describe('Sawbug production frames', () => {
     expect(source).toContain("const status = ok ? 'passed' : 'running'");
     expect(source).not.toContain('SELF_TEST_TIMEOUT_MS');
     expect(source).toContain("const wallNow = () => globalThis.performance?.now?.() ?? Date.now()");
+    expect(source).toContain('let completed = false');
+    expect(source).toContain('if (completed) return');
+    expect(source).toContain('if (ok) completed = true');
     expect(source).toContain('scene.__wmSawbugSelfTestRefresh = finishWhenShotObserved');
     expect(source).toContain('globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS)');
     expect(source).not.toContain('scene.time?.delayedCall?.(SELF_TEST_POLL_MS, finishWhenShotObserved)');
   });
-
 });
