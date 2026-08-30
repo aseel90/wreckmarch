@@ -10,7 +10,7 @@ test('Long Barrel uses both canonical weapon modifiers in the final upgrade scen
     { timeout: 30_000 }
   ).toBe(true);
 
-  const result = await page.evaluate(async () => {
+  const before = await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
@@ -27,41 +27,66 @@ test('Long Barrel uses both canonical weapon modifiers in the final upgrade scen
     scene.level = 1;
     scene.rigSummoned = false;
 
-    const beforeProjectileSpeed = scene.primaryWeapon.projectileSpeed;
-    const beforeRange = scene.primaryWeapon.range;
-    const baseProjectileSpeed = scene.runStatState.state.base.weapon.projectileSpeed;
-    const baseRange = scene.runStatState.state.base.weapon.range;
-
-    scene.openUpgradeCards();
-    await new Promise(resolve => setTimeout(resolve, 140));
-
-    const upgradeScene = game.scene.getScene('UpgradeSceneV4');
-    const choiceIds = (upgradeScene.choices || []).map((choice: any) => choice.id);
-    const longBarrelIndex = choiceIds.indexOf('long-barrel');
-    if (longBarrelIndex < 0) throw new Error(`Long Barrel missing from forced offer: ${choiceIds.join(',')}`);
-    upgradeScene.choose(longBarrelIndex);
-    await new Promise(resolve => setTimeout(resolve, 140));
-
-    return {
-      choiceIds,
-      beforeProjectileSpeed,
-      beforeRange,
+    const snapshot = {
       projectileSpeed: scene.primaryWeapon.projectileSpeed,
       range: scene.primaryWeapon.range,
-      baseProjectileSpeed,
-      baseRange,
+      baseProjectileSpeed: scene.runStatState.state.base.weapon.projectileSpeed,
+      baseRange: scene.runStatState.state.base.weapon.range
+    };
+
+    scene.openUpgradeCards();
+    return snapshot;
+  });
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      const upgradeScene = game.scene.getScene('UpgradeSceneV4');
+      if (!upgradeScene?.sys?.isActive?.()) return [];
+      return (upgradeScene.choices || []).map((choice: any) => choice.id);
+    }),
+    { timeout: 10_000 }
+  ).toEqual(['long-barrel']);
+
+  await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const upgradeScene = game.scene.getScene('UpgradeSceneV4');
+    const choiceIds = (upgradeScene.choices || []).map((choice: any) => choice.id);
+    const index = choiceIds.indexOf('long-barrel');
+    if (index < 0) throw new Error(`Long Barrel missing from forced offer: ${choiceIds.join(',')}`);
+    upgradeScene.choose(index);
+  });
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      return game.scene.getScene('Wreckmarch').upgradeLevels['long-barrel'] || 0;
+    }),
+    { timeout: 10_000 }
+  ).toBe(1);
+
+  const result = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    return {
+      projectileSpeed: scene.primaryWeapon.projectileSpeed,
+      range: scene.primaryWeapon.range,
+      mirrorProjectileSpeed: scene.projectileSpeed,
+      baseProjectileSpeed: scene.runStatState.state.base.weapon.projectileSpeed,
+      baseRange: scene.runStatState.state.base.weapon.range,
       level: scene.upgradeLevels['long-barrel'],
       projectileModifierIds: (scene.runStatState.state.modifiers.weapon.projectileSpeed || []).map((modifier: any) => modifier.id),
       rangeModifierIds: (scene.runStatState.state.modifiers.weapon.range || []).map((modifier: any) => modifier.id)
     };
   });
 
-  expect(result.choiceIds).toEqual(['long-barrel']);
   expect(result.level).toBe(1);
-  expect(result.projectileSpeed).toBeCloseTo(result.beforeProjectileSpeed * 1.18);
-  expect(result.range).toBeCloseTo(result.beforeRange * 1.10);
-  expect(result.baseProjectileSpeed).toBe(result.beforeProjectileSpeed);
-  expect(result.baseRange).toBe(result.beforeRange);
+  expect(result.projectileSpeed).toBeCloseTo(before.projectileSpeed * 1.18);
+  expect(result.range).toBeCloseTo(before.range * 1.10);
+  expect(result.baseProjectileSpeed).toBe(before.baseProjectileSpeed);
+  expect(result.baseRange).toBe(before.baseRange);
+  expect(result.baseProjectileSpeed).toBe(before.projectileSpeed);
+  expect(result.baseRange).toBe(before.range);
   expect(result.projectileModifierIds).toContain('long-barrel@1:0');
   expect(result.rangeModifierIds).toContain('long-barrel@1:1');
 });
