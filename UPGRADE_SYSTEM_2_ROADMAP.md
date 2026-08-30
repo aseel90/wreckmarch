@@ -147,8 +147,8 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
   - Verified on `51a90d7`: canonical Character `pickupRadiusMultiplier` preserves the 135px Phase C base radius and applies +25% multiplicatively per level (max 4) through RunStatState. Shared Phase C/C1 registry adapter, unit parity, deterministic final-scene attraction E2E, Quality, Smoke, all three E2E shards, aggregate E2E and post-merge Live Chromium passed on the same `main` SHA with no open CI/Live failure issue.
 - [x] Migrate Armor Plate. — **Status:** ✅ DONE
   - Verified on gameplay commit `361c26b` with production recovery on `f49a580`: canonical mixed upgrade adds +15 `character.maxHp` FLAT per level (max 4) plus transactional `RESTORE_HP` capped at the newly resolved max HP. Shared Phase C/C1 registry wiring, rollback coverage, Quality, Smoke, all E2E shards, aggregate E2E, deploy and post-deploy Live Chromium passed; stale Pages module caching was cleared by bumping the C3/C3.1 import fingerprints, and Live Issue #93 auto-closed after recovery.
-- [ ] Decide temporary handling of Call the Rig without expanding old Rig system. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-  - Canonical temporary strategy: registry-owned one-level `COMPANION` card with `SUMMON_RIG` named effect. The effect delegates only to `RigSystem.summon()`; level-2 offer gating is data-driven, and reserved Rig Overdrive/Twin Cannon choices remain unavailable in both Phase C and C1. Final checkbox waits for clean PR + `main` + Live Chromium verification.
+- [x] Decide temporary handling of Call the Rig without expanding old Rig system. — **Status:** ✅ DONE
+  - Verified on `a44f551`: registry-owned one-level `COMPANION` card with a named `SUMMON_RIG` effect delegates only to `RigSystem.summon()`. Level-2 offer gating is data-driven; reserved Rig Overdrive/Twin Cannon choices remain unavailable in Phase C/C1. Unit/final-scene coverage, Quality, Smoke, all three E2E shards, aggregate E2E, Pages deployment and post-deploy production browser gates passed with no open CI/Live failure issue.
 - [ ] Remove/deactivate obsolete duplicate card definitions after migration. — **Status:** 🧹 POST-MIGRATION
 
 ---
@@ -224,9 +224,9 @@ Do not create additional characters solely to prove the upgrade system.
 
 The current Rig/robot-dog visual/support system exists, but Upgrade System 2.0 must not accidentally expand or lock its final design during this migration.
 
-- [ ] Decide `Call the Rig` migration strategy. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [x] Decide `Call the Rig` migration strategy. — **Status:** ✅ DONE
 - [x] Keep reserved Rig upgrades unavailable until the future companion tree is designed. — **Status:** ✅ DONE
-- [ ] Do not convert old Rig internals into permanent Upgrade 2.0 API unless they are still valid for the future companion design. — **Status:** ⚪ NOT STARTED
+- [x] Do not convert old Rig internals into permanent Upgrade 2.0 API unless they are still valid for the future companion design. — **Status:** ✅ DONE
 
 Preferred temporary strategy:
 
@@ -312,11 +312,11 @@ Do not batch multiple gameplay migrations into one PR unless they share exactly 
 
 Core migration is complete when:
 
-- [ ] All active current non-Rig cards are registry-owned. — **Status:** 🟡 IN PROGRESS
+- [x] All active current non-Rig cards are registry-owned. — **Status:** ✅ DONE
 - [ ] Duplicate Phase C/C1 gameplay implementations are removed. — **Status:** 🟡 IN PROGRESS
 - [x] Character/Weapon stat ownership is canonical. — **Status:** ✅ DONE
 - [x] Current mixed stat/effect transaction pattern is proven. — **Status:** ✅ DONE
-- [ ] Current temporary Rig handling is explicitly decided and tested. — **Status:** ⚪ NOT STARTED
+- [x] Current temporary Rig handling is explicitly decided and tested. — **Status:** ✅ DONE
 - [ ] Roll service is extracted from scene UI. — **Status:** ⚪ NOT STARTED
 - [ ] Rarity model is data-driven. — **Status:** ⚪ NOT STARTED
 - [ ] Production verification remains green. — **Status:** 🟡 ACTIVE GATE
@@ -369,7 +369,7 @@ The browser verification architecture is part of the project standard, not a tem
 - [x] Live failure Issue auto-opens/updates. — **Status:** ✅ DONE
 - [x] Live recovery auto-closes Issue. — **Status:** ✅ DONE
 - [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
-  - Current verified production commit: `f49a580` (Armor Plate gameplay from `361c26b` plus C3/C3.1 Pages cache-bust; Quality/Smoke/all E2E shards/aggregate E2E and deploy passed, post-deploy Live Chromium recovered, and Live Issue #93 auto-closed).
+  - Current verified gameplay commit: `a44f551` (Call the Rig migration; PR Quality/Smoke/all E2E shards/aggregate E2E passed, `main` deployed successfully, production browser verification stayed green, and no CI/Live failure issue is open).
 
 ---
 
@@ -391,11 +391,9 @@ The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POL
 
 # 22. Next execution order
 
-1. Finish current U2 card migrations.
-2. Decide temporary `Call the Rig` handling without expanding the old Rig system.
-3. Remove/deactivate obsolete duplicate card definitions.
-4. Extract upgrade roll service.
-5. Add rarity system.
-6. Add save/run-state snapshot readiness.
+1. Remove/deactivate obsolete duplicate card definitions left after U2 migration.
+2. Extract upgrade roll service.
+3. Add rarity system.
+4. Add save/run-state snapshot readiness.
 
 Do not reorder these merely to add new feature content.
