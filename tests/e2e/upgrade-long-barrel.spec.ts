@@ -34,7 +34,13 @@ test('Long Barrel uses both canonical weapon modifiers in the final upgrade scen
       baseRange: scene.runStatState.state.base.weapon.range
     };
 
-    scene.openUpgradeCards();
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      scene.openUpgradeCards();
+    } finally {
+      Math.random = originalRandom;
+    }
     return snapshot;
   });
 

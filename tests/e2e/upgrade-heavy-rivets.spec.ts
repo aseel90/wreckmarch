@@ -29,7 +29,13 @@ test('Heavy Rivets uses the canonical registry path in the final upgrade scene',
 
     const beforeDamage = scene.primaryWeapon.damage;
     const baseDamage = scene.runStatState.state.base.weapon.damage;
-    scene.openUpgradeCards();
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      scene.openUpgradeCards();
+    } finally {
+      Math.random = originalRandom;
+    }
     await new Promise(resolve => setTimeout(resolve, 140));
 
     const upgradeScene = game.scene.getScene('UpgradeSceneV4');
