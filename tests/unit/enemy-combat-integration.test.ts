@@ -12,7 +12,7 @@ describe('authoritative CombatSystem integration', () => {
     expect(game).not.toContain('this.physics.add.overlap(this.bullets, this.enemies');
     expect(game).not.toContain('onBulletHit(bullet, enemy)');
     expect(game).not.toContain('killEnemy(enemy)');
-    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=5'");
+    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=6'");
     expect(system).toContain('scene.combatSystem = new CombatSystem(scene)');
     expect(system).toContain('scene.combatSystem.installOverlaps()');
     expect(system).not.toContain('scene.onBulletHit');
@@ -21,10 +21,12 @@ describe('authoritative CombatSystem integration', () => {
     expect(combat).toContain('return this.enemy.hitByProjectile(bullet, enemy)');
   });
 
-  it('routes swept projectile hits directly from ProjectileSystem to CombatSystem', () => {
+  it('routes swept projectile hits directly from ProjectileSystem to CombatSystem, including pierce chains', () => {
     expect(enemyCombat).toContain('resolveEnemyProjectileHit');
     expect(enemyCombat).toContain('resolveEnemyScrapDropCount');
-    expect(projectileSystem).toContain('scene.combatSystem?.hitEnemyByProjectile?.(bullet, enemy)');
+    expect(projectileSystem).toContain('const hitEnemy = scene.combatSystem?.hitEnemyByProjectile');
+    expect(projectileSystem).toContain('hitEnemy.call(scene.combatSystem, bullet, enemy)');
+    expect(projectileSystem).toContain('while (bullet.active)');
     expect(projectileSystem).not.toContain('this.onBulletHit(bullet, enemy)');
   });
 
