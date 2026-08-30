@@ -1,4 +1,4 @@
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=6';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=7';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
 const W = 960;
@@ -20,198 +20,68 @@ async function getScene(timeoutMs = 9000) {
   while (performance.now() - started < timeoutMs) {
     const game = window.Phaser?.GAMES?.find(Boolean) || window.Phaser?.GAMES?.[0];
     const scene = game?.scene?.getScene?.('Wreckmarch');
-    if (scene?.sys?.isActive?.() && scene.hero && scene.primaryWeapon && scene.upgradeLevels) return scene;
+    if (scene?.sys?.isActive?.() && scene.hero && scene.openUpgradeCards) return scene;
     await wait(60);
   }
-  throw new Error('Timed out waiting for Wreckmarch scene for Phase C.1');
+  throw new Error('Phase C.1: scene timeout');
 }
 
-function loadAimAssets(scene) {
-  if (scene.textures.exists('c1-aim-atlas')) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    let failed = false;
-    const fail = file => {
-      if (failed) return;
-      failed = true;
-      reject(new Error(`Phase C.1 aim asset failed: ${file?.key || 'unknown'}`));
-    };
-    scene.load.once('loaderror', fail);
-    scene.load.once('complete', () => {
-      scene.load.off('loaderror', fail);
-      if (!failed) resolve();
-    });
-    scene.load.svg('c1-aim-atlas', './assets/hero/aim-poses.svg');
-    scene.load.start();
-  });
-}
-
-function installLandscapeCanvas(scene) {
-  scene.scale.setGameSize(W, H);
-  scene.cameras.main.setSize(W, H);
-  scene.cameras.main.setViewport(0, 0, W, H);
-  scene.cameras.main.setBounds(0, 0, 2200, 2200);
-  scene.cameras.main.centerOn(scene.hero.x, scene.hero.y);
-}
-
-function reinstallLandscapeJoystick(scene) {
-  scene.input.off('pointerdown');
-  scene.input.off('pointermove');
-  scene.input.off('pointerup');
-  scene.input.off('pointerupoutside');
-  scene.input.once('pointerdown', () => scene.unlockAudio?.());
-
-  scene.joy.radius = 62;
-  scene.joy.active = false;
-  scene.joy.id = null;
-  const homeX = 96;
-  const homeY = H - 92;
-  scene.joyBase.setPosition(homeX, homeY).setAlpha(.38).setScrollFactor(0);
-  scene.joyKnob.setPosition(homeX, homeY).setAlpha(.4).setScrollFactor(0);
-
-  scene.input.on('pointerdown', p => {
-    if (scene.gameOver || scene.upgradeOpen || p.y < 92 || p.x > W * .58) return;
-    scene.joy.id = p.id;
-    scene.joy.active = true;
-    scene.joy.origin.set(p.x, p.y);
-    scene.joy.current.set(p.x, p.y);
-    scene.joyBase.setPosition(p.x, p.y).setAlpha(.7);
-    scene.joyKnob.setPosition(p.x, p.y).setAlpha(.86);
-  });
-  scene.input.on('pointermove', p => {
-    if (!scene.joy.active || p.id !== scene.joy.id) return;
-    scene.joy.current.set(p.x, p.y);
-    const d = new Phaser.Math.Vector2(p.x - scene.joy.origin.x, p.y - scene.joy.origin.y);
-    if (d.length() > scene.joy.radius) d.setLength(scene.joy.radius);
-    scene.joyKnob.setPosition(scene.joy.origin.x + d.x, scene.joy.origin.y + d.y);
-  });
-  const release = p => {
-    if (p.id !== scene.joy.id) return;
-    scene.joy.active = false;
-    scene.joy.id = null;
-    scene.joyBase.setPosition(homeX, homeY).setAlpha(.38);
-    scene.joyKnob.setPosition(homeX, homeY).setAlpha(.4);
-  };
-  scene.input.on('pointerup', release);
-  scene.input.on('pointerupoutside', release);
-}
-
-function angleToPose(angle) {
-  const normalized = Phaser.Math.Angle.Normalize(angle);
-  return Math.round(normalized / (Math.PI / 4)) % 8;
-}
-
-function installTwoHandAim(scene) {
-  scene.weaponRig?.setVisible?.(false);
-  scene.weaponArm?.setVisible?.(false);
-  scene.weaponSprite?.setVisible?.(false);
-
-  scene.aimPose?.destroy?.();
-  scene.aimPose = scene.add.image(scene.hero.x, scene.hero.y + 8, 'c1-aim-atlas')
-    .setOrigin(.5)
-    .setCrop(0, 0, 120, 100)
-    .setDisplaySize(90, 75)
-    .setDepth(26);
-  scene.weaponSprite = scene.aimPose;
-  scene.visualAimAngle = 0;
-  scene.currentAimPose = 0;
-
-  scene.updateWeaponPose = function() {
-    const pose = angleToPose(this.weaponAim);
-    if (pose !== this.currentAimPose) {
-      this.currentAimPose = pose;
-      this.aimPose.setCrop(pose * 120, 0, 120, 100);
-    }
-    this.visualAimAngle = pose * (Math.PI / 4);
-    this.aimPose.setPosition(this.hero.x, this.hero.y + 8);
-    const behind = pose >= 5 && pose <= 7;
-    this.aimPose.setDepth(behind ? 18 : 27);
-  };
-
-  scene.weaponSystem.configureHero({
-    aimYOffset: 6,
-    targetTurnRate: .24,
-    moveTurnRate: .18,
-    twinSpread2: .055,
-    twinSpread3: .085,
-    muzzleResolver: spread => {
-      const visual = scene.visualAimAngle + spread;
-      const radius = 49;
-      return new Phaser.Math.Vector2(
-        scene.hero.x + Math.cos(visual) * radius,
-        scene.hero.y + 8 + Math.sin(visual) * radius
-      );
-    },
-    fireFeedback: ({ visualAngle, muzzle }) => {
-      const flash = scene.add.image(muzzle.x, muzzle.y, 'flash')
-        .setDepth(31).setRotation(visualAngle).setScale(.5);
-      scene.tweens.add({ targets: flash, alpha: 0, scale: .08, duration: 68, onComplete: () => flash.destroy() });
-      scene.tweens.killTweensOf(scene.aimPose);
-      scene.aimPose.setDisplaySize(85, 71);
-      scene.tweens.add({ targets: scene.aimPose, displayWidth: 90, displayHeight: 75, duration: 72, ease: 'Quad.Out' });
-      scene.playTone?.(165, .045, 'square', .019, -34);
-    }
-  });
-
-  scene.updateWeaponPose();
+function createIconTexture(scene, id, index) {
+  const key = `c1-icon-${id}`;
+  if (scene.textures.exists(key)) return key;
+  const g = scene.make.graphics({ add: false });
+  const color = [0xd98446,0xf0b45d,0xb6d9e0,0x8fc6d6,0x6bc6a5,0x55c6d8,0x9cabb4,0xd4ad62,0xd4ad62,0xd4ad62][index % 10];
+  g.fillStyle(0x10171d, 1); g.fillRoundedRect(0, 0, 190, 120, 16); g.lineStyle(5, color, .95); g.strokeRoundedRect(4, 4, 182, 112, 14);
+  g.lineStyle(9, color, .92);
+  const cx=95,cy=59;
+  switch(index){
+    case 0: g.beginPath();g.moveTo(40,78);g.lineTo(142,43);g.strokePath();g.fillStyle(color,1);g.fillCircle(145,42,13);g.fillRect(53,63,55,10);break;
+    case 1: for(let i=0;i<3;i++){g.beginPath();g.moveTo(47+i*25,84);g.lineTo(100+i*21,37);g.strokePath();}break;
+    case 2: g.beginPath();g.moveTo(37,77);g.lineTo(147,42);g.strokePath();g.fillStyle(color,1);g.fillTriangle(146,42,121,31,128,57);break;
+    case 3: g.beginPath();g.moveTo(38,80);g.lineTo(148,40);g.strokePath();g.beginPath();g.moveTo(45,97);g.lineTo(155,57);g.strokePath();break;
+    case 4: g.fillStyle(color,1);g.fillTriangle(47,88,96,27,105,93);g.fillTriangle(92,91,141,31,149,96);break;
+    case 5: g.fillStyle(color,1);g.fillCircle(cx,cy,15);g.lineStyle(5,color,.8);for(let a=0;a<6;a++){const ang=a*Math.PI/3;g.beginPath();g.moveTo(cx+Math.cos(ang)*25,cy+Math.sin(ang)*25);g.lineTo(cx+Math.cos(ang)*55,cy+Math.sin(ang)*55);g.strokePath();}break;
+    case 6: g.fillStyle(color,1);g.fillRoundedRect(58,31,74,57,10);g.fillStyle(0x10171d,1);g.fillRoundedRect(73,46,44,27,6);break;
+    case 7: g.fillStyle(color,1);g.fillRoundedRect(41,45,108,44,12);g.fillCircle(63,91,19);g.fillCircle(128,91,19);g.fillStyle(0x10171d,1);g.fillCircle(63,91,8);g.fillCircle(128,91,8);break;
+    case 8: g.fillStyle(color,1);g.fillRoundedRect(50,43,92,46,10);g.fillStyle(0x10171d,1);g.fillRect(65,51,45,30);g.lineStyle(6,color,1);g.beginPath();g.moveTo(109,59);g.lineTo(158,35);g.strokePath();break;
+    default:g.fillStyle(color,1);g.fillRoundedRect(44,47,99,38,10);g.lineStyle(7,color,1);g.beginPath();g.moveTo(102,64);g.lineTo(160,44);g.strokePath();g.beginPath();g.moveTo(102,69);g.lineTo(160,77);g.strokePath();
+  }
+  g.generateTexture(key,190,120);g.destroy();return key;
 }
 
 function installLandscapeHud(scene) {
-  scene.children.list
-    .filter(obj => obj?.name === 'phase-b-hud-shade' || obj?.name === 'c1-hud-shade')
-    .forEach(obj => obj.destroy());
+  scene.scale.resize(W, H);
+  scene.cameras.main.setViewport(0, 0, W, H).setSize(W, H).setZoom(.88);
+  scene.cameras.main.setBounds(0,0,2200,2200);
+  scene.physics.world.setBounds(0,0,2200,2200);
+  scene.cameras.main.startFollow(scene.hero,true,.075,.075);
+  scene.cameras.main.roundPixels=true;
 
-  scene.add.rectangle(W / 2, 45, W, 90, 0x090d13, .91)
-    .setDepth(890).setScrollFactor(0).setName('c1-hud-shade');
-
-  scene.titleText.setPosition(24, 14).setFontSize(22).setDepth(920).setScrollFactor(0);
-  scene.timerText.setPosition(W - 24, 16).setFontSize(16).setDepth(920).setScrollFactor(0);
-  scene.waveText.setPosition(W / 2, 18).setFontSize(12).setDepth(920).setScrollFactor(0);
-  scene.levelText.setPosition(205, 53).setFontSize(12).setDepth(922).setScrollFactor(0);
-  scene.scrapText.setPosition(W - 205, 50).setFontSize(13).setDepth(922).setScrollFactor(0);
-
-  scene.xpBg?.destroy?.();
-  scene.xpFill?.destroy?.();
-  scene.xpBg = scene.add.rectangle(W / 2, 61, 470, 12, 0x111820, .98)
-    .setStrokeStyle(2, 0x59636d, .75).setDepth(918).setScrollFactor(0);
-  scene.xpFill = scene.add.rectangle(W / 2 - 232, 61, 464, 7, 0x55d7e5, 1)
-    .setOrigin(0, .5).setDepth(919).setScrollFactor(0);
-
-  scene.hint.setPosition(W / 2, H - 12).setFontSize(10).setDepth(800).setScrollFactor(0);
-  scene.joyBase.setPosition(92, H - 118).setScrollFactor(0);
-  scene.joyKnob.setPosition(92, H - 118).setScrollFactor(0);
-
-  if (scene.hitboxButton) {
-    scene.hitboxButton.setPosition(W - 18, H - 50).setScrollFactor(0).setDepth(5100);
-  }
-
-  scene.refreshProgressHud = function() {
-    const ratio = Phaser.Math.Clamp(this.scrapXp / Math.max(1, this.scrapNeeded), 0, 1);
-    this.levelText.setText(`LV ${this.level}`);
-    this.scrapText.setText(`SCRAP ${this.scrapXp}/${this.scrapNeeded}`);
-    this.xpFill.setScale(ratio, 1);
-  };
+  [scene.levelText,scene.scrapText,scene.xpBg,scene.xpFill,scene.titleText,scene.timerText,scene.waveText].forEach(o=>o?.destroy?.());
+  const shade=scene.add.rectangle(0,0,W,66,0x081014,.94).setOrigin(0).setScrollFactor(0).setDepth(70).setStrokeStyle(2,0x53636b,.5);
+  scene.titleText=scene.add.text(18,10,'WRECKMARCH',{fontFamily:'Arial Black, Arial',fontSize:'18px',color:'#f0d09b'}).setScrollFactor(0).setDepth(72);
+  scene.timerText=scene.add.text(W-18,10,'00:00',{fontFamily:'Arial Black, Arial',fontSize:'14px',color:'#e7ecee'}).setOrigin(1,0).setScrollFactor(0).setDepth(72);
+  scene.waveText=scene.add.text(W/2,10,'WAVE 1',{fontFamily:'Arial Black, Arial',fontSize:'11px',color:'#55cbd9'}).setOrigin(.5,0).setScrollFactor(0).setDepth(72);
+  scene.levelText=scene.add.text(18,39,'LV 1',{fontFamily:'Arial Black, Arial',fontSize:'10px',color:'#f0d09b'}).setScrollFactor(0).setDepth(72);
+  scene.scrapText=scene.add.text(69,39,'SCRAP 0/10',{fontFamily:'Arial',fontSize:'9px',color:'#aebbc2'}).setScrollFactor(0).setDepth(72);
+  scene.xpBg=scene.add.rectangle(168,47,390,8,0x131a1f,.95).setOrigin(0,.5).setScrollFactor(0).setDepth(72).setStrokeStyle(1,0x5f717a,.65);
+  scene.xpFill=scene.add.rectangle(170,47,386,5,0xe1a55d,1).setOrigin(0,.5).setScrollFactor(0).setDepth(73);
+  scene.hudShade=shade;
+  scene.refreshProgressHud=function(){const r=Phaser.Math.Clamp(this.scrapXp/Math.max(1,this.scrapNeeded),0,1);this.levelText.setText(`LV ${this.level}`);this.scrapText.setText(`SCRAP ${this.scrapXp}/${this.scrapNeeded}`);this.xpFill.setScale(r,1);};
   scene.refreshProgressHud();
 }
 
-function upgradeLevel(scene, id) {
-  return scene.upgradeLevels?.[id] || 0;
-}
-
-function bumpUpgrade(scene, id) {
-  scene.upgradeLevels[id] = upgradeLevel(scene, id) + 1;
-}
-
-function summonRigC1(scene) {
-  if (scene.rigSummoned) return;
-  scene.rigSummoned = true;
-  scene.rigFireDelay = 920;
-  scene.rigDamageScale = .58;
-  scene.rigShots = 1;
-  scene.lastRigShot = 0;
-  scene.cart.setVisible(true).setActive(true).setAlpha(0).setScale(.98);
-  scene.cart.setPosition(scene.hero.x - 155, scene.hero.y + 95);
-  scene.tweens.add({ targets: scene.cart, alpha: 1, duration: 260, ease: 'Cubic.Out' });
-  scene.cameras.main.flash(110, 80, 210, 225, false);
+function installAimPose(scene) {
+  scene.weaponArm?.setVisible(false);scene.weaponSprite?.setVisible(false);scene.weaponHand?.setVisible(false);
+  const armA=scene.add.rectangle(0,0,30,8,0x704e37).setStrokeStyle(2,0x261b15,.9).setOrigin(0,.5).setDepth(31);
+  const armB=scene.add.rectangle(0,0,28,8,0x704e37).setStrokeStyle(2,0x261b15,.9).setOrigin(0,.5).setDepth(31);
+  const handA=scene.add.circle(0,0,5,0x916445).setStrokeStyle(2,0x251915,.9).setDepth(33);
+  const handB=scene.add.circle(0,0,5,0x916445).setStrokeStyle(2,0x251915,.9).setDepth(33);
+  const gun=scene.add.sprite(0,0,'rivet-gun').setOrigin(.18,.5).setDisplaySize(76,36).setDepth(32);
+  scene.aimPose={armA,armB,handA,handB,gun};
+  scene.currentAimPose=0;scene.visualAimAngle=0;
+  const oldUpdate=scene.updateWeaponRig?.bind(scene);
+  scene.updateWeaponRig=function(){oldUpdate?.();const target=this.weaponTarget;let a=this.weaponAim||0;if(target)a=Phaser.Math.Angle.Between(this.hero.x,this.hero.y+5,target.x,target.y);const step=Math.PI/4,q=Math.round(Phaser.Math.Angle.Normalize(a)/step)%8,qa=q*step,u=new Phaser.Math.Vector2(Math.cos(qa),Math.sin(qa)),p=new Phaser.Math.Vector2(-u.y,u.x);this.currentAimPose=q;this.visualAimAngle=qa;const rear=this.hero.getCenter(),shoulderA=new Phaser.Math.Vector2(rear.x+p.x*9,rear.y+6+p.y*4),shoulderB=new Phaser.Math.Vector2(rear.x-p.x*7,rear.y+6-p.y*3),grip=new Phaser.Math.Vector2(rear.x+u.x*18+p.x*3,rear.y+6+u.y*15+p.y*3),front=new Phaser.Math.Vector2(rear.x+u.x*34-p.x*3,rear.y+6+u.y*25-p.y*3);const limb=(r,s,h)=>{r.setPosition(s.x,s.y).setDisplaySize(Phaser.Math.Distance.Between(s.x,s.y,h.x,h.y),8).setRotation(Phaser.Math.Angle.Between(s.x,s.y,h.x,h.y));};limb(armA,shoulderA,grip);limb(armB,shoulderB,front);handA.setPosition(grip.x,grip.y);handB.setPosition(front.x,front.y);gun.setPosition(rear.x+u.x*30,rear.y+6+u.y*24).setRotation(qa);this.weaponMuzzle.set(rear.x+u.x*69,rear.y+6+u.y*69);const back=q>=5&&q<=7;[armA,armB,handA,handB,gun].forEach((o,i)=>o.setDepth((back?18:29)+i));};
 }
 
 function c1UpgradePool(scene) {
@@ -223,15 +93,9 @@ function c1UpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
     createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),
-    { id:'call-rig', category:'FORTRESS', title:'CALL THE RIG', desc:'Summon the moving Fortress companion.', weight:.7,
-      available:()=>scene.level>=2&&!scene.rigSummoned,
-      apply:()=>summonRigC1(scene) },
-    { id:'rig-overdrive', category:'FORTRESS', title:'RIG OVERDRIVE', desc:'Fortress cannon fires 15% faster.', weight:.92,
-      available:()=>scene.rigSummoned&&upgradeLevel(scene,'rig-overdrive')<4,
-      apply:()=>{ bumpUpgrade(scene,'rig-overdrive'); scene.rigFireDelay=Math.max(360,scene.rigFireDelay*.85); } },
-    { id:'twin-cannon', category:'FORTRESS', title:'TWIN CANNON', desc:'Fortress fires another support shot.', weight:.7,
-      available:()=>scene.rigSummoned&&upgradeLevel(scene,'twin-cannon')<1,
-      apply:()=>{ bumpUpgrade(scene,'twin-cannon'); scene.rigShots=2; } }
+    createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' }),
+    { id:'rig-overdrive', category:'FORTRESS', title:'RIG OVERDRIVE', desc:'Reserved for the future companion upgrade tree.', weight:0, available:()=>false, apply:()=>{} },
+    { id:'twin-cannon', category:'FORTRESS', title:'TWIN CANNON', desc:'Reserved for the future companion upgrade tree.', weight:0, available:()=>false, apply:()=>{} }
   ];
 }
 
@@ -248,200 +112,31 @@ function pickC1Choices(scene, count=3) {
   return chosen;
 }
 
-function categoryHex(category) {
-  return CATEGORY_COLORS[category] || CATEGORY_COLORS.HERO;
-}
-
-class UpgradeScene extends Phaser.Scene {
-  constructor() { super('UpgradeScene'); }
-
-  init(data) {
-    this.payload = data || {};
-    this.selectedIndex = 0;
-    this.cardViews = [];
-    this.locked = false;
+function installUpgradeScene(scene) {
+  const existing=scene.game.scene.getScene('UpgradeScene');
+  if(existing) scene.game.scene.remove('UpgradeScene');
+  class UpgradeSceneV2 extends Phaser.Scene {
+    constructor(){super('UpgradeSceneV2');}
+    init(data){this.gameScene=data.gameScene;this.choices=data.choices;this.level=data.level;this.selectedIndex=0;this.cards=[];this.locked=false;}
+    create(){const W=this.scale.width,H=this.scale.height;this.add.rectangle(W/2,H/2,W,H,0x05080c,.94);this.add.text(W/2,20,`LEVEL ${this.level}`,{fontFamily:'Arial Black, Arial',fontSize:'12px',color:'#55cfdd'}).setOrigin(.5);this.add.text(W/2,47,'CHOOSE YOUR UPGRADE',{fontFamily:'Arial Black, Arial',fontSize:'24px',color:'#f0d09b'}).setOrigin(.5);this.add.text(W/2,72,'BUILD THE RUN  •  CHANGE THE MACHINE',{fontFamily:'Arial Black, Arial',fontSize:'8px',color:'#7d8b94'}).setOrigin(.5);const margin=Phaser.Math.Clamp(W*.05,32,56),gap=Phaser.Math.Clamp(W*.018,12,22),cw=Math.min(294,(W-margin*2-gap*2)/3),ch=Math.min(360,H-118),start=(W-(cw*3+gap*2))/2+cw/2;this.choices.forEach((u,i)=>this.card(start+i*(cw+gap),H*.59,cw,ch,u,i));this.refresh();this.input.keyboard?.on('keydown-LEFT',()=>this.move(-1));this.input.keyboard?.on('keydown-RIGHT',()=>this.move(1));this.input.keyboard?.on('keydown-ENTER',()=>this.choose(this.selectedIndex));this.input.keyboard?.on('keydown-ONE',()=>this.choose(0));this.input.keyboard?.on('keydown-TWO',()=>this.choose(1));this.input.keyboard?.on('keydown-THREE',()=>this.choose(2));}
+    card(x,y,w,h,u,i){const c=CATEGORY_COLORS[u.category]||CATEGORY_COLORS.HERO,g=this.add.container(x,y),shadow=this.add.rectangle(7,10,w,h,0,.4),bg=this.add.rectangle(0,0,w,h,0x151b22,.99).setStrokeStyle(2,c,.8),strip=this.add.rectangle(0,-h/2+7,w,14,c,.95),cat=this.add.text(-w/2+18,-h/2+29,u.category,{fontFamily:'Arial Black, Arial',fontSize:'10px',color:Phaser.Display.Color.IntegerToColor(c).rgba}).setOrigin(0,.5);const ay=-h*.18,art=this.add.image(0,ay,`c1-icon-${u.id}`).setDisplaySize(Math.min(w-44,190),Math.min(h*.35,120)),title=this.add.text(0,h*.07,u.title,{fontFamily:'Arial Black, Arial',fontSize:`${Math.max(14,Math.min(19,w/14))}px`,color:'#f4f5f6',align:'center',wordWrap:{width:w-32}}).setOrigin(.5),desc=this.add.text(0,h*.19,u.desc,{fontFamily:'Arial',fontSize:'12px',color:'#b7c0c8',align:'center',wordWrap:{width:w-42},lineSpacing:2}).setOrigin(.5,0),lv=this.gameScene?.upgradeLevels?.[u.id]||0,foot=this.add.text(0,h/2-24,lv?`CURRENT  LV ${lv}`:'NEW UPGRADE',{fontFamily:'Arial Black, Arial',fontSize:'9px',color:'#788590'}).setOrigin(.5),hit=this.add.zone(0,0,w,h).setInteractive({useHandCursor:true});hit.on('pointerover',()=>{this.selectedIndex=i;this.refresh();});hit.on('pointerdown',(_p,_x,_y,e)=>{e?.stopPropagation?.();this.choose(i);});g.add([shadow,bg,strip,cat,art,title,desc,foot,hit]);this.cards.push({g,bg,strip,art,c});}
+    move(d){if(!this.choices.length||this.locked)return;this.selectedIndex=(this.selectedIndex+d+this.choices.length)%this.choices.length;this.refresh();}
+    refresh(){this.cards.forEach((x,i)=>{const on=i===this.selectedIndex;x.g.setScale(on?1.025:1);x.bg.setStrokeStyle(on?4:2,x.c,on?1:.72);x.strip.setAlpha(on?1:.82);x.art.setAlpha(on?1:.9);});}
+    choose(i){if(this.locked||!this.choices[i])return;this.locked=true;this.choices[i].apply();this.cameras.main.flash(75,75,198,215,false);this.time.delayedCall(80,()=>this.gameScene?.closeUpgradeCards?.());}
   }
-
-  preload() {
-    if (!this.textures.exists('upgrade-icon-atlas')) this.load.svg('upgrade-icon-atlas', './assets/ui/upgrade-icons.svg');
-  }
-
-  create() {
-    const { gameScene, choices = [], level = 1 } = this.payload;
-    this.gameScene = gameScene;
-    this.choices = choices;
-    this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
-
-    this.add.rectangle(W / 2, H / 2, W, H, 0x06090d, .90).setDepth(0);
-    this.add.text(W / 2, 38, `LEVEL ${level}`, {
-      fontFamily: 'Arial Black, Arial', fontSize: '14px', color: '#59d4e2'
-    }).setOrigin(.5).setDepth(3);
-    this.add.text(W / 2, 68, 'CHOOSE YOUR UPGRADE', {
-      fontFamily: 'Arial Black, Arial', fontSize: '25px', color: '#f0d09b'
-    }).setOrigin(.5).setDepth(3);
-    this.add.text(W / 2, 94, 'Build the run. Change the machine.', {
-      fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#7f8c98'
-    }).setOrigin(.5).setDepth(3);
-
-    const xs = [170, 480, 790];
-    choices.forEach((upgrade, i) => this.createCard(xs[i], 304, upgrade, i));
-    this.refreshSelection();
-
-    this.input.keyboard?.on('keydown-LEFT', () => this.moveSelection(-1));
-    this.input.keyboard?.on('keydown-RIGHT', () => this.moveSelection(1));
-    this.input.keyboard?.on('keydown-ENTER', () => this.choose(this.selectedIndex));
-    this.input.keyboard?.on('keydown-SPACE', () => this.choose(this.selectedIndex));
-    this.input.keyboard?.on('keydown-ONE', () => this.choose(0));
-    this.input.keyboard?.on('keydown-TWO', () => this.choose(1));
-    this.input.keyboard?.on('keydown-THREE', () => this.choose(2));
-  }
-
-  createCard(x, y, upgrade, index) {
-    const accent = categoryHex(upgrade.category);
-    const group = this.add.container(x, y).setDepth(5);
-    const shadow = this.add.rectangle(5, 8, 270, 306, 0x000000, .28).setOrigin(.5);
-    const bg = this.add.rectangle(0, 0, 270, 306, 0x151b22, .985)
-      .setStrokeStyle(2, accent, .72).setOrigin(.5);
-    const strip = this.add.rectangle(0, -147, 270, 12, accent, .9).setOrigin(.5);
-    const iconPlate = this.add.circle(0, -70, 55, 0x0d1218, 1).setStrokeStyle(2, accent, .45);
-    const iconIndex = Math.max(0, ICON_IDS.indexOf(upgrade.id));
-    const icon = this.add.image(0, -70, 'upgrade-icon-atlas')
-      .setCrop(iconIndex * 128, 0, 128, 128)
-      .setDisplaySize(92, 92);
-    const category = this.add.text(-112, -128, upgrade.category, {
-      fontFamily: 'Arial Black, Arial', fontSize: '11px', color: Phaser.Display.Color.IntegerToColor(accent).rgba
-    }).setOrigin(0, .5);
-    const title = this.add.text(0, 0, upgrade.title, {
-      fontFamily: 'Arial Black, Arial', fontSize: '18px', color: '#f1f4f6', align: 'center', wordWrap: { width: 235 }
-    }).setOrigin(.5);
-    const desc = this.add.text(0, 48, upgrade.desc, {
-      fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#aab5bf', align: 'center', wordWrap: { width: 224 }
-    }).setOrigin(.5, 0);
-    const level = this.gameScene?.upgradeLevels?.[upgrade.id] || 0;
-    const footer = this.add.text(0, 126, level > 0 ? `CURRENT  LV ${level}` : 'NEW UPGRADE', {
-      fontFamily: 'Arial Black, Arial', fontSize: '10px', color: '#75818d'
-    }).setOrigin(.5);
-
-    const hit = this.add.zone(0, 0, 270, 306).setOrigin(.5).setInteractive({ useHandCursor: true });
-    hit.on('pointerover', () => { this.selectedIndex = index; this.refreshSelection(); });
-    hit.on('pointerdown', (_pointer, _lx, _ly, event) => {
-      event?.stopPropagation?.();
-      this.choose(index);
-    });
-
-    group.add([shadow, bg, strip, iconPlate, icon, category, title, desc, footer, hit]);
-    this.cardViews.push({ group, bg, strip, accent });
-  }
-
-  moveSelection(delta) {
-    if (!this.choices.length || this.locked) return;
-    this.selectedIndex = (this.selectedIndex + delta + this.choices.length) % this.choices.length;
-    this.refreshSelection();
-  }
-
-  refreshSelection() {
-    this.cardViews.forEach((view, i) => {
-      const selected = i === this.selectedIndex;
-      view.group.setScale(selected ? 1.035 : 1);
-      view.bg.setStrokeStyle(selected ? 4 : 2, view.accent, selected ? 1 : .65);
-      view.strip.setAlpha(selected ? 1 : .82);
-    });
-  }
-
-  choose(index) {
-    if (this.locked || !this.choices[index]) return;
-    this.locked = true;
-    const choice = this.choices[index];
-    this.cameras.main.flash(85, 72, 202, 218, false);
-    choice.apply();
-    this.time.delayedCall(90, () => this.gameScene?.closeUpgradeCards?.());
-  }
-}
-
-function installLandscapeUpgradeScene(scene) {
-  if (!scene.game.scene.getScene('UpgradeScene')) {
-    scene.game.scene.add('UpgradeScene', UpgradeScene, false);
-  }
-
-  scene.openUpgradeCards = function() {
-    if (this.upgradeOpen || this.gameOver) return;
-    const choices = pickC1Choices(this, 3);
-    if (!choices.length) return;
-    this.upgradeOpen = true;
-    this.physics.pause();
-    if (this.spawnEvent) this.spawnEvent.paused = true;
-    if (this.waveEvent) this.waveEvent.paused = true;
-    this.joy.active = false;
-    this.joy.id = null;
-    this.hero.setVelocity(0, 0);
-    this.input.enabled = false;
-    this.scene.launch('UpgradeScene', { gameScene: this, choices, level: this.level });
-    this.scene.bringToTop('UpgradeScene');
-  };
-
-  scene.closeUpgradeCards = function() {
-    if (!this.upgradeOpen) return;
-    this.scene.stop('UpgradeScene');
-    this.upgradeOpen = false;
-    this.input.enabled = true;
-    if (!this.gameOver) {
-      this.physics.resume();
-      if (this.spawnEvent) this.spawnEvent.paused = false;
-      if (this.waveEvent) this.waveEvent.paused = false;
-    }
-    this.joyBase.setAlpha(.38);
-    this.joyKnob.setAlpha(.4);
-    if (this.pendingLevelUps > 0) {
-      this.pendingLevelUps -= 1;
-      this.time.delayedCall(100, () => this.openUpgradeCards());
-    }
-  };
-}
-
-function refineLandscapeScale(scene) {
-  scene.hero.setScale(.70);
-  scene.enemies.children.iterate(enemy => {
-    if (!enemy?.active) return;
-    enemy.setScale(enemy.elite ? .67 : .54);
-    enemy.hitRadius = enemy.elite ? 29 : 24;
-  });
-
-  const baseSpawn = scene.spawnEnemy.bind(scene);
-  scene.spawnEnemy = function(elite = false) {
-    const before = new Set(this.enemies.getChildren());
-    baseSpawn(elite);
-    this.enemies.children.iterate(enemy => {
-      if (!enemy?.active || before.has(enemy)) return;
-      enemy.setScale(enemy.elite ? .67 : .54);
-      enemy.hitRadius = enemy.elite ? 29 : 24;
-    });
-  };
-
-  scene.children.list.forEach(obj => {
-    const key = obj?.texture?.key || '';
-    if (key === 'b1-wreck-a' || key === 'b1-wreck-b') {
-      obj.setScale(Math.max(obj.scaleX, 1.45));
-    }
-  });
-}
-
-function addOrientationSignal() {
-  document.documentElement.dataset.wreckmarchOrientation = 'landscape';
+  if(!scene.game.scene.getScene('UpgradeSceneV2'))scene.game.scene.add('UpgradeSceneV2',UpgradeSceneV2,false);
+  scene.openUpgradeCards=function(){if(this.upgradeOpen||this.gameOver)return;const choices=pickC1Choices(this,3);if(!choices.length){this.pendingUpgrade=false;return;}this.upgradeOpen=true;this.pendingUpgrade=false;this.physics.world.pause();this.scene.launch('UpgradeSceneV2',{gameScene:this,choices,level:this.level});this.scene.bringToTop('UpgradeSceneV2');this.playTone?.(520,.06,'triangle',.012,120);};
+  scene.closeUpgradeCards=function(){this.scene.stop('UpgradeSceneV2');this.physics.world.resume();this.upgradeOpen=false;this.refreshProgressHud?.();};
 }
 
 export async function applyPhaseC1() {
-  const scene = await getScene();
-  await loadAimAssets(scene);
-  installLandscapeCanvas(scene);
-  reinstallLandscapeJoystick(scene);
-  installTwoHandAim(scene);
+  const scene=await getScene();
+  ICON_IDS.forEach((id,i)=>createIconTexture(scene,id,i));
   installLandscapeHud(scene);
-  installLandscapeUpgradeScene(scene);
-  refineLandscapeScale(scene);
-  addOrientationSignal();
-
-  window.__WM_PHASE_C1__ = true;
-  document.documentElement.dataset.wreckmarchPhaseC1 = 'active';
+  installAimPose(scene);
+  installUpgradeScene(scene);
+  window.__WM_PHASE_C1__=true;
+  document.documentElement.dataset.wreckmarchPhaseC1='active';
   window.__WM_LOG__?.('Phase C.1 active: landscape HUD + 8-way two-hand aim + UpgradeScene cards');
   return true;
 }

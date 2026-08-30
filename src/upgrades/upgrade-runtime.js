@@ -1,6 +1,6 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=5';
-import { applyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=2';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=6';
+import { applyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=3';
 
 function mergeModifierCaps(existing = {}, modifier) {
   if (modifier.min == null && modifier.max == null) return null;
@@ -164,10 +164,17 @@ function applyMixedRegisteredUpgrade(scene, definition, level) {
   }
 }
 
+function passesOfferRules(scene, definition) {
+  const rules = definition.offerRules || {};
+  if (rules.minSceneLevel != null && Number(scene?.level ?? 0) < Number(rules.minSceneLevel)) return false;
+  if (typeof rules.requireSceneFlagFalse === 'string' && Boolean(scene?.[rules.requireSceneFlagFalse])) return false;
+  return true;
+}
+
 export function canApplyRegisteredUpgrade(scene, id) {
   const definition = requireRegisteredUpgrade(id);
   requireSupportedRegisteredUpgrade(definition);
-  return getSceneUpgradeLevel(scene, id) < definition.maxLevel;
+  return passesOfferRules(scene, definition) && getSceneUpgradeLevel(scene, id) < definition.maxLevel;
 }
 
 export function applyRegisteredUpgrade(scene, id) {

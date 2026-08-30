@@ -1,9 +1,28 @@
 export const UPGRADE_MECHANICAL_EFFECT_IDS = Object.freeze({
   TWIN_RIVETER: 'TWIN_RIVETER',
-  RESTORE_HP: 'RESTORE_HP'
+  RESTORE_HP: 'RESTORE_HP',
+  CALL_RIG: 'CALL_RIG'
 });
 
 const TRANSACTION_FACTORIES = Object.freeze({
+  [UPGRADE_MECHANICAL_EFFECT_IDS.CALL_RIG]: ({ scene, definition, level }) => {
+    const rigSystem = scene.rigSystem;
+    if (!rigSystem || typeof rigSystem.summon !== 'function') {
+      throw new Error('CALL_RIG requires scene.rigSystem.summon');
+    }
+    const previousLevel = scene.upgradeLevels?.[definition.id] ?? 0;
+    return Object.freeze({
+      apply() {
+        const summoned = rigSystem.summon();
+        if (!summoned) throw new Error('CALL_RIG summon was rejected');
+        return Object.freeze({ id: definition.id, effectId: UPGRADE_MECHANICAL_EFFECT_IDS.CALL_RIG, level, summoned: true });
+      },
+      rollback() {
+        if ((scene.upgradeLevels?.[definition.id] ?? 0) !== previousLevel) scene.upgradeLevels[definition.id] = previousLevel;
+      }
+    });
+  },
+
   [UPGRADE_MECHANICAL_EFFECT_IDS.TWIN_RIVETER]: ({ scene, definition, level, config }) => {
     const baseProjectileCount = Number.isInteger(config.baseProjectileCount) ? config.baseProjectileCount : 1;
     const maxProjectileCount = Number.isInteger(config.maxProjectileCount) ? config.maxProjectileCount : 3;
