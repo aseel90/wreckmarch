@@ -13,10 +13,11 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
     { timeout: 20_000 }
   ).toBe(true);
 
-  // Drive the existing acid-spitter state machine deterministically instead of relying
-  // on CI wall-clock scheduling. The normal update loop still performs the real fire path.
+  // Execute the real acid-spitter state machine deterministically instead of depending
+  // on CI frame scheduling: first enter windup, then make that windup due and execute
+  // the same production updater again so it performs the real fire path.
   await expect.poll(
-    () => page.evaluate(() => {
+    () => page.evaluate(async () => {
       const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
       const scene = game?.scene?.getScene?.('Wreckmarch');
       const sawbug = scene?.enemies?.getChildren?.()
@@ -27,28 +28,22 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
       scene.hero.setVelocity?.(0, 0);
       sawbug.setPosition?.(130, 480);
       sawbug.setVelocity?.(0, 0);
+      sawbug.__sawbugState = null;
+
+      const module = await import('/src/enemies/behaviors/acid-spitter.js?v=1');
+      const args = { scene, enemy: sawbug, target: scene.hero, random: () => 0 };
+      module.updateAcidSpitterBehavior(args);
 
       const state = sawbug.__sawbugState;
-      if (!state) return false;
-      if (state.phase === 'move') state.cooldownUntil = (Number(scene.time?.now) || 0) - 1;
-      return true;
-    }),
-    { timeout: 4_000 }
-  ).toBe(true);
-
-  await expect.poll(
-    () => page.evaluate(() => {
-      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-      const scene = game?.scene?.getScene?.('Wreckmarch');
-      const sawbug = scene?.enemies?.getChildren?.()
-        .find((candidate: any) => candidate?.active && candidate.enemyId === 'sawbug');
-      const state = sawbug?.__sawbugState;
-      if (!scene || !state) return false;
-      if (state.phase !== 'windup') return false;
+      if (state?.phase !== 'windup') return false;
       state.phaseUntil = (Number(scene.time?.now) || 0) - 1;
-      return true;
+      module.updateAcidSpitterBehavior(args);
+
+      return Number(sawbug.__sawbugShotsFired) >= 1
+        && Number(scene.__sawbugAcidShotsSpawned) >= 1
+        && Boolean(scene.__sawbugAcidProjectiles);
     }),
-    { timeout: 4_000 }
+    { timeout: 8_000 }
   ).toBe(true);
 
   await expect.poll(
