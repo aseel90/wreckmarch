@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const roadmap = readFileSync('UPGRADE_SYSTEM_2_ROADMAP.md', 'utf8');
 const coreReference = readFileSync('UPGRADE_SYSTEM_2_CORE_REFERENCE.md', 'utf8');
+const characterWeaponPolicy = readFileSync('UPGRADE_SYSTEM_2_CHARACTER_WEAPON_POLICY.md', 'utf8');
 
 const protectedAnchors = [
   '## 0.0. Roadmap integrity guard — DO NOT DELETE PLANNED SCOPE',
@@ -78,6 +79,18 @@ const protectedCoreReferenceAnchors = [
   '## 22. Historical core execution order',
 ] as const;
 
+const protectedCharacterWeaponPolicyAnchors = [
+  '## 1. Canonical character–weapon identity model',
+  '## 2. Current archetype — Runner / Hunter',
+  '## 3. Reserved second archetype — Shotgun Character',
+  '## 4. Future characters after Shotgun',
+  '## 5. Upgrade System compatibility contract',
+  'Compatibility filtering is allowed; build steering is not.',
+  '## 6. Anti-regression requirements',
+  '## 7. Current checklist',
+  '## 8. Documentation integrity',
+] as const;
+
 describe('Upgrade System 2.0 roadmap integrity', () => {
   it('keeps every protected full-roadmap section and approved card/build anchor', () => {
     for (const anchor of protectedAnchors) {
@@ -97,6 +110,20 @@ describe('Upgrade System 2.0 roadmap integrity', () => {
     expect(roadmap).toContain('NEXT ACTIVE PHASE');
     expect(coreReference).toContain('Superseded core-only conclusion');
     expect(coreReference).toContain('U4 — New Hunter build cards');
+  });
+
+  it('preserves the approved character/signature-weapon policy and reserved Shotgun archetype', () => {
+    for (const anchor of protectedCharacterWeaponPolicyAnchors) {
+      expect(
+        characterWeaponPolicy,
+        `missing protected character/weapon policy anchor: ${anchor}`,
+      ).toContain(anchor);
+    }
+
+    expect(characterWeaponPolicy).toContain('Runner/Hunter remains tied to the **Rivet Gun**');
+    expect(characterWeaponPolicy).toContain('Do not implement the Shotgun Character during U4.');
+    expect(characterWeaponPolicy).toContain('All playable characters after the Shotgun Character remain **TBD / uncommitted**.');
+    expect(characterWeaponPolicy).toContain('ROADMAP-REMOVAL:');
   });
 
   it('also preserves the newer core-summary architecture record', () => {
