@@ -1,25 +1,35 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1114" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Wreckmarch" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <title>Wreckmarch</title>
-  <link rel="stylesheet" href="./style.css?v=11" />
+  <meta name="apple-mobile-web-app-title" content="WRECKMARCH" />
+  <meta name="format-detection" content="telephone=no" />
+  <link rel="manifest" href="./manifest.webmanifest?v=1" />
+  <title>WRECKMARCH</title>
+  <link rel="stylesheet" href="./style.css?v=14" />
 </head>
 <body>
-  <main id="game-shell"><div id="game"></div></main>
-  <div id="boot-screen"><div class="boot-card"><h1>WRECKMARCH</h1><p id="boot-status">BOOTING…</p></div></div>
-  <button id="fs-btn" type="button" aria-label="Toggle fullscreen">⛶</button>
-  <details id="debug"><summary>Debug</summary><div class="debug-actions"><button id="copy-debug" type="button">Copy log</button></div><pre id="debug-log">WRECKMARCH boot log</pre></details>
+  <div id="game"></div>
+  <div id="boot"><strong>WRECKMARCH</strong><span>BUILD • ROLL • SURVIVE</span><small id="boot-status">LOADING VISUAL SLICE…</small></div>
+  <div id="rotate"><strong>↻ ROTATE TO LANDSCAPE</strong><span>WRECKMARCH is built for horizontal play.</span></div>
+  <button id="fs-btn">⛶ FULLSCREEN</button>
+  <details id="debug"><summary>DEBUG ▼</summary><button id="copy-debug">COPY DEBUG</button><pre id="log"></pre></details>
+
   <script type="module">
-    const params=new URLSearchParams(location.search);window.__WM_DEBUG__=params.get('debug')==='1';
-    const dbg=document.getElementById('debug'),out=document.getElementById('debug-log'),status=document.getElementById('boot-status'),bootEl=document.getElementById('boot-screen');if(window.__WM_DEBUG__)dbg.open=true;
-    const lines=[];const log=m=>{const s=`[${new Date().toISOString()}] ${m}`;lines.push(s);out.textContent=lines.slice(-120).join('\n');console.log('[WRECKMARCH]',m)};window.__WM_LOG__=log;
+    const bootEl=document.getElementById('boot'), status=document.getElementById('boot-status'), logEl=document.getElementById('log');
+    const params=new URLSearchParams(location.search),debug=params.get('debug')==='1';
+    document.body.classList.toggle('debug-enabled',debug);
+    const standalone=window.matchMedia?.('(display-mode: standalone)')?.matches||window.navigator.standalone===true;
+    document.documentElement.dataset.wreckmarchDisplayMode=standalone?'standalone':'browser';
+    document.body.classList.toggle('standalone-mode',standalone);
+    if(standalone) document.getElementById('fs-btn').hidden=true;
+    const lines=[]; const log=(m)=>{const line=`[${new Date().toISOString()}] ${m}`;lines.push(line);logEl.textContent=lines.join('\n');console.log(line)};
+    window.__WM_LOG__=log;
     const fail=(m)=>{log(m);status.textContent='LOAD FAILED — OPEN DEBUG';status.classList.add('error');bootEl.classList.add('failed');document.body.classList.add('boot-error');document.body.classList.add('debug-enabled');document.getElementById('debug').open=true};
     document.getElementById('copy-debug').onclick=()=>navigator.clipboard?.writeText(lines.join('\n'));
     document.getElementById('fs-btn').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen?.();else await document.exitFullscreen?.()}catch(e){log(`Fullscreen: ${e}`)}};
