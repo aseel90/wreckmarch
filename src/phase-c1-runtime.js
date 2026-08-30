@@ -1,4 +1,4 @@
-import { createRegisteredStatUpgradeChoice } from './upgrades/upgrade-runtime.js?v=3';
+import { createRegisteredStatUpgradeChoice } from './upgrades/upgrade-runtime.js?v=4';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
 const W = 960;
@@ -218,9 +218,7 @@ function c1UpgradePool(scene) {
   return [
     createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'overclock', { category: 'HERO' }),
-    { id:'long-barrel', category:'HERO', title:'LONG BARREL', desc:'+18% projectile speed and +10% range.', weight:1,
-      available:()=>upgradeLevel(scene,'long-barrel')<4,
-      apply:()=>{ bumpUpgrade(scene,'long-barrel'); scene.primaryWeapon.projectileSpeed*=1.18; scene.primaryWeapon.range*=1.1; } },
+    createRegisteredStatUpgradeChoice(scene, 'long-barrel', { category: 'HERO' }),
     { id:'twin-riveter', category:'HERO', title:'TWIN RIVETER', desc:'Fire an extra rivet with slight spread.', weight:.72,
       available:()=>upgradeLevel(scene,'twin-riveter')<2,
       apply:()=>{ bumpUpgrade(scene,'twin-riveter'); scene.twinShots=Math.min(3,(scene.twinShots||1)+1); } },

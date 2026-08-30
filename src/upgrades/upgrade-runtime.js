@@ -1,5 +1,5 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=2';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=3';
 
 function mergeModifierCaps(existing = {}, modifier) {
   if (modifier.min == null && modifier.max == null) return null;

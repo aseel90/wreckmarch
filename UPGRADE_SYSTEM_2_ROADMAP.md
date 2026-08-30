@@ -332,9 +332,10 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
 - [x] Migrate Heavy Rivets as first numeric reference card. — **Status:** ✅ DONE
 - [x] Verify Heavy Rivets gameplay parity. — **Status:** ✅ DONE
   - Verified on `c9da716`: canonical definition/registry/runtime adapter, shared Phase C/C1 apply path, unit parity, targeted final-card E2E, Quality, full E2E, Smoke, deploy eligibility, and no Live Chromium failure issue after deployment.
-- [ ] Migrate Overclock. — **Status:** 🟡 IMPLEMENTED / LIVE VERIFY
-  - Canonical definition + resolved-stat minimum cap + shared Phase C/C1 adapter + unit/E2E coverage are implemented. Final checkbox waits for this commit's Quality/E2E/Smoke + deployed Live Chromium gate.
-- [ ] Migrate Long Barrel. — **Status:** ⚪ NOT STARTED
+- [x] Migrate Overclock. — **Status:** ✅ DONE
+  - Verified on `8b57ef7`: canonical definition, 145ms resolved-stat floor, shared Phase C/C1 apply path, unit parity, final-card E2E, Quality, full E2E and Smoke all passed; no `[CI]` or `[LIVE] deployed main smoke failed` issue was opened after the deployment window.
+- [ ] Migrate Long Barrel. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
+  - Canonical dual-modifier definition (+18% projectile speed, +10% range), shared Phase C/C1 adapter and unit/final-card E2E coverage are implemented on the U2 Long Barrel branch. Final checkbox waits for PR Quality/E2E/Smoke, merge, deploy and Live Chromium gate.
 - [ ] Migrate Twin Riveter. — **Status:** ⚪ NOT STARTED
 - [ ] Migrate Fleet Feet. — **Status:** ⚪ NOT STARTED
 - [ ] Migrate Scrap Magnet. — **Status:** ⚪ NOT STARTED
