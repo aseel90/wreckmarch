@@ -12,7 +12,11 @@ function makeScene() {
     weaponBase: { damage: 24, fireDelay: 390, projectileSpeed: 720 }
   });
   runStatState.state.modifiers.character.maxHp = [{ id: 'armor-plate@1:0', type: 'FLAT', value: 15 }];
-  runStatState.state.modifiers.weapon.damage = [{ id: 'heavy-rivets@1:0', type: 'MULT', value: 0.12 }];
+  runStatState.state.modifiers.weapon.damage = [{
+    id: 'heavy-rivets@1:0',
+    type: 'MULTIPLICATIVE_PERCENT',
+    value: 0.12
+  }];
   return {
     runStatState,
     upgradeLevels: { 'twin-riveter': 2, 'heavy-rivets': 1, unused: 0 },
