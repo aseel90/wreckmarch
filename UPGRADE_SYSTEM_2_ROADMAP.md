@@ -159,20 +159,24 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
 
 Goal: rarity changes the strength/presentation of upgrades without creating separate duplicate gameplay implementations.
 
-- [ ] Define rarity tiers. — **Status:** ⚪ NOT STARTED
-- [ ] Define rarity weight model. — **Status:** ⚪ NOT STARTED
-- [ ] Define rarity power scaling rules. — **Status:** ⚪ NOT STARTED
-- [ ] Ensure rarity cannot bypass upgrade max levels or hard caps. — **Status:** ⚪ NOT STARTED
-- [ ] Add deterministic rarity roll tests. — **Status:** ⚪ NOT STARTED
+- [x] Define rarity tiers. — **Status:** ✅ DONE
+- [x] Define rarity weight model. — **Status:** ✅ DONE
+- [x] Define rarity power scaling rules. — **Status:** ✅ DONE
+- [x] Ensure rarity cannot bypass upgrade max levels or hard caps. — **Status:** ✅ DONE
+- [x] Add deterministic rarity roll tests. — **Status:** ✅ DONE
+  - Verified on `7f30957`: one canonical data-driven model defines Common / Rare / Epic / Legendary at 65% / 24% / 9% / 2%, with numeric power multipliers 1.00x / 1.15x / 1.30x / 1.50x. Rarity is attached to the selected canonical choice rather than creating rarity-suffixed upgrade definitions; `upgradeLevels` still advances by exactly one level, existing max-level/hard-cap rules remain authoritative, and per-level rarity metadata is recorded in `upgradeRarityHistory`.
+  - Numeric registry modifiers scale through the canonical rarity service; Armor Plate scales both its max-HP stat modifier and RESTORE_HP transaction together. Discrete mechanical upgrades `twin-riveter` and `call-rig` are explicitly fixed to Common until dedicated mechanical rarity scaling is designed.
+  - Phase D1 no longer owns a static `CARD_RARITY` table. Final premium cards consume the rolled canonical rarity and show rarity + power while retaining category presentation. Deterministic unit/browser coverage proves Legendary Heavy Rivets as one level with a 1.50x modifier-power scale and verifies that legacy Common-parity tests are non-flaky.
+  - PR #98 passed Quality, Smoke, all three isolated E2E shards and aggregate E2E on head `dede177`. After squash merge, Pages/iOS live verification and Pages recovery passed on exact gameplay SHA `7f3095753b9511df984c6e13e84b23f448bb420f`; after the main/live run window no `ci-failure` issue was open and `[LIVE] deployed main smoke failed` remained closed.
 
-Potential tiers:
+Canonical tiers:
 
-- Common
-- Rare
-- Epic
-- Legendary
+- Common — 65%, 1.00x
+- Rare — 24%, 1.15x
+- Epic — 9%, 1.30x
+- Legendary — 2%, 1.50x
 
-Avoid implementing rarity as copies such as `heavy-rivets-common`, `heavy-rivets-rare`, etc.
+Do not implement rarity as copies such as `heavy-rivets-common`, `heavy-rivets-rare`, etc.
 
 ---
 
@@ -260,6 +264,7 @@ No persistent meta-progression is required yet, but runtime structures must be s
 - [ ] Define stat-modifier snapshot format. — **Status:** ⚪ NOT STARTED
 - [ ] Define mechanical-effect snapshot format. — **Status:** ⚪ NOT STARTED
 - [ ] Add round-trip tests before any persistence feature uses it. — **Status:** ⚪ NOT STARTED
+  - Readiness note: `upgradeLevels` plus `upgradeRarityHistory` now provide serializable acquisition metadata, but the canonical snapshot/restore contract is intentionally deferred to this phase.
 
 ---
 
@@ -322,7 +327,7 @@ Core migration is complete when:
 - [x] Current mixed stat/effect transaction pattern is proven. — **Status:** ✅ DONE
 - [x] Current temporary Rig handling is explicitly decided and tested. — **Status:** ✅ DONE
 - [x] Roll service is extracted from scene UI. — **Status:** ✅ DONE
-- [ ] Rarity model is data-driven. — **Status:** ⚪ NOT STARTED
+- [x] Rarity model is data-driven. — **Status:** ✅ DONE
 - [ ] Production verification remains green. — **Status:** 🟢 CURRENTLY GREEN / CONTINUOUS GATE
 
 ---
@@ -373,7 +378,7 @@ The browser verification architecture is part of the project standard, not a tem
 - [x] Live failure Issue auto-opens/updates. — **Status:** ✅ DONE
 - [x] Live recovery auto-closes Issue. — **Status:** ✅ DONE
 - [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
-  - Current verified gameplay commit: `86e5a11` (canonical Upgrade Roll Service extraction; PR Quality/Smoke/all E2E shards/aggregate E2E passed, Pages/iOS live verification and recovery passed on the same SHA, the Live Chromium failure bridge remained clean, and no CI/Live failure issue is open).
+  - Current verified gameplay commit: `7f30957` (data-driven rarity system; PR #98 Quality/Smoke/all E2E shards/aggregate E2E passed, Pages/iOS live verification and recovery passed on exact SHA `7f3095753b9511df984c6e13e84b23f448bb420f`, the post-deploy Live Chromium failure bridge remained clean through the run window, and no CI/Live failure issue is open).
 
 ---
 
@@ -397,7 +402,7 @@ The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POL
 
 1. [x] Remove/deactivate obsolete duplicate card definitions left after U2 migration. — **DONE on `f723494`**
 2. [x] Extract upgrade roll service. — **DONE on `86e5a11`**
-3. [ ] Add rarity system. — **NEXT**
-4. [ ] Add save/run-state snapshot readiness.
+3. [x] Add rarity system. — **DONE on `7f30957`**
+4. [ ] Add save/run-state snapshot readiness. — **NEXT**
 
 Do not reorder these merely to add new feature content.
