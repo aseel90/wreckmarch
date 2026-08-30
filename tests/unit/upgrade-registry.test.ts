@@ -44,6 +44,24 @@ describe('Upgrade System 2.0 registry and schema', () => {
     expect(Object.isFrozen(definition.modifiers[0])).toBe(true);
   });
 
+  it('supports declarative resolved-stat caps on numeric modifiers', () => {
+    const registry = createUpgradeRegistry([{
+      ...heavyRivetsFixture,
+      id: 'overclock-fixture',
+      name: 'OVERCLOCK FIXTURE',
+      description: 'Test-only capped fire-delay definition.',
+      modifiers: [{
+        domain: D.WEAPON,
+        stat: 'fireDelay',
+        type: T.MULTIPLICATIVE_PERCENT,
+        value: -0.12,
+        min: 145
+      }]
+    }]);
+
+    expect(registry.get('overclock-fixture')?.modifiers[0]).toMatchObject({ min: 145 });
+  });
+
   it('supports multiple numeric modifiers without runtime callbacks', () => {
     const registry = createUpgradeRegistry([{
       ...heavyRivetsFixture,
@@ -86,6 +104,7 @@ describe('Upgrade System 2.0 registry and schema', () => {
     expect(() => createUpgradeRegistry([{ ...heavyRivetsFixture, id: 'Bad ID' }])).toThrow(/Invalid upgrade id/);
     expect(() => createUpgradeRegistry([{ ...heavyRivetsFixture, scope: 'UNKNOWN' }])).toThrow(/Invalid upgrade scope/);
     expect(() => createUpgradeRegistry([{ ...heavyRivetsFixture, modifiers: [], mechanicalEffect: null }])).toThrow(/requires modifiers or mechanicalEffect/);
+    expect(() => createUpgradeRegistry([{ ...heavyRivetsFixture, modifiers: [{ ...heavyRivetsFixture.modifiers[0], min: 5, max: 4 }] }])).toThrow(/min cannot be greater than max/);
     expect(() => createUpgradeRegistry([{
       ...heavyRivetsFixture,
       modifiers: [{ ...heavyRivetsFixture.modifiers[0], domain: 'world' }]
