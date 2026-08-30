@@ -56,7 +56,7 @@ jobs:
               echo '```'
             done
           } > /tmp/wm-quality-comment.md
-          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-quality-comment.md
+          gh issue comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-quality-comment.md
       - name: Preserve quality diagnostics
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
@@ -109,7 +109,7 @@ jobs:
               echo '```'
             done
           } > /tmp/wm-e2e-comment.md
-          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
+          gh issue comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
       - name: Preserve Playwright diagnostics
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
@@ -197,11 +197,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           QUALITY: ${{ needs.quality.result }}
           E2E: ${{ needs.e2e.result }}
           SMOKE: ${{ needs.smoke.result }}
         run: |
-          set -euo pipefail
           TITLE='[CI] main is failing'
           ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[CI] main is failing") | .number' | head -n1)"
           if [ "$QUALITY" = success ] && [ "$E2E" = success ] && [ "$SMOKE" = success ]; then
@@ -211,31 +211,42 @@ jobs:
             exit 0
           fi
           {
-            printf 'CI failed on `%s`.\n\n' "$SHA"
+            echo "CI failed on \`$SHA\`."
+            echo
             printf -- '- quality: **%s**\n- e2e: **%s**\n- smoke: **%s**\n\n' "$QUALITY" "$E2E" "$SMOKE"
-            printf 'Run: https://github.com/%s/actions/runs/%s\n\n' "$REPO" "${{ github.run_id }}"
+            echo "Run: $RUN_URL"
+            echo
             if [ "$QUALITY" = failure ]; then
               for LOG in /tmp/ci-quality/wm-quality-check.log /tmp/ci-quality/wm-quality-install.log; do
                 [ -f "$LOG" ] || continue
-                printf '### %s\n```text\n' "$(basename "$LOG")"
-                tail -c 12000 "$LOG"
-                printf '\n```\n\n'
+                echo "### $(basename "$LOG")"
+                echo '```text'
+                tail -c 10000 "$LOG"
+                echo
+                echo '```'
+                echo
               done
             fi
             if [ "$E2E" = failure ]; then
               for LOG in /tmp/ci-e2e/wm-e2e.log /tmp/ci-e2e/wm-e2e-playwright-install.log; do
                 [ -f "$LOG" ] || continue
-                printf '### %s\n```text\n' "$(basename "$LOG")"
-                tail -c 12000 "$LOG"
-                printf '\n```\n\n'
+                echo "### $(basename "$LOG")"
+                echo '```text'
+                tail -c 10000 "$LOG"
+                echo
+                echo '```'
+                echo
               done
             fi
             if [ "$SMOKE" = failure ]; then
               for LOG in /tmp/ci-smoke/wm-smoke.log /tmp/ci-smoke/wm-smoke-playwright-install.log /tmp/ci-smoke/wm-http.log; do
                 [ -f "$LOG" ] || continue
-                printf '### %s\n```text\n' "$(basename "$LOG")"
-                tail -c 12000 "$LOG"
-                printf '\n```\n\n'
+                echo "### $(basename "$LOG")"
+                echo '```text'
+                tail -c 10000 "$LOG"
+                echo
+                echo '```'
+                echo
               done
             fi
           } > /tmp/wm-ci-issue.md
@@ -247,14 +258,12 @@ jobs:
 
   deploy:
     name: Deploy GitHub Pages
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [quality, smoke]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.quality.result == 'success' && needs.smoke.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -262,16 +271,12 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Prepare artifact
         run: |
-          mkdir -p _site
-          cp index.html style.css manifest.webmanifest _site/
-          cp -R src _site/src
-          cp -R assets _site/assets
-          mkdir -p _site/vendor
-          if [ -f vendor/phaser.min.js ]; then cp vendor/phaser.min.js _site/vendor/phaser.min.js; else curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o _site/vendor/phaser.min.js; fi
+          rm -rf .git node_modules .vite dist test-results playwright-report
+          rm -f wm-*.log
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: .
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
@@ -279,7 +284,7 @@ jobs:
   live-smoke:
     name: Live Chromium smoke
     needs: [deploy]
-    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy.result == 'success'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -290,7 +295,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install dependencies
+      - name: Install smoke dependencies
         run: |
           set -o pipefail
           pnpm install --no-frozen-lockfile 2>&1 | tee wm-live-install.log
@@ -298,21 +303,22 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-live-playwright-install.log
-      - name: Smoke test deployed Pages build
-        id: live_smoke
-        continue-on-error: true
+      - name: Run live browser smoke
         env:
-          WM_SMOKE_URL: ${{ needs.deploy.outputs.page_url }}?autotest=1&debug=1
+          WM_SMOKE_URL: ${{ steps.pages.outputs.url }}
         run: |
           set -o pipefail
-          timeout 45s node scripts/ci-smoke.mjs 2>&1 | tee wm-live-smoke.log
+          PAGE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/?autotest=1&debug=1"
+          echo "LIVE_URL=$PAGE_URL" | tee wm-live-url.log
+          WM_SMOKE_URL="$PAGE_URL" timeout 45s node scripts/ci-smoke.mjs 2>&1 | tee wm-live-smoke.log
       - name: Preserve live smoke diagnostics
-        if: steps.live_smoke.outcome == 'failure'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: live-smoke
           if-no-files-found: ignore
           path: |
+            wm-live-url.log
             wm-live-smoke.log
             wm-live-install.log
             wm-live-playwright-install.log
@@ -322,33 +328,36 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
-          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-          OUTCOME: ${{ steps.live_smoke.outcome }}
+          PAGE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          LIVE_RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          set -euo pipefail
           TITLE='[LIVE] deployed main smoke failed'
           ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[LIVE] deployed main smoke failed") | .number' | head -n1)"
-          if [ "$OUTCOME" = success ]; then
+          if [ "$LIVE_RESULT" = success ]; then
             if [ -n "$ISSUE_NUMBER" ]; then
               gh issue close "$ISSUE_NUMBER" --repo "$REPO" --comment "Live Chromium smoke recovered on \`$SHA\`: $PAGE_URL"
             fi
             exit 0
           fi
           {
-            printf 'Live Chromium smoke failed after GitHub Pages deployed `%s`.\n\n' "$SHA"
-            printf 'Live URL: %s\n' "$PAGE_URL"
-            printf 'Run: https://github.com/%s/actions/runs/%s\n\n' "$REPO" "${{ github.run_id }}"
-            printf 'The smoke gate treats these browser signals as failures:\n'
-            printf -- '- console.error\n- pageerror\n- requestfailed\n- boot/playability assertion timeout\n\n'
-            if [ -f wm-live-smoke.log ]; then
-              printf '### wm-live-smoke.log\n```text\n'
-              tail -c 16000 wm-live-smoke.log
-              printf '\n```\n'
-            fi
+            echo "Live Chromium smoke failed on deployed \`$SHA\`."
+            echo
+            echo "URL: $PAGE_URL"
+            echo "Run: $RUN_URL"
+            echo
+            for LOG in wm-live-smoke.log wm-live-playwright-install.log; do
+              [ -f "$LOG" ] || continue
+              echo "### $LOG"
+              echo '```text'
+              tail -c 12000 "$LOG"
+              echo
+              echo '```'
+              echo
+            done
           } > /tmp/wm-live-issue.md
           if [ -n "$ISSUE_NUMBER" ]; then
             gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file /tmp/wm-live-issue.md
           else
             gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/wm-live-issue.md --label ci-failure
           fi
-          exit 1
