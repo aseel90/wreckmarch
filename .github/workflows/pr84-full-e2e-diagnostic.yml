@@ -1,0 +1,59 @@
+name: PR84 Full E2E diagnostic
+
+on:
+  push:
+    branches:
+      - stabilize-sawbug-self-test
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  full-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run full E2E and capture log
+        id: e2e
+        shell: bash
+        run: |
+          set +e
+          pnpm test:e2e > wm-e2e.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Publish diagnostic issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXIT_CODE: ${{ steps.e2e.outputs.exit_code }}
+          SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          if [ "$EXIT_CODE" = "0" ]; then outcome="success"; else outcome="failure"; fi
+          {
+            echo "Full E2E diagnostic on \`$SHA\`: **$outcome**"
+            echo
+            echo '```text'
+            tail -c 55000 wm-e2e.log
+            echo
+            echo '```'
+          } > diagnostic-body.md
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "[TEMP PR84] Full E2E diagnostic" --body-file diagnostic-body.md
