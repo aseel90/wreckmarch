@@ -76,14 +76,14 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
       pierceCount: scene.runStatState.resolve().weapon.pierceCount,
       bulletPierceRemaining: shot.bullet.pierceRemaining,
       iconExists: scene.textures.exists('upgrade-icon-piercing-rivets'),
-      liveReady: scene.__piercingRivetsLiveReady === true
+      cardArtReady: scene.__upgradeCardArtReady === true
     };
   });
 
   expect(setup.choiceIds).toEqual(['piercing-rivets']);
   expect(setup.artKey).toBe('upgrade-icon-piercing-rivets');
   expect(setup.iconExists).toBe(true);
-  expect(setup.liveReady).toBe(true);
+  expect(setup.cardArtReady).toBe(true);
   expect(setup.level).toBe(1);
   expect(setup.pierceCount).toBe(1);
   expect(setup.bulletPierceRemaining).toBe(1);

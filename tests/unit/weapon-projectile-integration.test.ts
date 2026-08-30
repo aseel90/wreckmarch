@@ -69,6 +69,6 @@ describe('Weapon / Projectile ownership integration', () => {
     expect(html).toContain("./src/enemies/enemy-system.js?v=15");
     expect(html).toContain("./src/phase-c-runtime.js?v=17");
     expect(html).toContain("./src/phase-c1-runtime.js?v=12");
-    expect(html).toContain("./src/upgrades/piercing-rivets-live.js?v=1");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=17");
   });
 });

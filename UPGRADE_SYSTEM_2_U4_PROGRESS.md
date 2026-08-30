@@ -12,6 +12,7 @@ This is a narrow verification record for U4 implementation work. The canonical r
 - [x] Rig/support volleys remain at zero pierce unless separately designed later.
 - [x] Snapshot/debug state remains compatible through canonical upgrade levels + stat modifiers.
 - [x] Dedicated Wreckmarch-style card icon exists: hot rivet penetrating scrap armor plates with cyan/orange impact sparks.
+- [x] Custom U4 card art routes through the final D1 card owner and shared `upgrade-card-art.js` registry; no post-owner card wrapper is used.
 - [x] Browser module graph is cache-busted for changed live owners.
 - [x] Unit coverage added.
 - [x] Deterministic Chromium E2E added.
