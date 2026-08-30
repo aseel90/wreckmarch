@@ -1,28 +1,10 @@
 export const UPGRADE_MECHANICAL_EFFECT_IDS = Object.freeze({
   TWIN_RIVETER: 'TWIN_RIVETER',
   RESTORE_HP: 'RESTORE_HP',
-  CALL_RIG: 'CALL_RIG'
+  SUMMON_RIG: 'SUMMON_RIG'
 });
 
 const TRANSACTION_FACTORIES = Object.freeze({
-  [UPGRADE_MECHANICAL_EFFECT_IDS.CALL_RIG]: ({ scene, definition, level }) => {
-    const rigSystem = scene.rigSystem;
-    if (!rigSystem || typeof rigSystem.summon !== 'function') {
-      throw new Error('CALL_RIG requires scene.rigSystem.summon');
-    }
-    const previousLevel = scene.upgradeLevels?.[definition.id] ?? 0;
-    return Object.freeze({
-      apply() {
-        const summoned = rigSystem.summon();
-        if (!summoned) throw new Error('CALL_RIG summon was rejected');
-        return Object.freeze({ id: definition.id, effectId: UPGRADE_MECHANICAL_EFFECT_IDS.CALL_RIG, level, summoned: true });
-      },
-      rollback() {
-        if ((scene.upgradeLevels?.[definition.id] ?? 0) !== previousLevel) scene.upgradeLevels[definition.id] = previousLevel;
-      }
-    });
-  },
-
   [UPGRADE_MECHANICAL_EFFECT_IDS.TWIN_RIVETER]: ({ scene, definition, level, config }) => {
     const baseProjectileCount = Number.isInteger(config.baseProjectileCount) ? config.baseProjectileCount : 1;
     const maxProjectileCount = Number.isInteger(config.maxProjectileCount) ? config.maxProjectileCount : 3;
@@ -91,7 +73,36 @@ const TRANSACTION_FACTORIES = Object.freeze({
         scene.heroHp = previousHp;
       }
     });
+  },
+
+  [UPGRADE_MECHANICAL_EFFECT_IDS.SUMMON_RIG]: ({ scene, definition, level }) => {
+    return Object.freeze({
+      apply() {
+        if (!scene.rigSystem || typeof scene.rigSystem.summon !== 'function') {
+          throw new Error('SUMMON_RIG requires scene.rigSystem.summon()');
+        }
+        const summoned = scene.rigSystem.summon();
+        if (summoned !== true) throw new Error('SUMMON_RIG could not summon the companion');
+        return Object.freeze({
+          id: definition.id,
+          effectId: UPGRADE_MECHANICAL_EFFECT_IDS.SUMMON_RIG,
+          level,
+          summoned: true
+        });
+      },
+      rollback() {}
+    });
   }
+});
+
+const EFFECT_AVAILABILITY = Object.freeze({
+  [UPGRADE_MECHANICAL_EFFECT_IDS.SUMMON_RIG]: (scene) => Boolean(
+    scene?.rigSystem &&
+    typeof scene.rigSystem.summon === 'function' &&
+    !scene.rigSummoned &&
+    scene.cart &&
+    scene.hero
+  )
 });
 
 function requireMechanicalEffect(scene, definition, level) {
@@ -109,6 +120,12 @@ function requireMechanicalEffect(scene, definition, level) {
 
 export function hasUpgradeMechanicalEffect(id) {
   return typeof TRANSACTION_FACTORIES[id] === 'function';
+}
+
+export function canApplyUpgradeMechanicalEffect(scene, definition) {
+  if (!definition?.mechanicalEffect) return true;
+  const predicate = EFFECT_AVAILABILITY[definition.mechanicalEffect.id];
+  return predicate ? predicate(scene, definition) : true;
 }
 
 export function createUpgradeMechanicalTransaction(scene, definition, level) {

@@ -148,7 +148,7 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
 - [x] Migrate Armor Plate. — **Status:** ✅ DONE
   - Verified on gameplay commit `361c26b` with production recovery on `f49a580`: canonical mixed upgrade adds +15 `character.maxHp` FLAT per level (max 4) plus transactional `RESTORE_HP` capped at the newly resolved max HP. Shared Phase C/C1 registry wiring, rollback coverage, Quality, Smoke, all E2E shards, aggregate E2E, deploy and post-deploy Live Chromium passed; stale Pages module caching was cleared by bumping the C3/C3.1 import fingerprints, and Live Issue #93 auto-closed after recovery.
 - [ ] Decide temporary handling of Call the Rig without expanding old Rig system. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-  - `call-rig` is registry-owned as a one-shot COMPANION `CALL_RIG` mechanical effect. Offer rules keep it unavailable before scene level 2 or after summon, and the effect delegates exclusively to `RigSystem.summon()` without exposing legacy Rig internals. Phase C/C1 now share the registered adapter; reserved `rig-overdrive` and `twin-cannon` choices are blocked pending the future companion tree. Final checkbox waits for clean PR + `main` + Live Chromium verification.
+  - Canonical temporary strategy: registry-owned one-level `COMPANION` card with `SUMMON_RIG` named effect. The effect delegates only to `RigSystem.summon()`; level-2 offer gating is data-driven, and reserved Rig Overdrive/Twin Cannon choices remain unavailable in both Phase C and C1. Final checkbox waits for clean PR + `main` + Live Chromium verification.
 - [ ] Remove/deactivate obsolete duplicate card definitions after migration. — **Status:** 🧹 POST-MIGRATION
 
 ---
@@ -225,7 +225,7 @@ Do not create additional characters solely to prove the upgrade system.
 The current Rig/robot-dog visual/support system exists, but Upgrade System 2.0 must not accidentally expand or lock its final design during this migration.
 
 - [ ] Decide `Call the Rig` migration strategy. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [x] Keep reserved Rig upgrades unavailable until the future companion tree is designed. — **Status:** ✅ IMPLEMENTED / VERIFY WITH CALL-RIG PR
+- [x] Keep reserved Rig upgrades unavailable until the future companion tree is designed. — **Status:** ✅ DONE
 - [ ] Do not convert old Rig internals into permanent Upgrade 2.0 API unless they are still valid for the future companion design. — **Status:** ⚪ NOT STARTED
 
 Preferred temporary strategy:

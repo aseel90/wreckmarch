@@ -1,6 +1,6 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js';
 import { getUpgradeDefinition } from './upgrade-catalog.js?v=6';
-import { applyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=3';
+import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=3';
 
 function mergeModifierCaps(existing = {}, modifier) {
   if (modifier.min == null && modifier.max == null) return null;
@@ -164,17 +164,24 @@ function applyMixedRegisteredUpgrade(scene, definition, level) {
   }
 }
 
-function passesOfferRules(scene, definition) {
-  const rules = definition.offerRules || {};
-  if (rules.minSceneLevel != null && Number(scene?.level ?? 0) < Number(rules.minSceneLevel)) return false;
-  if (typeof rules.requireSceneFlagFalse === 'string' && Boolean(scene?.[rules.requireSceneFlagFalse])) return false;
+function meetsOfferRules(scene, definition) {
+  const minRunLevel = definition.offerRules?.minRunLevel;
+  if (minRunLevel != null) {
+    if (!Number.isInteger(minRunLevel) || minRunLevel < 1) {
+      throw new TypeError(`Invalid minRunLevel for ${definition.id}: ${String(minRunLevel)}`);
+    }
+    if (!Number.isInteger(scene?.level) || scene.level < minRunLevel) return false;
+  }
   return true;
 }
 
 export function canApplyRegisteredUpgrade(scene, id) {
   const definition = requireRegisteredUpgrade(id);
-  requireSupportedRegisteredUpgrade(definition);
-  return passesOfferRules(scene, definition) && getSceneUpgradeLevel(scene, id) < definition.maxLevel;
+  const { hasMechanicalEffect } = requireSupportedRegisteredUpgrade(definition);
+  if (getSceneUpgradeLevel(scene, id) >= definition.maxLevel) return false;
+  if (!meetsOfferRules(scene, definition)) return false;
+  if (hasMechanicalEffect && !canApplyUpgradeMechanicalEffect(scene, definition)) return false;
+  return true;
 }
 
 export function applyRegisteredUpgrade(scene, id) {

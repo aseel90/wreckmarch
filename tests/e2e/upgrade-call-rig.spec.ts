@@ -2,31 +2,74 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 960, height: 540 } });
 
-test('Call the Rig uses the canonical RigSystem and reserved Rig upgrades stay blocked', async ({ page }) => {
+test('Call the Rig is offered at level 2 and delegates the summon to the canonical RigSystem', async ({ page }) => {
   await page.goto('/?debug=1&autotest=1');
   await expect(page.locator('canvas')).toBeVisible({ timeout: 20_000 });
-  await expect.poll(() => page.evaluate(() => document.body.classList.contains('visual-ready')), { timeout: 30_000 }).toBe(true);
+  await expect.poll(
+    () => page.evaluate(() => document.body.classList.contains('visual-ready')),
+    { timeout: 30_000 }
+  ).toBe(true);
 
-  const result = await page.evaluate(async () => {
+  await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
     scene.enemies.clear(true, true);
+    Object.assign(scene.upgradeLevels, {
+      'heavy-rivets': 5,
+      'overclock': 5,
+      'long-barrel': 4,
+      'twin-riveter': 2,
+      'fleet-feet': 3,
+      'scrap-magnet': 4,
+      'armor-plate': 4
+    });
     scene.level = 2;
     scene.rigSummoned = false;
+    scene.cart.setVisible(false).setActive(false);
+    scene.openUpgradeCards();
+  });
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      const upgradeScene = game.scene.getScene('UpgradeSceneV4');
+      if (!upgradeScene?.sys?.isActive?.()) return [];
+      return (upgradeScene.choices || []).map((choice: any) => choice.id);
+    }),
+    { timeout: 10_000 }
+  ).toEqual(['call-rig']);
+
+  await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const upgradeScene = game.scene.getScene('UpgradeSceneV4');
+    const index = (upgradeScene.choices || []).findIndex((choice: any) => choice.id === 'call-rig');
+    if (index < 0) throw new Error('Call the Rig missing from forced offer');
+    upgradeScene.choose(index);
+  });
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      const scene = game.scene.getScene('Wreckmarch');
+      return {
+        upgradeLevel: scene.upgradeLevels['call-rig'] || 0,
+        rigSummoned: Boolean(scene.rigSummoned),
+        cartVisible: Boolean(scene.cart?.visible),
+        fireDelay: scene.rigFireDelay,
+        shots: scene.rigShots
+      };
+    }),
+    { timeout: 10_000 }
+  ).toEqual({ upgradeLevel: 1, rigSummoned: true, cartVisible: true, fireDelay: 920, shots: 1 });
+
+  const availability = await page.evaluate(async () => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
     const loadModule = new Function('path', 'return import(path)') as (path: string) => Promise<any>;
     const runtime = await loadModule('/src/upgrades/upgrade-runtime.js?v=7');
     const choice = runtime.createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' });
-    const before = { available: choice.available(), visible: scene.cart.visible, level: scene.upgradeLevels['call-rig'] || 0 };
-    choice.apply();
-    const phaseC1 = await loadModule('/src/phase-c1-runtime.js?v=8');
-    return {
-      before,
-      after: { available: choice.available(), rigSummoned: scene.rigSummoned, visible: scene.cart.visible, level: scene.upgradeLevels['call-rig'], fireDelay: scene.rigFireDelay, shots: scene.rigShots },
-      phaseC1Loaded: Boolean(phaseC1)
-    };
+    return choice.available();
   });
-  expect(result.before).toEqual({ available: true, visible: false, level: 0 });
-  expect(result.after).toMatchObject({ available: false, rigSummoned: true, visible: true, level: 1, fireDelay: 920, shots: 1 });
-  expect(result.phaseC1Loaded).toBe(true);
+  expect(availability).toBe(false);
 });
