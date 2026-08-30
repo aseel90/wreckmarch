@@ -15,7 +15,8 @@ async function forceOnlyTwinRiveter(page: any) {
       'long-barrel': 4,
       'fleet-feet': 4,
       'scrap-magnet': 4,
-      'armor-plate': 4
+      'armor-plate': 4,
+      'piercing-rivets': 3
     });
     scene.level = 1;
     scene.rigSummoned = false;

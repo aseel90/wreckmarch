@@ -67,16 +67,31 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
 
     const shot = scene.weaponSystem.fireHeroProjectile(0, 1);
     if (!shot?.bullet) throw new Error('Hero projectile was not created');
-    scene.__piercingRivetsTest = { enemies, bullet: shot.bullet };
+    const bullet = shot.bullet;
+    const initialPierceRemaining = bullet.pierceRemaining;
+
+    // Drive one deterministic swept segment through both live enemies. This exercises
+    // the real WeaponSystem -> ProjectileSystem -> CombatSystem path without relying
+    // on frame timing or enemy movement in CI.
+    bullet.setVelocity?.(0, 0);
+    bullet.prevX = muzzle.x;
+    bullet.prevY = muzzle.y - 1;
+    bullet.x = muzzle.x + 280;
+    bullet.y = muzzle.y - 1;
+    scene.projectileSystem.update(16);
 
     return {
       choiceIds,
       artKey,
       level: scene.upgradeLevels['piercing-rivets'],
       pierceCount: scene.runStatState.resolve().weapon.pierceCount,
-      bulletPierceRemaining: shot.bullet.pierceRemaining,
+      initialPierceRemaining,
       iconExists: scene.textures.exists('upgrade-icon-piercing-rivets'),
-      cardArtReady: scene.__upgradeCardArtReady === true
+      cardArtReady: scene.__upgradeCardArtReady === true,
+      enemyHp: enemies.map((enemy: any) => enemy.hp),
+      bulletActive: bullet.active ?? false,
+      hitCount: bullet.hitEnemies?.size ?? 0,
+      pierceRemaining: bullet.pierceRemaining ?? null
     };
   });
 
@@ -86,27 +101,9 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
   expect(setup.cardArtReady).toBe(true);
   expect(setup.level).toBe(1);
   expect(setup.pierceCount).toBe(1);
-  expect(setup.bulletPierceRemaining).toBe(1);
-
-  await expect.poll(() => page.evaluate(() => {
-    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-    const scene = game.scene.getScene('Wreckmarch');
-    const testState = scene.__piercingRivetsTest;
-    return testState?.enemies?.map((enemy: any) => enemy.hp) || [];
-  }), { timeout: 5_000 }).toEqual([76, 76]);
-
-  const result = await page.evaluate(() => {
-    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-    const scene = game.scene.getScene('Wreckmarch');
-    const { bullet } = scene.__piercingRivetsTest;
-    return {
-      bulletActive: bullet?.active ?? false,
-      hitCount: bullet?.hitEnemies?.size ?? 0,
-      pierceRemaining: bullet?.pierceRemaining ?? null
-    };
-  });
-
-  expect(result.bulletActive).toBe(false);
-  expect(result.hitCount).toBe(2);
-  expect(result.pierceRemaining).toBe(0);
+  expect(setup.initialPierceRemaining).toBe(1);
+  expect(setup.enemyHp).toEqual([76, 76]);
+  expect(setup.bulletActive).toBe(false);
+  expect(setup.hitCount).toBe(2);
+  expect(setup.pierceRemaining).toBe(0);
 });
