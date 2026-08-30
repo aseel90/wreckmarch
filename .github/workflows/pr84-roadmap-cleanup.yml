@@ -17,63 +17,21 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore main roadmap and apply only intended CI updates
+      - name: Restore main roadmap and apply intended updates
         run: |
           set -euo pipefail
           git fetch origin main
           git checkout origin/main -- UPGRADE_SYSTEM_2_ROADMAP.md
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('UPGRADE_SYSTEM_2_ROADMAP.md')
-          text = path.read_text()
-
-          old = """- [ ] Migrate Long Barrel. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
-  - Canonical dual-modifier definition (+18% projectile speed, +10% range), shared Phase C/C1 adapter and unit/final-card E2E coverage are implemented on the U2 Long Barrel branch. Final checkbox waits for PR Quality/E2E/Smoke, merge, deploy and Live Chromium gate.
-"""
-          new = """- [ ] Migrate Long Barrel. — **Status:** 🟡 MERGED / CI RECOVERY + LIVE VERIFY
-  - Canonical dual-modifier definition (+18% projectile speed, +10% range), shared Phase C/C1 adapter and unit/final-card E2E coverage were merged to `main` in `d731bad`. Final checkbox remains blocked until the canonical CI E2E gate is stable again and the resulting deployed build clears Live Chromium.
-"""
-          if old not in text:
-              raise SystemExit('Long Barrel roadmap block not found on main')
-          text = text.replace(old, new, 1)
-
-          section = """
-# 21.2. Sharded Playwright E2E gate
-
-The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POLICY.md`. It replaces the single-runner/multi-worker approach with isolated runner-level parallelism.
-
-- [ ] Pin Playwright CI execution to one worker per runner. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Split the E2E suite across three GitHub Actions shards. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Keep one stable aggregate check named `E2E` for branch protection and CI consumers. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Use Playwright blob reports per shard and merge them into one HTML diagnostic artifact. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Use `retryStrategy: isolated` with one CI retry. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Fail CI when Playwright classifies a test as flaky; a retry must not silently turn the gate green. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Record traces only on the first retry in CI. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Comment failing shard logs directly on the PR and keep aggregate diagnostics as a second layer. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Remove temporary diagnostic workflows from the canonical path. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Verify the new E2E architecture on PR, merge, and confirm `main` + Live Chromium before marking this gate complete. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
-
-Architecture rule: speed comes from independent CI shards, never by raising browser-worker contention inside one runner. Test retries are diagnostic only; flaky classifications remain failures.
-
----
-
-"""
-          marker = "# 22. Cleanup / architecture debt pass"
-          if marker not in text:
-              raise SystemExit('Roadmap section 22 marker not found on main')
-          text = text.replace(marker, section + marker, 1)
-          path.write_text(text)
-          PY
+          python -c "from pathlib import Path; import base64; p=Path('UPGRADE_SYSTEM_2_ROADMAP.md'); t=p.read_text(); old=base64.b64decode('LSBbIF0gTWlncmF0ZSBMb25nIEJhcnJlbC4g4oCUICoqU3RhdHVzOioqIPCfn6EgSU1QTEVNRU5URUQgLyBQUiArIExJVkUgVkVSSUZZCiAgLSBDYW5vbmljYWwgZHVhbC1tb2RpZmllciBkZWZpbml0aW9uICgrMTglIHByb2plY3RpbGUgc3BlZWQsICsxMCUgcmFuZ2UpLCBzaGFyZWQgUGhhc2UgQy9DMSBhZGFwdGVyIGFuZCB1bml0L2ZpbmFsLWNhcmQgRTJFIGNvdmVyYWdlIGFyZSBpbXBsZW1lbnRlZCBvbiB0aGUgVTIgTG9uZyBCYXJyZWwgYnJhbmNoLiBGaW5hbCBjaGVja2JveCB3YWl0cyBmb3IgUFIgUXVhbGl0eS9FMkUvU21va2UsIG1lcmdlLCBkZXBsb3kgYW5kIExpdmUgQ2hyb21pdW0gZ2F0ZS4K').decode(); new=base64.b64decode('LSBbIF0gTWlncmF0ZSBMb25nIEJhcnJlbC4g4oCUICoqU3RhdHVzOioqIPCfn6EgTUVSR0VEIC8gQ0kgUkVDT1ZFUlkgKyBMSVZFIFZFUklGWQogIC0gQ2Fub25pY2FsIGR1YWwtbW9kaWZpZXIgZGVmaW5pdGlvbiAoKzE4JSBwcm9qZWN0aWxlIHNwZWVkLCArMTAlIHJhbmdlKSwgc2hhcmVkIFBoYXNlIEMvQzEgYWRhcHRlciBhbmQgdW5pdC9maW5hbC1jYXJkIEUyRSBjb3ZlcmFnZSB3ZXJlIG1lcmdlZCB0byBgbWFpbmAgaW4gYGQ3MzFiYWRgLiBGaW5hbCBjaGVja2JveCByZW1haW5zIGJsb2NrZWQgdW50aWwgdGhlIGNhbm9uaWNhbCBDSSBFMkUgZ2F0ZSBpcyBzdGFibGUgYWdhaW4gYW5kIHRoZSByZXN1bHRpbmcgZGVwbG95ZWQgYnVpbGQgY2xlYXJzIExpdmUgQ2hyb21pdW0uCg==').decode(); sec=base64.b64decode('CiMgMjEuMi4gU2hhcmRlZCBQbGF5d3JpZ2h0IEUyRSBnYXRlCgpUaGUgY2Fub25pY2FsIGJyb3dzZXIgRTJFIGFyY2hpdGVjdHVyZSBpcyBkZWZpbmVkIGluIGBURVNUSU5HX0FORF9ERVBMT1lNRU5UX1BPTElDWS5tZGAuIEl0IHJlcGxhY2VzIHRoZSBzaW5nbGUtcnVubmVyL211bHRpLXdvcmtlciBhcHByb2FjaCB3aXRoIGlzb2xhdGVkIHJ1bm5lci1sZXZlbCBwYXJhbGxlbGlzbS4KCi0gWyBdIFBpbiBQbGF5d3JpZ2h0IENJIGV4ZWN1dGlvbiB0byBvbmUgd29ya2VyIHBlciBydW5uZXIuIOKAlCAqKlN0YXR1czoqKiDwn5+hIElNUExFTUVOVEVEIC8gUFIgVkVSSUZZCi0gWyBdIFNwbGl0IHRoZSBFMkUgc3VpdGUgYWNyb3NzIHRocmVlIEdpdEh1YiBBY3Rpb25zIHNoYXJkcy4g4oCUICoqU3RhdHVzOioqIPCfn6EgSU1QTEVNRU5URUQgLyBQUiBWRVJJRlkKLSBbIF0gS2VlcCBvbmUgc3RhYmxlIGFnZ3JlZ2F0ZSBjaGVjayBuYW1lZCBgRTJFYCBmb3IgYnJhbmNoIHByb3RlY3Rpb24gYW5kIENJIGNvbnN1bWVycy4g4oCUICoqU3RhdHVzOioqIPCfn6EgSU1QTEVNRU5URUQgLyBQUiBWRVJJRlkKLSBbIF0gVXNlIFBsYXl3cmlnaHQgYmxvYiByZXBvcnRzIHBlciBzaGFyZCBhbmQgbWVyZ2UgdGhlbSBpbnRvIG9uZSBIVE1MIGRpYWdub3N0aWMgYXJ0aWZhY3QuIOKAlCAqKlN0YXR1czoqKiDwn5+hIElNUExFTUVOVEVEIC8gUFIgVkVSSUZZCi0gWyBdIFVzZSBgcmV0cnlTdHJhdGVneTogaXNvbGF0ZWRgIHdpdGggb25lIENJIHJldHJ5LiDigJQgKipTdGF0dXM6Kiog8J+foSBJTVBMRU1FTlRFRCAvIFBSIFZFUklGWQotIFsgXSBGYWlsIENJIHdoZW4gUGxheXdyaWdodCBjbGFzc2lmaWVzIGEgdGVzdCBhcyBmbGFreTsgYSByZXRyeSBtdXN0IG5vdCBzaWxlbnRseSB0dXJuIHRoZSBnYXRlIGdyZWVuLiDigJQgKipTdGF0dXM6Kiog8J+foSBJTVBMRU1FTlRFRCAvIFBSIFZFUklGWQotIFsgXSBSZWNvcmQgdHJhY2VzIG9ubHkgb24gdGhlIGZpcnN0IHJldHJ5IGluIENJLiDigJQgKipTdGF0dXM6Kiog8J+foSBJTVBMRU1FTlRFRCAvIFBSIFZFUklGWQotIFsgXSBDb21tZW50IGZhaWxpbmcgc2hhcmQgbG9ncyBkaXJlY3RseSBvbiB0aGUgUFIgYW5kIGtlZXAgYWdncmVnYXRlIGRpYWdub3N0aWNzIGFzIGEgc2Vjb25kIGxheWVyLiDigJQgKipTdGF0dXM6Kiog8J+foSBJTVBMRU1FTlRFRCAvIFBSIFZFUklGWQotIFsgXSBSZW1vdmUgdGVtcG9yYXJ5IGRpYWdub3N0aWMgd29ya2Zsb3dzIGZyb20gdGhlIGNhbm9uaWNhbCBwYXRoLiDigJQgKipTdGF0dXM6Kiog8J+foSBJTVBMRU1FTlRFRCAvIFBSIFZFUklGWQotIFsgXSBWZXJpZnkgdGhlIG5ldyBFMkUgYXJjaGl0ZWN0dXJlIG9uIFBSLCBtZXJnZSwgYW5kIGNvbmZpcm0gYG1haW5gICsgTGl2ZSBDaHJvbWl1bSBiZWZvcmUgbWFya2luZyB0aGlzIGdhdGUgY29tcGxldGUuIOKAlCAqKlN0YXR1czoqKiDwn5+hIElNUExFTUVOVEVEIC8gUFIgKyBMSVZFIFZFUklGWQoKQXJjaGl0ZWN0dXJlIHJ1bGU6IHNwZWVkIGNvbWVzIGZyb20gaW5kZXBlbmRlbnQgQ0kgc2hhcmRzLCBuZXZlciBieSByYWlzaW5nIGJyb3dzZXItd29ya2VyIGNvbnRlbnRpb24gaW5zaWRlIG9uZSBydW5uZXIuIFRlc3QgcmV0cmllcyBhcmUgZGlhZ25vc3RpYyBvbmx5OyBmbGFreSBjbGFzc2lmaWNhdGlvbnMgcmVtYWluIGZhaWx1cmVzLgoKLS0tCgo=').decode(); marker='# 22. Cleanup / architecture debt pass'; assert old in t, 'Long Barrel block not found'; assert marker in t, 'section 22 marker not found'; p.write_text(t.replace(old,new,1).replace(marker,sec+marker,1))"
       - name: Commit cleaned roadmap
         run: |
           set -euo pipefail
-          if git diff --quiet -- UPGRADE_SYSTEM_2_ROADMAP.md; then
-            echo 'No roadmap changes needed.'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add UPGRADE_SYSTEM_2_ROADMAP.md
+          if git diff --cached --quiet; then
+            echo 'No roadmap changes needed.'
+            exit 0
+          fi
           git commit -m 'Clean roadmap for sharded E2E gate'
           git push origin HEAD:stabilize-sawbug-self-test
