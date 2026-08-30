@@ -1,5 +1,5 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=6';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=7';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
@@ -200,23 +200,6 @@ function installProgressHud(scene) {
   scene.refreshProgressHud();
 }
 
-function summonRig(scene) {
-  if (scene.rigSystem?.summon) {
-    scene.rigSystem.summon();
-    return;
-  }
-  if (scene.rigSummoned) return;
-  scene.rigSummoned = true;
-  scene.rigFireDelay = 920;
-  scene.rigDamageScale = .58;
-  scene.rigShots = 1;
-  scene.lastRigShot = 0;
-  scene.cart.setVisible(true).setActive(true).setAlpha(0).setScale(.92);
-  scene.cart.setPosition(scene.hero.x - 145, scene.hero.y + 105);
-  scene.tweens.add({ targets: scene.cart, alpha: 1, duration: 260, ease: 'Cubic.Out' });
-  scene.cameras.main.flash(110, 80, 210, 225, false);
-}
-
 function createUpgradePool(scene) {
   return [
     createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
@@ -226,7 +209,7 @@ function createUpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
     createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),
-    { id: 'call-rig', category: 'FORTRESS', title: 'CALL THE RIG', desc: 'Summon the moving Fortress companion.', weight: .7, available: () => scene.level >= 2 && !scene.rigSummoned, apply: () => summonRig(scene) },
+    createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' }),
     { id: 'rig-overdrive', category: 'FORTRESS', title: 'RIG OVERDRIVE', desc: 'Reserved for the future companion upgrade tree.', weight: 0, available: () => false, apply: () => {} },
     { id: 'twin-cannon', category: 'FORTRESS', title: 'TWIN CANNON', desc: 'Reserved for the future companion upgrade tree.', weight: 0, available: () => false, apply: () => {} }
   ];

@@ -1,4 +1,4 @@
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=6';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=7';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
 const W = 960;
@@ -193,27 +193,6 @@ function installLandscapeHud(scene) {
   scene.refreshProgressHud();
 }
 
-function upgradeLevel(scene, id) {
-  return scene.upgradeLevels?.[id] || 0;
-}
-
-function bumpUpgrade(scene, id) {
-  scene.upgradeLevels[id] = upgradeLevel(scene, id) + 1;
-}
-
-function summonRigC1(scene) {
-  if (scene.rigSummoned) return;
-  scene.rigSummoned = true;
-  scene.rigFireDelay = 920;
-  scene.rigDamageScale = .58;
-  scene.rigShots = 1;
-  scene.lastRigShot = 0;
-  scene.cart.setVisible(true).setActive(true).setAlpha(0).setScale(.98);
-  scene.cart.setPosition(scene.hero.x - 155, scene.hero.y + 95);
-  scene.tweens.add({ targets: scene.cart, alpha: 1, duration: 260, ease: 'Cubic.Out' });
-  scene.cameras.main.flash(110, 80, 210, 225, false);
-}
-
 function c1UpgradePool(scene) {
   return [
     createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
@@ -223,15 +202,9 @@ function c1UpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
     createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),
-    { id:'call-rig', category:'FORTRESS', title:'CALL THE RIG', desc:'Summon the moving Fortress companion.', weight:.7,
-      available:()=>scene.level>=2&&!scene.rigSummoned,
-      apply:()=>summonRigC1(scene) },
-    { id:'rig-overdrive', category:'FORTRESS', title:'RIG OVERDRIVE', desc:'Fortress cannon fires 15% faster.', weight:.92,
-      available:()=>scene.rigSummoned&&upgradeLevel(scene,'rig-overdrive')<4,
-      apply:()=>{ bumpUpgrade(scene,'rig-overdrive'); scene.rigFireDelay=Math.max(360,scene.rigFireDelay*.85); } },
-    { id:'twin-cannon', category:'FORTRESS', title:'TWIN CANNON', desc:'Fortress fires another support shot.', weight:.7,
-      available:()=>scene.rigSummoned&&upgradeLevel(scene,'twin-cannon')<1,
-      apply:()=>{ bumpUpgrade(scene,'twin-cannon'); scene.rigShots=2; } }
+    createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' }),
+    { id:'rig-overdrive', category:'FORTRESS', title:'RIG OVERDRIVE', desc:'Reserved for the future companion upgrade tree.', weight:0, available:()=>false, apply:()=>{} },
+    { id:'twin-cannon', category:'FORTRESS', title:'TWIN CANNON', desc:'Reserved for the future companion upgrade tree.', weight:0, available:()=>false, apply:()=>{} }
   ];
 }
 

@@ -76,8 +76,14 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC).toContain("const pickupRadiusMultiplier = Number(this.runCombatStats?.pickupRadiusMultiplier) || 1;");
     expect(phaseC).toContain('const magnetRadius = this.magnetRadius * pickupRadiusMultiplier;');
 
-    expect(phaseC).toContain("id: 'call-rig'");
-    expect(phaseC1).toContain("id:'call-rig'");
+    expect(phaseC).toContain("createRegisteredUpgradeChoice(scene, 'call-rig'");
+    expect(phaseC1).toContain("createRegisteredUpgradeChoice(scene, 'call-rig'");
+    expect(phaseC).not.toContain("id: 'call-rig'");
+    expect(phaseC1).not.toContain("id:'call-rig'");
+    expect(phaseC).not.toContain('scene.rigFireDelay = 920');
+    expect(phaseC1).not.toContain('scene.rigFireDelay = 920');
+    expect(phaseC1).not.toContain('scene.rigFireDelay=Math.max(360');
+    expect(phaseC1).not.toContain('scene.rigShots=2');
     expect(upgradeRuntime).toContain('applyMixedRegisteredUpgrade');
     expect(upgradeRuntime).toContain('createUpgradeMechanicalTransaction');
   });
