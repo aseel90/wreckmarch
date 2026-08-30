@@ -41,6 +41,8 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'overclock'");
     expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'long-barrel'");
     expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'long-barrel'");
+    expect(phaseC).toContain("createRegisteredUpgradeChoice(scene, 'twin-riveter'");
+    expect(phaseC1).toContain("createRegisteredUpgradeChoice(scene, 'twin-riveter'");
     expect(phaseC).not.toContain('primaryWeapon.damage *= 1.2');
     expect(phaseC1).not.toContain('primaryWeapon.damage*=1.2');
     expect(phaseC).not.toContain('primaryWeapon.fireDelay = Math.max(145');
@@ -49,9 +51,12 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC1).not.toContain('primaryWeapon.projectileSpeed*=1.18');
     expect(phaseC).not.toContain('primaryWeapon.range *= 1.1');
     expect(phaseC1).not.toContain('primaryWeapon.range*=1.1');
+    expect(phaseC).not.toContain("id: 'twin-riveter'");
+    expect(phaseC1).not.toContain("id:'twin-riveter'");
     expect(upgradeRuntime).toContain('applyRegisteredStatUpgrade');
+    expect(upgradeRuntime).toContain('applyRegisteredUpgrade');
 
-    for (const id of ['twin-riveter', 'fleet-feet', 'scrap-magnet', 'armor-plate']) {
+    for (const id of ['fleet-feet', 'scrap-magnet', 'armor-plate']) {
       expect(phaseC).toContain(`id: '${id}'`);
       expect(phaseC1).toContain(`id:'${id}'`);
     }
