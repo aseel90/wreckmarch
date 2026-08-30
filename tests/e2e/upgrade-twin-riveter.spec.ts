@@ -44,7 +44,7 @@ async function chooseTwinRiveter(page: any) {
   });
 
   // UpgradeSceneV4 closes through an 80ms delayed callback. Wait for that
-  // canonical close path before opening the next level so the second offer
+  // canonical delayed close path before opening the next level so the second offer
   // cannot race the previous scene teardown.
   await expect.poll(
     () => page.evaluate(() => {
