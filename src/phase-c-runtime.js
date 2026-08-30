@@ -232,7 +232,7 @@ function createUpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'long-barrel', { category: 'HERO' }),
     createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
-    { id: 'scrap-magnet', category: 'UTILITY', title: 'SCRAP MAGNET', desc: 'Increase Scrap pickup radius by 25%.', weight: 1, available: () => upgradeLevel(scene, 'scrap-magnet') < 4, apply: () => { bumpUpgrade(scene, 'scrap-magnet'); scene.magnetRadius *= 1.25; } },
+    createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
     { id: 'armor-plate', category: 'UTILITY', title: 'ARMOR PLATE', desc: '+15 max HP and restore 15 HP.', weight: .95, available: () => upgradeLevel(scene, 'armor-plate') < 4, apply: () => { bumpUpgrade(scene, 'armor-plate'); scene.heroMaxHp += 15; scene.heroHp = Math.min(scene.heroMaxHp, scene.heroHp + 15); } },
     { id: 'call-rig', category: 'FORTRESS', title: 'CALL THE RIG', desc: 'Summon the moving Fortress companion.', weight: .7, available: () => scene.level >= 2 && !scene.rigSummoned, apply: () => summonRig(scene) },
     { id: 'rig-overdrive', category: 'FORTRESS', title: 'RIG OVERDRIVE', desc: 'Reserved for the future companion upgrade tree.', weight: 0, available: () => false, apply: () => {} },
@@ -316,11 +316,13 @@ function installScrapProgression(scene) {
   scene.magnetRadius = 135;
   scene.lastScrapTotalForXp = scene.scrap || 0;
   scene.updateScrapMagnet = function() {
+    const pickupRadiusMultiplier = Number(this.runCombatStats?.pickupRadiusMultiplier) || 1;
+    const magnetRadius = this.magnetRadius * pickupRadiusMultiplier;
     this.scraps.children.iterate(s => {
       if (!s?.active) return;
       const d = Phaser.Math.Distance.Between(s.x, s.y, this.hero.x, this.hero.y);
-      if (d < this.magnetRadius) {
-        const strength = Phaser.Math.Clamp((this.magnetRadius + 8 - d) / (this.magnetRadius + 8), .08, 1);
+      if (d < magnetRadius) {
+        const strength = Phaser.Math.Clamp((magnetRadius + 8 - d) / (magnetRadius + 8), .08, 1);
         const ang = Phaser.Math.Angle.Between(s.x, s.y, this.hero.x, this.hero.y);
         s.setVelocity(Math.cos(ang) * (140 + strength * 350), Math.sin(ang) * (140 + strength * 350));
       } else s.setVelocity(s.body.velocity.x * .9, s.body.velocity.y * .9);

@@ -45,6 +45,8 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC1).toContain("createRegisteredUpgradeChoice(scene, 'twin-riveter'");
     expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'fleet-feet'");
     expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'fleet-feet'");
+    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'scrap-magnet'");
+    expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'scrap-magnet'");
     expect(phaseC).not.toContain('primaryWeapon.damage *= 1.2');
     expect(phaseC1).not.toContain('primaryWeapon.damage*=1.2');
     expect(phaseC).not.toContain('primaryWeapon.fireDelay = Math.max(145');
@@ -57,11 +59,18 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC1).not.toContain("id:'twin-riveter'");
     expect(phaseC).not.toContain("id: 'fleet-feet'");
     expect(phaseC1).not.toContain("id:'fleet-feet'");
+    expect(phaseC).not.toContain("id: 'scrap-magnet'");
+    expect(phaseC1).not.toContain("id:'scrap-magnet'");
+    expect(phaseC).not.toContain('scene.magnetRadius *= 1.25');
+    expect(phaseC1).not.toContain('scene.magnetRadius*=1.25');
     expect(phaseC1).not.toContain("scene.heroSpeed=Math.min(365,scene.heroSpeed*1.08)");
     expect(upgradeRuntime).toContain('applyRegisteredStatUpgrade');
     expect(upgradeRuntime).toContain('applyRegisteredUpgrade');
 
-    for (const id of ['scrap-magnet', 'armor-plate']) {
+    expect(phaseC).toContain("const pickupRadiusMultiplier = Number(this.runCombatStats?.pickupRadiusMultiplier) || 1;");
+    expect(phaseC).toContain('const magnetRadius = this.magnetRadius * pickupRadiusMultiplier;');
+
+    for (const id of ['armor-plate']) {
       expect(phaseC).toContain(`id: '${id}'`);
       expect(phaseC1).toContain(`id:'${id}'`);
     }

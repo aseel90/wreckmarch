@@ -338,9 +338,10 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
   - Gameplay migration merged in `d731bad`; after the Sawbug/CI stabilization merge, `main` `98de52f` recovered with quality=success, e2e=success, smoke=success and passed post-deploy Live Chromium.
 - [x] Migrate Twin Riveter. — **Status:** ✅ DONE
   - Verified on `10ba433`: canonical mechanical-effect path, shared Phase C/C1 registry adapter, WeaponSystem mechanical-state ownership, level 1 → 2 rivets / level 2 → 3 rivets parity, unit/final-scene E2E, Quality, Smoke, all three E2E shards, aggregate E2E, deploy, Live Chromium and Pages recovery all passed.
-- [ ] Migrate Fleet Feet. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-  - Canonical Character `moveSpeed` migration uses the `RUN_BALANCE` contract (+3% per level, max level 3, hard cap 280), shared Phase C/C1 stat adapter, unit parity against `getPlayerMoveSpeed()` and deterministic final-scene E2E. Final checkbox waits for clean PR + `main` + Live Chromium verification.
-- [ ] Migrate Scrap Magnet. — **Status:** ⚪ NOT STARTED
+- [x] Migrate Fleet Feet. — **Status:** ✅ DONE
+  - Verified on `3fd680b`: canonical Character `moveSpeed` migration uses the `RUN_BALANCE` contract (+3% per level, max level 3, hard cap 280), shared Phase C/C1 stat adapter, unit parity against `getPlayerMoveSpeed()`, deterministic final-scene E2E, Quality, Smoke, all three E2E shards and aggregate E2E; post-merge Live Chromium passed on the same SHA with no open `[CI] main is failing` or `[LIVE] deployed main smoke failed` issue.
+- [ ] Migrate Scrap Magnet. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+  - Canonical Character `pickupRadiusMultiplier` migration preserves the 135px Phase C base radius and applies +25% multiplicatively per level (max 4) through RunStatState. Shared Phase C/C1 registry adapter, unit parity and a deterministic final-scene E2E prove a Scrap at 150px is outside the base radius and attracted after level 1. Final checkbox waits for clean PR + `main` + Live Chromium verification.
 - [ ] Migrate Armor Plate. — **Status:** ⚪ NOT STARTED
 - [ ] Decide temporary handling of Call the Rig without expanding old Rig system. — **Status:** ⚪ NOT STARTED
 - [ ] Remove/deactivate obsolete duplicate card definitions after migration. — **Status:** 🧹 POST-MIGRATION
