@@ -188,7 +188,7 @@ Rules:
 - [x] Add validation for invalid definitions. — **Status:** ✅ DONE
 - [ ] Migrate Heavy Rivets as first numeric reference card. — **Status:** 🔵 IN PROGRESS
 - [ ] Verify Heavy Rivets gameplay parity. — **Status:** 🔵 IN PROGRESS
-  - Heavy Rivets migration note: canonical definition/registry/runtime adapter implemented; Phase C and Phase C1 now share one apply path. Local parity check passed; final checkbox waits for CI + deployed Chromium verification.
+  - Heavy Rivets migration note: canonical definition/registry/runtime adapter implemented; Phase C and Phase C1 now share one apply path. Local parity check passed and targeted `tests/e2e/upgrade-heavy-rivets.spec.ts` covers the final UpgradeSceneV4 choice path; final checkbox waits for CI + deployed Chromium verification.
 - [ ] Migrate Overclock. — **Status:** ⚪ NOT STARTED
 - [ ] Migrate Long Barrel. — **Status:** ⚪ NOT STARTED
 - [ ] Migrate Twin Riveter. — **Status:** ⚪ NOT STARTED

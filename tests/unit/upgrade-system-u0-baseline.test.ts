@@ -30,16 +30,21 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(weapon).toContain('const fireDelay =');
   });
 
-  it('records the current Phase C upgrade owner until the U2 migration', () => {
+  it('tracks the U2 ownership boundary while cards migrate incrementally', () => {
     const phaseC = read('src/phase-c-runtime.js');
-    expect(phaseC).toContain('scene.upgradeLevels = {}');
-    expect(phaseC).toContain("id: 'heavy-rivets'");
-    expect(phaseC).toContain("id: 'overclock'");
-    expect(phaseC).toContain("id: 'long-barrel'");
-    expect(phaseC).toContain("id: 'twin-riveter'");
-    expect(phaseC).toContain("id: 'fleet-feet'");
-    expect(phaseC).toContain("id: 'scrap-magnet'");
-    expect(phaseC).toContain("id: 'armor-plate'");
+    const phaseC1 = read('src/phase-c1-runtime.js');
+    const upgradeRuntime = read('src/upgrades/upgrade-runtime.js');
+
+    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
+    expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
+    expect(phaseC).not.toContain('primaryWeapon.damage *= 1.2');
+    expect(phaseC1).not.toContain('primaryWeapon.damage*=1.2');
+    expect(upgradeRuntime).toContain('applyRegisteredStatUpgrade');
+
+    for (const id of ['overclock', 'long-barrel', 'twin-riveter', 'fleet-feet', 'scrap-magnet', 'armor-plate']) {
+      expect(phaseC).toContain(`id: '${id}'`);
+      expect(phaseC1).toContain(`id:'${id}'`);
+    }
   });
 
   it('keeps the final Runner production boundary routed through CharacterSystem', () => {
