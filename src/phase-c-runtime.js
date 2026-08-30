@@ -1,6 +1,6 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=7';
-import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=1';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=8';
+import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;

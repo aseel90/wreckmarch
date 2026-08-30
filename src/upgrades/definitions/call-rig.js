@@ -4,7 +4,7 @@ export const CALL_RIG_UPGRADE = Object.freeze({
   id: 'call-rig',
   name: 'CALL THE RIG',
   description: 'Summon the moving Fortress companion.',
-  rarity: null,
+  rarity: 'COMMON',
   maxLevel: 1,
   scope: UPGRADE_SCOPES.COMPANION,
   tags: Object.freeze(['companion', 'summon']),

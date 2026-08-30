@@ -39,7 +39,13 @@ test('Fleet Feet uses canonical character stats in the final upgrade scene', asy
       heroSpeed: scene.heroSpeed,
       baseMoveSpeed: scene.runStatState.state.base.character.moveSpeed
     };
-    scene.openUpgradeCards();
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      scene.openUpgradeCards();
+    } finally {
+      Math.random = originalRandom;
+    }
     return snapshot;
   });
 

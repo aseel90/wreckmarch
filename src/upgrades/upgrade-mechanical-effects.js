@@ -5,7 +5,7 @@ export const UPGRADE_MECHANICAL_EFFECT_IDS = Object.freeze({
 });
 
 const TRANSACTION_FACTORIES = Object.freeze({
-  [UPGRADE_MECHANICAL_EFFECT_IDS.TWIN_RIVETER]: ({ scene, definition, level, config }) => {
+  [UPGRADE_MECHANICAL_EFFECT_IDS.TWIN_RIVETER]: ({ scene, definition, level, config, rarity }) => {
     const baseProjectileCount = Number.isInteger(config.baseProjectileCount) ? config.baseProjectileCount : 1;
     const maxProjectileCount = Number.isInteger(config.maxProjectileCount) ? config.maxProjectileCount : 3;
     const projectileCount = Math.min(maxProjectileCount, baseProjectileCount + level);
@@ -25,6 +25,7 @@ const TRANSACTION_FACTORIES = Object.freeze({
           id: definition.id,
           effectId: UPGRADE_MECHANICAL_EFFECT_IDS.TWIN_RIVETER,
           level,
+          rarity,
           projectileCount
         });
         scene.upgradeMechanicalState[definition.id] = state;
@@ -47,9 +48,11 @@ const TRANSACTION_FACTORIES = Object.freeze({
     });
   },
 
-  [UPGRADE_MECHANICAL_EFFECT_IDS.RESTORE_HP]: ({ scene, definition, level, config }) => {
-    const amount = Number(config.amount);
-    if (!Number.isFinite(amount) || amount < 0) throw new TypeError('RESTORE_HP amount must be a finite number >= 0');
+  [UPGRADE_MECHANICAL_EFFECT_IDS.RESTORE_HP]: ({ scene, definition, level, config, rarity, powerMultiplier }) => {
+    const baseAmount = Number(config.amount);
+    const amount = baseAmount * powerMultiplier;
+    if (!Number.isFinite(baseAmount) || baseAmount < 0) throw new TypeError('RESTORE_HP amount must be a finite number >= 0');
+    if (!Number.isFinite(amount) || amount < 0) throw new TypeError('RESTORE_HP scaled amount must be a finite number >= 0');
     const previousHp = Number(scene.heroHp);
     if (!Number.isFinite(previousHp)) throw new TypeError('RESTORE_HP requires finite scene.heroHp');
 
@@ -63,6 +66,7 @@ const TRANSACTION_FACTORIES = Object.freeze({
           id: definition.id,
           effectId: UPGRADE_MECHANICAL_EFFECT_IDS.RESTORE_HP,
           level,
+          rarity,
           amount,
           previousHp,
           heroHp: nextHp,
@@ -75,7 +79,7 @@ const TRANSACTION_FACTORIES = Object.freeze({
     });
   },
 
-  [UPGRADE_MECHANICAL_EFFECT_IDS.SUMMON_RIG]: ({ scene, definition, level }) => {
+  [UPGRADE_MECHANICAL_EFFECT_IDS.SUMMON_RIG]: ({ scene, definition, level, rarity }) => {
     return Object.freeze({
       apply() {
         if (!scene.rigSystem || typeof scene.rigSystem.summon !== 'function') {
@@ -87,6 +91,7 @@ const TRANSACTION_FACTORIES = Object.freeze({
           id: definition.id,
           effectId: UPGRADE_MECHANICAL_EFFECT_IDS.SUMMON_RIG,
           level,
+          rarity,
           summoned: true
         });
       },
@@ -128,18 +133,23 @@ export function canApplyUpgradeMechanicalEffect(scene, definition) {
   return predicate ? predicate(scene, definition) : true;
 }
 
-export function createUpgradeMechanicalTransaction(scene, definition, level) {
+export function createUpgradeMechanicalTransaction(scene, definition, level, { rarity = 'COMMON', powerMultiplier = 1 } = {}) {
   const { factory } = requireMechanicalEffect(scene, definition, level);
+  if (!Number.isFinite(powerMultiplier) || powerMultiplier <= 0) {
+    throw new TypeError('Upgrade mechanical effect powerMultiplier must be finite and > 0');
+  }
   return factory({
     scene,
     definition,
     level,
+    rarity,
+    powerMultiplier,
     config: definition.mechanicalEffect.config || {}
   });
 }
 
-export function applyUpgradeMechanicalEffect(scene, definition, level) {
-  const transaction = createUpgradeMechanicalTransaction(scene, definition, level);
+export function applyUpgradeMechanicalEffect(scene, definition, level, options = {}) {
+  const transaction = createUpgradeMechanicalTransaction(scene, definition, level, options);
   try {
     return transaction.apply();
   } catch (error) {

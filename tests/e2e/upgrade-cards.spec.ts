@@ -24,30 +24,36 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
       frameWidth: card.art?.frame?.realWidth || 0,
       frameHeight: card.art?.frame?.realHeight || 0,
       rarity: card.rarity,
+      badge: card.rarityText?.text || '',
       rank: card.style?.rank,
       frameColor: card.style?.frame,
       glowAlpha: card.glow?.alpha
     }));
-    const rarityValues = Object.values(scene.__d1CardRarity || {});
+    const choiceRarities = (upgradeScene.choices || []).map((choice: any) => choice.rarity);
+    const rarityStyles = scene.__d1RarityStyles || [];
     scene.closeUpgradeCards();
 
     return {
       artSource: scene.__d1CardArtSource,
       premiumCards: scene.__d1PremiumCards,
-      rarityValues,
+      rarityStyles,
+      choiceRarities,
       cards
     };
   });
 
   expect(result.artSource).toBe('c3-atlas-icons');
   expect(result.premiumCards).toBe(true);
-  expect(new Set(result.rarityValues)).toEqual(new Set(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']));
+  expect(new Set(result.rarityStyles)).toEqual(new Set(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']));
+  expect(result.cards.map((card: any) => card.rarity)).toEqual(result.choiceRarities);
   expect(result.cards).toHaveLength(3);
   for (const card of result.cards) {
     expect(card.texture).toBe('c3-atlas');
     expect(card.frameWidth).toBeGreaterThanOrEqual(70);
     expect(card.frameHeight).toBeGreaterThanOrEqual(60);
     expect(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']).toContain(card.rarity);
+    expect(card.badge).toContain(card.rarity);
+    expect(card.badge).toContain('% POWER');
     expect(card.rank).toBeGreaterThanOrEqual(0);
     expect(card.rank).toBeLessThanOrEqual(3);
     expect(card.frameColor).toBeGreaterThan(0);

@@ -29,7 +29,13 @@ test('Overclock uses the canonical registry path in the final upgrade scene', as
 
     const beforeDelay = scene.primaryWeapon.fireDelay;
     const baseDelay = scene.runStatState.state.base.weapon.fireDelay;
-    scene.openUpgradeCards();
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      scene.openUpgradeCards();
+    } finally {
+      Math.random = originalRandom;
+    }
     await new Promise(resolve => setTimeout(resolve, 140));
 
     const upgradeScene = game.scene.getScene('UpgradeSceneV4');

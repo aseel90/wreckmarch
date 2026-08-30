@@ -33,7 +33,13 @@ test('Armor Plate applies canonical max HP and restore HP in the final upgrade s
     scene.level = 1;
     scene.rigSummoned = false;
     scene.heroHp = 50;
-    scene.openUpgradeCards();
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      scene.openUpgradeCards();
+    } finally {
+      Math.random = originalRandom;
+    }
 
     return {
       heroHp: scene.heroHp,

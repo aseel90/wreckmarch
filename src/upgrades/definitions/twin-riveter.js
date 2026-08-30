@@ -5,7 +5,7 @@ export const TWIN_RIVETER_UPGRADE = Object.freeze({
   id: 'twin-riveter',
   name: 'TWIN RIVETER',
   description: 'Fire an extra rivet with slight spread.',
-  rarity: null,
+  rarity: 'COMMON',
   maxLevel: 2,
   scope: UPGRADE_SCOPES.WEAPON,
   tags: ['PROJECTILE_COUNT', 'RIVET'],

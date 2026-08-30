@@ -103,6 +103,7 @@ describe('Upgrade System 2.0 registry and schema', () => {
     expect(() => registry.register(heavyRivetsFixture)).toThrow(/Duplicate upgrade id/);
     expect(() => createUpgradeRegistry([{ ...heavyRivetsFixture, id: 'Bad ID' }])).toThrow(/Invalid upgrade id/);
     expect(() => createUpgradeRegistry([{ ...heavyRivetsFixture, scope: 'UNKNOWN' }])).toThrow(/Invalid upgrade scope/);
+    expect(() => createUpgradeRegistry([{ ...heavyRivetsFixture, rarity: 'MYTHIC' }])).toThrow(/Unknown upgrade rarity/);
     expect(() => createUpgradeRegistry([{ ...heavyRivetsFixture, modifiers: [], mechanicalEffect: null }])).toThrow(/requires modifiers or mechanicalEffect/);
     expect(() => createUpgradeRegistry([{ ...heavyRivetsFixture, modifiers: [{ ...heavyRivetsFixture.modifiers[0], min: 5, max: 4 }] }])).toThrow(/min cannot be greater than max/);
     expect(() => createUpgradeRegistry([{

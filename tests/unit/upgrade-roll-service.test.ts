@@ -8,11 +8,11 @@ function choice(id: string, weight: number, available = true) {
 describe('upgrade roll service', () => {
   it('uses deterministic seeded weighted sampling without replacement', () => {
     const pool = [choice('a', 1), choice('b', 2), choice('c', 3), choice('d', 4)];
-    const first = rollUpgradeChoices(pool, { count: 3, rng: createSeededUpgradeRng('run-42') }).map(item => item.id);
-    const second = rollUpgradeChoices(pool, { count: 3, rng: createSeededUpgradeRng('run-42') }).map(item => item.id);
+    const first = rollUpgradeChoices(pool, { count: 3, rng: createSeededUpgradeRng('run-42') }).map(item => ({ id: item.id, rarity: item.rarity }));
+    const second = rollUpgradeChoices(pool, { count: 3, rng: createSeededUpgradeRng('run-42') }).map(item => ({ id: item.id, rarity: item.rarity }));
 
     expect(first).toEqual(second);
-    expect(new Set(first).size).toBe(first.length);
+    expect(new Set(first.map(item => item.id)).size).toBe(first.length);
     expect(first).toHaveLength(3);
   });
 
@@ -29,6 +29,22 @@ describe('upgrade roll service', () => {
       rng: createSeededUpgradeRng(7),
       excludeIds: ['excluded']
     }).map(item => item.id)).toEqual(['valid']);
+  });
+
+  it('assigns rarity after card selection and respects fixed Common constraints', () => {
+    const rollable = { ...choice('rollable', 1), apply: (rarity?: string | null) => rarity };
+    const values = [0, 0.999];
+    const rolled = rollUpgradeChoices([rollable], { count: 1, rng: () => values.shift() ?? 0 });
+    expect(rolled[0].rarity).toBe('LEGENDARY');
+    expect(rolled[0].rarityPowerMultiplier).toBe(1.5);
+    expect(rolled[0].apply?.()).toBe('LEGENDARY');
+
+    let calls = 0;
+    const fixed = { ...choice('fixed', 1), rarityConstraint: 'COMMON', apply: (rarity?: string | null) => rarity };
+    const fixedRoll = rollUpgradeChoices([fixed], { count: 1, rng: () => { calls += 1; return 0.999; } });
+    expect(fixedRoll[0].rarity).toBe('COMMON');
+    expect(fixedRoll[0].apply?.()).toBe('COMMON');
+    expect(calls).toBe(1);
   });
 
   it('returns an empty list when no valid choices remain', () => {

@@ -46,7 +46,13 @@ test('Scrap Magnet uses canonical pickup radius stats in the final upgrade scene
       probeSpeed: Math.hypot(probe.body.velocity.x, probe.body.velocity.y)
     };
     scene.__scrapMagnetProbe = probe;
-    scene.openUpgradeCards();
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      scene.openUpgradeCards();
+    } finally {
+      Math.random = originalRandom;
+    }
     return snapshot;
   });
 

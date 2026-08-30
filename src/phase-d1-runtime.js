@@ -2,19 +2,11 @@
 import { CharacterSystem } from './characters/character-system.js?v=5';
 import { loadRunnerLocomotionArt } from './characters/runner-locomotion-art.js?v=4';
 import { installMobileHudPolish } from './mobile-hud-polish.js?v=2';
+import { UPGRADE_RARITIES, UPGRADE_RARITY_RULES, getUpgradeRarityRule } from './upgrades/upgrade-rarity.js?v=1';
 const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const COLORS={HERO:0xd98446,UTILITY:0x4fc8d8,FORTRESS:0xd4ad62,EVOLUTION:0x9d6be8};
-const CARD_RARITY={
-  'heavy-rivets':'COMMON','overclock':'COMMON','long-barrel':'RARE','twin-riveter':'EPIC','fleet-feet':'COMMON',
-  'scrap-magnet':'RARE','armor-plate':'COMMON','call-rig':'LEGENDARY','rig-overdrive':'RARE','twin-cannon':'EPIC'
-};
-const RARITY_STYLE={
-  COMMON:{label:'COMMON',frame:0x7f8b93,glow:0x7f8b93,rank:0},
-  RARE:{label:'RARE',frame:0x4fc8d8,glow:0x2d9fb4,rank:1},
-  EPIC:{label:'EPIC',frame:0xa26be8,glow:0x7543bb,rank:2},
-  LEGENDARY:{label:'LEGENDARY',frame:0xf0b95f,glow:0xd98446,rank:3}
-};
+const RARITY_ORDER=Object.values(UPGRADE_RARITIES);
 const CARD_IDS=['heavy-rivets','overclock','long-barrel','twin-riveter','fleet-feet','scrap-magnet','armor-plate','call-rig','rig-overdrive','twin-cannon'];
 const GUN_FRAMES=['gun_e.png','gun_se.png','gun_s.png','gun_sw.png','gun_w.png','gun_nw.png','gun_n.png','gun_ne.png'];
 const GUN_POSES=[
@@ -109,9 +101,10 @@ function installPremiumCards(s){
 
   up.card=function(x,y,w,h,u,i){
     const category=COLORS[u.category]||COLORS.HERO;
-    const rarity=CARD_RARITY[u.id]||'COMMON';
-    const style=RARITY_STYLE[rarity];
-    const rank=style.rank;
+    const rarity=u.rarity||UPGRADE_RARITIES.COMMON;
+    const rule=getUpgradeRarityRule(rarity);
+    const rank=RARITY_ORDER.indexOf(rarity);
+    const style={label:rule.label,frame:rule.color,glow:rule.color,rank};
     const g=this.add.container(x,y);
     const shadow=this.add.rectangle(8,11,w,h,0,.46);
     const glow=this.add.rectangle(0,0,w+8,h+8,style.glow,rank>=2?.10:rank===1?.055:.02);
@@ -120,7 +113,7 @@ function installPremiumCards(s){
     const header=this.add.rectangle(0,-h/2+27,w-4,50,0x0b1016,.98);
     const strip=this.add.rectangle(0,-h/2+5,w,10,style.frame,.98);
     const categoryText=this.add.text(-w/2+16,-h/2+28,u.category,{fontFamily:'Arial Black,Arial',fontSize:'10px',color:Phaser.Display.Color.IntegerToColor(category).rgba}).setOrigin(0,.5);
-    const rarityText=this.add.text(w/2-16,-h/2+28,style.label,{fontFamily:'Arial Black,Arial',fontSize:rank>=3?'9px':'8px',color:Phaser.Display.Color.IntegerToColor(style.frame).rgba,letterSpacing:1}).setOrigin(1,.5);
+    const rarityText=this.add.text(w/2-16,-h/2+28,`${u.rarityLabel||style.label} • ${Math.round((Number(u.rarityPowerMultiplier)||1)*100)}% POWER`,{fontFamily:'Arial Black,Arial',fontSize:rank>=3?'9px':'8px',color:Phaser.Display.Color.IntegerToColor(style.frame).rgba,letterSpacing:1}).setOrigin(1,.5);
 
     const artH=Math.min(154,h*.39),artY=-h*.18;
     const artBg=this.add.rectangle(0,artY,w-34,artH,0x0a1015,.96).setStrokeStyle(2,style.frame,rank>=2?.48:.28);
@@ -173,15 +166,15 @@ function installPremiumCards(s){
   };
 
   s.__d1PremiumCards=true;
-  s.__d1CardRarity={...CARD_RARITY};
+  s.__d1RarityStyles=Object.keys(UPGRADE_RARITY_RULES);
   s.__d1CardArtSource='c3-atlas-icons';
 }
 
 function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='1')return;
-  const runFrames=s.anims.get(s.characterDefinition?.animations?.run?.key)?.frames?.length||0,hdSheet=s.textures.get('c5-upgrade-sheet'),allHdCards=CARD_IDS.every(id=>s.textures.get('c3-atlas')?.has?.(CARD_FRAME(id))),rarities=new Set(Object.values(s.__d1CardRarity||{})),roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
+  const runFrames=s.anims.get(s.characterDefinition?.animations?.run?.key)?.frames?.length||0,hdSheet=s.textures.get('c5-upgrade-sheet'),allHdCards=CARD_IDS.every(id=>s.textures.get('c3-atlas')?.has?.(CARD_FRAME(id))),rarities=new Set(s.__d1RarityStyles||[]),roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
   const probe=s.add.image(-9999,-9999,'c3-atlas',CARD_FRAME('overclock'));fit(probe,112,96);
   const checks={animatedLegs:runFrames===3&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),weaponGripCalibration:GUN_POSES[2].gripDx===-4&&GUN_POSES[2].gripDy===-2&&GUN_POSES[6].gripDx===-4&&GUN_POSES[6].gripDy===6&&GUN_POSES[1].gripDx===-7&&GUN_POSES[3].gripDx===7&&GUN_POSES[5].gripDx===7&&GUN_POSES[7].gripDx===-7,weaponFront:s.weaponV3Gun.depth>s.hero.depth,weaponScale:s.weaponV3Gun.displayWidth<=60&&s.weaponV3Gun.displayHeight<=60,noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allHdCards&&probe.texture?.key==='c3-atlas'&&probe.displayWidth>=80,rarityCards:['COMMON','RARE','EPIC','LEGENDARY'].every(r=>rarities.has(r)),roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth,characterSystem:s.characterId==='runner'&&s.characterDefinition?.id==='runner'&&s.__characterSystemReady===true};probe.destroy();
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_D1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchD1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`D1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase D.1 self-test failed: '+detail)
 }
 
-export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installMobileHudPolish(s);installVehicleScale(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: Hunter Runner + integrated compact weapon + compact icon rarity cards + visible asphalt + real vehicle scale');selfTest(s);return true}
+export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installMobileHudPolish(s);installVehicleScale(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: Hunter Runner + integrated compact weapon + dynamic canonical rarity cards + visible asphalt + real vehicle scale');selfTest(s);return true}
