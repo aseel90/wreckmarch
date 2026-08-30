@@ -1,5 +1,6 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=3';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=4';
+import { applyUpgradeMechanicalEffect, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=1';
 
 function mergeModifierCaps(existing = {}, modifier) {
   if (modifier.min == null && modifier.max == null) return null;
@@ -84,12 +85,29 @@ export function getSceneUpgradeLevel(scene, id) {
   return level;
 }
 
-export function canApplyRegisteredStatUpgrade(scene, id) {
+function requireSupportedRegisteredUpgrade(definition) {
+  const hasModifiers = Array.isArray(definition.modifiers) && definition.modifiers.length > 0;
+  const hasMechanicalEffect = Boolean(definition.mechanicalEffect);
+
+  if (hasModifiers && hasMechanicalEffect) {
+    throw new Error(`Mixed stat/mechanical upgrade requires transactional support: ${definition.id}`);
+  }
+  if (hasMechanicalEffect && !hasUpgradeMechanicalEffect(definition.mechanicalEffect.id)) {
+    throw new Error(`Unknown upgrade mechanical effect: ${definition.mechanicalEffect.id}`);
+  }
+  if (!hasModifiers && !hasMechanicalEffect) {
+    throw new Error(`Upgrade definition has no applicable effect: ${definition.id}`);
+  }
+  return { hasModifiers, hasMechanicalEffect };
+}
+
+export function canApplyRegisteredUpgrade(scene, id) {
   const definition = requireRegisteredUpgrade(id);
+  requireSupportedRegisteredUpgrade(definition);
   return getSceneUpgradeLevel(scene, id) < definition.maxLevel;
 }
 
-export function applyRegisteredStatUpgrade(scene, id) {
+export function applyRegisteredUpgrade(scene, id) {
   const definition = requireRegisteredUpgrade(id);
   const currentLevel = getSceneUpgradeLevel(scene, id);
   const nextLevel = currentLevel + 1;
@@ -97,20 +115,49 @@ export function applyRegisteredStatUpgrade(scene, id) {
     throw new RangeError(`${definition.id} is already at max level ${definition.maxLevel}`);
   }
 
-  const resolved = applyUpgradeStatModifiers(scene, definition, nextLevel);
+  const { hasModifiers } = requireSupportedRegisteredUpgrade(definition);
+  const result = hasModifiers
+    ? applyUpgradeStatModifiers(scene, definition, nextLevel)
+    : applyUpgradeMechanicalEffect(scene, definition, nextLevel);
+
   scene.upgradeLevels[definition.id] = nextLevel;
-  return resolved;
+  return result;
 }
 
-export function createRegisteredStatUpgradeChoice(scene, id, { category = 'HERO' } = {}) {
+export function createRegisteredUpgradeChoice(scene, id, { category = 'HERO' } = {}) {
   const definition = requireRegisteredUpgrade(id);
+  requireSupportedRegisteredUpgrade(definition);
   return {
     id: definition.id,
     category,
     title: definition.name,
     desc: definition.description,
     weight: definition.weight,
-    available: () => canApplyRegisteredStatUpgrade(scene, definition.id),
-    apply: () => applyRegisteredStatUpgrade(scene, definition.id)
+    available: () => canApplyRegisteredUpgrade(scene, definition.id),
+    apply: () => applyRegisteredUpgrade(scene, definition.id)
   };
+}
+
+export function canApplyRegisteredStatUpgrade(scene, id) {
+  const definition = requireRegisteredUpgrade(id);
+  if (!definition.modifiers?.length || definition.mechanicalEffect) {
+    throw new Error(`Registered stat upgrade expected: ${definition.id}`);
+  }
+  return canApplyRegisteredUpgrade(scene, definition.id);
+}
+
+export function applyRegisteredStatUpgrade(scene, id) {
+  const definition = requireRegisteredUpgrade(id);
+  if (!definition.modifiers?.length || definition.mechanicalEffect) {
+    throw new Error(`Registered stat upgrade expected: ${definition.id}`);
+  }
+  return applyRegisteredUpgrade(scene, definition.id);
+}
+
+export function createRegisteredStatUpgradeChoice(scene, id, options = {}) {
+  const definition = requireRegisteredUpgrade(id);
+  if (!definition.modifiers?.length || definition.mechanicalEffect) {
+    throw new Error(`Registered stat upgrade expected: ${definition.id}`);
+  }
+  return createRegisteredUpgradeChoice(scene, definition.id, options);
 }
