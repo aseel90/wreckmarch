@@ -35,6 +35,10 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     const phaseC1 = read('src/phase-c1-runtime.js');
     const upgradeRuntime = read('src/upgrades/upgrade-runtime.js');
     const rollService = read('src/upgrades/upgrade-roll-service.js');
+    const rarityService = read('src/upgrades/upgrade-rarity.js');
+    const twinDefinition = read('src/upgrades/definitions/twin-riveter.js');
+    const rigDefinition = read('src/upgrades/definitions/call-rig.js');
+    const phaseC5 = read('src/phase-c5-runtime.js');
     const companionRuntime = read('src/companion-runtime-v3.js');
 
     expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
@@ -102,6 +106,13 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC1).not.toContain('function pickC1Choices');
     expect(rollService).toContain('export function rollUpgradeChoices');
     expect(rollService).toContain('export function createSeededUpgradeRng');
+    expect(rollService).toContain('rollUpgradeRarity');
+    expect(rarityService).toContain('UPGRADE_RARITY_RULES');
+    expect(rarityService).toContain("LEGENDARY: 'LEGENDARY'");
+    expect(upgradeRuntime).toContain('upgradeRarityHistory');
+    expect(twinDefinition).toContain("rarity: 'COMMON'");
+    expect(rigDefinition).toContain("rarity: 'COMMON'");
+    expect(phaseC5).toContain('rarityText:rarity');
   });
 
   it('keeps the final Runner production boundary routed through CharacterSystem', () => {
