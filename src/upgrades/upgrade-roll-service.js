@@ -8,6 +8,10 @@ function hashSeed(seed) {
   return hash >>> 0;
 }
 
+/**
+ * @param {string | number} seed
+ * @returns {() => number}
+ */
 export function createSeededUpgradeRng(seed) {
   let state = hashSeed(seed);
   return function seededUpgradeRng() {
@@ -62,7 +66,15 @@ function readRoll(rng) {
   return value;
 }
 
-export function rollUpgradeChoices(choices, { count = 3, rng = Math.random, excludeIds = [] } = {}) {
+/**
+ * @typedef {{ id: string, weight: number, available: () => boolean }} UpgradeRollChoice
+ * @typedef {{ count?: number, rng?: () => number, excludeIds?: string[] | Set<string> }} UpgradeRollOptions
+ * @param {UpgradeRollChoice[]} choices
+ * @param {UpgradeRollOptions} [options]
+ * @returns {UpgradeRollChoice[]}
+ */
+export function rollUpgradeChoices(choices, options = {}) {
+  const { count = 3, rng = Math.random, excludeIds = [] } = options;
   if (!Array.isArray(choices)) throw new TypeError('Upgrade roll choices must be an array');
   requireCount(count);
   requireRng(rng);
