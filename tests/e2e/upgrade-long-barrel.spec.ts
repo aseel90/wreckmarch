@@ -22,7 +22,8 @@ test('Long Barrel uses both canonical weapon modifiers in the final upgrade scen
       'twin-riveter': 2,
       'fleet-feet': 4,
       'scrap-magnet': 4,
-      'armor-plate': 4
+      'armor-plate': 4,
+      'piercing-rivets': 3
     });
     scene.level = 1;
     scene.rigSummoned = false;
