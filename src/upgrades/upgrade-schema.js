@@ -1,5 +1,6 @@
 import { STAT_MODIFIER_TYPES } from '../stats/stat-resolver.js';
 import { RUN_STAT_DOMAINS } from '../stats/run-stat-state.js';
+import { normalizeUpgradeRarity } from './upgrade-rarity.js?v=1';
 
 export const UPGRADE_SCOPES = Object.freeze({
   GENERAL: 'GENERAL',
@@ -83,7 +84,7 @@ export function normalizeUpgradeDefinition(definition) {
   if (!nonEmptyString(definition.description)) throw new TypeError('Upgrade description must be a non-empty string');
   if (!Number.isInteger(definition.maxLevel) || definition.maxLevel < 1) throw new TypeError('Upgrade maxLevel must be a positive integer');
   if (!VALID_SCOPES.has(definition.scope)) throw new TypeError(`Invalid upgrade scope: ${String(definition.scope)}`);
-  if (definition.rarity != null && !nonEmptyString(definition.rarity)) throw new TypeError('Upgrade rarity must be null or a non-empty string');
+  const rarity = definition.rarity == null ? null : normalizeUpgradeRarity(definition.rarity);
   if (!Number.isFinite(definition.weight) || definition.weight < 0) throw new TypeError('Upgrade weight must be a finite number >= 0');
 
   const tags = definition.tags ?? [];
@@ -106,7 +107,7 @@ export function normalizeUpgradeDefinition(definition) {
     id: definition.id,
     name: definition.name.trim(),
     description: definition.description.trim(),
-    rarity: definition.rarity == null ? null : definition.rarity.trim(),
+    rarity,
     maxLevel: definition.maxLevel,
     scope: definition.scope,
     tags: Object.freeze(normalizedTags),

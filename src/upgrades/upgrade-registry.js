@@ -1,4 +1,4 @@
-import { normalizeUpgradeDefinition } from './upgrade-schema.js?v=2';
+import { normalizeUpgradeDefinition } from './upgrade-schema.js?v=3';
 
 export class UpgradeRegistry {
   #definitions = new Map();
