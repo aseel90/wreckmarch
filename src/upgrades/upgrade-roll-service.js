@@ -32,8 +32,8 @@ function requireCount(count) {
   return count;
 }
 
-function requireRng(rng, label = 'Upgrade roll rng') {
-  if (typeof rng !== 'function') throw new TypeError(`${label} must be a function`);
+function requireRng(rng) {
+  if (typeof rng !== 'function') throw new TypeError('Upgrade roll rng must be a function');
   return rng;
 }
 
@@ -85,17 +85,16 @@ function readRoll(rng) {
 /**
  * @typedef {{ id: string, weight: number, available: () => boolean, rarityConstraint?: string | null, apply?: (rarity?: string | null) => unknown }} UpgradeRollChoice
  * @typedef {UpgradeRollChoice & { rarity: string, rarityLabel: string, rarityColor: number, rarityPowerMultiplier: number }} RolledUpgradeChoice
- * @typedef {{ count?: number, rng?: () => number, rarityRng?: () => number, excludeIds?: string[] | Set<string> }} UpgradeRollOptions
+ * @typedef {{ count?: number, rng?: () => number, excludeIds?: string[] | Set<string> }} UpgradeRollOptions
  * @param {UpgradeRollChoice[]} choices
  * @param {UpgradeRollOptions} [options]
  * @returns {RolledUpgradeChoice[]}
  */
 export function rollUpgradeChoices(choices, options = {}) {
-  const { count = 3, rng = Math.random, rarityRng = rng, excludeIds = [] } = options;
+  const { count = 3, rng = Math.random, excludeIds = [] } = options;
   if (!Array.isArray(choices)) throw new TypeError('Upgrade roll choices must be an array');
   requireCount(count);
   requireRng(rng);
-  requireRng(rarityRng, 'Upgrade rarity rng');
   const excluded = normalizeExcludeIds(excludeIds);
 
   const available = choices
@@ -118,5 +117,5 @@ export function rollUpgradeChoices(choices, options = {}) {
     }
     chosen.push(available.splice(index, 1)[0]);
   }
-  return chosen.map(choice => attachRolledRarity(choice, rarityRng));
+  return chosen.map(choice => attachRolledRarity(choice, rng));
 }

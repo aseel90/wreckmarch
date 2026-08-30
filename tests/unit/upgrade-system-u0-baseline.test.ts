@@ -101,14 +101,12 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(companionRuntime).not.toContain('s.__companionUpgradeRulesPatched=true');
     expect(upgradeRuntime).toContain('applyMixedRegisteredUpgrade');
     expect(upgradeRuntime).toContain('createUpgradeMechanicalTransaction');
-    expect(phaseC).toContain("rollUpgradeChoices(createUpgradePool(this), { count: 3, rarityRng:");
-    expect(phaseC1).toContain("rollUpgradeChoices(c1UpgradePool(this), { count: 3, rarityRng:");
+    expect(phaseC).toContain("rollUpgradeChoices(createUpgradePool(this), { count: 3 })");
+    expect(phaseC1).toContain("rollUpgradeChoices(c1UpgradePool(this), { count: 3 })");
     expect(phaseC).not.toContain('function weightedChoices');
     expect(phaseC1).not.toContain('function pickC1Choices');
     expect(rollService).toContain('export function rollUpgradeChoices');
     expect(rollService).toContain('export function createSeededUpgradeRng');
-    expect(phaseC).toContain('__upgradeRarityRng');
-    expect(phaseC1).toContain('__upgradeRarityRng');
     expect(rollService).toContain('rollUpgradeRarity');
     expect(rarityService).toContain('UPGRADE_RARITY_RULES');
     expect(rarityService).toContain("LEGENDARY: 'LEGENDARY'");
