@@ -40,6 +40,7 @@ jobs:
           pnpm check 2>&1 | tee wm-quality-check.log
       - name: Comment quality diagnostics
         if: failure() && github.event_name == 'pull_request'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -56,7 +57,7 @@ jobs:
               echo '```'
             done
           } > /tmp/wm-quality-comment.md
-          gh issue comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-quality-comment.md
+          gh api --silent --method POST "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" -F "body=@/tmp/wm-quality-comment.md"
       - name: Preserve quality diagnostics
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
@@ -153,6 +154,7 @@ jobs:
           exit 0
       - name: Comment merged Playwright diagnostics
         if: ${{ github.event_name == 'pull_request' && (needs.e2e-shard.result != 'success' || steps.merge_e2e.outputs.exit_code != '0') }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -177,7 +179,7 @@ jobs:
               echo '```'
             done
           } > /tmp/wm-e2e-comment.md
-          gh issue comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
+          gh api --silent --method POST "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" -F "body=@/tmp/wm-e2e-comment.md"
       - name: Enforce E2E gate
         env:
           SHARD_RESULT: ${{ needs.e2e-shard.result }}

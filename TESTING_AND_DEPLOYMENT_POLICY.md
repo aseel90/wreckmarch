@@ -69,7 +69,7 @@ The three shard jobs are implementation details. The stable public gate remains 
 
 ## PR diagnostics rule
 
-The workflow currently grants `issues: write`. PRs are also issue resources in GitHub's API, so automated PR failure comments must use the Issue comment path (`gh issue comment`) rather than relying on a separate pull-request write permission.
+The workflow currently grants `issues: write`. PRs are also issue resources in GitHub's API, so automated PR failure comments must call the shared Issue Comments REST endpoint (via `gh api`) rather than relying on a separate pull-request write permission.
 
 For E2E failures, the canonical `E2E` aggregation job should comment once with:
 
