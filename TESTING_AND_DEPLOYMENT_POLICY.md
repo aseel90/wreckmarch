@@ -16,7 +16,7 @@ This document defines the canonical browser verification and deployment gate ado
 - [x] Merge shard blob reports into one canonical Playwright HTML report. — **Status:** ✅ DONE
 - [x] Route shard and aggregate PR failure diagnostics through explicit `pull-requests: write` permission. — **Status:** ✅ DONE
 - [x] Confirm the sharded E2E gate and Live Chromium gate on `main`. — **Status:** ✅ DONE
-  - Verified on `98de52f`: Quality, all E2E shards, aggregate `E2E`, Smoke and post-deploy Live Chromium passed; CI Issue #83 auto-closed after recovery.
+  - Latest verified production run: `f49a580` — Quality, all E2E shards, aggregate `E2E`, Smoke, GitHub Pages deploy and post-deploy Live Chromium passed. The run also proved the recovery path by auto-closing Live Issue #93 after a stale Pages module-cache failure on the preceding Armor Plate deploy.
 
 > **Status reviewed:** 2026-08-30.
 
