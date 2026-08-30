@@ -42,6 +42,22 @@ async function chooseTwinRiveter(page: any) {
     if (index < 0) throw new Error(`Twin Riveter missing from forced offer: ${choiceIds.join(',')}`);
     upgradeScene.choose(index);
   });
+
+  // UpgradeSceneV4 closes through an 80ms delayed callback. Wait for that
+  // canonical close path before opening the next level so the second offer
+  // cannot race the previous scene teardown.
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      const scene = game.scene.getScene('Wreckmarch');
+      const upgradeScene = game.scene.getScene('UpgradeSceneV4');
+      return {
+        upgradeOpen: Boolean(scene.upgradeOpen),
+        upgradeSceneActive: Boolean(upgradeScene?.sys?.isActive?.())
+      };
+    }),
+    { timeout: 10_000 }
+  ).toEqual({ upgradeOpen: false, upgradeSceneActive: false });
 }
 
 test('Twin Riveter uses the canonical mechanical upgrade path through both levels', async ({ page }) => {
