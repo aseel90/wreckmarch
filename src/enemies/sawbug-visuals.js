@@ -160,9 +160,16 @@ function runBrowserSelfTest(scene) {
   scene.__sawbugAcidShotsSpawned = 0;
   document.documentElement.dataset.wreckmarchSawbugTest = 'running';
 
-  const startedAt = Number(scene.time?.now) || 0;
+  // The observer uses wall-clock time so CI load cannot stretch the test deadline
+  // just because Phaser advances scene.time slowly. Gameplay still runs on Phaser time.
+  const wallNow = () => globalThis.performance?.now?.() ?? Date.now();
+  const startedAt = wallNow();
   const finishWhenShotObserved = () => {
-    if (!scene?.sys?.isActive?.()) return;
+    if (!scene?.sys?.isActive?.()) {
+      window.__WM_SAWBUG_TEST__ = { ok: false, status: 'failed', reason: 'scene-inactive' };
+      document.documentElement.dataset.wreckmarchSawbugTest = 'failed';
+      return;
+    }
     const checks = {
       active: Boolean(sawbug.active),
       visual: sawbug.__sawbugVisual === true,
@@ -175,7 +182,7 @@ function runBrowserSelfTest(scene) {
       acidSpawned: Number(scene.__sawbugAcidShotsSpawned) >= 1,
       projectileSpeed: Math.abs(Number(sawbug.__sawbugLastProjectileSpeed) - Number(sawbug.behaviorConfig?.projectileSpeed)) <= 1
     };
-    const elapsed = (Number(scene.time?.now) || startedAt) - startedAt;
+    const elapsed = wallNow() - startedAt;
     const ok = Object.values(checks).every(Boolean);
     const timedOut = elapsed >= SELF_TEST_TIMEOUT_MS;
     const status = ok ? 'passed' : timedOut ? 'failed' : 'running';
@@ -194,13 +201,13 @@ function runBrowserSelfTest(scene) {
     document.documentElement.dataset.wreckmarchSawbugTest = status;
 
     if (status === 'running') {
-      scene.time?.delayedCall?.(SELF_TEST_POLL_MS, finishWhenShotObserved);
+      globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS);
       return;
     }
 
     window.__WM_LOG__?.(`Sawbug browser test ${ok ? 'PASSED' : 'FAILED'}: ${JSON.stringify(window.__WM_SAWBUG_TEST__)}`);
   };
-  scene.time?.delayedCall?.(SELF_TEST_POLL_MS, finishWhenShotObserved);
+  globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS);
 }
 
 export async function installSawbugVisuals(scene) {
