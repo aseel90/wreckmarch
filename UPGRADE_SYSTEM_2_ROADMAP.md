@@ -275,7 +275,9 @@ No persistent meta-progression is required yet, but runtime structures must be s
 - [x] Final-scene E2E can inspect canonical upgrade state deterministically. — **Status:** ✅ DONE
 - [x] CI preserves failing browser diagnostics. — **Status:** ✅ DONE
 - [x] Live Chromium preserves console/page/request failures. — **Status:** ✅ DONE
-- [ ] Add an optional compact debug dump of acquired upgrades + resolved stats. — **Status:** ⚪ NOT STARTED
+- [x] Add an optional compact debug dump of acquired upgrades + resolved stats. — **Status:** ✅ DONE
+  - Verified on `89926f8`: `src/upgrades/upgrade-debug-dump.js` produces deterministic one-line JSON containing acquired upgrade levels, rarity history and canonical resolved Character/Weapon stats. The existing `?debug=1` panel exposes `COPY UPGRADE STATE` and lazy-loads the formatter only on demand; normal gameplay does not load another runtime owner or show the control.
+  - Diagnostics preserve non-finite stat failures as readable JSON-safe values, log the dump before clipboard access, and remain unavailable outside debug mode. PR #100 passed Quality, Smoke, all three isolated E2E shards and aggregate E2E on final head `71eea81`; after squash merge, Pages/iOS verification and the production failure bridges remained clean on exact gameplay SHA `89926f8818a415567138815ee91c6ca2474b343d`.
 
 ---
 
@@ -379,7 +381,7 @@ The browser verification architecture is part of the project standard, not a tem
 - [x] Live failure Issue auto-opens/updates. — **Status:** ✅ DONE
 - [x] Live recovery auto-closes Issue. — **Status:** ✅ DONE
 - [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
-  - Current verified gameplay commit: `a53dc9e` (versioned Upgrade System run-state snapshot readiness; PR #99 Quality/Smoke/all E2E shards/aggregate E2E passed, Pages/iOS live verification passed on exact SHA `a53dc9e3e2f9d4874c4290cb3704ad7cafabc25e`, the post-deploy Live Chromium failure bridge remained clean through the run window, and no CI/Live failure issue is open).
+  - Current verified gameplay commit: `89926f8` (optional compact Upgrade System debug dump; PR #100 Quality/Smoke/all E2E shards/aggregate E2E passed on final head `71eea81`, Pages/iOS live verification and recovery passed on exact SHA `89926f8818a415567138815ee91c6ca2474b343d`, the post-deploy Live Chromium failure bridge remained clean through the production run window, and no CI/Live failure issue is open).
 
 ---
 
@@ -405,6 +407,8 @@ The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POL
 2. [x] Extract upgrade roll service. — **DONE on `86e5a11`**
 3. [x] Add rarity system. — **DONE on `7f30957`**
 4. [x] Add save/run-state snapshot readiness. — **DONE on `a53dc9e`**
-5. [ ] Add optional compact debug dump of acquired upgrades + resolved stats. — **NEXT**
+5. [x] Add optional compact debug dump of acquired upgrades + resolved stats. — **DONE on `89926f8`**
+
+**Upgrade System 2.0 core migration has no remaining active implementation item.** Future-only hooks (second-character eligibility, new companion/run transaction effects and additional weapon-specific cleanup) stay deferred until the related gameplay feature is explicitly approved; do not invent placeholder systems just to keep this roadmap moving.
 
 Do not reorder these merely to add new feature content.
