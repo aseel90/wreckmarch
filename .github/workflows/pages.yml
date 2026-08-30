@@ -56,7 +56,7 @@ jobs:
               echo '```'
             done
           } > /tmp/wm-quality-comment.md
-          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-quality-comment.md
+          gh issue comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-quality-comment.md
       - name: Preserve quality diagnostics
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
@@ -67,9 +67,14 @@ jobs:
             wm-quality-check.log
             wm-quality-install.log
 
-  e2e:
-    name: E2E
+  e2e-shard:
+    name: E2E shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2, 3]
+        shardTotal: [3]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,45 +87,122 @@ jobs:
       - name: Install dependencies
         run: |
           set -o pipefail
-          pnpm install --no-frozen-lockfile 2>&1 | tee wm-e2e-install.log
+          pnpm install --no-frozen-lockfile 2>&1 | tee "wm-e2e-install-${{ matrix.shardIndex }}.log"
       - name: Install Playwright Chromium
         run: |
           set -o pipefail
-          pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-e2e-playwright-install.log
-      - name: Run Playwright tests
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee "wm-e2e-playwright-install-${{ matrix.shardIndex }}.log"
+      - name: Run Playwright shard
         run: |
           set -o pipefail
-          pnpm test:e2e 2>&1 | tee wm-e2e.log
-      - name: Comment Playwright diagnostics
-        if: failure() && github.event_name == 'pull_request'
+          pnpm exec playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} 2>&1 | tee "wm-e2e-shard-${{ matrix.shardIndex }}.log"
+      - name: Upload shard report and diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-shard-${{ matrix.shardIndex }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            blob-report/**
+            wm-e2e-shard-${{ matrix.shardIndex }}.log
+            wm-e2e-install-${{ matrix.shardIndex }}.log
+            wm-e2e-playwright-install-${{ matrix.shardIndex }}.log
+
+  e2e:
+    name: E2E
+    needs: [e2e-shard]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install report dependencies
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee wm-e2e-report-install.log
+      - name: Download all E2E shard artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: e2e-shard-*
+          path: all-e2e-artifacts
+          merge-multiple: true
+      - name: Merge Playwright shard reports
+        id: merge_e2e
+        run: |
+          set -u
+          mkdir -p all-blob-reports
+          find all-e2e-artifacts -type f -name '*.zip' -exec cp {} all-blob-reports/ \;
+          if ! compgen -G 'all-blob-reports/*.zip' > /dev/null; then
+            echo 'No Playwright blob reports were produced.' | tee wm-e2e-merged.log
+            echo 'exit_code=1' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          set +e
+          set -o pipefail
+          pnpm exec playwright merge-reports --reporter=html,line ./all-blob-reports 2>&1 | tee wm-e2e-merged.log
+          MERGE_EXIT=${PIPESTATUS[0]}
+          set -e
+          echo "exit_code=$MERGE_EXIT" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Comment merged Playwright diagnostics
+        if: ${{ github.event_name == 'pull_request' && (needs.e2e-shard.result != 'success' || steps.merge_e2e.outputs.exit_code != '0') }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          SHARD_RESULT: ${{ needs.e2e-shard.result }}
         run: |
           {
-            echo 'Playwright E2E failed.'
+            echo "Playwright E2E failed. Sharded result: **$SHARD_RESULT**."
             echo
-            for LOG in wm-e2e.log wm-e2e-playwright-install.log wm-e2e-install.log; do
-              [ -f "$LOG" ] || continue
-              echo "### $LOG"
+            if [ -f wm-e2e-merged.log ]; then
+              echo '### merged Playwright report'
               echo '```text'
-              tail -c 12000 "$LOG"
+              tail -c 16000 wm-e2e-merged.log
+              echo
+              echo '```'
+            fi
+            for LOG in all-e2e-artifacts/wm-e2e-shard-*.log; do
+              [ -f "$LOG" ] || continue
+              echo "### $(basename "$LOG")"
+              echo '```text'
+              tail -c 6000 "$LOG"
               echo
               echo '```'
             done
           } > /tmp/wm-e2e-comment.md
-          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
-      - name: Preserve Playwright diagnostics
-        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+          gh issue comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
+      - name: Enforce E2E gate
+        env:
+          SHARD_RESULT: ${{ needs.e2e-shard.result }}
+          MERGE_EXIT: ${{ steps.merge_e2e.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          if [ "$SHARD_RESULT" != success ]; then
+            echo "One or more E2E shards failed: $SHARD_RESULT"
+            exit 1
+          fi
+          if [ "${MERGE_EXIT:-1}" != 0 ]; then
+            echo "Merged Playwright report failed: ${MERGE_EXIT:-missing}"
+            exit 1
+          fi
+      - name: Preserve merged E2E diagnostics
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: ci-e2e
           if-no-files-found: ignore
+          retention-days: 14
           path: |
-            wm-e2e.log
-            wm-e2e-install.log
-            wm-e2e-playwright-install.log
-            test-results/**
+            wm-e2e-merged.log
+            wm-e2e-report-install.log
+            all-e2e-artifacts/**
             playwright-report/**
 
   smoke:
@@ -176,18 +258,21 @@ jobs:
     steps:
       - name: Download quality diagnostics
         if: needs.quality.result == 'failure'
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: ci-quality
           path: /tmp/ci-quality
       - name: Download E2E diagnostics
         if: needs.e2e.result == 'failure'
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: ci-e2e
           path: /tmp/ci-e2e
       - name: Download smoke diagnostics
         if: needs.smoke.result == 'failure'
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: ci-smoke
@@ -223,7 +308,7 @@ jobs:
               done
             fi
             if [ "$E2E" = failure ]; then
-              for LOG in /tmp/ci-e2e/wm-e2e.log /tmp/ci-e2e/wm-e2e-playwright-install.log; do
+              for LOG in /tmp/ci-e2e/wm-e2e-merged.log /tmp/ci-e2e/all-e2e-artifacts/wm-e2e-shard-*.log; do
                 [ -f "$LOG" ] || continue
                 printf '### %s\n```text\n' "$(basename "$LOG")"
                 tail -c 12000 "$LOG"
