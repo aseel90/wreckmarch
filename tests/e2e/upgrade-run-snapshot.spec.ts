@@ -16,9 +16,10 @@ test('upgrade run snapshot round-trips canonical state in Chromium without repla
     scene.spawnEvent.paused = true;
     scene.enemies.clear(true, true);
 
-    const snapshotApi = await import('/src/upgrades/upgrade-run-snapshot.js');
-    const runtime = await import('/src/upgrades/upgrade-runtime.js');
-    const statsApi = await import('/src/stats/run-stat-state.js');
+    const browserModule = (path: string) => new URL(path, location.origin).href;
+    const snapshotApi = await import(browserModule('/src/upgrades/upgrade-run-snapshot.js'));
+    const runtime = await import(browserModule('/src/upgrades/upgrade-runtime.js'));
+    const statsApi = await import(browserModule('/src/stats/run-stat-state.js'));
 
     runtime.applyRegisteredUpgrade(scene, 'heavy-rivets', { rarity: 'LEGENDARY' });
     runtime.applyRegisteredUpgrade(scene, 'armor-plate', { rarity: 'LEGENDARY' });
