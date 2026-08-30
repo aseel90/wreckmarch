@@ -151,6 +151,7 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
   - Verified on `a44f551`: registry-owned one-level `COMPANION` card with a named `SUMMON_RIG` effect delegates only to `RigSystem.summon()`. Level-2 offer gating is data-driven; reserved Rig Overdrive/Twin Cannon choices remain unavailable in Phase C/C1. Unit/final-scene coverage, Quality, Smoke, all three E2E shards, aggregate E2E, Pages deployment and post-deploy production browser gates passed with no open CI/Live failure issue.
 - [x] Remove/deactivate obsolete duplicate card definitions after migration. — **Status:** ✅ DONE
   - Verified on `f723494`: removed reserved Phase C/C1 `rig-overdrive` / `twin-cannon` gameplay placeholders and the Companion V3 upgrade-level monkeypatch while preserving companion presentation/runtime behavior. Twin Riveter level 2 is proven through the real `UpgradeSceneV4`; Quality, Smoke, all three E2E shards, aggregate E2E and Pages deployment passed, and the post-deploy Live Chromium gate completed without opening a `[LIVE] deployed main smoke failed` issue. No `ci-failure` issue remains open.
+  - Manual deployed-build baseline after this cleanup: ✅ PASS — upgrade cards, Twin Riveter level 2, Call the Rig and general gameplay were confirmed working normally before the roll-service extraction began.
 
 ---
 
@@ -179,12 +180,14 @@ Avoid implementing rarity as copies such as `heavy-rivets-common`, `heavy-rivets
 
 The roll service owns selection probability, exclusion and deterministic seeded behavior.
 
-- [ ] Extract card roll logic from scene UI. — **Status:** ⚪ NOT STARTED
-- [ ] Add seeded RNG support for tests. — **Status:** ⚪ NOT STARTED
-- [ ] Prevent maxed upgrades from being rolled. — **Status:** ⚪ NOT STARTED
-- [ ] Prevent invalid prerequisites/exclusions. — **Status:** ⚪ NOT STARTED
-- [ ] Keep category/rarity weighting data-driven. — **Status:** ⚪ NOT STARTED
-- [ ] Add no-valid-choice fallback contract. — **Status:** ⚪ NOT STARTED
+- [x] Extract card roll logic from scene UI. — **Status:** ✅ DONE
+- [x] Add seeded RNG support for tests. — **Status:** ✅ DONE
+- [x] Prevent maxed upgrades from being rolled. — **Status:** ✅ DONE
+- [x] Prevent invalid prerequisites/exclusions. — **Status:** ✅ DONE
+- [x] Keep category/rarity weighting data-driven. — **Status:** ✅ DONE
+- [x] Add no-valid-choice fallback contract. — **Status:** ✅ DONE
+  - Verified on `86e5a11`: Phase C and Phase C1 now delegate weighted sampling without replacement to `src/upgrades/upgrade-roll-service.js`. Production preserves the existing card pool, weights and `Math.random` behavior; tests can inject `createSeededUpgradeRng(seed)`. Canonical `choice.available()` remains the eligibility gate for max-level/offer/mechanical validity, while explicit exclusions and zero-weight choices are filtered by the roll service. The empty-pool fallback returns `[]`. Quality, Smoke, all three E2E shards, aggregate E2E, Pages/iOS live verification and recovery passed on the same SHA, and no CI/Live failure Issue is open.
+  - Future prerequisite rules remain owned by the canonical availability adapter; the roll service does not invent a second prerequisite DSL.
 
 ---
 
@@ -243,9 +246,9 @@ Preferred temporary strategy:
 Upgrade UI is a consumer of choices, not the owner of gameplay effects.
 
 - [x] Phase C/C1 can consume shared registered upgrade choices. — **Status:** ✅ DONE
-- [ ] Make all active card choices come from one roll service. — **Status:** ⚪ NOT STARTED
-- [ ] Move remaining card availability/max-level rules out of scene literals. — **Status:** ⚪ NOT STARTED
-- [ ] Preserve current illustrated/premium card presentation while changing data source. — **Status:** ⚪ NOT STARTED
+- [x] Make all active card choices come from one roll service. — **Status:** ✅ DONE
+- [x] Move remaining card availability/max-level rules out of scene literals. — **Status:** ✅ DONE
+- [x] Preserve current illustrated/premium card presentation while changing data source. — **Status:** ✅ DONE
 
 ---
 
@@ -318,9 +321,9 @@ Core migration is complete when:
 - [x] Character/Weapon stat ownership is canonical. — **Status:** ✅ DONE
 - [x] Current mixed stat/effect transaction pattern is proven. — **Status:** ✅ DONE
 - [x] Current temporary Rig handling is explicitly decided and tested. — **Status:** ✅ DONE
-- [ ] Roll service is extracted from scene UI. — **Status:** ⚪ NOT STARTED
+- [x] Roll service is extracted from scene UI. — **Status:** ✅ DONE
 - [ ] Rarity model is data-driven. — **Status:** ⚪ NOT STARTED
-- [ ] Production verification remains green. — **Status:** 🟡 ACTIVE GATE
+- [ ] Production verification remains green. — **Status:** 🟢 CURRENTLY GREEN / CONTINUOUS GATE
 
 ---
 
@@ -370,7 +373,7 @@ The browser verification architecture is part of the project standard, not a tem
 - [x] Live failure Issue auto-opens/updates. — **Status:** ✅ DONE
 - [x] Live recovery auto-closes Issue. — **Status:** ✅ DONE
 - [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
-  - Current verified gameplay commit: `f723494` (obsolete U2 card ownership cleanup; PR Quality/Smoke/all E2E shards/aggregate E2E passed, `main` and Pages deployed successfully, the Live Chromium failure bridge remained clean, and no CI/Live failure issue is open).
+  - Current verified gameplay commit: `86e5a11` (canonical Upgrade Roll Service extraction; PR Quality/Smoke/all E2E shards/aggregate E2E passed, Pages/iOS live verification and recovery passed on the same SHA, the Live Chromium failure bridge remained clean, and no CI/Live failure issue is open).
 
 ---
 
@@ -393,8 +396,8 @@ The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POL
 # 22. Next execution order
 
 1. [x] Remove/deactivate obsolete duplicate card definitions left after U2 migration. — **DONE on `f723494`**
-2. [ ] Extract upgrade roll service. — **NEXT**
-3. [ ] Add rarity system.
+2. [x] Extract upgrade roll service. — **DONE on `86e5a11`**
+3. [ ] Add rarity system. — **NEXT**
 4. [ ] Add save/run-state snapshot readiness.
 
 Do not reorder these merely to add new feature content.
