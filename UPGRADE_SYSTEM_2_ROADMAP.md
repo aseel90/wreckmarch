@@ -334,9 +334,10 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
   - Verified on `c9da716`: canonical definition/registry/runtime adapter, shared Phase C/C1 apply path, unit parity, targeted final-card E2E, Quality, full E2E, Smoke, deploy eligibility, and no Live Chromium failure issue after deployment.
 - [x] Migrate Overclock. — **Status:** ✅ DONE
   - Verified on `8b57ef7`: canonical definition, 145ms resolved-stat floor, shared Phase C/C1 apply path, unit parity, final-card E2E, Quality, full E2E and Smoke all passed; no `[CI]` or `[LIVE] deployed main smoke failed` issue was opened after the deployment window.
-- [ ] Migrate Long Barrel. — **Status:** 🟡 MERGED / CI RECOVERY + LIVE VERIFY
-  - Canonical dual-modifier definition (+18% projectile speed, +10% range), shared Phase C/C1 adapter and unit/final-card E2E coverage were merged to `main` in `d731bad`. Final checkbox remains blocked until the canonical CI E2E gate is stable again and the resulting deployed build clears Live Chromium.
-- [ ] Migrate Twin Riveter. — **Status:** ⚪ NOT STARTED
+- [x] Migrate Long Barrel. — **Status:** ✅ DONE
+  - Gameplay migration merged in `d731bad`; after the Sawbug/CI stabilization merge, `main` `98de52f` recovered with quality=success, e2e=success, smoke=success and passed post-deploy Live Chromium.
+- [ ] Migrate Twin Riveter. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+  - PR #89 implements the canonical mechanical-effect path, shared Phase C/C1 registry adapter, WeaponSystem mechanical-state ownership, level 1 → 2 rivets / level 2 → 3 rivets parity, unit coverage and final-scene E2E. Final checkbox remains blocked on clean PR + `main` + Live Chromium verification.
 - [ ] Migrate Fleet Feet. — **Status:** ⚪ NOT STARTED
 - [ ] Migrate Scrap Magnet. — **Status:** ⚪ NOT STARTED
 - [ ] Migrate Armor Plate. — **Status:** ⚪ NOT STARTED
@@ -810,7 +811,7 @@ This is the official production verification gate described in `TESTING_AND_DEPL
 - [x] Open/update one deduplicated GitHub Issue when deployed `main` fails. — **Status:** ✅ DONE
 - [x] Auto-close the live-smoke Issue after a later successful deployed `main`. — **Status:** ✅ DONE
 - [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
-  - Current verified gameplay commit: `c9da716` (Quality/E2E/Smoke recovered; deployment produced no `[LIVE] deployed main smoke failed` issue).
+  - Current verified gameplay commit: `98de52f` (Quality/E2E/Smoke recovered on `main`; post-deploy Live Chromium verification passed and CI Issue #83 auto-closed).
 
 ---
 
@@ -819,16 +820,17 @@ This is the official production verification gate described in `TESTING_AND_DEPL
 
 The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POLICY.md`. It replaces the single-runner/multi-worker approach with isolated runner-level parallelism.
 
-- [ ] Pin Playwright CI execution to one worker per runner. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Split the E2E suite across three GitHub Actions shards. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Keep one stable aggregate check named `E2E` for branch protection and CI consumers. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Use Playwright blob reports per shard and merge them into one HTML diagnostic artifact. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Use `retryStrategy: isolated` with one CI retry. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Fail CI when Playwright classifies a test as flaky; a retry must not silently turn the gate green. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Record traces only on the first retry in CI. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Comment failing shard logs directly on the PR and keep aggregate diagnostics as a second layer. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Remove temporary diagnostic workflows from the canonical path. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Verify the new E2E architecture on PR, merge, and confirm `main` + Live Chromium before marking this gate complete. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
+- [x] Pin Playwright CI execution to one worker per runner. — **Status:** ✅ DONE
+- [x] Split the E2E suite across three GitHub Actions shards. — **Status:** ✅ DONE
+- [x] Keep one stable aggregate check named `E2E` for branch protection and CI consumers. — **Status:** ✅ DONE
+- [x] Use Playwright blob reports per shard and merge them into one HTML diagnostic artifact. — **Status:** ✅ DONE
+- [x] Use `retryStrategy: isolated` with one CI retry. — **Status:** ✅ DONE
+- [x] Fail CI when Playwright classifies a test as flaky; a retry must not silently turn the gate green. — **Status:** ✅ DONE
+- [x] Record traces only on the first retry in CI. — **Status:** ✅ DONE
+- [x] Comment failing shard logs directly on the PR and keep aggregate diagnostics as a second layer. — **Status:** ✅ DONE
+- [x] Remove temporary diagnostic workflows from the canonical path. — **Status:** ✅ DONE
+- [x] Verify the new E2E architecture on PR, merge, and confirm `main` + Live Chromium before marking this gate complete. — **Status:** ✅ DONE
+  - Verified on `98de52f`: all three shards, stable aggregate `E2E`, Quality and Smoke passed on `main`; post-deploy Live Chromium passed and the prior CI failure Issue #83 auto-closed.
 
 Architecture rule: speed comes from independent CI shards, never by raising browser-worker contention inside one runner. Test retries are diagnostic only; flaky classifications remain failures.
 

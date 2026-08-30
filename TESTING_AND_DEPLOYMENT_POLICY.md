@@ -11,11 +11,12 @@ This document defines the canonical browser verification and deployment gate ado
 - [x] Failure diagnostics are preserved as workflow artifacts. — **Status:** ✅ DONE
 - [x] A deployed `main` failure opens/updates one deduplicated Issue. — **Status:** ✅ DONE
 - [x] A later successful deployed `main` closes that Issue automatically. — **Status:** ✅ DONE
-- [ ] Run E2E as three isolated Playwright shards with one worker per runner. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Use isolated retries and fail CI if any test is classified as flaky. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Merge shard blob reports into one canonical Playwright HTML report. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Route shard and aggregate PR failure diagnostics through explicit `pull-requests: write` permission. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Confirm the sharded E2E gate and Live Chromium gate on `main`. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
+- [x] Run E2E as three isolated Playwright shards with one worker per runner. — **Status:** ✅ DONE
+- [x] Use isolated retries and fail CI if any test is classified as flaky. — **Status:** ✅ DONE
+- [x] Merge shard blob reports into one canonical Playwright HTML report. — **Status:** ✅ DONE
+- [x] Route shard and aggregate PR failure diagnostics through explicit `pull-requests: write` permission. — **Status:** ✅ DONE
+- [x] Confirm the sharded E2E gate and Live Chromium gate on `main`. — **Status:** ✅ DONE
+  - Verified on `98de52f`: Quality, all E2E shards, aggregate `E2E`, Smoke and post-deploy Live Chromium passed; CI Issue #83 auto-closed after recovery.
 
 > **Status reviewed:** 2026-08-30.
 

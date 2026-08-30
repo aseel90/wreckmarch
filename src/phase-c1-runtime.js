@@ -1,4 +1,4 @@
-import { createRegisteredStatUpgradeChoice } from './upgrades/upgrade-runtime.js?v=4';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=5';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
 const W = 960;
@@ -219,9 +219,7 @@ function c1UpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'overclock', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'long-barrel', { category: 'HERO' }),
-    { id:'twin-riveter', category:'HERO', title:'TWIN RIVETER', desc:'Fire an extra rivet with slight spread.', weight:.72,
-      available:()=>upgradeLevel(scene,'twin-riveter')<2,
-      apply:()=>{ bumpUpgrade(scene,'twin-riveter'); scene.twinShots=Math.min(3,(scene.twinShots||1)+1); } },
+    createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
     { id:'fleet-feet', category:'UTILITY', title:'FLEET FEET', desc:'+8% movement speed.', weight:1.05,
       available:()=>upgradeLevel(scene,'fleet-feet')<4,
       apply:()=>{ bumpUpgrade(scene,'fleet-feet'); scene.heroSpeed=Math.min(365,scene.heroSpeed*1.08); } },

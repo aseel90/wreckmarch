@@ -77,7 +77,8 @@ export class WeaponSystem {
   }
 
   heroSpreads() {
-    const count = Math.max(1, this.scene.twinShots || 1);
+    const mechanicalCount = this.scene.upgradeMechanicalState?.['twin-riveter']?.projectileCount;
+    const count = Math.max(1, mechanicalCount || this.scene.twinShots || 1);
     if (count === 1) return [0];
     if (count === 2) return [-this.heroProfile.twinSpread2, this.heroProfile.twinSpread2];
     return [-this.heroProfile.twinSpread3, 0, this.heroProfile.twinSpread3];
