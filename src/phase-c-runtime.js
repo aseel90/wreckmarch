@@ -1,5 +1,5 @@
 import { RUN_BALANCE, getPlayerMoveSpeed } from './balance/run-balance.js?v=6';
-import { createRegisteredStatUpgradeChoice } from './upgrades/upgrade-runtime.js?v=2';
+import { createRegisteredStatUpgradeChoice } from './upgrades/upgrade-runtime.js?v=3';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
@@ -229,7 +229,7 @@ function summonRig(scene) {
 function createUpgradePool(scene) {
   return [
     createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
-    { id: 'overclock', category: 'HERO', title: 'OVERCLOCK', desc: '12% faster fire rate.', weight: 1.2, available: () => upgradeLevel(scene, 'overclock') < 5, apply: () => { bumpUpgrade(scene, 'overclock'); scene.primaryWeapon.fireDelay = Math.max(145, scene.primaryWeapon.fireDelay * .88); scene.fireDelay = scene.primaryWeapon.fireDelay; } },
+    createRegisteredStatUpgradeChoice(scene, 'overclock', { category: 'HERO' }),
     { id: 'long-barrel', category: 'HERO', title: 'LONG BARREL', desc: '+18% projectile speed and +10% range.', weight: 1, available: () => upgradeLevel(scene, 'long-barrel') < 4, apply: () => { bumpUpgrade(scene, 'long-barrel'); scene.primaryWeapon.projectileSpeed *= 1.18; scene.primaryWeapon.range *= 1.1; } },
     { id: 'twin-riveter', category: 'HERO', title: 'TWIN RIVETER', desc: 'Fire an extra rivet with slight spread.', weight: .72, available: () => upgradeLevel(scene, 'twin-riveter') < 1, apply: () => { bumpUpgrade(scene, 'twin-riveter'); scene.twinShots = 2; } },
     { id: 'fleet-feet', category: 'UTILITY', title: 'FLEET FEET', desc: '+3% movement speed.', weight: 1.05, available: () => upgradeLevel(scene, 'fleet-feet') < RUN_BALANCE.player.fleetFeetMaxLevel, apply: () => { bumpUpgrade(scene, 'fleet-feet'); scene.heroSpeed = getPlayerMoveSpeed(scene.__baseHeroMoveSpeed, upgradeLevel(scene, 'fleet-feet')); } },
