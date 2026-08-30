@@ -16,10 +16,10 @@ This is a narrow verification record for U4 implementation work. The canonical r
 - [x] Browser module graph is cache-busted for changed live owners.
 - [x] Unit coverage added.
 - [x] Deterministic Chromium E2E added.
-- [ ] PR Quality passes.
-- [ ] PR Smoke passes.
-- [ ] PR E2E shards 1/3, 2/3, 3/3 pass.
-- [ ] Aggregate E2E passes.
-- [ ] Merge to `main`.
-- [ ] Production Live verification passes on the merged SHA.
-- [ ] Only after the production gate: mark Piercing Rivets DONE in the canonical roadmap.
+- [x] PR Quality passes — PR #105 final head `6c1cf96d29a738a83fdb969c92ad23d56e6814c4`.
+- [x] PR Smoke passes.
+- [x] PR E2E shards 1/3, 2/3, 3/3 pass.
+- [x] Aggregate E2E passes.
+- [x] Merge to `main` — squash merge `0b33898e66d0f9932330cd0cb53c7651596076e8`.
+- [x] Production Live verification passes on the merged SHA — iOS Live verification and Pages recovery both passed on `0b33898e66d0f9932330cd0cb53c7651596076e8`.
+- [x] After the production gate, Piercing Rivets is marked DONE in the canonical roadmap.
