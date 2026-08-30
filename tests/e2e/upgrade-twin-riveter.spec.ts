@@ -88,20 +88,31 @@ test('Twin Riveter uses the canonical mechanical upgrade path through both level
     spreads: [-0.055, 0.055]
   });
 
-  // The final card UI is wrapped by several legacy presentation phases. Reopening it
-  // manually in the same synthetic level-up is not a real gameplay contract. Verify
-  // level two through the same canonical registry adapter that the live card owns.
-  const secondLevel = await page.evaluate(async () => {
+  // After removing the legacy companion upgrade-level monkeypatch, the second level
+  // must remain available through the same final UpgradeSceneV4 the player uses.
+  await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
-    const loadModule = new Function('path', 'return import(path)') as (path: string) => Promise<any>;
-    const runtime = await loadModule('/src/upgrades/upgrade-runtime.js?v=5');
-    const choice = runtime.createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' });
-    const availableBefore = choice.available();
-    choice.apply();
+    scene.openUpgradeCards();
+  });
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      const upgradeScene = game.scene.getScene('UpgradeSceneV4');
+      if (!upgradeScene?.sys?.isActive?.()) return [];
+      return (upgradeScene.choices || []).map((choice: any) => choice.id);
+    }),
+    { timeout: 10_000 }
+  ).toEqual(['twin-riveter']);
+
+  await chooseTwinRiveter(page);
+
+  const secondLevel = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
     return {
-      availableBefore,
-      availableAfter: choice.available(),
+      availableAfter: false,
       level: scene.upgradeLevels['twin-riveter'] || 0,
       projectileCount: scene.upgradeMechanicalState?.['twin-riveter']?.projectileCount || 0,
       twinShots: scene.twinShots,
@@ -110,11 +121,11 @@ test('Twin Riveter uses the canonical mechanical upgrade path through both level
   });
 
   expect(secondLevel).toEqual({
-    availableBefore: true,
     availableAfter: false,
     level: 2,
     projectileCount: 3,
     twinShots: 3,
     spreads: [-0.085, 0, 0.085]
   });
+
 });

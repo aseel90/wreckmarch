@@ -34,6 +34,7 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     const phaseC = read('src/phase-c-runtime.js');
     const phaseC1 = read('src/phase-c1-runtime.js');
     const upgradeRuntime = read('src/upgrades/upgrade-runtime.js');
+    const companionRuntime = read('src/companion-runtime-v3.js');
 
     expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
     expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
@@ -84,6 +85,14 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC1).not.toContain('scene.rigFireDelay = 920');
     expect(phaseC1).not.toContain('scene.rigFireDelay=Math.max(360');
     expect(phaseC1).not.toContain('scene.rigShots=2');
+    expect(phaseC).not.toContain("{ id: 'rig-overdrive'");
+    expect(phaseC).not.toContain("{ id: 'twin-cannon'");
+    expect(phaseC1).not.toContain("{ id:'rig-overdrive'");
+    expect(phaseC1).not.toContain("{ id:'twin-cannon'");
+    expect(companionRuntime).not.toContain('function upgradeRules');
+    expect(companionRuntime).not.toContain("'rig-overdrive'");
+    expect(companionRuntime).not.toContain("'twin-cannon'");
+    expect(companionRuntime).not.toContain('s.__companionUpgradeRulesPatched=true');
     expect(upgradeRuntime).toContain('applyMixedRegisteredUpgrade');
     expect(upgradeRuntime).toContain('createUpgradeMechanicalTransaction');
   });
