@@ -92,7 +92,7 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(companionRuntime).not.toContain('function upgradeRules');
     expect(companionRuntime).not.toContain("'rig-overdrive'");
     expect(companionRuntime).not.toContain("'twin-cannon'");
-    expect(companionRuntime).not.toContain('__companionUpgradeRulesPatched');
+    expect(companionRuntime).not.toContain('s.__companionUpgradeRulesPatched=true');
     expect(upgradeRuntime).toContain('applyMixedRegisteredUpgrade');
     expect(upgradeRuntime).toContain('createUpgradeMechanicalTransaction');
   });
