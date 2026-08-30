@@ -25,14 +25,8 @@ test('Legendary rarity is shown by UpgradeSceneV4 and applies one scaled canonic
     });
     scene.level = 1;
 
-    const originalRandom = Math.random;
-    const values = [0, 0.999];
-    Math.random = () => values.shift() ?? 0;
-    try {
-      scene.openUpgradeCards();
-    } finally {
-      Math.random = originalRandom;
-    }
+    scene.__upgradeRarityRng = () => 0.999;
+    scene.openUpgradeCards();
   });
 
   await expect.poll(

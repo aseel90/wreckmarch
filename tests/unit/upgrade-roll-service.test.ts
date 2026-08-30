@@ -33,18 +33,21 @@ describe('upgrade roll service', () => {
 
   it('assigns rarity after card selection and respects fixed Common constraints', () => {
     const rollable = { ...choice('rollable', 1), apply: (rarity?: string | null) => rarity };
-    const values = [0, 0.999];
-    const rolled = rollUpgradeChoices([rollable], { count: 1, rng: () => values.shift() ?? 0 });
+    const rolled = rollUpgradeChoices([rollable], { count: 1, rng: () => 0, rarityRng: () => 0.999 });
     expect(rolled[0].rarity).toBe('LEGENDARY');
     expect(rolled[0].rarityPowerMultiplier).toBe(1.5);
     expect(rolled[0].apply?.()).toBe('LEGENDARY');
 
-    let calls = 0;
+    let rarityCalls = 0;
     const fixed = { ...choice('fixed', 1), rarityConstraint: 'COMMON', apply: (rarity?: string | null) => rarity };
-    const fixedRoll = rollUpgradeChoices([fixed], { count: 1, rng: () => { calls += 1; return 0.999; } });
+    const fixedRoll = rollUpgradeChoices([fixed], {
+      count: 1,
+      rng: () => 0,
+      rarityRng: () => { rarityCalls += 1; return 0.999; }
+    });
     expect(fixedRoll[0].rarity).toBe('COMMON');
     expect(fixedRoll[0].apply?.()).toBe('COMMON');
-    expect(calls).toBe(1);
+    expect(rarityCalls).toBe(0);
   });
 
   it('returns an empty list when no valid choices remain', () => {
@@ -58,6 +61,7 @@ describe('upgrade roll service', () => {
     const pool = [choice('common', 1), choice('rare', 9)];
     expect(rollUpgradeChoices(pool, { count: 1, rng: () => 0.95 })[0].id).toBe('rare');
     expect(() => rollUpgradeChoices(pool, { count: 1, rng: () => 1 })).toThrow(/\[0, 1\)/);
+    expect(() => rollUpgradeChoices(pool, { count: 1, rarityRng: null as any })).toThrow(/rarity rng/);
     expect(() => rollUpgradeChoices([choice('bad', -1)])).toThrow(/weight/);
   });
 });

@@ -39,6 +39,7 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     const twinDefinition = read('src/upgrades/definitions/twin-riveter.js');
     const rigDefinition = read('src/upgrades/definitions/call-rig.js');
     const phaseC5 = read('src/phase-c5-runtime.js');
+    const phaseD1 = read('src/phase-d1-runtime.js');
     const companionRuntime = read('src/companion-runtime-v3.js');
 
     expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
@@ -100,12 +101,14 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(companionRuntime).not.toContain('s.__companionUpgradeRulesPatched=true');
     expect(upgradeRuntime).toContain('applyMixedRegisteredUpgrade');
     expect(upgradeRuntime).toContain('createUpgradeMechanicalTransaction');
-    expect(phaseC).toContain("rollUpgradeChoices(createUpgradePool(this), { count: 3 })");
-    expect(phaseC1).toContain("rollUpgradeChoices(c1UpgradePool(this), { count: 3 })");
+    expect(phaseC).toContain("rollUpgradeChoices(createUpgradePool(this), { count: 3, rarityRng:");
+    expect(phaseC1).toContain("rollUpgradeChoices(c1UpgradePool(this), { count: 3, rarityRng:");
     expect(phaseC).not.toContain('function weightedChoices');
     expect(phaseC1).not.toContain('function pickC1Choices');
     expect(rollService).toContain('export function rollUpgradeChoices');
     expect(rollService).toContain('export function createSeededUpgradeRng');
+    expect(phaseC).toContain('__upgradeRarityRng');
+    expect(phaseC1).toContain('__upgradeRarityRng');
     expect(rollService).toContain('rollUpgradeRarity');
     expect(rarityService).toContain('UPGRADE_RARITY_RULES');
     expect(rarityService).toContain("LEGENDARY: 'LEGENDARY'");
@@ -113,6 +116,9 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(twinDefinition).toContain("rarity: 'COMMON'");
     expect(rigDefinition).toContain("rarity: 'COMMON'");
     expect(phaseC5).toContain('rarityText:rarity');
+    expect(phaseD1).toContain('getUpgradeRarityRule');
+    expect(phaseD1).not.toContain('CARD_RARITY');
+    expect(phaseD1).not.toContain('RARITY_STYLE');
   });
 
   it('keeps the final Runner production boundary routed through CharacterSystem', () => {
