@@ -30,7 +30,8 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
       sawbug.setVelocity?.(0, 0);
       sawbug.__sawbugState = null;
 
-      const module = await import('/src/enemies/behaviors/acid-spitter.js?v=1');
+      const loadModule = new Function('path', 'return import(path)');
+      const module = await loadModule('/src/enemies/behaviors/acid-spitter.js?v=1');
       const args = { scene, enemy: sawbug, target: scene.hero, random: () => 0 };
       module.updateAcidSpitterBehavior(args);
 
