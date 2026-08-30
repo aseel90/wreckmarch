@@ -19,7 +19,9 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
     await new Promise(resolve => setTimeout(resolve, 100));
 
     const upgradeScene = game.scene.getScene('UpgradeSceneV4');
-    const cards = (upgradeScene.cards || []).map((card: any) => ({
+    const choices = upgradeScene.choices || [];
+    const cards = (upgradeScene.cards || []).map((card: any, index: number) => ({
+      id: choices[index]?.id || null,
       texture: card.art?.texture?.key,
       frameWidth: card.art?.frame?.realWidth || 0,
       frameHeight: card.art?.frame?.realHeight || 0,
@@ -29,13 +31,15 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
       frameColor: card.style?.frame,
       glowAlpha: card.glow?.alpha
     }));
-    const choiceRarities = (upgradeScene.choices || []).map((choice: any) => choice.rarity);
+    const choiceRarities = choices.map((choice: any) => choice.rarity);
     const rarityStyles = scene.__d1RarityStyles || [];
+    const customArtReady = scene.__upgradeCardArtReady === true;
     scene.closeUpgradeCards();
 
     return {
       artSource: scene.__d1CardArtSource,
       premiumCards: scene.__d1PremiumCards,
+      customArtReady,
       rarityStyles,
       choiceRarities,
       cards
@@ -44,11 +48,13 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
 
   expect(result.artSource).toBe('c3-atlas-icons');
   expect(result.premiumCards).toBe(true);
+  expect(result.customArtReady).toBe(true);
   expect(new Set(result.rarityStyles)).toEqual(new Set(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']));
   expect(result.cards.map((card: any) => card.rarity)).toEqual(result.choiceRarities);
   expect(result.cards).toHaveLength(3);
   for (const card of result.cards) {
-    expect(card.texture).toBe('c3-atlas');
+    const expectedTexture = card.id === 'piercing-rivets' ? 'upgrade-icon-piercing-rivets' : 'c3-atlas';
+    expect(card.texture).toBe(expectedTexture);
     expect(card.frameWidth).toBeGreaterThanOrEqual(70);
     expect(card.frameHeight).toBeGreaterThanOrEqual(60);
     expect(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']).toContain(card.rarity);
