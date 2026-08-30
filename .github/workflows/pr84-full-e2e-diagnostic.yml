@@ -1,4 +1,4 @@
-name: PR84 Sawbug stress diagnostic
+name: PR84 Full E2E stress diagnostic
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   issues: write
 
 jobs:
-  sawbug-stress:
+  full-e2e-stress:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,13 +30,13 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run Sawbug stress and capture outcome
+      - name: Run full E2E stress and capture outcome
         id: stress
         shell: bash
         run: |
           set +e
           set -o pipefail
-          pnpm exec playwright test tests/e2e/sawbug.spec.ts --repeat-each=10 --workers=2 2>&1 | tee wm-sawbug-stress.log
+          pnpm exec playwright test --repeat-each=3 --workers=2 2>&1 | tee wm-full-e2e-stress.log
           code=${PIPESTATUS[0]}
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -50,11 +50,11 @@ jobs:
         run: |
           if [ "$EXIT_CODE" = "0" ]; then outcome="success"; else outcome="failure"; fi
           {
-            echo "Sawbug stress diagnostic on \`$SHA\`: **$outcome**"
+            echo "Full E2E stress diagnostic on \`$SHA\`: **$outcome**"
             echo
             echo '```text'
-            tail -c 50000 wm-sawbug-stress.log
+            tail -c 60000 wm-full-e2e-stress.log
             echo
             echo '```'
           } > diagnostic-body.md
-          gh issue create --repo "$GITHUB_REPOSITORY" --title "[TEMP PR84] Sawbug stress diagnostic" --body-file diagnostic-body.md
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "[TEMP PR84] Full E2E stress diagnostic" --body-file diagnostic-body.md
