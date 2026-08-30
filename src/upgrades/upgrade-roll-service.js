@@ -1,3 +1,5 @@
+import { getUpgradeRarityRule, rollUpgradeRarity } from './upgrade-rarity.js?v=1';
+
 function hashSeed(seed) {
   const text = typeof seed === 'string' ? seed : String(seed);
   let hash = 0x811c9dc5;
@@ -58,6 +60,20 @@ function normalizeChoice(choice, index) {
   return choice;
 }
 
+function attachRolledRarity(choice, rng) {
+  const rarity = rollUpgradeRarity(rng, choice.rarityConstraint ?? null);
+  const rule = getUpgradeRarityRule(rarity);
+  const originalApply = typeof choice.apply === 'function' ? choice.apply : null;
+  return Object.freeze({
+    ...choice,
+    rarity,
+    rarityLabel: rule.label,
+    rarityColor: rule.color,
+    rarityPowerMultiplier: rule.powerMultiplier,
+    ...(originalApply ? { apply: () => originalApply(rarity) } : {})
+  });
+}
+
 function readRoll(rng) {
   const value = rng();
   if (!Number.isFinite(value) || value < 0 || value >= 1) {
@@ -67,11 +83,12 @@ function readRoll(rng) {
 }
 
 /**
- * @typedef {{ id: string, weight: number, available: () => boolean }} UpgradeRollChoice
+ * @typedef {{ id: string, weight: number, available: () => boolean, rarityConstraint?: string | null, apply?: (rarity?: string | null) => unknown }} UpgradeRollChoice
+ * @typedef {UpgradeRollChoice & { rarity: string, rarityLabel: string, rarityColor: number, rarityPowerMultiplier: number }} RolledUpgradeChoice
  * @typedef {{ count?: number, rng?: () => number, excludeIds?: string[] | Set<string> }} UpgradeRollOptions
  * @param {UpgradeRollChoice[]} choices
  * @param {UpgradeRollOptions} [options]
- * @returns {UpgradeRollChoice[]}
+ * @returns {RolledUpgradeChoice[]}
  */
 export function rollUpgradeChoices(choices, options = {}) {
   const { count = 3, rng = Math.random, excludeIds = [] } = options;
@@ -100,5 +117,5 @@ export function rollUpgradeChoices(choices, options = {}) {
     }
     chosen.push(available.splice(index, 1)[0]);
   }
-  return chosen;
+  return chosen.map(choice => attachRolledRarity(choice, rng));
 }

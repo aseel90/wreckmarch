@@ -1,6 +1,7 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=6';
-import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=3';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=7';
+import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=4';
+import { UPGRADE_RARITIES, getUpgradeRarityRule, resolveUpgradeRarityForDefinition, scaleUpgradeModifierValue } from './upgrade-rarity.js?v=1';
 
 function mergeModifierCaps(existing = {}, modifier) {
   if (modifier.min == null && modifier.max == null) return null;
@@ -22,7 +23,7 @@ function getModifierBucket(runStatState, domain, stat) {
   return domainModifiers[stat];
 }
 
-export function applyUpgradeStatModifiers(scene, definition, level) {
+export function applyUpgradeStatModifiers(scene, definition, level, { rarity = UPGRADE_RARITIES.COMMON } = {}) {
   if (!scene?.runStatState?.state || typeof scene.runStatState.resolve !== 'function') {
     throw new Error('Upgrade stat modifiers require scene.runStatState');
   }
@@ -32,6 +33,7 @@ export function applyUpgradeStatModifiers(scene, definition, level) {
   if (!Number.isInteger(level) || level < 1 || level > definition.maxLevel) {
     throw new RangeError(`Invalid ${definition.id} level: ${level}`);
   }
+  const resolvedRarity = resolveUpgradeRarityForDefinition(definition, rarity);
 
   const capPlans = new Map();
   const planned = definition.modifiers.map((modifier, index) => {
@@ -53,14 +55,14 @@ export function applyUpgradeStatModifiers(scene, definition, level) {
       });
     }
 
-    return { bucket, id, modifier };
+    return { bucket, id, modifier, scaledValue: scaleUpgradeModifierValue(modifier, resolvedRarity) };
   });
 
-  for (const { bucket, id, modifier } of planned) {
+  for (const { bucket, id, modifier, scaledValue } of planned) {
     bucket.push({
       id,
       type: modifier.type,
-      value: modifier.value,
+      value: scaledValue,
       ...(modifier.priority == null ? {} : { priority: modifier.priority })
     });
   }
@@ -140,11 +142,12 @@ function restoreRunStatMutationState(scene, snapshot) {
   return resolved;
 }
 
-function applyMixedRegisteredUpgrade(scene, definition, level) {
+function applyMixedRegisteredUpgrade(scene, definition, level, rarity) {
   const statSnapshot = snapshotRunStatMutationState(scene);
-  const mechanicalTransaction = createUpgradeMechanicalTransaction(scene, definition, level);
+  const powerMultiplier = getUpgradeRarityRule(rarity).powerMultiplier;
+  const mechanicalTransaction = createUpgradeMechanicalTransaction(scene, definition, level, { rarity, powerMultiplier });
   try {
-    const resolved = applyUpgradeStatModifiers(scene, definition, level);
+    const resolved = applyUpgradeStatModifiers(scene, definition, level, { rarity });
     const mechanicalEffect = mechanicalTransaction.apply();
     return Object.freeze({ resolved, mechanicalEffect });
   } catch (error) {
@@ -184,22 +187,49 @@ export function canApplyRegisteredUpgrade(scene, id) {
   return true;
 }
 
-export function applyRegisteredUpgrade(scene, id) {
+function planUpgradeRarityHistory(scene, definition, currentLevel, rarity) {
+  const container = scene?.upgradeRarityHistory;
+  if (container != null && (typeof container !== 'object' || Array.isArray(container))) {
+    throw new TypeError('scene.upgradeRarityHistory must be an object when present');
+  }
+  const existing = container?.[definition.id];
+  if (existing != null && !Array.isArray(existing)) {
+    throw new TypeError(`Invalid rarity history for ${definition.id}`);
+  }
+  const history = existing ? [...existing] : [];
+  if (history.length > currentLevel) throw new Error(`Rarity history exceeds upgrade level for ${definition.id}`);
+  while (history.length < currentLevel) history.push(UPGRADE_RARITIES.COMMON);
+  history.push(rarity);
+  return Object.freeze(history);
+}
+
+function commitUpgradeRarityHistory(scene, definition, history) {
+  if (!scene.upgradeRarityHistory || typeof scene.upgradeRarityHistory !== 'object' || Array.isArray(scene.upgradeRarityHistory)) {
+    scene.upgradeRarityHistory = {};
+  }
+  scene.upgradeRarityHistory[definition.id] = history;
+}
+
+export function applyRegisteredUpgrade(scene, id, { rarity = null } = {}) {
   const definition = requireRegisteredUpgrade(id);
   const currentLevel = getSceneUpgradeLevel(scene, id);
   const nextLevel = currentLevel + 1;
   if (nextLevel > definition.maxLevel) {
     throw new RangeError(`${definition.id} is already at max level ${definition.maxLevel}`);
   }
+  const resolvedRarity = resolveUpgradeRarityForDefinition(definition, rarity);
+  const rarityHistory = planUpgradeRarityHistory(scene, definition, currentLevel, resolvedRarity);
+  const powerMultiplier = getUpgradeRarityRule(resolvedRarity).powerMultiplier;
 
   const { hasModifiers, hasMechanicalEffect } = requireSupportedRegisteredUpgrade(definition);
   const result = hasModifiers && hasMechanicalEffect
-    ? applyMixedRegisteredUpgrade(scene, definition, nextLevel)
+    ? applyMixedRegisteredUpgrade(scene, definition, nextLevel, resolvedRarity)
     : hasModifiers
-      ? applyUpgradeStatModifiers(scene, definition, nextLevel)
-      : applyUpgradeMechanicalEffect(scene, definition, nextLevel);
+      ? applyUpgradeStatModifiers(scene, definition, nextLevel, { rarity: resolvedRarity })
+      : applyUpgradeMechanicalEffect(scene, definition, nextLevel, { rarity: resolvedRarity, powerMultiplier });
 
   scene.upgradeLevels[definition.id] = nextLevel;
+  commitUpgradeRarityHistory(scene, definition, rarityHistory);
   return result;
 }
 
@@ -212,8 +242,9 @@ export function createRegisteredUpgradeChoice(scene, id, { category = 'HERO' } =
     title: definition.name,
     desc: definition.description,
     weight: definition.weight,
+    rarityConstraint: definition.rarity,
     available: () => canApplyRegisteredUpgrade(scene, definition.id),
-    apply: () => applyRegisteredUpgrade(scene, definition.id)
+    apply: (rarity = null) => applyRegisteredUpgrade(scene, definition.id, { rarity })
   };
 }
 
@@ -225,12 +256,12 @@ export function canApplyRegisteredStatUpgrade(scene, id) {
   return canApplyRegisteredUpgrade(scene, definition.id);
 }
 
-export function applyRegisteredStatUpgrade(scene, id) {
+export function applyRegisteredStatUpgrade(scene, id, options = {}) {
   const definition = requireRegisteredUpgrade(id);
   if (!definition.modifiers?.length || definition.mechanicalEffect) {
     throw new Error(`Registered stat upgrade expected: ${definition.id}`);
   }
-  return applyRegisteredUpgrade(scene, definition.id);
+  return applyRegisteredUpgrade(scene, definition.id, options);
 }
 
 export function createRegisteredStatUpgradeChoice(scene, id, options = {}) {
