@@ -5,6 +5,7 @@ import { LONG_BARREL_UPGRADE } from './definitions/long-barrel.js';
 import { TWIN_RIVETER_UPGRADE } from './definitions/twin-riveter.js';
 import { FLEET_FEET_UPGRADE } from './definitions/fleet-feet.js';
 import { SCRAP_MAGNET_UPGRADE } from './definitions/scrap-magnet.js';
+import { ARMOR_PLATE_UPGRADE } from './definitions/armor-plate.js';
 
 const DEFAULT_UPGRADE_REGISTRY = createUpgradeRegistry([
   HEAVY_RIVETS_UPGRADE,
@@ -12,7 +13,8 @@ const DEFAULT_UPGRADE_REGISTRY = createUpgradeRegistry([
   LONG_BARREL_UPGRADE,
   TWIN_RIVETER_UPGRADE,
   FLEET_FEET_UPGRADE,
-  SCRAP_MAGNET_UPGRADE
+  SCRAP_MAGNET_UPGRADE,
+  ARMOR_PLATE_UPGRADE
 ]);
 
 export function getUpgradeDefinition(id) {

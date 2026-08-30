@@ -1,5 +1,5 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=5';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=6';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
@@ -200,14 +200,6 @@ function installProgressHud(scene) {
   scene.refreshProgressHud();
 }
 
-function upgradeLevel(scene, id) {
-  return scene.upgradeLevels[id] || 0;
-}
-
-function bumpUpgrade(scene, id) {
-  scene.upgradeLevels[id] = upgradeLevel(scene, id) + 1;
-}
-
 function summonRig(scene) {
   if (scene.rigSystem?.summon) {
     scene.rigSystem.summon();
@@ -233,7 +225,7 @@ function createUpgradePool(scene) {
     createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
-    { id: 'armor-plate', category: 'UTILITY', title: 'ARMOR PLATE', desc: '+15 max HP and restore 15 HP.', weight: .95, available: () => upgradeLevel(scene, 'armor-plate') < 4, apply: () => { bumpUpgrade(scene, 'armor-plate'); scene.heroMaxHp += 15; scene.heroHp = Math.min(scene.heroMaxHp, scene.heroHp + 15); } },
+    createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),
     { id: 'call-rig', category: 'FORTRESS', title: 'CALL THE RIG', desc: 'Summon the moving Fortress companion.', weight: .7, available: () => scene.level >= 2 && !scene.rigSummoned, apply: () => summonRig(scene) },
     { id: 'rig-overdrive', category: 'FORTRESS', title: 'RIG OVERDRIVE', desc: 'Reserved for the future companion upgrade tree.', weight: 0, available: () => false, apply: () => {} },
     { id: 'twin-cannon', category: 'FORTRESS', title: 'TWIN CANNON', desc: 'Reserved for the future companion upgrade tree.', weight: 0, available: () => false, apply: () => {} }

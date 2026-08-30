@@ -1,6 +1,6 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=4';
-import { applyUpgradeMechanicalEffect, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=1';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=5';
+import { applyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=2';
 
 function mergeModifierCaps(existing = {}, modifier) {
   if (modifier.min == null && modifier.max == null) return null;
@@ -89,9 +89,6 @@ function requireSupportedRegisteredUpgrade(definition) {
   const hasModifiers = Array.isArray(definition.modifiers) && definition.modifiers.length > 0;
   const hasMechanicalEffect = Boolean(definition.mechanicalEffect);
 
-  if (hasModifiers && hasMechanicalEffect) {
-    throw new Error(`Mixed stat/mechanical upgrade requires transactional support: ${definition.id}`);
-  }
   if (hasMechanicalEffect && !hasUpgradeMechanicalEffect(definition.mechanicalEffect.id)) {
     throw new Error(`Unknown upgrade mechanical effect: ${definition.mechanicalEffect.id}`);
   }
@@ -99,6 +96,72 @@ function requireSupportedRegisteredUpgrade(definition) {
     throw new Error(`Upgrade definition has no applicable effect: ${definition.id}`);
   }
   return { hasModifiers, hasMechanicalEffect };
+}
+
+function cloneModifierRecord(record = {}) {
+  return Object.fromEntries(Object.entries(record).map(([stat, modifiers]) => [
+    stat,
+    Array.isArray(modifiers) ? modifiers.map(modifier => ({ ...modifier })) : []
+  ]));
+}
+
+function cloneCapRecord(record = {}) {
+  return Object.fromEntries(Object.entries(record).map(([stat, cap]) => [stat, { ...cap }]));
+}
+
+function snapshotRunStatMutationState(scene) {
+  const state = scene?.runStatState?.state;
+  if (!state) throw new Error('Mixed upgrade requires scene.runStatState');
+  return {
+    modifiers: {
+      character: cloneModifierRecord(state.modifiers.character),
+      weapon: cloneModifierRecord(state.modifiers.weapon)
+    },
+    caps: {
+      character: cloneCapRecord(state.caps.character),
+      weapon: cloneCapRecord(state.caps.weapon)
+    }
+  };
+}
+
+function restoreRecord(target, snapshot, cloneValue) {
+  for (const key of Object.keys(target)) delete target[key];
+  for (const [key, value] of Object.entries(snapshot)) target[key] = cloneValue(value);
+}
+
+function restoreRunStatMutationState(scene, snapshot) {
+  const state = scene.runStatState.state;
+  restoreRecord(state.modifiers.character, snapshot.modifiers.character, value => value.map(modifier => ({ ...modifier })));
+  restoreRecord(state.modifiers.weapon, snapshot.modifiers.weapon, value => value.map(modifier => ({ ...modifier })));
+  restoreRecord(state.caps.character, snapshot.caps.character, value => ({ ...value }));
+  restoreRecord(state.caps.weapon, snapshot.caps.weapon, value => ({ ...value }));
+  const resolved = scene.runStatState.resolve();
+  mirrorResolvedRunStats(scene, resolved);
+  return resolved;
+}
+
+function applyMixedRegisteredUpgrade(scene, definition, level) {
+  const statSnapshot = snapshotRunStatMutationState(scene);
+  const mechanicalTransaction = createUpgradeMechanicalTransaction(scene, definition, level);
+  try {
+    const resolved = applyUpgradeStatModifiers(scene, definition, level);
+    const mechanicalEffect = mechanicalTransaction.apply();
+    return Object.freeze({ resolved, mechanicalEffect });
+  } catch (error) {
+    let rollbackError = null;
+    try {
+      mechanicalTransaction.rollback();
+    } catch (candidate) {
+      rollbackError = candidate;
+    }
+    try {
+      restoreRunStatMutationState(scene, statSnapshot);
+    } catch (candidate) {
+      rollbackError ||= candidate;
+    }
+    if (rollbackError) throw new AggregateError([error, rollbackError], `Failed to roll back mixed upgrade ${definition.id}`);
+    throw error;
+  }
 }
 
 export function canApplyRegisteredUpgrade(scene, id) {
@@ -115,10 +178,12 @@ export function applyRegisteredUpgrade(scene, id) {
     throw new RangeError(`${definition.id} is already at max level ${definition.maxLevel}`);
   }
 
-  const { hasModifiers } = requireSupportedRegisteredUpgrade(definition);
-  const result = hasModifiers
-    ? applyUpgradeStatModifiers(scene, definition, nextLevel)
-    : applyUpgradeMechanicalEffect(scene, definition, nextLevel);
+  const { hasModifiers, hasMechanicalEffect } = requireSupportedRegisteredUpgrade(definition);
+  const result = hasModifiers && hasMechanicalEffect
+    ? applyMixedRegisteredUpgrade(scene, definition, nextLevel)
+    : hasModifiers
+      ? applyUpgradeStatModifiers(scene, definition, nextLevel)
+      : applyUpgradeMechanicalEffect(scene, definition, nextLevel);
 
   scene.upgradeLevels[definition.id] = nextLevel;
   return result;

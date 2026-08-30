@@ -340,9 +340,10 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
   - Verified on `10ba433`: canonical mechanical-effect path, shared Phase C/C1 registry adapter, WeaponSystem mechanical-state ownership, level 1 → 2 rivets / level 2 → 3 rivets parity, unit/final-scene E2E, Quality, Smoke, all three E2E shards, aggregate E2E, deploy, Live Chromium and Pages recovery all passed.
 - [x] Migrate Fleet Feet. — **Status:** ✅ DONE
   - Verified on `3fd680b`: canonical Character `moveSpeed` migration uses the `RUN_BALANCE` contract (+3% per level, max level 3, hard cap 280), shared Phase C/C1 stat adapter, unit parity against `getPlayerMoveSpeed()`, deterministic final-scene E2E, Quality, Smoke, all three E2E shards and aggregate E2E; post-merge Live Chromium passed on the same SHA with no open `[CI] main is failing` or `[LIVE] deployed main smoke failed` issue.
-- [ ] Migrate Scrap Magnet. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-  - Canonical Character `pickupRadiusMultiplier` migration preserves the 135px Phase C base radius and applies +25% multiplicatively per level (max 4) through RunStatState. Shared Phase C/C1 registry adapter, unit parity and a deterministic final-scene E2E prove a Scrap at 150px is outside the base radius and attracted after level 1. Final checkbox waits for clean PR + `main` + Live Chromium verification.
-- [ ] Migrate Armor Plate. — **Status:** ⚪ NOT STARTED
+- [x] Migrate Scrap Magnet. — **Status:** ✅ DONE
+  - Verified on `51a90d7`: canonical Character `pickupRadiusMultiplier` preserves the 135px Phase C base radius and applies +25% multiplicatively per level (max 4) through RunStatState. Shared Phase C/C1 registry adapter, unit parity, deterministic final-scene attraction E2E, Quality, Smoke, all three E2E shards, aggregate E2E and post-merge Live Chromium passed on the same `main` SHA with no open CI/Live failure issue.
+- [ ] Migrate Armor Plate. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+  - Canonical mixed upgrade: +15 `character.maxHp` FLAT per level (max 4) plus a transactional `RESTORE_HP` post-stat effect that restores 15 HP capped at the newly resolved max HP. Phase C/C1 share the registered adapter; rollback coverage proves failed side-effects cannot leave partial max-HP modifiers. Final checkbox waits for clean PR + `main` + Live Chromium verification.
 - [ ] Decide temporary handling of Call the Rig without expanding old Rig system. — **Status:** ⚪ NOT STARTED
 - [ ] Remove/deactivate obsolete duplicate card definitions after migration. — **Status:** 🧹 POST-MIGRATION
 
@@ -813,7 +814,7 @@ This is the official production verification gate described in `TESTING_AND_DEPL
 - [x] Open/update one deduplicated GitHub Issue when deployed `main` fails. — **Status:** ✅ DONE
 - [x] Auto-close the live-smoke Issue after a later successful deployed `main`. — **Status:** ✅ DONE
 - [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
-  - Current verified gameplay commit: `10ba433` (Twin Riveter merged; Quality/Smoke/all E2E shards/aggregate E2E passed, then post-deploy Live Chromium and Pages recovery passed on the same `main` commit).
+  - Current verified gameplay commit: `51a90d7` (Scrap Magnet merged; Quality/Smoke/all E2E shards/aggregate E2E passed, then post-deploy Live Chromium passed on the same `main` commit with no open CI/Live failure issue).
 
 ---
 
