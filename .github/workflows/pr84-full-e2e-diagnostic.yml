@@ -1,4 +1,4 @@
-name: PR84 Full E2E diagnostic
+name: PR84 Sawbug stress diagnostic
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   issues: write
 
 jobs:
-  full-e2e:
+  sawbug-stress:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,22 +25,18 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: |
-          set -o pipefail
-          pnpm install --no-frozen-lockfile 2>&1 | tee wm-e2e-install.log
+        run: pnpm install --no-frozen-lockfile
 
       - name: Install Playwright Chromium
-        run: |
-          set -o pipefail
-          pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-e2e-playwright-install.log
+        run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run full E2E and capture outcome
-        id: e2e
+      - name: Run Sawbug stress and capture outcome
+        id: stress
         shell: bash
         run: |
           set +e
           set -o pipefail
-          pnpm test:e2e 2>&1 | tee wm-e2e.log
+          pnpm exec playwright test tests/e2e/sawbug.spec.ts --repeat-each=10 --workers=2 2>&1 | tee wm-sawbug-stress.log
           code=${PIPESTATUS[0]}
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -48,21 +44,17 @@ jobs:
       - name: Publish diagnostic issue
         env:
           GH_TOKEN: ${{ github.token }}
-          EXIT_CODE: ${{ steps.e2e.outputs.exit_code }}
+          EXIT_CODE: ${{ steps.stress.outputs.exit_code }}
           SHA: ${{ github.sha }}
         shell: bash
         run: |
           if [ "$EXIT_CODE" = "0" ]; then outcome="success"; else outcome="failure"; fi
           {
-            echo "Full E2E diagnostic on \`$SHA\`: **$outcome**"
+            echo "Sawbug stress diagnostic on \`$SHA\`: **$outcome**"
             echo
-            for LOG in wm-e2e.log wm-e2e-playwright-install.log wm-e2e-install.log; do
-              [ -f "$LOG" ] || continue
-              echo "### $LOG"
-              echo '```text'
-              tail -c 16000 "$LOG"
-              echo
-              echo '```'
-            done
+            echo '```text'
+            tail -c 50000 wm-sawbug-stress.log
+            echo
+            echo '```'
           } > diagnostic-body.md
-          gh issue create --repo "$GITHUB_REPOSITORY" --title "[TEMP PR84] Full E2E diagnostic" --body-file diagnostic-body.md
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "[TEMP PR84] Sawbug stress diagnostic" --body-file diagnostic-body.md
