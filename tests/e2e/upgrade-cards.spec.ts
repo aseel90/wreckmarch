@@ -45,7 +45,7 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
   expect(result.artSource).toBe('c3-atlas-icons');
   expect(result.premiumCards).toBe(true);
   expect(new Set(result.rarityStyles)).toEqual(new Set(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']));
-  expect(result.cards.map(card => card.rarity)).toEqual(result.choiceRarities);
+  expect(result.cards.map((card: any) => card.rarity)).toEqual(result.choiceRarities);
   expect(result.cards).toHaveLength(3);
   for (const card of result.cards) {
     expect(card.texture).toBe('c3-atlas');
