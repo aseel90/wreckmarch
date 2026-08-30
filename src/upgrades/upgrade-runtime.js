@@ -1,4 +1,5 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js';
+import { getUpgradeDefinition } from './upgrade-catalog.js';
 
 function getModifierBucket(runStatState, domain, stat) {
   const domainModifiers = runStatState?.state?.modifiers?.[domain];
@@ -39,4 +40,49 @@ export function applyUpgradeStatModifiers(scene, definition, level) {
   const resolved = scene.runStatState.resolve();
   mirrorResolvedRunStats(scene, resolved);
   return resolved;
+}
+
+function requireRegisteredUpgrade(id) {
+  const definition = getUpgradeDefinition(id);
+  if (!definition) throw new Error(`Unknown upgrade definition: ${id}`);
+  return definition;
+}
+
+export function getSceneUpgradeLevel(scene, id) {
+  const level = scene?.upgradeLevels?.[id] ?? 0;
+  if (!Number.isInteger(level) || level < 0) {
+    throw new TypeError(`Invalid scene upgrade level for ${id}: ${String(level)}`);
+  }
+  return level;
+}
+
+export function canApplyRegisteredStatUpgrade(scene, id) {
+  const definition = requireRegisteredUpgrade(id);
+  return getSceneUpgradeLevel(scene, id) < definition.maxLevel;
+}
+
+export function applyRegisteredStatUpgrade(scene, id) {
+  const definition = requireRegisteredUpgrade(id);
+  const currentLevel = getSceneUpgradeLevel(scene, id);
+  const nextLevel = currentLevel + 1;
+  if (nextLevel > definition.maxLevel) {
+    throw new RangeError(`${definition.id} is already at max level ${definition.maxLevel}`);
+  }
+
+  const resolved = applyUpgradeStatModifiers(scene, definition, nextLevel);
+  scene.upgradeLevels[definition.id] = nextLevel;
+  return resolved;
+}
+
+export function createRegisteredStatUpgradeChoice(scene, id, { category = 'HERO' } = {}) {
+  const definition = requireRegisteredUpgrade(id);
+  return {
+    id: definition.id,
+    category,
+    title: definition.name,
+    desc: definition.description,
+    weight: definition.weight,
+    available: () => canApplyRegisteredStatUpgrade(scene, definition.id),
+    apply: () => applyRegisteredStatUpgrade(scene, definition.id)
+  };
 }
