@@ -361,9 +361,12 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
 - [x] Migrate Scrap Magnet. — **Status:** ✅ DONE
   - Verified on `51a90d7`: canonical Character `pickupRadiusMultiplier` preserves the 135px Phase C base radius and applies +25% multiplicatively per level (max 4) through RunStatState. Shared Phase C/C1 registry adapter, unit parity, deterministic final-scene attraction E2E, Quality, Smoke, all three E2E shards, aggregate E2E and post-merge Live Chromium passed on the same `main` SHA with no open CI/Live failure issue.
 - [x] Migrate Armor Plate. — **Status:** ✅ DONE
-  - Canonical mixed upgrade: +15 `character.maxHp` FLAT per level (max 4) plus a transactional `RESTORE_HP` post-stat effect that restores 15 HP capped at the newly resolved max HP. Phase C/C1 share the registered adapter; rollback coverage proves failed side-effects cannot leave partial max-HP modifiers. Final checkbox waits for clean PR + `main` + Live Chromium verification.
+  - Verified on gameplay commit `361c26b` with production recovery on `f49a580`: canonical mixed upgrade adds +15 `character.maxHp` FLAT per level (max 4) plus transactional `RESTORE_HP` capped at the newly resolved max HP. Shared Phase C/C1 registry wiring, rollback coverage, Quality, Smoke, all E2E shards, aggregate E2E, deploy and post-deploy Live Chromium passed; stale Pages module caching was cleared by bumping the C3/C3.1 import fingerprints, and Live Issue #93 auto-closed after recovery.
 - [x] Decide temporary handling of Call the Rig without expanding old Rig system. — **Status:** ✅ DONE
+  - Verified on `a44f551`: registry-owned one-level `COMPANION` card with a named `SUMMON_RIG` effect delegates only to `RigSystem.summon()`. Level-2 offer gating is data-driven; reserved Rig Overdrive/Twin Cannon choices remain unavailable in Phase C/C1. Unit/final-scene coverage, Quality, Smoke, all three E2E shards, aggregate E2E, Pages deployment and post-deploy production browser gates passed with no open CI/Live failure issue.
 - [x] Remove/deactivate obsolete duplicate card definitions after migration. — **Status:** ✅ DONE
+  - Verified on `f723494`: removed reserved Phase C/C1 `rig-overdrive` / `twin-cannon` gameplay placeholders and the Companion V3 upgrade-level monkeypatch while preserving companion presentation/runtime behavior. Twin Riveter level 2 is proven through the real `UpgradeSceneV4`; Quality, Smoke, all three E2E shards, aggregate E2E and Pages deployment passed, and the post-deploy Live Chromium gate completed without opening a `[LIVE] deployed main smoke failed` issue. No `ci-failure` issue remains open.
+  - Manual deployed-build baseline after this cleanup: ✅ PASS — upgrade cards, Twin Riveter level 2, Call the Rig and general gameplay were confirmed working normally before the roll-service extraction began.
 
 ---
 
@@ -891,7 +894,7 @@ This is the official production verification gate described in `TESTING_AND_DEPL
 - [x] Open/update one deduplicated GitHub Issue when deployed `main` fails. — **Status:** ✅ DONE
 - [x] Auto-close the live-smoke Issue after a later successful deployed `main`. — **Status:** ✅ DONE
 - [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
-  - Current verified gameplay commit: `51a90d7` (Scrap Magnet merged; Quality/Smoke/all E2E shards/aggregate E2E passed, then post-deploy Live Chromium passed on the same `main` commit with no open CI/Live failure issue).
+  - Current verified gameplay commit: `89926f8` (optional compact Upgrade System debug dump; PR #100 Quality/Smoke/all E2E shards/aggregate E2E passed on final head `71eea81`, Pages/iOS live verification and recovery passed on exact SHA `89926f8818a415567138815ee91c6ca2474b343d`, the post-deploy Live Chromium failure bridge remained clean through the production run window, and no CI/Live failure issue is open).
 
 ---
 
