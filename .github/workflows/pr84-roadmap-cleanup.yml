@@ -1,0 +1,79 @@
+name: PR84 Roadmap Cleanup
+
+on:
+  push:
+    branches:
+      - stabilize-sawbug-self-test
+
+permissions:
+  contents: write
+
+jobs:
+  clean-roadmap:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore main roadmap and apply only intended CI updates
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout origin/main -- UPGRADE_SYSTEM_2_ROADMAP.md
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('UPGRADE_SYSTEM_2_ROADMAP.md')
+          text = path.read_text()
+
+          old = """- [ ] Migrate Long Barrel. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
+  - Canonical dual-modifier definition (+18% projectile speed, +10% range), shared Phase C/C1 adapter and unit/final-card E2E coverage are implemented on the U2 Long Barrel branch. Final checkbox waits for PR Quality/E2E/Smoke, merge, deploy and Live Chromium gate.
+"""
+          new = """- [ ] Migrate Long Barrel. — **Status:** 🟡 MERGED / CI RECOVERY + LIVE VERIFY
+  - Canonical dual-modifier definition (+18% projectile speed, +10% range), shared Phase C/C1 adapter and unit/final-card E2E coverage were merged to `main` in `d731bad`. Final checkbox remains blocked until the canonical CI E2E gate is stable again and the resulting deployed build clears Live Chromium.
+"""
+          if old not in text:
+              raise SystemExit('Long Barrel roadmap block not found on main')
+          text = text.replace(old, new, 1)
+
+          section = """
+# 21.2. Sharded Playwright E2E gate
+
+The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POLICY.md`. It replaces the single-runner/multi-worker approach with isolated runner-level parallelism.
+
+- [ ] Pin Playwright CI execution to one worker per runner. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Split the E2E suite across three GitHub Actions shards. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Keep one stable aggregate check named `E2E` for branch protection and CI consumers. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Use Playwright blob reports per shard and merge them into one HTML diagnostic artifact. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Use `retryStrategy: isolated` with one CI retry. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Fail CI when Playwright classifies a test as flaky; a retry must not silently turn the gate green. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Record traces only on the first retry in CI. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Comment failing shard logs directly on the PR and keep aggregate diagnostics as a second layer. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Remove temporary diagnostic workflows from the canonical path. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Verify the new E2E architecture on PR, merge, and confirm `main` + Live Chromium before marking this gate complete. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
+
+Architecture rule: speed comes from independent CI shards, never by raising browser-worker contention inside one runner. Test retries are diagnostic only; flaky classifications remain failures.
+
+---
+
+"""
+          marker = "# 22. Cleanup / architecture debt pass"
+          if marker not in text:
+              raise SystemExit('Roadmap section 22 marker not found on main')
+          text = text.replace(marker, section + marker, 1)
+          path.write_text(text)
+          PY
+      - name: Commit cleaned roadmap
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- UPGRADE_SYSTEM_2_ROADMAP.md; then
+            echo 'No roadmap changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add UPGRADE_SYSTEM_2_ROADMAP.md
+          git commit -m 'Clean roadmap for sharded E2E gate'
+          git push origin HEAD:stabilize-sawbug-self-test
