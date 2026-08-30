@@ -38,6 +38,8 @@ const FRAME_SOURCES = Object.freeze({
 
 const FRAME_KEYS = Object.freeze(Object.keys(FRAME_SOURCES));
 const VISUAL_VERSION = 'production-v3-safe-windup';
+const SELF_TEST_POLL_MS = 120;
+const SELF_TEST_TIMEOUT_MS = 12000;
 
 export function canonicalizeBakedDataUrl(source) {
   if (typeof source !== 'string') return source;
@@ -143,14 +145,20 @@ function runBrowserSelfTest(scene) {
   tuneSawbugVisual(sawbug);
   sawbug.hp = 999999;
   sawbug.maxHp = 999999;
-  // Keep the browser regression deterministic: remove the normal opening cooldown
-  // only for ?sawbugtest=1 so CI validates the real windup/fire path promptly.
+  // Keep the browser regression deterministic without changing production behavior:
+  // reset any state that may have been initialized during spawn, then let the real
+  // acid-spitter state machine rebuild from this test-only opening configuration.
   sawbug.behaviorConfig = {
     ...sawbug.behaviorConfig,
     initialCooldownMinMs: 0,
     initialCooldownMaxMs: 0,
     telegraphMs: 120
   };
+  sawbug.__sawbugState = null;
+  sawbug.__sawbugPhase = 'move';
+  sawbug.__sawbugShotsFired = 0;
+  scene.__sawbugAcidShotsSpawned = 0;
+  document.documentElement.dataset.wreckmarchSawbugTest = 'running';
 
   const startedAt = Number(scene.time?.now) || 0;
   const finishWhenShotObserved = () => {
@@ -167,16 +175,14 @@ function runBrowserSelfTest(scene) {
       acidSpawned: Number(scene.__sawbugAcidShotsSpawned) >= 1,
       projectileSpeed: Math.abs(Number(sawbug.__sawbugLastProjectileSpeed) - Number(sawbug.behaviorConfig?.projectileSpeed)) <= 1
     };
-    const shotObserved = checks.shots && checks.acidSpawned && checks.projectileSpeed;
     const elapsed = (Number(scene.time?.now) || startedAt) - startedAt;
-    if (!shotObserved && elapsed < 7000) {
-      scene.time?.delayedCall?.(120, finishWhenShotObserved);
-      return;
-    }
-
     const ok = Object.values(checks).every(Boolean);
+    const timedOut = elapsed >= SELF_TEST_TIMEOUT_MS;
+    const status = ok ? 'passed' : timedOut ? 'failed' : 'running';
+
     window.__WM_SAWBUG_TEST__ = {
       ok,
+      status,
       ...checks,
       phase: sawbug.__sawbugPhase,
       elapsedMs: Math.round(elapsed),
@@ -185,10 +191,16 @@ function runBrowserSelfTest(scene) {
       splashesSpawned: scene.__sawbugAcidSplashesSpawned,
       visualVersion: sawbug.__sawbugVisualVersion
     };
-    document.documentElement.dataset.wreckmarchSawbugTest = ok ? 'passed' : 'failed';
+    document.documentElement.dataset.wreckmarchSawbugTest = status;
+
+    if (status === 'running') {
+      scene.time?.delayedCall?.(SELF_TEST_POLL_MS, finishWhenShotObserved);
+      return;
+    }
+
     window.__WM_LOG__?.(`Sawbug browser test ${ok ? 'PASSED' : 'FAILED'}: ${JSON.stringify(window.__WM_SAWBUG_TEST__)}`);
   };
-  scene.time?.delayedCall?.(120, finishWhenShotObserved);
+  scene.time?.delayedCall?.(SELF_TEST_POLL_MS, finishWhenShotObserved);
 }
 
 export async function installSawbugVisuals(scene) {

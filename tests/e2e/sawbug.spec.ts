@@ -15,8 +15,8 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
 
   await expect.poll(
     () => page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest || ''),
-    { timeout: 12_000 }
-  ).toMatch(/^(passed|failed)$/);
+    { timeout: 15_000 }
+  ).toBe('passed');
 
   const state = await page.evaluate(() => (window as typeof window & { __WM_SAWBUG_TEST__?: any }).__WM_SAWBUG_TEST__);
   console.log('SAWBUG_SELF_TEST_STATE', JSON.stringify(state));

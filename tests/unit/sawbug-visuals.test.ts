@@ -40,4 +40,13 @@ describe('Sawbug production frames', () => {
     expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-flight', PROJECTILE_KEYS, 10, -1)");
     expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-splash', SPLASH_KEYS, 12, 0)");
   });
+
+  it('keeps the browser self-test pending until the real acid shot resolves or the final deadline expires', () => {
+    const source = fs.readFileSync(path.join(root, 'src/enemies/sawbug-visuals.js'), 'utf8');
+    expect(source).toContain("document.documentElement.dataset.wreckmarchSawbugTest = 'running'");
+    expect(source).toContain("sawbug.__sawbugState = null");
+    expect(source).toContain("const status = ok ? 'passed' : timedOut ? 'failed' : 'running'");
+    expect(source).toContain('SELF_TEST_TIMEOUT_MS = 12000');
+  });
+
 });
