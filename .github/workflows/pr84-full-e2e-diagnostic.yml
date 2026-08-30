@@ -13,30 +13,35 @@ jobs:
   full-e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee wm-e2e-install.log
 
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Playwright Chromium
+        run: |
+          set -o pipefail
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-e2e-playwright-install.log
 
-      - name: Run full E2E and capture log
+      - name: Run full E2E and capture outcome
         id: e2e
         shell: bash
         run: |
           set +e
-          pnpm test:e2e > wm-e2e.log 2>&1
-          code=$?
+          set -o pipefail
+          pnpm test:e2e 2>&1 | tee wm-e2e.log
+          code=${PIPESTATUS[0]}
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
@@ -51,9 +56,13 @@ jobs:
           {
             echo "Full E2E diagnostic on \`$SHA\`: **$outcome**"
             echo
-            echo '```text'
-            tail -c 55000 wm-e2e.log
-            echo
-            echo '```'
+            for LOG in wm-e2e.log wm-e2e-playwright-install.log wm-e2e-install.log; do
+              [ -f "$LOG" ] || continue
+              echo "### $LOG"
+              echo '```text'
+              tail -c 16000 "$LOG"
+              echo
+              echo '```'
+            done
           } > diagnostic-body.md
           gh issue create --repo "$GITHUB_REPOSITORY" --title "[TEMP PR84] Full E2E diagnostic" --body-file diagnostic-body.md
