@@ -41,11 +41,17 @@ describe('Sawbug production frames', () => {
     expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-splash', SPLASH_KEYS, 12, 0)");
   });
 
-  it('keeps the browser self-test pending until the real acid shot resolves and exposes a direct CI refresh hook', () => {
+  it('keeps the browser self-test singleton and pending until the real acid shot resolves', () => {
     const source = fs.readFileSync(path.join(root, 'src/enemies/sawbug-visuals.js'), 'utf8');
     expect(source).toContain("document.documentElement.dataset.wreckmarchSawbugTest = 'running'");
-    expect(source).toContain("if (!document.body.classList.contains('visual-ready'))");
+    expect(source).toContain('function startBrowserSelfTest(scene)');
+    expect(source).toContain('if (scene.__wmSawbugSelfTestStarted) return');
+    expect(source).toContain('scene.__wmSawbugSelfTestStarted = true');
+    expect(source).toContain("if (params.get('sawbugtest') !== '1' || scene.__wmSawbugSelfTestStarted) return");
+    expect(source).toContain("if (document.body.classList.contains('visual-ready'))");
+    expect(source).toContain('if (scene.__wmSawbugSelfTestObserver) return');
     expect(source).toContain('const observer = new MutationObserver');
+    expect(source).toContain('scene.__wmSawbugSelfTestObserver = observer');
     expect(source).toContain("observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })");
     expect(source).toContain('scene.__wmSawbugSelfTestEnemy = sawbug || null');
     expect(source).toContain("sawbug.__sawbugState = null");

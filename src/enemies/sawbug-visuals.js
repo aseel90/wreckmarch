@@ -117,19 +117,9 @@ function installFactoryVisualHook(scene) {
   factory.__sawbugVisualHook = VISUAL_VERSION;
 }
 
-function runBrowserSelfTest(scene) {
-  const params = new URLSearchParams(location.search);
-  if (params.get('sawbugtest') !== '1') return;
-
-  if (!document.body.classList.contains('visual-ready')) {
-    const observer = new MutationObserver(() => {
-      if (!document.body.classList.contains('visual-ready')) return;
-      observer.disconnect();
-      runBrowserSelfTest(scene);
-    });
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    return;
-  }
+function startBrowserSelfTest(scene) {
+  if (scene.__wmSawbugSelfTestStarted) return;
+  scene.__wmSawbugSelfTestStarted = true;
 
   scene.spawnEvent && (scene.spawnEvent.paused = true);
   scene.fireDelay = 999999;
@@ -216,6 +206,26 @@ function runBrowserSelfTest(scene) {
   };
   scene.__wmSawbugSelfTestRefresh = finishWhenShotObserved;
   globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS);
+}
+
+function runBrowserSelfTest(scene) {
+  const params = new URLSearchParams(location.search);
+  if (params.get('sawbugtest') !== '1' || scene.__wmSawbugSelfTestStarted) return;
+
+  if (document.body.classList.contains('visual-ready')) {
+    startBrowserSelfTest(scene);
+    return;
+  }
+
+  if (scene.__wmSawbugSelfTestObserver) return;
+  const observer = new MutationObserver(() => {
+    if (!document.body.classList.contains('visual-ready')) return;
+    observer.disconnect();
+    scene.__wmSawbugSelfTestObserver = null;
+    startBrowserSelfTest(scene);
+  });
+  scene.__wmSawbugSelfTestObserver = observer;
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 }
 
 export async function installSawbugVisuals(scene) {
