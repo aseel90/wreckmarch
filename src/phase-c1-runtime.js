@@ -1,4 +1,5 @@
 import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=7';
+import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=1';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
 const W = 960;
@@ -206,19 +207,6 @@ function c1UpgradePool(scene) {
   ];
 }
 
-function pickC1Choices(scene, count=3) {
-  const available=c1UpgradePool(scene).filter(item=>item.available());
-  const chosen=[];
-  while(chosen.length<count&&available.length){
-    const total=available.reduce((sum,item)=>sum+item.weight,0);
-    let roll=Math.random()*total;
-    let index=0;
-    for(;index<available.length;index++){ roll-=available[index].weight; if(roll<=0) break; }
-    chosen.push(available.splice(Math.min(index,available.length-1),1)[0]);
-  }
-  return chosen;
-}
-
 function categoryHex(category) {
   return CATEGORY_COLORS[category] || CATEGORY_COLORS.HERO;
 }
@@ -336,7 +324,7 @@ function installLandscapeUpgradeScene(scene) {
 
   scene.openUpgradeCards = function() {
     if (this.upgradeOpen || this.gameOver) return;
-    const choices = pickC1Choices(this, 3);
+    const choices = rollUpgradeChoices(c1UpgradePool(this), { count: 3 });
     if (!choices.length) return;
     this.upgradeOpen = true;
     this.physics.pause();

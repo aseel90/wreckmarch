@@ -34,6 +34,7 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     const phaseC = read('src/phase-c-runtime.js');
     const phaseC1 = read('src/phase-c1-runtime.js');
     const upgradeRuntime = read('src/upgrades/upgrade-runtime.js');
+    const rollService = read('src/upgrades/upgrade-roll-service.js');
     const companionRuntime = read('src/companion-runtime-v3.js');
 
     expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
@@ -95,6 +96,12 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(companionRuntime).not.toContain('s.__companionUpgradeRulesPatched=true');
     expect(upgradeRuntime).toContain('applyMixedRegisteredUpgrade');
     expect(upgradeRuntime).toContain('createUpgradeMechanicalTransaction');
+    expect(phaseC).toContain("rollUpgradeChoices(createUpgradePool(this), { count: 3 })");
+    expect(phaseC1).toContain("rollUpgradeChoices(c1UpgradePool(this), { count: 3 })");
+    expect(phaseC).not.toContain('function weightedChoices');
+    expect(phaseC1).not.toContain('function pickC1Choices');
+    expect(rollService).toContain('export function rollUpgradeChoices');
+    expect(rollService).toContain('export function createSeededUpgradeRng');
   });
 
   it('keeps the final Runner production boundary routed through CharacterSystem', () => {

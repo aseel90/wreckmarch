@@ -1,5 +1,6 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
 import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=7';
+import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=1';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
@@ -213,22 +214,6 @@ function createUpgradePool(scene) {
   ];
 }
 
-function weightedChoices(scene, count = 3) {
-  const available = createUpgradePool(scene).filter(item => item.available());
-  const chosen = [];
-  while (chosen.length < count && available.length) {
-    const total = available.reduce((sum, item) => sum + item.weight, 0);
-    let roll = Math.random() * total;
-    let index = 0;
-    for (; index < available.length; index++) {
-      roll -= available[index].weight;
-      if (roll <= 0) break;
-    }
-    chosen.push(available.splice(Math.min(index, available.length - 1), 1)[0]);
-  }
-  return chosen;
-}
-
 function makeCard(scene, y, upgrade, index) {
   const card = scene.add.container(W / 2, y).setDepth(4200).setScrollFactor(0);
   const bg = scene.add.rectangle(0, 0, 430, 142, 0x151b22, .98).setStrokeStyle(2, index === 0 ? 0xd0a862 : 0x56636f, .95).setInteractive({ useHandCursor: true });
@@ -249,7 +234,7 @@ function installUpgradeCards(scene) {
   scene.upgradeUi = [];
   scene.openUpgradeCards = function() {
     if (this.upgradeOpen || this.gameOver) return;
-    const choices = weightedChoices(this, 3);
+    const choices = rollUpgradeChoices(createUpgradePool(this), { count: 3 });
     if (!choices.length) return;
     this.upgradeOpen = true;
     this.physics.pause();
