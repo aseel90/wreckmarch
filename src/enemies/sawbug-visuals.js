@@ -205,6 +205,9 @@ function runBrowserSelfTest(scene) {
 
     window.__WM_LOG__?.(`Sawbug browser test ${ok ? 'PASSED' : 'FAILED'}: ${JSON.stringify(window.__WM_SAWBUG_TEST__)}`);
   };
+  // Expose a test-only refresh hook so browser E2E can synchronize immediately after
+  // it drives the real acid-spitter path, instead of waiting on timer scheduling.
+  scene.__wmSawbugSelfTestRefresh = finishWhenShotObserved;
   globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS);
 }
 

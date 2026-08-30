@@ -41,13 +41,14 @@ describe('Sawbug production frames', () => {
     expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-splash', SPLASH_KEYS, 12, 0)");
   });
 
-  it('keeps the browser self-test pending until the real acid shot resolves, with Playwright owning the deadline', () => {
+  it('keeps the browser self-test pending until the real acid shot resolves and exposes a direct CI refresh hook', () => {
     const source = fs.readFileSync(path.join(root, 'src/enemies/sawbug-visuals.js'), 'utf8');
     expect(source).toContain("document.documentElement.dataset.wreckmarchSawbugTest = 'running'");
     expect(source).toContain("sawbug.__sawbugState = null");
     expect(source).toContain("const status = ok ? 'passed' : 'running'");
     expect(source).not.toContain('SELF_TEST_TIMEOUT_MS');
     expect(source).toContain("const wallNow = () => globalThis.performance?.now?.() ?? Date.now()");
+    expect(source).toContain('scene.__wmSawbugSelfTestRefresh = finishWhenShotObserved');
     expect(source).toContain('globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS)');
     expect(source).not.toContain('scene.time?.delayedCall?.(SELF_TEST_POLL_MS, finishWhenShotObserved)');
   });

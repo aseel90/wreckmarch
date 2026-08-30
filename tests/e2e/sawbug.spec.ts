@@ -39,6 +39,7 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
       if (state?.phase !== 'windup') return false;
       state.phaseUntil = (Number(scene.time?.now) || 0) - 1;
       module.updateAcidSpitterBehavior(args);
+      scene.__wmSawbugSelfTestRefresh?.();
 
       return Number(sawbug.__sawbugShotsFired) >= 1
         && Number(scene.__sawbugAcidShotsSpawned) >= 1
@@ -47,15 +48,16 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
     { timeout: 8_000 }
   ).toBe(true);
 
-  await expect.poll(
-    () => page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest || ''),
-    { timeout: 8_000 }
-  ).toBe('passed');
-
-  const state = await page.evaluate(() => (window as typeof window & { __WM_SAWBUG_TEST__?: any }).__WM_SAWBUG_TEST__);
+  const state = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game?.scene?.getScene?.('Wreckmarch');
+    scene?.__wmSawbugSelfTestRefresh?.();
+    return (window as typeof window & { __WM_SAWBUG_TEST__?: any }).__WM_SAWBUG_TEST__;
+  });
   console.log('SAWBUG_SELF_TEST_STATE', JSON.stringify(state));
   expect(state, JSON.stringify(state)).toMatchObject({
     ok: true,
+    status: 'passed',
     active: true,
     visual: true,
     bakedFrames: true,
