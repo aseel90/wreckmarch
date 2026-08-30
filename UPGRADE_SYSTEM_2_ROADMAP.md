@@ -334,8 +334,8 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
   - Verified on `c9da716`: canonical definition/registry/runtime adapter, shared Phase C/C1 apply path, unit parity, targeted final-card E2E, Quality, full E2E, Smoke, deploy eligibility, and no Live Chromium failure issue after deployment.
 - [x] Migrate Overclock. — **Status:** ✅ DONE
   - Verified on `8b57ef7`: canonical definition, 145ms resolved-stat floor, shared Phase C/C1 apply path, unit parity, final-card E2E, Quality, full E2E and Smoke all passed; no `[CI]` or `[LIVE] deployed main smoke failed` issue was opened after the deployment window.
-- [ ] Migrate Long Barrel. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
-  - Canonical dual-modifier definition (+18% projectile speed, +10% range), shared Phase C/C1 adapter and unit/final-card E2E coverage are implemented on the U2 Long Barrel branch. Final checkbox waits for PR Quality/E2E/Smoke, merge, deploy and Live Chromium gate.
+- [ ] Migrate Long Barrel. — **Status:** 🟡 MERGED / CI RECOVERY + LIVE VERIFY
+  - Canonical dual-modifier definition (+18% projectile speed, +10% range), shared Phase C/C1 adapter and unit/final-card E2E coverage were merged to `main` in `d731bad`. Final checkbox remains blocked until the canonical CI E2E gate is stable again and the resulting deployed build clears Live Chromium.
 - [ ] Migrate Twin Riveter. — **Status:** ⚪ NOT STARTED
 - [ ] Migrate Fleet Feet. — **Status:** ⚪ NOT STARTED
 - [ ] Migrate Scrap Magnet. — **Status:** ⚪ NOT STARTED
@@ -811,6 +811,26 @@ This is the official production verification gate described in `TESTING_AND_DEPL
 - [x] Auto-close the live-smoke Issue after a later successful deployed `main`. — **Status:** ✅ DONE
 - [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
   - Current verified gameplay commit: `c9da716` (Quality/E2E/Smoke recovered; deployment produced no `[LIVE] deployed main smoke failed` issue).
+
+---
+
+
+# 21.2. Sharded Playwright E2E gate
+
+The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POLICY.md`. It replaces the single-runner/multi-worker approach with isolated runner-level parallelism.
+
+- [ ] Pin Playwright CI execution to one worker per runner. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Split the E2E suite across three GitHub Actions shards. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Keep one stable aggregate check named `E2E` for branch protection and CI consumers. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Use Playwright blob reports per shard and merge them into one HTML diagnostic artifact. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Use `retryStrategy: isolated` with one CI retry. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Fail CI when Playwright classifies a test as flaky; a retry must not silently turn the gate green. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Record traces only on the first retry in CI. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Comment failing shard logs directly on the PR and keep aggregate diagnostics as a second layer. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Remove temporary diagnostic workflows from the canonical path. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Verify the new E2E architecture on PR, merge, and confirm `main` + Live Chromium before marking this gate complete. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
+
+Architecture rule: speed comes from independent CI shards, never by raising browser-worker contention inside one runner. Test retries are diagnostic only; flaky classifications remain failures.
 
 ---
 

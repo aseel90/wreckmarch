@@ -38,6 +38,7 @@ const FRAME_SOURCES = Object.freeze({
 
 const FRAME_KEYS = Object.freeze(Object.keys(FRAME_SOURCES));
 const VISUAL_VERSION = 'production-v3-safe-windup';
+const SELF_TEST_POLL_MS = 120;
 
 export function canonicalizeBakedDataUrl(source) {
   if (typeof source !== 'string') return source;
@@ -81,7 +82,6 @@ function replaceAnimation(scene, key, frames, frameRate, repeat = -1) {
 function installAnimations(scene) {
   replaceAnimation(scene, 'sawbug-idle', IDLE_KEYS, 3, -1);
   replaceAnimation(scene, 'sawbug-walk', WALK_KEYS, 8, -1);
-  // attack-1 and attack-2 contain corrupted pixels; keep windup on the verified clean attack-0 pose.
   replaceAnimation(scene, 'sawbug-acid-attack', [ATTACK_KEYS[0]], 1, 0);
   replaceAnimation(scene, 'sawbug-acid-flight', PROJECTILE_KEYS, 10, -1);
   replaceAnimation(scene, 'sawbug-acid-splash', SPLASH_KEYS, 12, 0);
@@ -117,9 +117,9 @@ function installFactoryVisualHook(scene) {
   factory.__sawbugVisualHook = VISUAL_VERSION;
 }
 
-function runBrowserSelfTest(scene) {
-  const params = new URLSearchParams(location.search);
-  if (params.get('sawbugtest') !== '1') return;
+function startBrowserSelfTest(scene) {
+  if (scene.__wmSawbugSelfTestStarted) return;
+  scene.__wmSawbugSelfTestStarted = true;
 
   scene.spawnEvent && (scene.spawnEvent.paused = true);
   scene.fireDelay = 999999;
@@ -133,6 +133,7 @@ function runBrowserSelfTest(scene) {
   scene.hero?.setVelocity?.(0, 0);
 
   const sawbug = scene.spawnSystem?.spawn?.('sawbug', { elite: false });
+  scene.__wmSawbugSelfTestEnemy = sawbug || null;
   sawbug?.setPosition?.(130, 480);
   if (!sawbug) {
     document.documentElement.dataset.wreckmarchSawbugTest = 'failed';
@@ -143,18 +144,29 @@ function runBrowserSelfTest(scene) {
   tuneSawbugVisual(sawbug);
   sawbug.hp = 999999;
   sawbug.maxHp = 999999;
-  // Keep the browser regression deterministic: remove the normal opening cooldown
-  // only for ?sawbugtest=1 so CI validates the real windup/fire path promptly.
   sawbug.behaviorConfig = {
     ...sawbug.behaviorConfig,
     initialCooldownMinMs: 0,
     initialCooldownMaxMs: 0,
     telegraphMs: 120
   };
+  sawbug.__sawbugState = null;
+  sawbug.__sawbugPhase = 'move';
+  sawbug.__sawbugShotsFired = 0;
+  scene.__sawbugAcidShotsSpawned = 0;
+  document.documentElement.dataset.wreckmarchSawbugTest = 'running';
 
-  const startedAt = Number(scene.time?.now) || 0;
+  const wallNow = () => globalThis.performance?.now?.() ?? Date.now();
+  const startedAt = wallNow();
+  let completed = false;
   const finishWhenShotObserved = () => {
-    if (!scene?.sys?.isActive?.()) return;
+    if (completed) return;
+    if (!scene?.sys?.isActive?.()) {
+      completed = true;
+      window.__WM_SAWBUG_TEST__ = { ok: false, status: 'failed', reason: 'scene-inactive' };
+      document.documentElement.dataset.wreckmarchSawbugTest = 'failed';
+      return;
+    }
     const checks = {
       active: Boolean(sawbug.active),
       visual: sawbug.__sawbugVisual === true,
@@ -167,16 +179,14 @@ function runBrowserSelfTest(scene) {
       acidSpawned: Number(scene.__sawbugAcidShotsSpawned) >= 1,
       projectileSpeed: Math.abs(Number(sawbug.__sawbugLastProjectileSpeed) - Number(sawbug.behaviorConfig?.projectileSpeed)) <= 1
     };
-    const shotObserved = checks.shots && checks.acidSpawned && checks.projectileSpeed;
-    const elapsed = (Number(scene.time?.now) || startedAt) - startedAt;
-    if (!shotObserved && elapsed < 7000) {
-      scene.time?.delayedCall?.(120, finishWhenShotObserved);
-      return;
-    }
-
+    const elapsed = wallNow() - startedAt;
     const ok = Object.values(checks).every(Boolean);
+    const status = ok ? 'passed' : 'running';
+    if (ok) completed = true;
+
     window.__WM_SAWBUG_TEST__ = {
       ok,
+      status,
       ...checks,
       phase: sawbug.__sawbugPhase,
       elapsedMs: Math.round(elapsed),
@@ -185,10 +195,37 @@ function runBrowserSelfTest(scene) {
       splashesSpawned: scene.__sawbugAcidSplashesSpawned,
       visualVersion: sawbug.__sawbugVisualVersion
     };
-    document.documentElement.dataset.wreckmarchSawbugTest = ok ? 'passed' : 'failed';
+    document.documentElement.dataset.wreckmarchSawbugTest = status;
+
+    if (status === 'running') {
+      globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS);
+      return;
+    }
+
     window.__WM_LOG__?.(`Sawbug browser test ${ok ? 'PASSED' : 'FAILED'}: ${JSON.stringify(window.__WM_SAWBUG_TEST__)}`);
   };
-  scene.time?.delayedCall?.(120, finishWhenShotObserved);
+  scene.__wmSawbugSelfTestRefresh = finishWhenShotObserved;
+  globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS);
+}
+
+function runBrowserSelfTest(scene) {
+  const params = new URLSearchParams(location.search);
+  if (params.get('sawbugtest') !== '1' || scene.__wmSawbugSelfTestStarted) return;
+
+  if (document.body.classList.contains('visual-ready')) {
+    startBrowserSelfTest(scene);
+    return;
+  }
+
+  if (scene.__wmSawbugSelfTestObserver) return;
+  const observer = new MutationObserver(() => {
+    if (!document.body.classList.contains('visual-ready')) return;
+    observer.disconnect();
+    scene.__wmSawbugSelfTestObserver = null;
+    startBrowserSelfTest(scene);
+  });
+  scene.__wmSawbugSelfTestObserver = observer;
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 }
 
 export async function installSawbugVisuals(scene) {

@@ -40,4 +40,29 @@ describe('Sawbug production frames', () => {
     expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-flight', PROJECTILE_KEYS, 10, -1)");
     expect(source).toContain("replaceAnimation(scene, 'sawbug-acid-splash', SPLASH_KEYS, 12, 0)");
   });
+
+  it('keeps the browser self-test singleton and pending until the real acid shot resolves', () => {
+    const source = fs.readFileSync(path.join(root, 'src/enemies/sawbug-visuals.js'), 'utf8');
+    expect(source).toContain("document.documentElement.dataset.wreckmarchSawbugTest = 'running'");
+    expect(source).toContain('function startBrowserSelfTest(scene)');
+    expect(source).toContain('if (scene.__wmSawbugSelfTestStarted) return');
+    expect(source).toContain('scene.__wmSawbugSelfTestStarted = true');
+    expect(source).toContain("if (params.get('sawbugtest') !== '1' || scene.__wmSawbugSelfTestStarted) return");
+    expect(source).toContain("if (document.body.classList.contains('visual-ready'))");
+    expect(source).toContain('if (scene.__wmSawbugSelfTestObserver) return');
+    expect(source).toContain('const observer = new MutationObserver');
+    expect(source).toContain('scene.__wmSawbugSelfTestObserver = observer');
+    expect(source).toContain("observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })");
+    expect(source).toContain('scene.__wmSawbugSelfTestEnemy = sawbug || null');
+    expect(source).toContain("sawbug.__sawbugState = null");
+    expect(source).toContain("const status = ok ? 'passed' : 'running'");
+    expect(source).not.toContain('SELF_TEST_TIMEOUT_MS');
+    expect(source).toContain("const wallNow = () => globalThis.performance?.now?.() ?? Date.now()");
+    expect(source).toContain('let completed = false');
+    expect(source).toContain('if (completed) return');
+    expect(source).toContain('if (ok) completed = true');
+    expect(source).toContain('scene.__wmSawbugSelfTestRefresh = finishWhenShotObserved');
+    expect(source).toContain('globalThis.setTimeout(finishWhenShotObserved, SELF_TEST_POLL_MS)');
+    expect(source).not.toContain('scene.time?.delayedCall?.(SELF_TEST_POLL_MS, finishWhenShotObserved)');
+  });
 });

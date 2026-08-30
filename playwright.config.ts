@@ -4,11 +4,15 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
   timeout: 45_000,
+  forbidOnly: !!process.env.CI,
+  failOnFlakyTests: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  retryStrategy: process.env.CI ? 'isolated' : 'immediate',
+  workers: process.env.CI ? 1 : undefined,
+  reporter: process.env.CI ? [['blob'], ['line']] : 'list',
   use: {
     baseURL: 'http://127.0.0.1:4173',
-    trace: 'retain-on-failure',
+    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure'
   },
