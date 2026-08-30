@@ -4,7 +4,7 @@ import { createRunStatState } from '../../src/stats/run-stat-state.js';
 import { getUpgradeDefinition } from '../../src/upgrades/upgrade-catalog.js';
 import { applyUpgradeStatModifiers } from '../../src/upgrades/upgrade-runtime.js';
 
-function makeScene(moveSpeed = RUN_BALANCE.player.baseMoveSpeed) {
+function makeScene(moveSpeed: number = RUN_BALANCE.player.baseMoveSpeed) {
   const runStatState = createRunStatState({
     characterBase: { maxHp: 100, moveSpeed },
     weaponBase: { damage: 24, fireDelay: 390, projectileSpeed: 720, range: 570 }
