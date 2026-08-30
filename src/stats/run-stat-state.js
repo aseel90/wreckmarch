@@ -78,6 +78,9 @@ export function mirrorResolvedRunStats(scene, resolved) {
     for (const key of ['damage', 'fireDelay', 'projectileSpeed', 'range']) {
       if (Number.isFinite(weapon[key])) scene.primaryWeapon[key] = weapon[key];
     }
+    if (Number.isFinite(weapon.pierceCount)) {
+      scene.primaryWeapon.pierceCount = Math.max(0, Math.floor(weapon.pierceCount));
+    }
   }
   if (Number.isFinite(weapon.damage)) scene.damage = weapon.damage;
   if (Number.isFinite(weapon.fireDelay)) scene.fireDelay = weapon.fireDelay;

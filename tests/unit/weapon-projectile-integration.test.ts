@@ -20,8 +20,8 @@ const historical = [
 describe('Weapon / Projectile ownership integration', () => {
   it('installs authoritative systems with Enemy Foundation', () => {
     const enemySystem = read('src/enemies/enemy-system.js');
-    expect(enemySystem).toContain("import { ProjectileSystem } from '../combat/projectile-system.js?v=1'");
-    expect(enemySystem).toContain("import { WeaponSystem } from '../combat/weapon-system.js?v=2'");
+    expect(enemySystem).toContain("import { ProjectileSystem } from '../combat/projectile-system.js?v=2'");
+    expect(enemySystem).toContain("import { WeaponSystem } from '../combat/weapon-system.js?v=3'");
     expect(enemySystem).toContain('scene.projectileSystem = new ProjectileSystem(scene)');
     expect(enemySystem).toContain('scene.weaponSystem = new WeaponSystem(scene, { projectileSystem: scene.projectileSystem })');
   });
@@ -62,5 +62,13 @@ describe('Weapon / Projectile ownership integration', () => {
     expect(d1).toContain("setScale(.31).setAlpha(.9).setBlendMode(Phaser.BlendModes.ADD)");
     expect(d1).toContain("setScale(.14).setAlpha(1).setBlendMode(Phaser.BlendModes.ADD)");
     expect(d1).toContain("bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx))");
+  });
+
+  it('cache-busts the Piercing Rivets live owners from the boot graph', () => {
+    const html = read('index.html');
+    expect(html).toContain("./src/enemies/enemy-system.js?v=15");
+    expect(html).toContain("./src/phase-c-runtime.js?v=17");
+    expect(html).toContain("./src/phase-c1-runtime.js?v=12");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=17");
   });
 });

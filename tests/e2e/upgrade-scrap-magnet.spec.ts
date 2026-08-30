@@ -29,7 +29,8 @@ test('Scrap Magnet uses canonical pickup radius stats in the final upgrade scene
       'long-barrel': 4,
       'twin-riveter': 2,
       'fleet-feet': 3,
-      'armor-plate': 4
+      'armor-plate': 4,
+      'piercing-rivets': 3
     });
     scene.level = 1;
     scene.rigSummoned = false;

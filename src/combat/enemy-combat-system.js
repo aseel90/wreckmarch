@@ -29,6 +29,9 @@ export class EnemyCombatSystem {
 
   hitByProjectile(bullet, enemy) {
     if (!bullet?.active || !enemy?.active) return null;
+    if (bullet.hitEnemies?.has?.(enemy)) return null;
+    if (!(bullet.hitEnemies instanceof Set)) bullet.hitEnemies = new Set();
+    bullet.hitEnemies.add(enemy);
 
     const velocityX = Number(bullet.body?.velocity?.x) || 0;
     const velocityY = Number(bullet.body?.velocity?.y) || 0;
@@ -41,7 +44,9 @@ export class EnemyCombatSystem {
       velocityY
     });
 
-    bullet.destroy();
+    const pierceRemaining = Math.max(0, Math.floor(Number(bullet.pierceRemaining) || 0));
+    if (pierceRemaining > 0) bullet.pierceRemaining = pierceRemaining - 1;
+    else bullet.destroy();
     enemy.hp = result.nextHp;
 
     const enemyId = enemy.enemyId;

@@ -37,6 +37,7 @@ export class ProjectileSystem {
     angle,
     speed,
     damage,
+    pierceCount = 0,
     lifeMs,
     scale = .74,
     tint = null,
@@ -50,6 +51,8 @@ export class ProjectileSystem {
     if (tint != null) bullet.setTint(tint);
     bullet.setCircle(radius, offsetX, offsetY);
     bullet.damage = damage;
+    bullet.pierceRemaining = Math.max(0, Math.floor(Number(pierceCount) || 0));
+    bullet.hitEnemies = new Set();
     bullet.life = lifeMs;
     bullet.prevX = x;
     bullet.prevY = y;
@@ -61,7 +64,7 @@ export class ProjectileSystem {
     let bestEnemy = null;
     let bestT = Infinity;
     this.scene.enemies.children.iterate(enemy => {
-      if (!enemy?.active || enemy.hp <= 0) return;
+      if (!enemy?.active || enemy.hp <= 0 || bullet.hitEnemies?.has?.(enemy)) return;
       const radius = (enemy.hitRadius || 25) + 5;
       const centerX = enemy.x + (enemy.flipX ? -4 : 4);
       const centerY = enemy.y + 1;
@@ -84,11 +87,18 @@ export class ProjectileSystem {
       const y2 = bullet.y;
       const x1 = Number.isFinite(bullet.prevX) ? bullet.prevX : x2;
       const y1 = Number.isFinite(bullet.prevY) ? bullet.prevY : y2;
-      const enemy = this.findEarliestEnemyHit(bullet, x1, y1, x2, y2);
-      if (enemy && bullet.active) {
-        scene.combatSystem?.hitEnemyByProjectile?.(bullet, enemy);
-        return;
+      const hitEnemy = scene.combatSystem?.hitEnemyByProjectile;
+      if (typeof hitEnemy === 'function') {
+        while (bullet.active) {
+          const enemy = this.findEarliestEnemyHit(bullet, x1, y1, x2, y2);
+          if (!enemy) break;
+          const beforeHits = bullet.hitEnemies?.size || 0;
+          hitEnemy.call(scene.combatSystem, bullet, enemy);
+          const afterHits = bullet.hitEnemies?.size || 0;
+          if (bullet.active && afterHits <= beforeHits) break;
+        }
       }
+      if (!bullet.active) return;
 
       bullet.prevX = x2;
       bullet.prevY = y2;

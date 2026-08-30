@@ -21,7 +21,8 @@ test('Legendary rarity is shown by UpgradeSceneV4 and applies one scaled canonic
       'twin-riveter': 2,
       'fleet-feet': 4,
       'scrap-magnet': 4,
-      'armor-plate': 4
+      'armor-plate': 4,
+      'piercing-rivets': 3
     });
     scene.level = 1;
 
