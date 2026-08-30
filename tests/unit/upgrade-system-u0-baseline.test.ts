@@ -47,6 +47,8 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'fleet-feet'");
     expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'scrap-magnet'");
     expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'scrap-magnet'");
+    expect(phaseC).toContain("createRegisteredUpgradeChoice(scene, 'armor-plate'");
+    expect(phaseC1).toContain("createRegisteredUpgradeChoice(scene, 'armor-plate'");
     expect(phaseC).not.toContain('primaryWeapon.damage *= 1.2');
     expect(phaseC1).not.toContain('primaryWeapon.damage*=1.2');
     expect(phaseC).not.toContain('primaryWeapon.fireDelay = Math.max(145');
@@ -61,6 +63,10 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC1).not.toContain("id:'fleet-feet'");
     expect(phaseC).not.toContain("id: 'scrap-magnet'");
     expect(phaseC1).not.toContain("id:'scrap-magnet'");
+    expect(phaseC).not.toContain("id: 'armor-plate'");
+    expect(phaseC1).not.toContain("id:'armor-plate'");
+    expect(phaseC).not.toContain('scene.heroMaxHp += 15');
+    expect(phaseC1).not.toContain('scene.heroMaxHp+=15');
     expect(phaseC).not.toContain('scene.magnetRadius *= 1.25');
     expect(phaseC1).not.toContain('scene.magnetRadius*=1.25');
     expect(phaseC1).not.toContain("scene.heroSpeed=Math.min(365,scene.heroSpeed*1.08)");
@@ -70,10 +76,10 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC).toContain("const pickupRadiusMultiplier = Number(this.runCombatStats?.pickupRadiusMultiplier) || 1;");
     expect(phaseC).toContain('const magnetRadius = this.magnetRadius * pickupRadiusMultiplier;');
 
-    for (const id of ['armor-plate']) {
-      expect(phaseC).toContain(`id: '${id}'`);
-      expect(phaseC1).toContain(`id:'${id}'`);
-    }
+    expect(phaseC).toContain("id: 'call-rig'");
+    expect(phaseC1).toContain("id:'call-rig'");
+    expect(upgradeRuntime).toContain('applyMixedRegisteredUpgrade');
+    expect(upgradeRuntime).toContain('createUpgradeMechanicalTransaction');
   });
 
   it('keeps the final Runner production boundary routed through CharacterSystem', () => {
