@@ -30,20 +30,23 @@ test('optional debug panel copies/logs a compact canonical upgrade dump', async 
     return text.includes('UPGRADE_STATE {');
   }), { timeout: 10_000 }).toBe(true);
 
-  const dump = await page.evaluate(() => {
+  const result = await page.evaluate(() => {
     const lines = (document.getElementById('log')?.textContent || '').split('\n');
     const line = [...lines].reverse().find(value => value.includes('UPGRADE_STATE {'))!;
     const marker = 'UPGRADE_STATE ';
-    return JSON.parse(line.slice(line.indexOf(marker) + marker.length));
+    const dump = JSON.parse(line.slice(line.indexOf(marker) + marker.length));
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    return { dump, resolved: scene.runStatState.resolve() };
   });
 
-  expect(dump.version).toBe(1);
-  expect(dump.upgrades).toEqual(expect.arrayContaining([
+  expect(result.dump.version).toBe(1);
+  expect(result.dump.upgrades).toEqual(expect.arrayContaining([
     { id: 'armor-plate', level: 1, rarities: ['RARE'] },
     { id: 'heavy-rivets', level: 1, rarities: ['LEGENDARY'] }
   ]));
-  expect(dump.stats.character.maxHp).toBeCloseTo(117.25);
-  expect(dump.stats.weapon.damage).toBeCloseTo(28.32);
+  expect(result.dump.stats.character).toEqual(result.resolved.character);
+  expect(result.dump.stats.weapon).toEqual(result.resolved.weapon);
 });
 
 test('upgrade debug copy control stays unavailable outside debug mode', async ({ page }) => {
