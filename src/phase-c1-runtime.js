@@ -1,5 +1,5 @@
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=7';
-import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=1';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=8';
+import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
 const W = 960;
