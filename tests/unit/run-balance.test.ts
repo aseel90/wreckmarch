@@ -108,11 +108,12 @@ describe('Wreckmarch run balance', () => {
     expect(getPlayerMoveSpeed(255, 99)).toBeCloseTo(278.645385, 5);
   });
 
-  it('routes the live Fleet Feet card through the canonical movement cap', async () => {
+  it('routes the live Fleet Feet card through canonical Upgrade System stat ownership', async () => {
     const phaseC = await readFile(new URL('../../src/phase-c-runtime.js', import.meta.url), 'utf8');
-    expect(phaseC).toContain("desc: '+3% movement speed.'");
-    expect(phaseC).toContain("getPlayerMoveSpeed(scene.__baseHeroMoveSpeed, upgradeLevel(scene, 'fleet-feet'))");
+    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' })");
     expect(phaseC).toContain('RUN_BALANCE.player.moveSpeedHardCap');
+    expect(phaseC).not.toContain('getPlayerMoveSpeed');
+    expect(phaseC).not.toContain('__baseHeroMoveSpeed');
     expect(phaseC).not.toContain('Math.min(310, scene.heroSpeed * 1.06)');
   });
 

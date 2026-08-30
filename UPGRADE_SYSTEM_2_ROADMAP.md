@@ -336,9 +336,10 @@ Not every card needs custom executable logic. Numeric cards should primarily be 
   - Verified on `8b57ef7`: canonical definition, 145ms resolved-stat floor, shared Phase C/C1 apply path, unit parity, final-card E2E, Quality, full E2E and Smoke all passed; no `[CI]` or `[LIVE] deployed main smoke failed` issue was opened after the deployment window.
 - [x] Migrate Long Barrel. — **Status:** ✅ DONE
   - Gameplay migration merged in `d731bad`; after the Sawbug/CI stabilization merge, `main` `98de52f` recovered with quality=success, e2e=success, smoke=success and passed post-deploy Live Chromium.
-- [ ] Migrate Twin Riveter. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-  - PR #89 implements the canonical mechanical-effect path, shared Phase C/C1 registry adapter, WeaponSystem mechanical-state ownership, level 1 → 2 rivets / level 2 → 3 rivets parity, unit coverage and final-scene E2E. Final checkbox remains blocked on clean PR + `main` + Live Chromium verification.
-- [ ] Migrate Fleet Feet. — **Status:** ⚪ NOT STARTED
+- [x] Migrate Twin Riveter. — **Status:** ✅ DONE
+  - Verified on `10ba433`: canonical mechanical-effect path, shared Phase C/C1 registry adapter, WeaponSystem mechanical-state ownership, level 1 → 2 rivets / level 2 → 3 rivets parity, unit/final-scene E2E, Quality, Smoke, all three E2E shards, aggregate E2E, deploy, Live Chromium and Pages recovery all passed.
+- [ ] Migrate Fleet Feet. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+  - Canonical Character `moveSpeed` migration uses the `RUN_BALANCE` contract (+3% per level, max level 3, hard cap 280), shared Phase C/C1 stat adapter, unit parity against `getPlayerMoveSpeed()` and deterministic final-scene E2E. Final checkbox waits for clean PR + `main` + Live Chromium verification.
 - [ ] Migrate Scrap Magnet. — **Status:** ⚪ NOT STARTED
 - [ ] Migrate Armor Plate. — **Status:** ⚪ NOT STARTED
 - [ ] Decide temporary handling of Call the Rig without expanding old Rig system. — **Status:** ⚪ NOT STARTED
@@ -811,7 +812,7 @@ This is the official production verification gate described in `TESTING_AND_DEPL
 - [x] Open/update one deduplicated GitHub Issue when deployed `main` fails. — **Status:** ✅ DONE
 - [x] Auto-close the live-smoke Issue after a later successful deployed `main`. — **Status:** ✅ DONE
 - [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
-  - Current verified gameplay commit: `98de52f` (Quality/E2E/Smoke recovered on `main`; post-deploy Live Chromium verification passed and CI Issue #83 auto-closed).
+  - Current verified gameplay commit: `10ba433` (Twin Riveter merged; Quality/Smoke/all E2E shards/aggregate E2E passed, then post-deploy Live Chromium and Pages recovery passed on the same `main` commit).
 
 ---
 
