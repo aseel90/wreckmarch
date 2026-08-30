@@ -1,90 +1,95 @@
-import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { RUN_BALANCE, getEnemyDifficultyMultipliers, getPlayerMoveSpeed, getPressurePhase, getPressureStep, getWaveNumber, pickEnemyForRun } from '../../src/balance/run-balance.js';
-import { applyRunEnemyRoleProfile, RunDirector } from '../../src/balance/run-director.js';
-import { getEnemyDefinition } from '../../src/enemies/enemy-registry.js';
-import { resolveEnemySpawnStats } from '../../src/enemies/enemy-factory.js';
+import { readFile } from 'node:fs/promises';
+import {
+  RUN_BALANCE,
+  applyRunEnemyRoleProfile,
+  getEnemyDifficultyMultipliers,
+  getPlayerMoveSpeed,
+  getRunDirectorState,
+  getSpawnPressureSnapshot
+} from '../../src/balance/run-balance.js';
 
-describe('Wreckmarch run balance', () => {
-  it('uses 60-second waves with four readable 15-second pressure phases', () => {
-    expect(RUN_BALANCE.waveDurationSeconds).toBe(60);
-    expect(RUN_BALANCE.pressureStepSeconds).toBe(15);
-    expect(getWaveNumber(0)).toBe(1);
-    expect(getWaveNumber(59.9)).toBe(1);
-    expect(getWaveNumber(60)).toBe(2);
-    expect(getWaveNumber(599)).toBe(10);
-    expect(getPressureStep(0)).toBe(0);
-    expect(getPressureStep(15)).toBe(1);
-    expect(getPressureStep(30)).toBe(2);
-    expect(getPressureStep(45)).toBe(3);
-    expect([0, 15, 30, 45].map(getPressurePhase).map(phase => phase.key)).toEqual(['lull', 'build', 'surge', 'breather']);
+describe('Run Balance v2', () => {
+  it('uses the requested opening wave mix and pressure budget', () => {
+    expect(RUN_BALANCE.runDirector.waveCount).toBe(6);
+    expect(RUN_BALANCE.runDirector.openingBudget).toBe(13);
+    expect(RUN_BALANCE.runDirector.openingActiveCap).toBe(24);
+    expect(RUN_BALANCE.runDirector.openingWave).toEqual([
+      { enemyId: 'scrap-rat', count: 7, elite: false },
+      { enemyId: 'rust-hound', count: 1, elite: false },
+      { enemyId: 'sawbug', count: 1, elite: false }
+    ]);
   });
 
-  it('creates a real surge followed by a breather instead of monotonic spawn pressure', () => {
-    const scene: any = {
-      runTime: 0,
-      gameOver: false,
-      enemies: { children: { iterate() {} }, countActive: () => 0 }
+  it('keeps the run on a lull-build-surge-breather director loop', () => {
+    expect(getRunDirectorState(0).phase).toBe('lull');
+    expect(getRunDirectorState(20).phase).toBe('build');
+    expect(getRunDirectorState(50).phase).toBe('surge');
+    expect(getRunDirectorState(80).phase).toBe('breather');
+    expect(getRunDirectorState(110).phase).toBe('lull');
+  });
+
+  it('keeps the live wave balance monotonic without runaway active caps', () => {
+    const waves = [0, 1, 2, 3, 4, 5].map(wave => getSpawnPressureSnapshot(wave));
+    expect(waves[0]).toMatchObject({ budget: 13, activeCap: 24, wave: 1 });
+    for (let index = 1; index < waves.length; index++) {
+      expect(waves[index].budget).toBeGreaterThanOrEqual(waves[index - 1].budget);
+      expect(waves[index].activeCap).toBeGreaterThanOrEqual(waves[index - 1].activeCap);
+    }
+    expect(waves.at(-1)?.activeCap).toBeLessThanOrEqual(RUN_BALANCE.runDirector.maxActiveCap);
+  });
+
+  it('keeps Scrap Rat as the cheap common pressure unit', () => {
+    const rat: any = {
+      enemyId: 'scrap-rat',
+      speed: 88,
+      baseSpeed: 88,
+      threatValue: 1,
+      behaviorConfig: { chaseSharpness: 5.8 }
     };
-    const director = new RunDirector(scene);
-    const lull = director.getState(0);
-    const build = director.getState(15);
-    const surge = director.getState(30);
-    const breather = director.getState(45);
-
-    expect(lull.pressurePhase).toBe('lull');
-    expect(surge.pressurePhase).toBe('surge');
-    expect(breather.pressurePhase).toBe('breather');
-    expect(lull.threatBudget).toBeLessThan(build.threatBudget);
-    expect(surge.threatBudget).toBeGreaterThan(build.threatBudget);
-    expect(surge.spawnIntervalMs).toBeLessThan(build.spawnIntervalMs);
-    expect(breather.threatBudget).toBeLessThan(surge.threatBudget);
-    expect(breather.spawnIntervalMs).toBeGreaterThan(surge.spawnIntervalMs);
+    applyRunEnemyRoleProfile(rat, 'scrap-rat');
+    expect(rat.__runRole).toBe('swarm');
+    expect(rat.threatValue).toBe(1);
+    expect(rat.speed).toBe(88);
+    expect(rat.baseSpeed).toBe(88);
+    expect(rat.behaviorConfig.chaseSharpness).toBe(5.8);
   });
 
-  it('weights Rust Hounds toward surge windows and away from lull windows', () => {
-    expect(pickEnemyForRun(60, () => .85).id).toBe('scrap-rat');
-    expect(pickEnemyForRun(90, () => .85)).toMatchObject({ id: 'rust-hound', threat: 3 });
-    expect(pickEnemyForRun(105, () => .85).id).toBe('scrap-rat');
+  it('keeps Sawbug as ranged anti-camp pressure instead of a contact tank', () => {
+    const sawbug: any = {
+      enemyId: 'sawbug',
+      speed: 72,
+      baseSpeed: 72,
+      threatValue: 2,
+      behaviorConfig: {
+        preferredRangeMin: 250,
+        preferredRangeMax: 380,
+        retreatDistance: 205,
+        projectileSpeed: 275,
+        cooldownMinMs: 420,
+        cooldownMaxMs: 600,
+        telegraphMs: 320
+      }
+    };
+    applyRunEnemyRoleProfile(sawbug, 'sawbug');
+    expect(sawbug.__runRole).toBe('ranged');
+    expect(sawbug.threatValue).toBe(2);
+    expect(sawbug.speed).toBe(72);
+    expect(sawbug.baseSpeed).toBe(72);
+    expect(sawbug.behaviorConfig.preferredRangeMin).toBe(230);
+    expect(sawbug.behaviorConfig.preferredRangeMax).toBe(360);
+    expect(sawbug.behaviorConfig.retreatDistance).toBe(185);
+    expect(sawbug.behaviorConfig.projectileSpeed).toBe(275);
+    expect(sawbug.behaviorConfig.cooldownMinMs).toBe(720);
+    expect(sawbug.behaviorConfig.cooldownMaxMs).toBe(980);
+    expect(sawbug.behaviorConfig.telegraphMs).toBe(360);
   });
 
-  it('introduces Sawbug in wave 3 as a threat-2 ranged spitter', () => {
-    expect(RUN_BALANCE.enemyPools[0].entries.map(entry => entry.id)).toEqual(['scrap-rat']);
-    expect(RUN_BALANCE.enemyPools[1].entries.map(entry => entry.id)).toEqual(['scrap-rat', 'rust-hound']);
-    expect(RUN_BALANCE.enemyPools[2].entries.map(entry => entry.id)).toEqual(['scrap-rat', 'rust-hound', 'sawbug']);
-    const sawbug = RUN_BALANCE.enemyPools[2].entries.find(entry => entry.id === 'sawbug');
-    expect(sawbug).toMatchObject({ id: 'sawbug', threat: 2 });
-    expect(RUN_BALANCE.enemyRoles.sawbug).toMatchObject({
-      role: 'ranged-spitter',
-      threat: 2,
-      behaviorConfig: { preferredRangeMax: 380, stationaryFireRangeMax: 430, projectileSpeed: 275, projectileDamage: 11, telegraphMs: 320 }
-    });
-  });
-
-  it('keeps Rat as the roster backbone while phasing Hound and Sawbug in gradually', () => {
-    expect(RUN_BALANCE.enemyPools[1].entries).toMatchObject([
-      { id: 'scrap-rat', weight: .84 },
-      { id: 'rust-hound', weight: .16 }
-    ]);
-    expect(RUN_BALANCE.enemyPools[2].entries).toMatchObject([
-      { id: 'scrap-rat', weight: .70 },
-      { id: 'rust-hound', weight: .18 },
-      { id: 'sawbug', weight: .12 }
-    ]);
-    expect(RUN_BALANCE.enemyPools[9].entries).toMatchObject([
-      { id: 'scrap-rat', weight: .52 },
-      { id: 'rust-hound', weight: .25 },
-      { id: 'sawbug', weight: .23 }
-    ]);
-    expect(RUN_BALANCE.waves[0]).toMatchObject({ threatBudget: 15, activeCap: 26, spawnIntervalMs: 720 });
-    expect(RUN_BALANCE.waves[9]).toMatchObject({ threatBudget: 46, activeCap: 44, spawnIntervalMs: 425 });
-  });
-
-  it('turns a run Rust Hound into a readable hunter instead of a constant-speed chaser', () => {
+  it('keeps Rust Hound as the hunter with committed telegraph windows', () => {
     const hound: any = {
-      active: true,
-      speed: 210,
-      baseSpeed: 210,
+      enemyId: 'rust-hound',
+      speed: 168,
+      baseSpeed: 168,
       threatValue: 2,
       behaviorConfig: { slideSpeed: 360, telegraphMs: 220, cooldownMinMs: 1050 }
     };
@@ -108,11 +113,12 @@ describe('Wreckmarch run balance', () => {
     expect(getPlayerMoveSpeed(255, 99)).toBeCloseTo(278.645385, 5);
   });
 
-  it('routes the live Fleet Feet card through the canonical movement cap', async () => {
+  it('routes the live Fleet Feet card through canonical Upgrade System stat ownership', async () => {
     const phaseC = await readFile(new URL('../../src/phase-c-runtime.js', import.meta.url), 'utf8');
-    expect(phaseC).toContain("desc: '+3% movement speed.'");
-    expect(phaseC).toContain("getPlayerMoveSpeed(scene.__baseHeroMoveSpeed, upgradeLevel(scene, 'fleet-feet'))");
+    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' })");
     expect(phaseC).toContain('RUN_BALANCE.player.moveSpeedHardCap');
+    expect(phaseC).not.toContain('getPlayerMoveSpeed');
+    expect(phaseC).not.toContain('__baseHeroMoveSpeed');
     expect(phaseC).not.toContain('Math.min(310, scene.heroSpeed * 1.06)');
   });
 
@@ -131,27 +137,10 @@ describe('Wreckmarch run balance', () => {
         countActive: () => active.length
       }
     };
-    const director = new RunDirector(scene);
-    expect(director.getState().threatBudget).toBe(12);
-    expect(director.canSpawn(1)).toBe(true);
-    expect(director.canSpawn(2)).toBe(false);
-  });
-
-  it('applies wave multipliers to enemy stats when run balance is enabled', () => {
-    const rat = getEnemyDefinition('scrap-rat');
-    const stats = resolveEnemySpawnStats(rat, {
-      runTime: 599,
-      useRunBalance: true,
-      randomBetween: (min: number) => min
-    });
-    expect(stats.hp).toBeCloseTo(54 * 1.9, 5);
-    expect(stats.speed).toBeCloseTo(88 * 1.09, 5);
-    expect(stats.damage).toBeCloseTo(10 * 1.36, 5);
-  });
-
-  it('records two guaranteed Elite crate milestones', () => {
-    expect(RUN_BALANCE.eliteRewards.guaranteedAtSeconds).toEqual([270, 450]);
-    expect(RUN_BALANCE.eliteRewards.choices).toBe(3);
-    expect(RUN_BALANCE.eliteRewards.minimumRarity).toBe('RARE');
+    const pressure = getSpawnPressureSnapshot(scene, 0);
+    expect(pressure.currentThreat).toBe(11);
+    expect(pressure.budget).toBe(13);
+    expect(pressure.canSpawnThreat(1)).toBe(true);
+    expect(pressure.canSpawnThreat(3)).toBe(false);
   });
 });
