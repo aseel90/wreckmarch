@@ -96,7 +96,7 @@ export class WeaponSystem {
       angle,
       speed: weapon.projectileSpeed,
       damage: weapon.damage * damageScale,
-      pierceCount: Math.max(0, Math.floor(Number(weapon.pierceCount) || 0)),
+      pierceCount: Math.max(0, Math.floor(Number(scene.runStatState?.resolve?.()?.weapon?.pierceCount ?? weapon.pierceCount) || 0)),
       lifeMs: p.lifeMs,
       scale: p.scale,
       radius: p.radius,
