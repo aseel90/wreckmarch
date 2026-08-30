@@ -1,5 +1,5 @@
 import { RUN_BALANCE, getPlayerMoveSpeed } from './balance/run-balance.js?v=6';
-import { createRegisteredStatUpgradeChoice } from './upgrades/upgrade-runtime.js?v=4';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=5';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
@@ -231,7 +231,7 @@ function createUpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'overclock', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'long-barrel', { category: 'HERO' }),
-    { id: 'twin-riveter', category: 'HERO', title: 'TWIN RIVETER', desc: 'Fire an extra rivet with slight spread.', weight: .72, available: () => upgradeLevel(scene, 'twin-riveter') < 1, apply: () => { bumpUpgrade(scene, 'twin-riveter'); scene.twinShots = 2; } },
+    createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
     { id: 'fleet-feet', category: 'UTILITY', title: 'FLEET FEET', desc: '+3% movement speed.', weight: 1.05, available: () => upgradeLevel(scene, 'fleet-feet') < RUN_BALANCE.player.fleetFeetMaxLevel, apply: () => { bumpUpgrade(scene, 'fleet-feet'); scene.heroSpeed = getPlayerMoveSpeed(scene.__baseHeroMoveSpeed, upgradeLevel(scene, 'fleet-feet')); } },
     { id: 'scrap-magnet', category: 'UTILITY', title: 'SCRAP MAGNET', desc: 'Increase Scrap pickup radius by 25%.', weight: 1, available: () => upgradeLevel(scene, 'scrap-magnet') < 4, apply: () => { bumpUpgrade(scene, 'scrap-magnet'); scene.magnetRadius *= 1.25; } },
     { id: 'armor-plate', category: 'UTILITY', title: 'ARMOR PLATE', desc: '+15 max HP and restore 15 HP.', weight: .95, available: () => upgradeLevel(scene, 'armor-plate') < 4, apply: () => { bumpUpgrade(scene, 'armor-plate'); scene.heroMaxHp += 15; scene.heroHp = Math.min(scene.heroMaxHp, scene.heroHp + 15); } },
