@@ -1,5 +1,5 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=8';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=9';
 import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
@@ -90,7 +90,8 @@ function installWeaponRig(scene) {
     damage: scene.primaryWeapon.damage || scene.damage || 24,
     fireDelay: scene.primaryWeapon.fireDelay || scene.fireDelay || 390,
     projectileSpeed: scene.primaryWeapon.projectileSpeed || 720,
-    range: scene.primaryWeapon.range || 570
+    range: scene.primaryWeapon.range || 570,
+    pierceCount: Math.max(0, Math.floor(Number(scene.primaryWeapon.pierceCount) || 0))
   };
   scene.twinShots = scene.twinShots || 1;
 
@@ -206,6 +207,7 @@ function createUpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'overclock', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'long-barrel', { category: 'HERO' }),
+    createRegisteredStatUpgradeChoice(scene, 'piercing-rivets', { category: 'HERO' }),
     createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
