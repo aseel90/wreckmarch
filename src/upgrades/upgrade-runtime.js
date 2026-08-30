@@ -210,6 +210,11 @@ function commitUpgradeRarityHistory(scene, definition, history) {
   scene.upgradeRarityHistory[definition.id] = history;
 }
 
+/**
+ * @param {object} scene
+ * @param {string} id
+ * @param {{ rarity?: string | null }} [options]
+ */
 export function applyRegisteredUpgrade(scene, id, { rarity = null } = {}) {
   const definition = requireRegisteredUpgrade(id);
   const currentLevel = getSceneUpgradeLevel(scene, id);

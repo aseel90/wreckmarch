@@ -13,7 +13,7 @@ import {
 import { createSeededUpgradeRng } from '../../src/upgrades/upgrade-roll-service.js';
 import { applyRegisteredUpgrade, canApplyRegisteredUpgrade, createRegisteredUpgradeChoice } from '../../src/upgrades/upgrade-runtime.js';
 
-function makeScene(moveSpeed = RUN_BALANCE.player.baseMoveSpeed) {
+function makeScene(moveSpeed: number = RUN_BALANCE.player.baseMoveSpeed) {
   const runStatState = createRunStatState({
     characterBase: { maxHp: 100, moveSpeed },
     weaponBase: { damage: 24, fireDelay: 390, projectileSpeed: 720, range: 570 }
@@ -102,8 +102,8 @@ describe('Upgrade System 2.0 rarity model', () => {
   });
 
   it('does not create rarity-suffixed duplicate upgrade definitions or bypass maxLevel', () => {
-    const ids = listUpgradeDefinitions().map(definition => definition.id);
-    expect(ids.some(id => /-(common|rare|epic|legendary)$/.test(id))).toBe(false);
+    const ids = listUpgradeDefinitions().map((definition: any) => definition.id);
+    expect(ids.some((id: string) => /-(common|rare|epic|legendary)$/.test(id))).toBe(false);
 
     const scene = makeScene();
     const heavy = getUpgradeDefinition('heavy-rivets');
