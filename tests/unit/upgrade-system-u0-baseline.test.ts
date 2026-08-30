@@ -37,11 +37,15 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
 
     expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
     expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
+    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'overclock'");
+    expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'overclock'");
     expect(phaseC).not.toContain('primaryWeapon.damage *= 1.2');
     expect(phaseC1).not.toContain('primaryWeapon.damage*=1.2');
+    expect(phaseC).not.toContain('primaryWeapon.fireDelay = Math.max(145');
+    expect(phaseC1).not.toContain('primaryWeapon.fireDelay=Math.max(145');
     expect(upgradeRuntime).toContain('applyRegisteredStatUpgrade');
 
-    for (const id of ['overclock', 'long-barrel', 'twin-riveter', 'fleet-feet', 'scrap-magnet', 'armor-plate']) {
+    for (const id of ['long-barrel', 'twin-riveter', 'fleet-feet', 'scrap-magnet', 'armor-plate']) {
       expect(phaseC).toContain(`id: '${id}'`);
       expect(phaseC1).toContain(`id:'${id}'`);
     }

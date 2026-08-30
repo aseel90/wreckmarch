@@ -1,5 +1,18 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js';
-import { getUpgradeDefinition } from './upgrade-catalog.js';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=2';
+
+function mergeModifierCaps(existing = {}, modifier) {
+  if (modifier.min == null && modifier.max == null) return null;
+  const existingMin = existing.min == null ? -Infinity : Number(existing.min);
+  const existingMax = existing.max == null ? Infinity : Number(existing.max);
+  const nextMin = modifier.min == null ? existingMin : Math.max(existingMin, Number(modifier.min));
+  const nextMax = modifier.max == null ? existingMax : Math.min(existingMax, Number(modifier.max));
+  if (nextMin > nextMax) throw new RangeError(`Conflicting stat caps for ${modifier.domain}.${modifier.stat}`);
+  return {
+    ...(Number.isFinite(nextMin) ? { min: nextMin } : {}),
+    ...(Number.isFinite(nextMax) ? { max: nextMax } : {})
+  };
+}
 
 function getModifierBucket(runStatState, domain, stat) {
   const domainModifiers = runStatState?.state?.modifiers?.[domain];
@@ -19,12 +32,26 @@ export function applyUpgradeStatModifiers(scene, definition, level) {
     throw new RangeError(`Invalid ${definition.id} level: ${level}`);
   }
 
+  const capPlans = new Map();
   const planned = definition.modifiers.map((modifier, index) => {
     const bucket = getModifierBucket(scene.runStatState, modifier.domain, modifier.stat);
     const id = `${definition.id}@${level}:${index}`;
     if (bucket.some(existing => existing?.id === id)) {
       throw new Error(`Upgrade modifier already applied: ${id}`);
     }
+
+    if (modifier.min != null || modifier.max != null) {
+      const domainCaps = scene.runStatState?.state?.caps?.[modifier.domain];
+      if (!domainCaps) throw new Error(`Missing run stat cap domain: ${modifier.domain}`);
+      const key = `${modifier.domain}:${modifier.stat}`;
+      const existing = capPlans.get(key)?.value || domainCaps[modifier.stat] || {};
+      capPlans.set(key, {
+        domainCaps,
+        stat: modifier.stat,
+        value: mergeModifierCaps(existing, modifier)
+      });
+    }
+
     return { bucket, id, modifier };
   });
 
@@ -36,6 +63,7 @@ export function applyUpgradeStatModifiers(scene, definition, level) {
       ...(modifier.priority == null ? {} : { priority: modifier.priority })
     });
   }
+  for (const { domainCaps, stat, value } of capPlans.values()) domainCaps[stat] = value;
 
   const resolved = scene.runStatState.resolve();
   mirrorResolvedRunStats(scene, resolved);

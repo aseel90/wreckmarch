@@ -38,12 +38,19 @@ function normalizeModifier(modifier) {
   if (!VALID_MODIFIER_TYPES.has(modifier.type)) throw new TypeError(`Invalid upgrade modifier type: ${String(modifier.type)}`);
   if (!Number.isFinite(modifier.value)) throw new TypeError('Upgrade modifier value must be finite');
   if (modifier.priority != null && !Number.isFinite(modifier.priority)) throw new TypeError('Upgrade modifier priority must be finite');
+  if (modifier.min != null && !Number.isFinite(modifier.min)) throw new TypeError('Upgrade modifier min must be finite');
+  if (modifier.max != null && !Number.isFinite(modifier.max)) throw new TypeError('Upgrade modifier max must be finite');
+  if (modifier.min != null && modifier.max != null && Number(modifier.min) > Number(modifier.max)) {
+    throw new RangeError('Upgrade modifier min cannot be greater than max');
+  }
   return Object.freeze({
     domain: modifier.domain,
     stat: modifier.stat.trim(),
     type: modifier.type,
     value: Number(modifier.value),
-    ...(modifier.priority == null ? {} : { priority: Number(modifier.priority) })
+    ...(modifier.priority == null ? {} : { priority: Number(modifier.priority) }),
+    ...(modifier.min == null ? {} : { min: Number(modifier.min) }),
+    ...(modifier.max == null ? {} : { max: Number(modifier.max) })
   });
 }
 
