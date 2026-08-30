@@ -59,90 +59,136 @@ function reinstallLandscapeJoystick(scene) {
   scene.input.off('pointerup');
   scene.input.off('pointerupoutside');
   scene.input.once('pointerdown', () => scene.unlockAudio?.());
+
+  scene.joy.radius = 62;
   scene.joy.active = false;
   scene.joy.id = null;
-  scene.joyBase.setPosition(128, H - 126).setAlpha(.38).setRadius(68);
-  scene.joyKnob.setPosition(128, H - 126).setAlpha(.4).setRadius(27);
-  scene.joyMax = 58;
+  const homeX = 96;
+  const homeY = H - 92;
+  scene.joyBase.setPosition(homeX, homeY).setAlpha(.38).setScrollFactor(0);
+  scene.joyKnob.setPosition(homeX, homeY).setAlpha(.4).setScrollFactor(0);
 
   scene.input.on('pointerdown', p => {
-    if (scene.gameOver || scene.upgradeOpen || scene.joy.active || p.x > W * .46) return;
-    scene.joy.active = true;
+    if (scene.gameOver || scene.upgradeOpen || p.y < 92 || p.x > W * .58) return;
     scene.joy.id = p.id;
-    scene.joy.baseX = Phaser.Math.Clamp(p.x, 80, W * .34);
-    scene.joy.baseY = Phaser.Math.Clamp(p.y, H * .44, H - 74);
-    scene.joyBase.setPosition(scene.joy.baseX, scene.joy.baseY).setAlpha(.72);
-    scene.joyKnob.setPosition(scene.joy.baseX, scene.joy.baseY).setAlpha(.9);
+    scene.joy.active = true;
+    scene.joy.origin.set(p.x, p.y);
+    scene.joy.current.set(p.x, p.y);
+    scene.joyBase.setPosition(p.x, p.y).setAlpha(.7);
+    scene.joyKnob.setPosition(p.x, p.y).setAlpha(.86);
   });
   scene.input.on('pointermove', p => {
     if (!scene.joy.active || p.id !== scene.joy.id) return;
-    const dx = p.x - scene.joy.baseX;
-    const dy = p.y - scene.joy.baseY;
-    const len = Math.hypot(dx, dy) || 1;
-    const mag = Math.min(scene.joyMax, len);
-    const nx = dx / len;
-    const ny = dy / len;
-    scene.move.set(nx * Math.min(1, len / scene.joyMax), ny * Math.min(1, len / scene.joyMax));
-    scene.joyKnob.setPosition(scene.joy.baseX + nx * mag, scene.joy.baseY + ny * mag);
+    scene.joy.current.set(p.x, p.y);
+    const d = new Phaser.Math.Vector2(p.x - scene.joy.origin.x, p.y - scene.joy.origin.y);
+    if (d.length() > scene.joy.radius) d.setLength(scene.joy.radius);
+    scene.joyKnob.setPosition(scene.joy.origin.x + d.x, scene.joy.origin.y + d.y);
   });
   const release = p => {
-    if (!scene.joy.active || p.id !== scene.joy.id) return;
+    if (p.id !== scene.joy.id) return;
     scene.joy.active = false;
     scene.joy.id = null;
-    scene.move.set(0, 0);
-    scene.joyKnob.setPosition(scene.joy.baseX, scene.joy.baseY).setAlpha(.4);
-    scene.joyBase.setAlpha(.38);
+    scene.joyBase.setPosition(homeX, homeY).setAlpha(.38);
+    scene.joyKnob.setPosition(homeX, homeY).setAlpha(.4);
   };
   scene.input.on('pointerup', release);
   scene.input.on('pointerupoutside', release);
 }
 
-function hudCard(scene, x, y, w, h, stroke, alpha=.86) {
-  const shadow = scene.add.rectangle(x + 4, y + 5, w, h, 0x000000, .28).setDepth(930).setScrollFactor(0);
-  const panel = scene.add.rectangle(x, y, w, h, 0x10161c, alpha).setStrokeStyle(1.5, stroke, .68).setDepth(931).setScrollFactor(0);
-  return { shadow, panel };
+function angleToPose(angle) {
+  const normalized = Phaser.Math.Angle.Normalize(angle);
+  return Math.round(normalized / (Math.PI / 4)) % 8;
+}
+
+function installTwoHandAim(scene) {
+  scene.weaponRig?.setVisible?.(false);
+  scene.weaponArm?.setVisible?.(false);
+  scene.weaponSprite?.setVisible?.(false);
+
+  scene.aimPose?.destroy?.();
+  scene.aimPose = scene.add.image(scene.hero.x, scene.hero.y + 8, 'c1-aim-atlas')
+    .setOrigin(.5)
+    .setCrop(0, 0, 120, 100)
+    .setDisplaySize(90, 75)
+    .setDepth(26);
+  scene.weaponSprite = scene.aimPose;
+  scene.visualAimAngle = 0;
+  scene.currentAimPose = 0;
+
+  scene.updateWeaponPose = function() {
+    const pose = angleToPose(this.weaponAim);
+    if (pose !== this.currentAimPose) {
+      this.currentAimPose = pose;
+      this.aimPose.setCrop(pose * 120, 0, 120, 100);
+    }
+    this.visualAimAngle = pose * (Math.PI / 4);
+    this.aimPose.setPosition(this.hero.x, this.hero.y + 8);
+    const behind = pose >= 5 && pose <= 7;
+    this.aimPose.setDepth(behind ? 18 : 27);
+  };
+
+  scene.weaponSystem.configureHero({
+    aimYOffset: 6,
+    targetTurnRate: .24,
+    moveTurnRate: .18,
+    twinSpread2: .055,
+    twinSpread3: .085,
+    muzzleResolver: spread => {
+      const visual = scene.visualAimAngle + spread;
+      const radius = 49;
+      return new Phaser.Math.Vector2(
+        scene.hero.x + Math.cos(visual) * radius,
+        scene.hero.y + 8 + Math.sin(visual) * radius
+      );
+    },
+    fireFeedback: ({ visualAngle, muzzle }) => {
+      const flash = scene.add.image(muzzle.x, muzzle.y, 'flash')
+        .setDepth(31).setRotation(visualAngle).setScale(.5);
+      scene.tweens.add({ targets: flash, alpha: 0, scale: .08, duration: 68, onComplete: () => flash.destroy() });
+      scene.tweens.killTweensOf(scene.aimPose);
+      scene.aimPose.setDisplaySize(85, 71);
+      scene.tweens.add({ targets: scene.aimPose, displayWidth: 90, displayHeight: 75, duration: 72, ease: 'Quad.Out' });
+      scene.playTone?.(165, .045, 'square', .019, -34);
+    }
+  });
+
+  scene.updateWeaponPose();
 }
 
 function installLandscapeHud(scene) {
-  scene.hudLayerC1?.forEach?.(obj => obj?.destroy?.());
-  scene.hudLayerC1 = [];
+  scene.children.list
+    .filter(obj => obj?.name === 'phase-b-hud-shade' || obj?.name === 'c1-hud-shade')
+    .forEach(obj => obj.destroy());
 
-  scene.hpBg.setVisible(false);
-  scene.hpFill.setVisible(false);
-  scene.hpText.setVisible(false);
-  scene.scrapText.setVisible(false);
-  scene.waveText.setVisible(false);
-  scene.levelText.setVisible(false);
-  scene.xpBg.setVisible(false);
-  scene.xpFill.setVisible(false);
+  scene.add.rectangle(W / 2, 45, W, 90, 0x090d13, .91)
+    .setDepth(890).setScrollFactor(0).setName('c1-hud-shade');
 
-  const hpCard = hudCard(scene, 138, 46, 232, 64, 0xa85d42, .9);
-  const runCard = hudCard(scene, W - 122, 46, 214, 64, 0x4ca9b7, .9);
-  const xpPanel = scene.add.rectangle(W / 2, 30, 330, 38, 0x0e1419, .91).setStrokeStyle(1.5, 0x727b83, .65).setDepth(931).setScrollFactor(0);
-  const xpBarBg = scene.add.rectangle(W / 2, 39, 260, 8, 0x1b242c, .98).setStrokeStyle(1, 0x4b555e, .8).setDepth(933).setScrollFactor(0);
-  const xpBar = scene.add.rectangle(W / 2 - 128, 39, 256, 4, 0x58d8e5, 1).setOrigin(0, .5).setDepth(934).setScrollFactor(0).setScale(0, 1);
-  const hpBarBg = scene.add.rectangle(140, 58, 196, 10, 0x2d1715, .98).setDepth(933).setScrollFactor(0);
-  const hpBar = scene.add.rectangle(42, 58, 196, 6, 0xd96f4d, 1).setOrigin(0, .5).setDepth(934).setScrollFactor(0).setScale(1, 1);
-  const hpLabel = scene.add.text(42, 29, 'HUNTER', { fontFamily:'Arial Black, Arial', fontSize:'11px', color:'#e7b88d' }).setDepth(934).setScrollFactor(0);
-  const hpValue = scene.add.text(236, 29, '100/100', { fontFamily:'Arial Black, Arial', fontSize:'11px', color:'#f0e1d3' }).setOrigin(1, 0).setDepth(934).setScrollFactor(0);
-  const levelText = scene.add.text(W / 2, 14, 'LV 1', { fontFamily:'Arial Black, Arial', fontSize:'11px', color:'#f0d19a' }).setOrigin(.5).setDepth(934).setScrollFactor(0);
-  const xpText = scene.add.text(W / 2, 50, 'SCRAP 0/12', { fontFamily:'Arial Black, Arial', fontSize:'8px', color:'#81909c' }).setOrigin(.5).setDepth(934).setScrollFactor(0);
-  const waveValue = scene.add.text(W - 42, 29, 'WAVE 1', { fontFamily:'Arial Black, Arial', fontSize:'11px', color:'#e9edf0' }).setOrigin(1, 0).setDepth(934).setScrollFactor(0);
-  const scrapValue = scene.add.text(W - 42, 51, 'SCRAP 0', { fontFamily:'Arial Black, Arial', fontSize:'10px', color:'#65d4df' }).setOrigin(1, 0).setDepth(934).setScrollFactor(0);
+  scene.titleText.setPosition(24, 14).setFontSize(22).setDepth(920).setScrollFactor(0);
+  scene.timerText.setPosition(W - 24, 16).setFontSize(16).setDepth(920).setScrollFactor(0);
+  scene.waveText.setPosition(W / 2, 18).setFontSize(12).setDepth(920).setScrollFactor(0);
+  scene.levelText.setPosition(205, 53).setFontSize(12).setDepth(922).setScrollFactor(0);
+  scene.scrapText.setPosition(W - 205, 50).setFontSize(13).setDepth(922).setScrollFactor(0);
 
-  scene.hudLayerC1.push(hpCard.shadow, hpCard.panel, runCard.shadow, runCard.panel, xpPanel, xpBarBg, xpBar, hpBarBg, hpBar, hpLabel, hpValue, levelText, xpText, waveValue, scrapValue);
-  scene.c1Hud = { xpBar, hpBar, hpValue, levelText, xpText, waveValue, scrapValue };
+  scene.xpBg?.destroy?.();
+  scene.xpFill?.destroy?.();
+  scene.xpBg = scene.add.rectangle(W / 2, 61, 470, 12, 0x111820, .98)
+    .setStrokeStyle(2, 0x59636d, .75).setDepth(918).setScrollFactor(0);
+  scene.xpFill = scene.add.rectangle(W / 2 - 232, 61, 464, 7, 0x55d7e5, 1)
+    .setOrigin(0, .5).setDepth(919).setScrollFactor(0);
+
+  scene.hint.setPosition(W / 2, H - 12).setFontSize(10).setDepth(800).setScrollFactor(0);
+  scene.joyBase.setPosition(92, H - 118).setScrollFactor(0);
+  scene.joyKnob.setPosition(92, H - 118).setScrollFactor(0);
+
+  if (scene.hitboxButton) {
+    scene.hitboxButton.setPosition(W - 18, H - 50).setScrollFactor(0).setDepth(5100);
+  }
 
   scene.refreshProgressHud = function() {
     const ratio = Phaser.Math.Clamp(this.scrapXp / Math.max(1, this.scrapNeeded), 0, 1);
-    const hpRatio = Phaser.Math.Clamp(this.heroHp / Math.max(1, this.heroMaxHp), 0, 1);
-    this.c1Hud.levelText.setText(`LV ${this.level}`);
-    this.c1Hud.xpText.setText(`SCRAP ${this.scrapXp}/${this.scrapNeeded}`);
-    this.c1Hud.xpBar.setScale(ratio, 1);
-    this.c1Hud.hpValue.setText(`${Math.ceil(this.heroHp)}/${this.heroMaxHp}`);
-    this.c1Hud.hpBar.setScale(hpRatio, 1);
-    this.c1Hud.waveValue.setText(`WAVE ${this.wave}`);
-    this.c1Hud.scrapValue.setText(`SCRAP ${this.scrap}`);
+    this.levelText.setText(`LV ${this.level}`);
+    this.scrapText.setText(`SCRAP ${this.scrapXp}/${this.scrapNeeded}`);
+    this.xpFill.setScale(ratio, 1);
   };
   scene.refreshProgressHud();
 }
@@ -238,63 +284,79 @@ class UpgradeScene extends Phaser.Scene {
     this.choices = choices;
     this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
 
-    const dim = this.add.rectangle(W/2, H/2, W, H, 0x05080c, .92);
-    const top = this.add.text(W/2, 28, `LEVEL ${level}`, { fontFamily:'Arial Black, Arial', fontSize:'12px', color:'#5ed8e4' }).setOrigin(.5);
-    const title = this.add.text(W/2, 58, 'CHOOSE YOUR UPGRADE', { fontFamily:'Arial Black, Arial', fontSize:'25px', color:'#f0d09b' }).setOrigin(.5);
-    const sub = this.add.text(W/2, 82, 'Build the run. Change the machine.', { fontFamily:'Arial', fontSize:'11px', color:'#87939d' }).setOrigin(.5);
-    void dim; void top; void title; void sub;
+    this.add.rectangle(W / 2, H / 2, W, H, 0x06090d, .90).setDepth(0);
+    this.add.text(W / 2, 38, `LEVEL ${level}`, {
+      fontFamily: 'Arial Black, Arial', fontSize: '14px', color: '#59d4e2'
+    }).setOrigin(.5).setDepth(3);
+    this.add.text(W / 2, 68, 'CHOOSE YOUR UPGRADE', {
+      fontFamily: 'Arial Black, Arial', fontSize: '25px', color: '#f0d09b'
+    }).setOrigin(.5).setDepth(3);
+    this.add.text(W / 2, 94, 'Build the run. Change the machine.', {
+      fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#7f8c98'
+    }).setOrigin(.5).setDepth(3);
 
-    const margin = 42;
-    const gap = 22;
-    const cardW = (W - margin*2 - gap*2) / 3;
-    const cardH = 355;
-    const startX = margin + cardW/2;
-    choices.forEach((upgrade, index) => this.createCard(startX + index*(cardW+gap), 307, cardW, cardH, upgrade, index));
+    const xs = [170, 480, 790];
+    choices.forEach((upgrade, i) => this.createCard(xs[i], 304, upgrade, i));
     this.refreshSelection();
 
     this.input.keyboard?.on('keydown-LEFT', () => this.moveSelection(-1));
     this.input.keyboard?.on('keydown-RIGHT', () => this.moveSelection(1));
     this.input.keyboard?.on('keydown-ENTER', () => this.choose(this.selectedIndex));
+    this.input.keyboard?.on('keydown-SPACE', () => this.choose(this.selectedIndex));
     this.input.keyboard?.on('keydown-ONE', () => this.choose(0));
     this.input.keyboard?.on('keydown-TWO', () => this.choose(1));
     this.input.keyboard?.on('keydown-THREE', () => this.choose(2));
   }
 
-  createCard(x, y, w, h, upgrade, index) {
-    const color = categoryHex(upgrade.category);
-    const group = this.add.container(x, y);
-    const shadow = this.add.rectangle(7, 10, w, h, 0x000000, .45);
-    const bg = this.add.rectangle(0, 0, w, h, 0x151b22, .985).setStrokeStyle(2, color, .78);
-    const topStrip = this.add.rectangle(0, -h/2 + 7, w, 14, color, .95);
-    const category = this.add.text(-w/2+18, -h/2+29, upgrade.category, { fontFamily:'Arial Black, Arial', fontSize:'10px', color:Phaser.Display.Color.IntegerToColor(color).rgba }).setOrigin(0,.5);
-    const artBg = this.add.rectangle(0, -53, w-30, 138, 0x0b1015, .86).setStrokeStyle(1.5, color, .34);
-    const icon = this.add.image(0, -54, 'upgrade-icon-atlas').setOrigin(.5).setScale(.58);
-    const idIndex = Math.max(0, ICON_IDS.indexOf(upgrade.id));
-    icon.setCrop((idIndex % 5) * 120, Math.floor(idIndex / 5) * 120, 120, 120);
-    const cardTitle = this.add.text(0, 35, upgrade.title, { fontFamily:'Arial Black, Arial', fontSize:'19px', color:'#f3f4f5', align:'center', wordWrap:{width:w-34} }).setOrigin(.5);
-    const desc = this.add.text(0, 81, upgrade.desc, { fontFamily:'Arial', fontSize:'12px', color:'#b4bec6', align:'center', wordWrap:{width:w-42}, lineSpacing:2 }).setOrigin(.5,0);
-    const current = this.gameScene?.upgradeLevels?.[upgrade.id] || 0;
-    const footer = this.add.text(0, h/2-26, current ? `CURRENT  LV ${current}` : 'NEW UPGRADE', { fontFamily:'Arial Black, Arial', fontSize:'9px', color:'#7c8993' }).setOrigin(.5);
-    const hit = this.add.zone(0, 0, w, h).setInteractive({ useHandCursor:true });
+  createCard(x, y, upgrade, index) {
+    const accent = categoryHex(upgrade.category);
+    const group = this.add.container(x, y).setDepth(5);
+    const shadow = this.add.rectangle(5, 8, 270, 306, 0x000000, .28).setOrigin(.5);
+    const bg = this.add.rectangle(0, 0, 270, 306, 0x151b22, .985)
+      .setStrokeStyle(2, accent, .72).setOrigin(.5);
+    const strip = this.add.rectangle(0, -147, 270, 12, accent, .9).setOrigin(.5);
+    const iconPlate = this.add.circle(0, -70, 55, 0x0d1218, 1).setStrokeStyle(2, accent, .45);
+    const iconIndex = Math.max(0, ICON_IDS.indexOf(upgrade.id));
+    const icon = this.add.image(0, -70, 'upgrade-icon-atlas')
+      .setCrop(iconIndex * 128, 0, 128, 128)
+      .setDisplaySize(92, 92);
+    const category = this.add.text(-112, -128, upgrade.category, {
+      fontFamily: 'Arial Black, Arial', fontSize: '11px', color: Phaser.Display.Color.IntegerToColor(accent).rgba
+    }).setOrigin(0, .5);
+    const title = this.add.text(0, 0, upgrade.title, {
+      fontFamily: 'Arial Black, Arial', fontSize: '18px', color: '#f1f4f6', align: 'center', wordWrap: { width: 235 }
+    }).setOrigin(.5);
+    const desc = this.add.text(0, 48, upgrade.desc, {
+      fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#aab5bf', align: 'center', wordWrap: { width: 224 }
+    }).setOrigin(.5, 0);
+    const level = this.gameScene?.upgradeLevels?.[upgrade.id] || 0;
+    const footer = this.add.text(0, 126, level > 0 ? `CURRENT  LV ${level}` : 'NEW UPGRADE', {
+      fontFamily: 'Arial Black, Arial', fontSize: '10px', color: '#75818d'
+    }).setOrigin(.5);
+
+    const hit = this.add.zone(0, 0, 270, 306).setOrigin(.5).setInteractive({ useHandCursor: true });
     hit.on('pointerover', () => { this.selectedIndex = index; this.refreshSelection(); });
-    hit.on('pointerdown', (_p,_x,_y,event) => { event?.stopPropagation?.(); this.choose(index); });
-    group.add([shadow,bg,topStrip,category,artBg,icon,cardTitle,desc,footer,hit]);
-    this.cardViews.push({ group,bg,topStrip,icon,color });
+    hit.on('pointerdown', (_pointer, _lx, _ly, event) => {
+      event?.stopPropagation?.();
+      this.choose(index);
+    });
+
+    group.add([shadow, bg, strip, iconPlate, icon, category, title, desc, footer, hit]);
+    this.cardViews.push({ group, bg, strip, accent });
   }
 
-  moveSelection(dir) {
+  moveSelection(delta) {
     if (!this.choices.length || this.locked) return;
-    this.selectedIndex = (this.selectedIndex + dir + this.choices.length) % this.choices.length;
+    this.selectedIndex = (this.selectedIndex + delta + this.choices.length) % this.choices.length;
     this.refreshSelection();
   }
 
   refreshSelection() {
-    this.cardViews.forEach((card,index) => {
-      const active = index === this.selectedIndex;
-      card.group.setScale(active ? 1.025 : 1);
-      card.bg.setStrokeStyle(active ? 4 : 2, card.color, active ? 1 : .72);
-      card.topStrip.setAlpha(active ? 1 : .78);
-      card.icon.setAlpha(active ? 1 : .82);
+    this.cardViews.forEach((view, i) => {
+      const selected = i === this.selectedIndex;
+      view.group.setScale(selected ? 1.035 : 1);
+      view.bg.setStrokeStyle(selected ? 4 : 2, view.accent, selected ? 1 : .65);
+      view.strip.setAlpha(selected ? 1 : .82);
     });
   }
 
@@ -361,12 +423,22 @@ function refineLandscapeScale(scene) {
     const before = new Set(this.enemies.getChildren());
     baseSpawn(elite);
     this.enemies.children.iterate(enemy => {
-      if (enemy?.active && !before.has(enemy)) {
-        enemy.setScale(enemy.elite ? .67 : .54);
-        enemy.hitRadius = enemy.elite ? 29 : 24;
-      }
+      if (!enemy?.active || before.has(enemy)) return;
+      enemy.setScale(enemy.elite ? .67 : .54);
+      enemy.hitRadius = enemy.elite ? 29 : 24;
     });
   };
+
+  scene.children.list.forEach(obj => {
+    const key = obj?.texture?.key || '';
+    if (key === 'b1-wreck-a' || key === 'b1-wreck-b') {
+      obj.setScale(Math.max(obj.scaleX, 1.45));
+    }
+  });
+}
+
+function addOrientationSignal() {
+  document.documentElement.dataset.wreckmarchOrientation = 'landscape';
 }
 
 export async function applyPhaseC1() {
@@ -374,9 +446,14 @@ export async function applyPhaseC1() {
   await loadAimAssets(scene);
   installLandscapeCanvas(scene);
   reinstallLandscapeJoystick(scene);
+  installTwoHandAim(scene);
   installLandscapeHud(scene);
   installLandscapeUpgradeScene(scene);
   refineLandscapeScale(scene);
+  addOrientationSignal();
+
+  window.__WM_PHASE_C1__ = true;
+  document.documentElement.dataset.wreckmarchPhaseC1 = 'active';
   window.__WM_LOG__?.('Phase C.1 active: landscape HUD + 8-way two-hand aim + UpgradeScene cards');
-  return scene;
+  return true;
 }
