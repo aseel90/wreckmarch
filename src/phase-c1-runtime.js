@@ -202,9 +202,7 @@ function c1UpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
     createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),
-    createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' }),
-    { id:'rig-overdrive', category:'FORTRESS', title:'RIG OVERDRIVE', desc:'Reserved for the future companion upgrade tree.', weight:0, available:()=>false, apply:()=>{} },
-    { id:'twin-cannon', category:'FORTRESS', title:'TWIN CANNON', desc:'Reserved for the future companion upgrade tree.', weight:0, available:()=>false, apply:()=>{} }
+    createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' })
   ];
 }
 
