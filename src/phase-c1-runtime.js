@@ -1,4 +1,4 @@
-import { createRegisteredStatUpgradeChoice } from './upgrades/upgrade-runtime.js?v=2';
+import { createRegisteredStatUpgradeChoice } from './upgrades/upgrade-runtime.js?v=3';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
 const W = 960;
@@ -217,9 +217,7 @@ function summonRigC1(scene) {
 function c1UpgradePool(scene) {
   return [
     createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
-    { id:'overclock', category:'HERO', title:'OVERCLOCK', desc:'12% faster fire rate.', weight:1.2,
-      available:()=>upgradeLevel(scene,'overclock')<5,
-      apply:()=>{ bumpUpgrade(scene,'overclock'); scene.primaryWeapon.fireDelay=Math.max(145,scene.primaryWeapon.fireDelay*.88); scene.fireDelay=scene.primaryWeapon.fireDelay; } },
+    createRegisteredStatUpgradeChoice(scene, 'overclock', { category: 'HERO' }),
     { id:'long-barrel', category:'HERO', title:'LONG BARREL', desc:'+18% projectile speed and +10% range.', weight:1,
       available:()=>upgradeLevel(scene,'long-barrel')<4,
       apply:()=>{ bumpUpgrade(scene,'long-barrel'); scene.primaryWeapon.projectileSpeed*=1.18; scene.primaryWeapon.range*=1.1; } },
