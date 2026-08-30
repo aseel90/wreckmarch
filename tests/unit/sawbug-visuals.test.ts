@@ -44,6 +44,10 @@ describe('Sawbug production frames', () => {
   it('keeps the browser self-test pending until the real acid shot resolves and exposes a direct CI refresh hook', () => {
     const source = fs.readFileSync(path.join(root, 'src/enemies/sawbug-visuals.js'), 'utf8');
     expect(source).toContain("document.documentElement.dataset.wreckmarchSawbugTest = 'running'");
+    expect(source).toContain("if (!document.body.classList.contains('visual-ready'))");
+    expect(source).toContain('const observer = new MutationObserver');
+    expect(source).toContain("observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })");
+    expect(source).toContain('scene.__wmSawbugSelfTestEnemy = sawbug || null');
     expect(source).toContain("sawbug.__sawbugState = null");
     expect(source).toContain("const status = ok ? 'passed' : 'running'");
     expect(source).not.toContain('SELF_TEST_TIMEOUT_MS');

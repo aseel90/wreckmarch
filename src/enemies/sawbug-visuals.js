@@ -121,6 +121,16 @@ function runBrowserSelfTest(scene) {
   const params = new URLSearchParams(location.search);
   if (params.get('sawbugtest') !== '1') return;
 
+  if (!document.body.classList.contains('visual-ready')) {
+    const observer = new MutationObserver(() => {
+      if (!document.body.classList.contains('visual-ready')) return;
+      observer.disconnect();
+      runBrowserSelfTest(scene);
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return;
+  }
+
   scene.spawnEvent && (scene.spawnEvent.paused = true);
   scene.fireDelay = 999999;
   if (scene.primaryWeapon) scene.primaryWeapon.fireDelay = 999999;
@@ -133,6 +143,7 @@ function runBrowserSelfTest(scene) {
   scene.hero?.setVelocity?.(0, 0);
 
   const sawbug = scene.spawnSystem?.spawn?.('sawbug', { elite: false });
+  scene.__wmSawbugSelfTestEnemy = sawbug || null;
   sawbug?.setPosition?.(130, 480);
   if (!sawbug) {
     document.documentElement.dataset.wreckmarchSawbugTest = 'failed';

@@ -13,15 +13,11 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
     { timeout: 20_000 }
   ).toBe(true);
 
-  // Execute the real acid-spitter state machine deterministically instead of depending
-  // on CI frame scheduling: first enter windup, then make that windup due and execute
-  // the same production updater again so it performs the real fire path.
   await expect.poll(
     () => page.evaluate(async () => {
       const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
       const scene = game?.scene?.getScene?.('Wreckmarch');
-      const sawbug = scene?.enemies?.getChildren?.()
-        .find((candidate: any) => candidate?.active && candidate.enemyId === 'sawbug');
+      const sawbug = scene?.__wmSawbugSelfTestEnemy;
       if (!scene || !sawbug?.active || !scene.hero?.active) return false;
 
       scene.hero.setPosition?.(360, 480);
@@ -70,9 +66,6 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
   });
   expect(Number(state.acidSpawned)).toBeGreaterThanOrEqual(1);
 
-  // Exercise the real Arcade overlap deterministically. Natural projectile travel is already
-  // covered by the self-test above; pinning that same live projectile onto the hero keeps this
-  // regression check focused on impact -> damage -> splash -> continued scene updates.
   await expect.poll(
     () => page.evaluate(() => {
       const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
