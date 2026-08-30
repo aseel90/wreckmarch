@@ -1,4 +1,6 @@
 import { RUN_BALANCE, getPlayerMoveSpeed } from './balance/run-balance.js?v=6';
+import { getUpgradeDefinition } from './upgrades/upgrade-catalog.js?v=1';
+import { applyUpgradeStatModifiers } from './upgrades/upgrade-runtime.js?v=1';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
@@ -226,8 +228,21 @@ function summonRig(scene) {
 }
 
 function createUpgradePool(scene) {
+  const heavyRivets = getUpgradeDefinition('heavy-rivets');
+  if (!heavyRivets) throw new Error('Heavy Rivets upgrade definition is missing');
   return [
-    { id: 'heavy-rivets', category: 'HERO', title: 'HEAVY RIVETS', desc: '+20% Rivet Gun damage.', weight: 1.25, available: () => upgradeLevel(scene, 'heavy-rivets') < 5, apply: () => { bumpUpgrade(scene, 'heavy-rivets'); scene.primaryWeapon.damage *= 1.2; scene.damage = scene.primaryWeapon.damage; } },
+    {
+      id: heavyRivets.id,
+      category: 'HERO',
+      title: heavyRivets.name,
+      desc: heavyRivets.description,
+      weight: heavyRivets.weight,
+      available: () => upgradeLevel(scene, heavyRivets.id) < heavyRivets.maxLevel,
+      apply: () => {
+        bumpUpgrade(scene, heavyRivets.id);
+        applyUpgradeStatModifiers(scene, heavyRivets, upgradeLevel(scene, heavyRivets.id));
+      }
+    },
     { id: 'overclock', category: 'HERO', title: 'OVERCLOCK', desc: '12% faster fire rate.', weight: 1.2, available: () => upgradeLevel(scene, 'overclock') < 5, apply: () => { bumpUpgrade(scene, 'overclock'); scene.primaryWeapon.fireDelay = Math.max(145, scene.primaryWeapon.fireDelay * .88); scene.fireDelay = scene.primaryWeapon.fireDelay; } },
     { id: 'long-barrel', category: 'HERO', title: 'LONG BARREL', desc: '+18% projectile speed and +10% range.', weight: 1, available: () => upgradeLevel(scene, 'long-barrel') < 4, apply: () => { bumpUpgrade(scene, 'long-barrel'); scene.primaryWeapon.projectileSpeed *= 1.18; scene.primaryWeapon.range *= 1.1; } },
     { id: 'twin-riveter', category: 'HERO', title: 'TWIN RIVETER', desc: 'Fire an extra rivet with slight spread.', weight: .72, available: () => upgradeLevel(scene, 'twin-riveter') < 1, apply: () => { bumpUpgrade(scene, 'twin-riveter'); scene.twinShots = 2; } },
