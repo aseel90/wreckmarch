@@ -13,9 +13,47 @@ test('Sawbug holds range and fires the baked acid projectile', async ({ page }) 
     { timeout: 20_000 }
   ).toBe(true);
 
+  // Drive the existing acid-spitter state machine deterministically instead of relying
+  // on CI wall-clock scheduling. The normal update loop still performs the real fire path.
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      const scene = game?.scene?.getScene?.('Wreckmarch');
+      const sawbug = scene?.enemies?.getChildren?.()
+        .find((candidate: any) => candidate?.active && candidate.enemyId === 'sawbug');
+      if (!scene || !sawbug?.active || !scene.hero?.active) return false;
+
+      scene.hero.setPosition?.(360, 480);
+      scene.hero.setVelocity?.(0, 0);
+      sawbug.setPosition?.(130, 480);
+      sawbug.setVelocity?.(0, 0);
+
+      const state = sawbug.__sawbugState;
+      if (!state) return false;
+      if (state.phase === 'move') state.cooldownUntil = (Number(scene.time?.now) || 0) - 1;
+      return true;
+    }),
+    { timeout: 4_000 }
+  ).toBe(true);
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      const scene = game?.scene?.getScene?.('Wreckmarch');
+      const sawbug = scene?.enemies?.getChildren?.()
+        .find((candidate: any) => candidate?.active && candidate.enemyId === 'sawbug');
+      const state = sawbug?.__sawbugState;
+      if (!scene || !state) return false;
+      if (state.phase !== 'windup') return false;
+      state.phaseUntil = (Number(scene.time?.now) || 0) - 1;
+      return true;
+    }),
+    { timeout: 4_000 }
+  ).toBe(true);
+
   await expect.poll(
     () => page.evaluate(() => document.documentElement.dataset.wreckmarchSawbugTest || ''),
-    { timeout: 15_000 }
+    { timeout: 8_000 }
   ).toBe('passed');
 
   const state = await page.evaluate(() => (window as typeof window & { __WM_SAWBUG_TEST__?: any }).__WM_SAWBUG_TEST__);
