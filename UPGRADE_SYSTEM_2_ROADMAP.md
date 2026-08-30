@@ -523,6 +523,8 @@ The goal is not simply more cards; it is multiple recognizable builds.
 ### Piercing Rivets
 Rivets penetrate additional enemies.
 
+**Implementation status:** ✅ DONE — PR #105, merged as `0b33898e66d0f9932330cd0cb53c7651596076e8`; exact-SHA production Live verification and Pages recovery passed. Canonical `pierceCount` weapon state, ordered multi-enemy swept hits, same-projectile duplicate-hit prevention, dedicated Wreckmarch card art, and deterministic Chromium coverage are live.
+
 ### Ricochet
 Rivets can redirect/bounce to a nearby valid enemy after impact.
 
@@ -549,8 +551,8 @@ Exact names, values, rarities and requirements require balance passes.
 > **Protected approved card concepts:** Piercing Rivets, Ricochet, Shrapnel Impact, Critical Rivet, Explosive Rivet and Triple Riveter must remain in this roadmap until implemented, explicitly deferred, or explicitly removed with user approval under the Roadmap integrity guard.
 
 - [ ] Finalize initial 10–12 card pool. — **Status:** ⚪ NOT STARTED
-- [ ] Implement first new mechanical card. — **Status:** ⚪ NOT STARTED
-- [ ] Implement Piercing Rivets. — **Status:** ⚪ NOT STARTED
+- [x] Implement first new mechanical card. — **Status:** ✅ DONE — Piercing Rivets, PR #105 / `0b33898e66d0f9932330cd0cb53c7651596076e8`
+- [x] Implement Piercing Rivets. — **Status:** ✅ DONE — canonical weapon `pierceCount` + live projectile chain + dedicated card art; production exact-SHA verification passed
 - [ ] Implement Ricochet. — **Status:** ⚪ NOT STARTED
 - [ ] Implement Shrapnel Impact. — **Status:** ⚪ NOT STARTED
 - [ ] Implement Critical Rivet + crit combat support. — **Status:** ⚪ NOT STARTED
@@ -1003,7 +1005,7 @@ Latest verified gameplay commit for the core: `89926f8`.
 
 ## Phase U4 — New Hunter build cards — **NEXT ACTIVE PHASE**
 - [ ] Finalize 10–12-card initial pool. — **Status:** 🟢 NEXT
-- [ ] Add mechanical projectile upgrades incrementally. — **Status:** ⚪ NOT STARTED
+- [ ] Add mechanical projectile upgrades incrementally. — **Status:** 🔵 IN PROGRESS — Piercing Rivets complete; further U4 projectile cards remain
 - [ ] Add crit only with combat integration/tests. — **Status:** ⚪ NOT STARTED
 - [ ] Verify at least 3 viable build identities. — **Status:** ⚪ NOT STARTED
 
