@@ -10,6 +10,7 @@ permissions:
   contents: read
   actions: read
   issues: write
+  pull-requests: write
   pages: write
   id-token: write
 
@@ -57,7 +58,7 @@ jobs:
               echo '```'
             done
           } > /tmp/wm-quality-comment.md
-          gh api --silent --method POST "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" -F "body=@/tmp/wm-quality-comment.md"
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-quality-comment.md
       - name: Preserve quality diagnostics
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
@@ -97,6 +98,26 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} 2>&1 | tee "wm-e2e-shard-${{ matrix.shardIndex }}.log"
+      - name: Comment shard failure diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          LOG="wm-e2e-shard-${{ matrix.shardIndex }}.log"
+          {
+            echo "Playwright **E2E shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}** failed."
+            echo
+            if [ -f "$LOG" ]; then
+              echo "### $LOG"
+              echo '```text'
+              tail -c 16000 "$LOG"
+              echo
+              echo '```'
+            fi
+          } > /tmp/wm-e2e-shard-comment.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-shard-comment.md
       - name: Upload shard report and diagnostics
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
@@ -179,7 +200,7 @@ jobs:
               echo '```'
             done
           } > /tmp/wm-e2e-comment.md
-          gh api --silent --method POST "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" -F "body=@/tmp/wm-e2e-comment.md"
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
       - name: Enforce E2E gate
         env:
           SHARD_RESULT: ${{ needs.e2e-shard.result }}

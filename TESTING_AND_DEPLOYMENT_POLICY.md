@@ -14,7 +14,7 @@ This document defines the canonical browser verification and deployment gate ado
 - [ ] Run E2E as three isolated Playwright shards with one worker per runner. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
 - [ ] Use isolated retries and fail CI if any test is classified as flaky. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
 - [ ] Merge shard blob reports into one canonical Playwright HTML report. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
-- [ ] Route PR failure diagnostics through the Issue API permission already granted to the workflow. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
+- [ ] Route shard and aggregate PR failure diagnostics through explicit `pull-requests: write` permission. — **Status:** 🟡 IMPLEMENTED / PR VERIFY
 - [ ] Confirm the sharded E2E gate and Live Chromium gate on `main`. — **Status:** 🟡 IMPLEMENTED / PR + LIVE VERIFY
 
 > **Status reviewed:** 2026-08-30.
@@ -69,9 +69,9 @@ The three shard jobs are implementation details. The stable public gate remains 
 
 ## PR diagnostics rule
 
-The workflow currently grants `issues: write`. PRs are also issue resources in GitHub's API, so automated PR failure comments must call the shared Issue Comments REST endpoint (via `gh api`) rather than relying on a separate pull-request write permission.
+The workflow grants `pull-requests: write` explicitly for PR diagnostics and keeps `issues: write` for the main/live failure Issues. Each failing shard comments its own log directly on the PR, while the aggregate `E2E` job adds the merged failure summary. Diagnostic-comment steps are `continue-on-error` so comment delivery can never mask or replace the real test result.
 
-For E2E failures, the canonical `E2E` aggregation job should comment once with:
+For E2E failures, the failing shard should comment immediately with its own log, and the canonical `E2E` aggregation job should also provide:
 
 - merged Playwright failure summary
 - failing shard result
