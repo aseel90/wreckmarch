@@ -99,6 +99,7 @@ export class WeaponSystem {
       damage: weapon.damage * damageScale,
       pierceCount: Math.max(0, Math.floor(Number(resolvedWeapon.pierceCount ?? weapon.pierceCount) || 0)),
       ricochetCount: Math.max(0, Math.floor(Number(resolvedWeapon.ricochetCount ?? weapon.ricochetCount) || 0)),
+      shrapnelCount: Math.max(0, Math.floor(Number(resolvedWeapon.shrapnelCount ?? weapon.shrapnelCount) || 0)),
       lifeMs: p.lifeMs,
       scale: p.scale,
       radius: p.radius,

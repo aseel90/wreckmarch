@@ -14,6 +14,19 @@ export function segmentCircleHit(x1, y1, x2, y2, cx, cy, radius) {
   return ox * ox + oy * oy <= radius * radius ? t : null;
 }
 
+const DEFAULT_SHRAPNEL_PROFILE = Object.freeze({
+  damageScale: .35,
+  speedScale: .68,
+  minSpeed: 420,
+  lifeMs: 260,
+  spreadRadians: 1.1,
+  scale: .42,
+  radius: 3,
+  offsetX: 1,
+  offsetY: 1,
+  maxFragments: 4
+});
+
 export class ProjectileSystem {
   /** @param {any} scene */
   constructor(scene) {
@@ -40,6 +53,7 @@ export class ProjectileSystem {
     pierceCount = 0,
     ricochetCount = 0,
     ricochetRange = 360,
+    shrapnelCount = 0,
     lifeMs,
     scale = .74,
     tint = null,
@@ -56,12 +70,58 @@ export class ProjectileSystem {
     bullet.pierceRemaining = Math.max(0, Math.floor(Number(pierceCount) || 0));
     bullet.ricochetRemaining = Math.max(0, Math.floor(Number(ricochetCount) || 0));
     bullet.ricochetRange = Math.max(0, Number(ricochetRange) || 0);
+    bullet.shrapnelCount = Math.max(0, Math.floor(Number(shrapnelCount) || 0));
     bullet.hitEnemies = new Set();
     bullet.life = lifeMs;
     bullet.prevX = x;
     bullet.prevY = y;
     bullet.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
     return bullet;
+  }
+
+  spawnImpactShrapnel({
+    x,
+    y,
+    angle,
+    speed,
+    damage,
+    count,
+    texture = 'bullet',
+    excludedEnemies = []
+  }) {
+    const profile = DEFAULT_SHRAPNEL_PROFILE;
+    const fragmentCount = Math.min(profile.maxFragments, Math.max(0, Math.floor(Number(count) || 0)));
+    if (fragmentCount <= 0) return [];
+
+    const sourceSpeed = Math.max(0, Number(speed) || 0);
+    const fragmentSpeed = Math.max(profile.minSpeed, sourceSpeed * profile.speedScale);
+    const fragmentDamage = Math.max(1, (Number(damage) || 0) * profile.damageScale);
+    const excluded = excludedEnemies instanceof Set ? excludedEnemies : new Set(excludedEnemies || []);
+    const fragments = [];
+
+    for (let index = 0; index < fragmentCount; index += 1) {
+      const ratio = fragmentCount === 1 ? .5 : index / (fragmentCount - 1);
+      const fragmentAngle = angle + (ratio - .5) * profile.spreadRadians;
+      const fragment = this.spawn({
+        x,
+        y,
+        angle: fragmentAngle,
+        speed: fragmentSpeed,
+        damage: fragmentDamage,
+        lifeMs: profile.lifeMs,
+        scale: profile.scale,
+        radius: profile.radius,
+        offsetX: profile.offsetX,
+        offsetY: profile.offsetY,
+        texture: texture || 'bullet'
+      });
+      fragment.isSecondaryProjectile = true;
+      fragment.projectileKind = 'shrapnel';
+      fragment.hitEnemies = new Set(excluded);
+      fragment.setRotation?.(fragmentAngle);
+      fragments.push(fragment);
+    }
+    return fragments;
   }
 
   findEarliestEnemyHit(bullet, x1, y1, x2, y2) {
