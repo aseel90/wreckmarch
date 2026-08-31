@@ -12,21 +12,24 @@ describe('authoritative CombatSystem integration', () => {
     expect(game).not.toContain('this.physics.add.overlap(this.bullets, this.enemies');
     expect(game).not.toContain('onBulletHit(bullet, enemy)');
     expect(game).not.toContain('killEnemy(enemy)');
-    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=6'");
+    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=7'");
     expect(system).toContain('scene.combatSystem = new CombatSystem(scene)');
     expect(system).toContain('scene.combatSystem.installOverlaps()');
     expect(system).not.toContain('scene.onBulletHit');
     expect(combat).toContain('scene.__enemyProjectileOverlap = scene.physics.add.overlap(');
     expect(combat).toContain('this.handleProjectileOverlap');
-    expect(combat).toContain('return this.enemy.hitByProjectile(bullet, enemy)');
+    expect(combat).toContain('return result');
   });
 
-  it('routes swept projectile hits directly from ProjectileSystem to CombatSystem, including pierce chains', () => {
+  it('routes swept projectile hits directly from ProjectileSystem to CombatSystem, including pierce and ricochet chains', () => {
     expect(enemyCombat).toContain('resolveEnemyProjectileHit');
     expect(enemyCombat).toContain('resolveEnemyScrapDropCount');
     expect(projectileSystem).toContain('const hitEnemy = scene.combatSystem?.hitEnemyByProjectile');
     expect(projectileSystem).toContain('hitEnemy.call(scene.combatSystem, bullet, enemy)');
     expect(projectileSystem).toContain('while (bullet.active)');
+    expect(projectileSystem).toContain('this.redirectRicochet(bullet, originX, originY)');
+    expect(combat).toContain('bullet.ricochetPending = { x: Number(enemy?.x) || 0, y: Number(enemy?.y) || 0 }');
+    expect(enemyCombat).toContain('const ricochetRemaining = Math.max(0, Math.floor(Number(bullet.ricochetRemaining) || 0))');
     expect(projectileSystem).not.toContain('this.onBulletHit(bullet, enemy)');
   });
 

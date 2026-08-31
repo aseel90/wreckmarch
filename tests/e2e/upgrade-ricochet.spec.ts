@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 960, height: 540 } });
 
-test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at level 1', async ({ page }) => {
+test('Ricochet redirects a Hunter rivet to a nearby valid enemy after final impact', async ({ page }) => {
   await page.goto('/?debug=1&autotest=1');
   await expect(page.locator('canvas')).toBeVisible({ timeout: 20_000 });
   await expect.poll(
@@ -10,7 +10,7 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
     { timeout: 30_000 }
   ).toBe(true);
 
-  const setup = await page.evaluate(async () => {
+  const result = await page.evaluate(async () => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
@@ -28,7 +28,7 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
       'scrap-magnet': 99,
       'armor-plate': 99,
       'call-rig': 99,
-      'ricochet': 99
+      'piercing-rivets': 99
     });
 
     const originalRandom = Math.random;
@@ -42,8 +42,8 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
 
     const upgradeScene = game.scene.getScene('UpgradeSceneV4');
     const choiceIds = (upgradeScene.choices || []).map((choice: any) => choice.id);
-    const index = choiceIds.indexOf('piercing-rivets');
-    if (index < 0) throw new Error(`Piercing Rivets missing from forced offer: ${choiceIds.join(',')}`);
+    const index = choiceIds.indexOf('ricochet');
+    if (index < 0) throw new Error(`Ricochet missing from forced offer: ${choiceIds.join(',')}`);
     const artKey = upgradeScene.cards?.[index]?.art?.texture?.key || null;
     upgradeScene.choose(index);
     await new Promise(resolve => setTimeout(resolve, 150));
@@ -58,53 +58,76 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
     scene.weaponAim = 0;
     scene.updateWeaponPose?.();
     const muzzle = scene.weaponSystem.getMuzzle(0);
-    enemies.forEach((enemy: any, i: number) => {
-      enemy.setPosition(muzzle.x + 90 + i * 90, muzzle.y - 1);
+    const first = enemies[0];
+    const second = enemies[1];
+    first.setPosition(muzzle.x + 100, muzzle.y - 1);
+    second.setPosition(muzzle.x + 100, muzzle.y + 120);
+    for (const enemy of enemies) {
       enemy.setVelocity(0, 0);
       enemy.speed = 0;
       enemy.hp = 100;
       enemy.maxHp = 100;
-    });
+    }
 
     const shot = scene.weaponSystem.fireHeroProjectile(0, 1);
     if (!shot?.bullet) throw new Error('Hero projectile was not created');
     const bullet = shot.bullet;
-    const initialPierceRemaining = bullet.pierceRemaining;
+    const initialRicochetRemaining = bullet.ricochetRemaining;
 
-    // Drive one deterministic swept segment through both live enemies. This exercises
-    // the real WeaponSystem -> ProjectileSystem -> CombatSystem path without relying
-    // on frame timing or enemy movement in CI.
+    // Deterministically drive the first swept impact, which must redirect the real projectile.
     bullet.setVelocity?.(0, 0);
+    bullet.body.velocity.x = 800;
+    bullet.body.velocity.y = 0;
     bullet.prevX = muzzle.x;
     bullet.prevY = muzzle.y - 1;
-    bullet.x = muzzle.x + 280;
+    bullet.x = muzzle.x + 170;
     bullet.y = muzzle.y - 1;
+    scene.projectileSystem.update(16);
+
+    const afterRedirect = {
+      x: bullet.x,
+      y: bullet.y,
+      vx: bullet.body?.velocity?.x || 0,
+      vy: bullet.body?.velocity?.y || 0,
+      ricochetRemaining: bullet.ricochetRemaining,
+      active: bullet.active ?? false,
+      hitCount: bullet.hitEnemies?.size ?? 0
+    };
+
+    // Drive the redirected segment through the second target.
+    bullet.prevX = first.x;
+    bullet.prevY = first.y;
+    bullet.x = second.x;
+    bullet.y = second.y;
     scene.projectileSystem.update(16);
 
     return {
       choiceIds,
       artKey,
-      level: scene.upgradeLevels['piercing-rivets'],
-      pierceCount: scene.runStatState.resolve().weapon.pierceCount,
-      initialPierceRemaining,
-      iconExists: scene.textures.exists('upgrade-icon-piercing-rivets'),
+      level: scene.upgradeLevels.ricochet,
+      ricochetCount: scene.runStatState.resolve().weapon.ricochetCount,
+      initialRicochetRemaining,
+      iconExists: scene.textures.exists('upgrade-icon-ricochet'),
       cardArtReady: scene.__upgradeCardArtReady === true,
+      afterRedirect,
       enemyHp: enemies.map((enemy: any) => enemy.hp),
       bulletActive: bullet.active ?? false,
-      hitCount: bullet.hitEnemies?.size ?? 0,
-      pierceRemaining: bullet.pierceRemaining ?? null
+      hitCount: bullet.hitEnemies?.size ?? 0
     };
   });
 
-  expect(setup.choiceIds).toEqual(['piercing-rivets']);
-  expect(setup.artKey).toBe('upgrade-icon-piercing-rivets');
-  expect(setup.iconExists).toBe(true);
-  expect(setup.cardArtReady).toBe(true);
-  expect(setup.level).toBe(1);
-  expect(setup.pierceCount).toBe(1);
-  expect(setup.initialPierceRemaining).toBe(1);
-  expect(setup.enemyHp).toEqual([76, 76]);
-  expect(setup.bulletActive).toBe(false);
-  expect(setup.hitCount).toBe(2);
-  expect(setup.pierceRemaining).toBe(0);
+  expect(result.choiceIds).toEqual(['ricochet']);
+  expect(result.artKey).toBe('upgrade-icon-ricochet');
+  expect(result.iconExists).toBe(true);
+  expect(result.cardArtReady).toBe(true);
+  expect(result.level).toBe(1);
+  expect(result.ricochetCount).toBe(1);
+  expect(result.initialRicochetRemaining).toBe(1);
+  expect(result.afterRedirect.active).toBe(true);
+  expect(result.afterRedirect.ricochetRemaining).toBe(0);
+  expect(result.afterRedirect.hitCount).toBe(1);
+  expect(Math.abs(result.afterRedirect.vy)).toBeGreaterThan(1);
+  expect(result.enemyHp).toEqual([76, 76]);
+  expect(result.bulletActive).toBe(false);
+  expect(result.hitCount).toBe(2);
 });

@@ -53,7 +53,11 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
   expect(result.cards.map((card: any) => card.rarity)).toEqual(result.choiceRarities);
   expect(result.cards).toHaveLength(3);
   for (const card of result.cards) {
-    const expectedTexture = card.id === 'piercing-rivets' ? 'upgrade-icon-piercing-rivets' : 'c3-atlas';
+    const expectedTexture = card.id === 'piercing-rivets'
+      ? 'upgrade-icon-piercing-rivets'
+      : card.id === 'ricochet'
+        ? 'upgrade-icon-ricochet'
+        : 'c3-atlas';
     expect(card.texture).toBe(expectedTexture);
     expect(card.frameWidth).toBeGreaterThanOrEqual(70);
     expect(card.frameHeight).toBeGreaterThanOrEqual(60);

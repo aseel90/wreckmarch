@@ -1,5 +1,5 @@
 /* WRECKMARCH — authoritative live combat boundary */
-import { EnemyCombatSystem } from './enemy-combat-system.js?v=5';
+import { EnemyCombatSystem } from './enemy-combat-system.js?v=6';
 import { PlayerDamageSystem } from './player-damage-system.js?v=2';
 
 export class CombatSystem {
@@ -46,7 +46,11 @@ export class CombatSystem {
   }
 
   hitEnemyByProjectile(bullet, enemy) {
-    return this.enemy.hitByProjectile(bullet, enemy);
+    const hadPierce = Math.max(0, Math.floor(Number(bullet?.pierceRemaining) || 0)) > 0;
+    const result = this.enemy.hitByProjectile(bullet, enemy);
+    const canRicochet = !hadPierce && result && bullet?.active && Math.max(0, Math.floor(Number(bullet.ricochetRemaining) || 0)) > 0;
+    if (canRicochet) bullet.ricochetPending = { x: Number(enemy?.x) || 0, y: Number(enemy?.y) || 0 };
+    return result;
   }
 
   killEnemy(enemy) {

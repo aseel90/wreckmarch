@@ -1,5 +1,6 @@
 export const UPGRADE_CARD_ART_TEXTURES = Object.freeze({
-  'piercing-rivets': 'upgrade-icon-piercing-rivets'
+  'piercing-rivets': 'upgrade-icon-piercing-rivets',
+  'ricochet': 'upgrade-icon-ricochet'
 });
 
 function buildPiercingRivetsIcon(scene) {
@@ -37,9 +38,35 @@ function buildPiercingRivetsIcon(scene) {
   return textureKey;
 }
 
+function buildRicochetIcon(scene) {
+  const textureKey = UPGRADE_CARD_ART_TEXTURES.ricochet;
+  if (scene.textures.exists(textureKey)) return textureKey;
+
+  const g = scene.make.graphics({ add: false });
+  g.fillStyle(0x11181d, 1).fillRoundedRect(18, 18, 92, 76, 12);
+  g.lineStyle(4, 0x4c5960, 1).strokeRoundedRect(18, 18, 92, 76, 12);
+  g.fillStyle(0x39434a, 1).fillCircle(35, 39, 12).fillCircle(91, 73, 12);
+  g.lineStyle(5, 0xc56d35, 1).lineBetween(8, 78, 53, 54);
+  g.lineStyle(3, 0xffd07a, 1).lineBetween(11, 75, 54, 52);
+  g.fillStyle(0xf4c66f, 1).fillTriangle(50, 45, 63, 50, 55, 61);
+  g.lineStyle(5, 0x55d8e5, .96);
+  g.beginPath();
+  g.moveTo(58, 52);
+  g.lineTo(85, 33);
+  g.lineTo(106, 48);
+  g.strokePath();
+  g.fillStyle(0xbff8ff, 1).fillTriangle(101, 42, 118, 51, 101, 58);
+  g.lineStyle(3, 0xe9a24e, .9).lineBetween(82, 29, 88, 17).lineBetween(91, 31, 103, 24);
+  g.fillStyle(0xf0b84a, 1).fillCircle(55, 52, 4).fillCircle(87, 34, 3).fillCircle(105, 49, 3);
+  g.generateTexture(textureKey, 128, 112);
+  g.destroy();
+  return textureKey;
+}
+
 export function installUpgradeCardArt(scene) {
   if (!scene?.textures || !scene?.make?.graphics) throw new TypeError('Upgrade card art requires a Phaser scene');
   buildPiercingRivetsIcon(scene);
+  buildRicochetIcon(scene);
   scene.__upgradeCardArtReady = true;
   return scene;
 }
