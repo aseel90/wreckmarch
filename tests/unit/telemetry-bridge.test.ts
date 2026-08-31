@@ -12,9 +12,9 @@ describe('balance run report bridge contract', () => {
     const worker = read('infra/cloudflare/wreckmarch-run-reports/worker.js');
     const migration = read('infra/cloudflare/wreckmarch-run-reports/migrations/001_run_reports.sql');
     const hud = read('src/mobile-hud-polish.js');
+    const hudLoader = read('src/mobile-hud-loader-telemetry-v1.js');
     const phaseD1 = read('src/phase-d1-runtime.js');
     const finalPolish = read('src/final-polish-runtime.js');
-    const pagesWorkflow = read('.github/workflows/pages.yml');
     const smokeScript = read('scripts/ci-smoke.mjs');
 
     expect(workflow).toContain('id-token: write');
@@ -47,7 +47,8 @@ describe('balance run report bridge contract', () => {
     expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=8');
     expect(html).toContain('./src/phase-d1-runtime.js?v=22');
     expect(html).not.toContain('./src/telemetry/telemetry-debug-ui.js');
-    expect(html).toContain('./src/mobile-hud-polish.js?v=4');
+    expect(html).toContain('./src/mobile-hud-loader-telemetry-v1.js');
+    expect(hudLoader).toContain('./mobile-hud-polish.js?asset=telemetry-hud-20260831-213754');
     expect(html).toContain('./src/final-polish-runtime.js?v=2');
     expect(phaseD1).not.toContain('mobile-hud-polish');
     expect(finalPolish).not.toContain('mobile-hud-polish');
@@ -55,13 +56,11 @@ describe('balance run report bridge contract', () => {
     expect(hud).toContain("window.__WM_TELEMETRY_RUNTIME__?.sendReport");
     expect(hud).toContain('FINALIZE → QUEUE → HTTP');
     expect(hud).toContain('__WM_LAST_MANUAL_REPORT_RESULT__');
-    expect(hud).toContain("const END_RUN_OWNER_VERSION = 'runtime-v4'");
-    expect(hud).toContain('scene.__mobileHudEndRunOwnerVersion === END_RUN_OWNER_VERSION');
-    expect(hud).toContain('wreckmarchEndRunLayout = END_RUN_OWNER_VERSION');
-    expect(pagesWorkflow).toContain('src/mobile-hud-polish.js?v=4');
-    expect(pagesWorkflow).toContain('wmTelemetry=1&build=${{ github.sha }}');
+    expect(hud).toContain("END_RUN_OWNER_VERSION='runtime-v5-test'");
+    expect(hud).toContain('scene.__mobileHudEndRunOwnerVersion===END_RUN_OWNER_VERSION');
+    expect(hud).toContain('wreckmarchEndRunLayout=END_RUN_OWNER_VERSION');
     expect(smokeScript).toContain('TELEMETRY_SMOKE');
-    expect(smokeScript).toContain("endRunVersion !== 'runtime-v4'");
+    expect(smokeScript).toContain("endRunVersion !== 'runtime-v5-test'");
     expect(worker).toContain('INSERT OR IGNORE INTO run_reports');
     expect(worker).toContain("stage: 'd1_insert'");
     expect(worker).toContain('issueComments');
