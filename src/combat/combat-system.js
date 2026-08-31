@@ -47,7 +47,26 @@ export class CombatSystem {
 
   hitEnemyByProjectile(bullet, enemy) {
     const hadPierce = Math.max(0, Math.floor(Number(bullet?.pierceRemaining) || 0)) > 0;
+    const shrapnelCount = bullet?.isSecondaryProjectile ? 0 : Math.max(0, Math.floor(Number(bullet?.shrapnelCount) || 0));
+    const velocityX = Number(bullet?.body?.velocity?.x) || 0;
+    const velocityY = Number(bullet?.body?.velocity?.y) || 0;
+    const shrapnelContext = shrapnelCount > 0 ? {
+      x: Number(enemy?.x) || 0,
+      y: Number(enemy?.y) || 0,
+      angle: Math.atan2(velocityY, velocityX),
+      speed: Math.hypot(velocityX, velocityY),
+      damage: Number(bullet?.damage) || Number(this.scene.damage) || 0,
+      count: shrapnelCount,
+      texture: bullet?.texture?.key || 'bullet'
+    } : null;
+
     const result = this.enemy.hitByProjectile(bullet, enemy);
+    if (result && shrapnelContext) {
+      this.scene.projectileSystem?.spawnImpactShrapnel?.({
+        ...shrapnelContext,
+        excludedEnemies: bullet?.hitEnemies instanceof Set ? bullet.hitEnemies : []
+      });
+    }
     const canRicochet = !hadPierce && result && bullet?.active && Math.max(0, Math.floor(Number(bullet.ricochetRemaining) || 0)) > 0;
     if (canRicochet) bullet.ricochetPending = { x: Number(enemy?.x) || 0, y: Number(enemy?.y) || 0 };
     return result;
