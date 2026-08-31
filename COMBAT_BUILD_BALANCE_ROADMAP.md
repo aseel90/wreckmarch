@@ -133,7 +133,8 @@ The report must be machine-readable (for example JSON) and accessible to Playwri
 - The game records locally during play and sends one finalized run summary at the end, rather than streaming per-shot/per-hit events remotely.
 - Submission failure must not affect gameplay or destroy the local report; failed reports remain locally recoverable for retry/debugging.
 - Remote submission uses an isolated Wreckmarch telemetry endpoint/provider. No GitHub credential may ship in the game client.
-- The intended first remote transport is an isolated Cloudflare Worker that forwards validated finalized reports to GitHub, without modifying unrelated Cloudflare Workers/Pages/DNS projects.
+- Remote submission is opt-in for balance-test sessions (`?wmTelemetry=1` or an explicit runtime override); ordinary public visits remain local/CI-only and do not generate GitHub run-report traffic.
+- The remote transport is the isolated `wreckmarch-run-reports` Cloudflare Worker + D1. GitHub Issue forwarding uses a GitHub Actions OIDC bridge with built-in `GITHUB_TOKEN`, so no user PAT is required in the game or Worker.
 
 ## 1.6 Deterministic balance scenarios
 
@@ -177,8 +178,8 @@ These observations complement telemetry; they do not replace it.
 - [x] Add projectile/mechanical counters. — **Status:** ✅ IMPLEMENTED
 - [x] Add browser-appropriate performance metrics. — **Status:** ✅ IMPLEMENTED
 - [x] Expose a machine-readable run report to Playwright/CI. — **Status:** ✅ IMPLEMENTED — `__WM_TELEMETRY__`, `__WM_TELEMETRY_RUNTIME__`, `__WM_LAST_RUN_REPORT__`
-- [x] Implement automatic end-of-run/death submission with server-assigned sequential `RUN-####` labels and local failure recovery. — **Status:** ✅ IMPLEMENTED THROUGH CLOUDFLARE/D1; GitHub Issue forwarding credential remains a deployment follow-up and does not block report preservation
-- [ ] Configure secure Worker → GitHub Issue forwarding credential and verify one real Issue is created. — **Status:** 🔵 IN PROGRESS — reports are already preserved as `pending_github` when forwarding is unavailable
+- [x] Implement automatic end-of-run/death submission with server-assigned sequential `RUN-####` labels and local failure recovery. — **Status:** ✅ IMPLEMENTED THROUGH CLOUDFLARE/D1
+- [ ] Verify secure OIDC Worker → GitHub Issue bridge on `main` and one real `RUN-####` Issue. — **Status:** 🔵 IN PROGRESS — no PAT required
 - [ ] Implement the initial deterministic balance-scenario suite. — **Status:** ⚪ NOT IMPLEMENTED
 - [x] Verify the telemetry change does not alter current gameplay/balance values. — **Status:** ✅ VERIFIED — PR #118 Quality/Smoke/E2E all passed; no card/enemy/wave/damage values changed
 - [x] Verify no Firebase/external analytics dependency is required. — **Status:** ✅ VERIFIED
@@ -249,7 +250,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 
 | # | Workstream | Current status | Gate / intent |
 |---:|---|---|---|
-| 1 | Baseline Metrics & automated run telemetry | 🔵 IN PROGRESS | Core telemetry is live; first real baseline runs + deterministic scenario suite remain before balance changes |
+| 1 | Baseline Metrics & automated run telemetry | 🔵 IN PROGRESS | Core telemetry is live; secure OIDC bridge verification, first real baseline runs + deterministic scenario suite remain before balance changes |
 | 2 | Multi-axis Power Budget | ✅ APPROVED DESIGN / ⚪ NUMBERS PENDING | Derive numeric envelopes only after baseline data |
 | 3 | Heavy Rivets rebalance | ⚪ PENDING BASELINE | Remove unintended exponential/hidden multiplication while preserving heavy-hit identity |
 | 4 | Overclock rebalance | ⚪ PENDING BASELINE | Rework fire-delay stacking into a readable fire-rate budget |
