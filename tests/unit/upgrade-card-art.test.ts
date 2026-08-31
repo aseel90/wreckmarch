@@ -9,6 +9,7 @@ describe('canonical Upgrade System card art', () => {
     expect(UPGRADE_CARD_ART_TEXTURES['piercing-rivets']).toBe('upgrade-icon-piercing-rivets');
     expect(UPGRADE_CARD_ART_TEXTURES.ricochet).toBe('upgrade-icon-ricochet');
     expect(UPGRADE_CARD_ART_TEXTURES['shrapnel-impact']).toBe('upgrade-icon-shrapnel-impact');
+    expect(UPGRADE_CARD_ART_TEXTURES['critical-rivet']).toBe('upgrade-icon-critical-rivet');
   });
 
   it('routes custom card art through the final D1 card owner without a runtime wrapper', () => {
@@ -16,14 +17,15 @@ describe('canonical Upgrade System card art', () => {
     const art = read('src/upgrades/upgrade-card-art.js');
     const html = read('index.html');
 
-    expect(d1).toContain("import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrades/upgrade-card-art.js?v=3'");
+    expect(d1).toContain("import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrades/upgrade-card-art.js?v=4'");
     expect(d1).toContain('installUpgradeCardArt(s);installPremiumCards(s)');
     expect(d1).toContain('const customArtTexture=getUpgradeCardArtTexture(this,u.id)');
     expect(art).toContain("'piercing-rivets': 'upgrade-icon-piercing-rivets'");
     expect(art).toContain("'ricochet': 'upgrade-icon-ricochet'");
     expect(art).toContain("'shrapnel-impact': 'upgrade-icon-shrapnel-impact'");
+    expect(art).toContain("'critical-rivet': 'upgrade-icon-critical-rivet'");
     expect(art).not.toContain('UpgradeSceneV4.card');
-    expect(html).toContain("./src/phase-d1-runtime.js?v=19");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=20");
     expect(html).not.toContain('piercing-rivets-live.js');
   });
 });

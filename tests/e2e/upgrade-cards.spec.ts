@@ -59,7 +59,9 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
         ? 'upgrade-icon-ricochet'
         : card.id === 'shrapnel-impact'
           ? 'upgrade-icon-shrapnel-impact'
-          : 'c3-atlas';
+          : card.id === 'critical-rivet'
+            ? 'upgrade-icon-critical-rivet'
+            : 'c3-atlas';
     expect(card.texture).toBe(expectedTexture);
     expect(card.frameWidth).toBeGreaterThanOrEqual(70);
     expect(card.frameHeight).toBeGreaterThanOrEqual(60);
