@@ -9,9 +9,13 @@ describe('final presentation polish', () => {
   it('boots final polish after the production enemy visuals', () => {
     const html = read('index.html');
     const rat = html.indexOf("./src/enemies/scrap-rat-visuals.js");
-    const polish = html.indexOf("./src/final-polish-runtime.js");
+    const phaseD1 = html.indexOf("./src/phase-d1-runtime.js?v=22");
+    const hud = html.indexOf("./src/mobile-hud-polish.js?v=4");
+    const polish = html.indexOf("./src/final-polish-runtime.js?v=2");
     expect(rat).toBeGreaterThan(-1);
-    expect(polish).toBeGreaterThan(rat);
+    expect(phaseD1).toBeGreaterThan(-1);
+    expect(hud).toBeGreaterThan(phaseD1);
+    expect(polish).toBeGreaterThan(hud);
     expect(html).toContain('<small id="boot-status">');
     expect(html).toContain("document.body.classList.toggle('debug-enabled',debug)");
   });
@@ -23,12 +27,16 @@ describe('final presentation polish', () => {
     expect(hud).toContain('safe-area-inset-bottom');
     expect(hud).toContain('clampJoystickOrigin');
     expect(hud).toContain("wreckmarchMobileHud = 'compact-v2'");
-    expect(hud).toContain("wreckmarchEndRunLayout = 'runtime-v3'");
+    expect(hud).toContain("const END_RUN_OWNER_VERSION = 'runtime-v4'");
+    expect(hud).toContain('wreckmarchEndRunLayout = END_RUN_OWNER_VERSION');
   });
 
   it('adds presentation feedback without changing balance or spawn rules', () => {
     const polish = read('src/final-polish-runtime.js');
+    const d1 = read('src/phase-d1-runtime.js');
     expect(polish).toContain("const VERSION = 'presentation-v1'");
+    expect(polish).not.toContain('mobile-hud-polish');
+    expect(d1).not.toContain('mobile-hud-polish');
     expect(polish).toContain('scene.spawnHitFx = function');
     expect(polish).toContain('scene.showBanner = function');
     expect(polish).toContain('scene.updateHUD = function');
