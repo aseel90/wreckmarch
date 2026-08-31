@@ -27,7 +27,8 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
       'fleet-feet': 99,
       'scrap-magnet': 99,
       'armor-plate': 99,
-      'call-rig': 99
+      'call-rig': 99,
+      'ricochet': 99
     });
 
     const originalRandom = Math.random;
