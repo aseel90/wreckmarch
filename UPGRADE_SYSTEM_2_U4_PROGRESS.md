@@ -79,7 +79,7 @@ Merged implementation: PR #111 from `u4-shrapnel-impact` → `main` as `440611c8
 - [x] After the production gate, Shrapnel Impact is marked DONE in the canonical roadmap.
 
 
-## Critical Rivet — IN PROGRESS (`u4-critical-rivet-v2`)
+## Critical Rivet — DONE (PR #115 / `3af77d101ba1288ee5b349adecf271594fdea2bc`)
 
 Current implementation values are provisional U4 test values, not locked U7 balance: +5% Crit Chance per level, max level 4, Runner critical-damage multiplier x1.5, and a declarative 35% hard chance cap.
 
@@ -96,13 +96,13 @@ Current implementation values are provisional U4 test values, not locked U7 bala
 - [x] Unit coverage added for definition/stat state and deterministic crit resolution/Support isolation.
 - [x] Deterministic Chromium E2E added for forced UpgradeSceneV4 offer, custom art, critical Hero damage, normal Hero damage and Support isolation.
 - [x] Existing forced-card E2Es explicitly max Critical Rivet so single-offer assumptions remain deterministic.
-- [ ] PR Quality passes.
-- [ ] PR Smoke passes.
-- [ ] PR E2E shards 1/3, 2/3, 3/3 pass.
-- [ ] Aggregate E2E passes.
-- [ ] Merge to `main`.
-- [ ] Production exact-SHA Live verification passes.
-- [ ] After the production gate, Critical Rivet is marked DONE in the canonical roadmap.
+- [x] PR Quality passes.
+- [x] PR Smoke passes.
+- [x] PR E2E shards 1/3, 2/3, 3/3 pass.
+- [x] Aggregate E2E passes.
+- [x] Merge to `main` — squash merge `3af77d101ba1288ee5b349adecf271594fdea2bc`.
+- [x] Production exact-SHA Live verification passes — iOS Live verification and Pages recovery both passed on `3af77d101ba1288ee5b349adecf271594fdea2bc`; no open `[CI] main is failing` or `[LIVE] deployed main smoke failed` issue remained after the production gate.
+- [x] After the production gate, Critical Rivet is marked DONE in the canonical roadmap.
 
 ## Future fixes / polish
 
