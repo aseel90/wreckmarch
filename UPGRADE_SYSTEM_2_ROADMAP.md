@@ -17,7 +17,7 @@ Every checklist item carries a current implementation state:
 - **🧭 ACTIVE POLICY** — an architectural rule currently enforced during development; it remains visible rather than being treated as a one-time feature.
 - **🧹 POST-MIGRATION** — cleanup that becomes actionable only after the replacement path is verified.
 
-> **Last status review:** 2026-08-30. Statuses describe the actual repository state on `main`; they do not count intention as completion.
+> **Last status review:** 2026-08-31. Statuses describe the actual repository state on `main`; they do not count intention as completion.
 
 ---
 
@@ -533,6 +533,8 @@ Rivets can redirect/bounce to a nearby valid enemy after impact.
 ### Shrapnel Impact
 Impact releases short-range damaging fragments or equivalent controlled secondary projectiles.
 
+**Implementation status:** ✅ DONE — PR #111, merged as `440611c87fdfae9ad36374700e6a5831afd49b7e`; exact-SHA iOS Live verification and Pages recovery passed, and no open Live Chromium or main CI failure remained after the production gate. Canonical `shrapnelCount`, ProjectileSystem-owned bounded secondary fragments, source-hit exclusion, recursion prevention, D1-owned card art and deterministic Chromium coverage are live.
+
 ### Critical Rivet
 Introduces/increases crit-oriented play.
 
@@ -556,7 +558,7 @@ Exact names, values, rarities and requirements require balance passes.
 - [x] Implement first new mechanical card. — **Status:** ✅ DONE — Piercing Rivets, PR #105 / `0b33898e66d0f9932330cd0cb53c7651596076e8`
 - [x] Implement Piercing Rivets. — **Status:** ✅ DONE — canonical weapon `pierceCount` + live projectile chain + dedicated card art; production exact-SHA verification passed
 - [x] Implement Ricochet. — **Status:** ✅ DONE — PR #109 / `6b499451bb5ff7fc29f184180d420db96fef88c6`; canonical ricochet behavior + dedicated card art; production exact-SHA verification passed
-- [ ] Implement Shrapnel Impact. — **Status:** ⚪ NOT STARTED
+- [x] Implement Shrapnel Impact. — **Status:** ✅ DONE — PR #111 / `440611c87fdfae9ad36374700e6a5831afd49b7e`; canonical bounded impact fragments + dedicated card art; production exact-SHA verification passed
 - [ ] Implement Critical Rivet + crit combat support. — **Status:** ⚪ NOT STARTED
 - [ ] Implement Explosive Rivet. — **Status:** ⚪ NOT STARTED
 - [ ] Implement advanced multishot progression. — **Status:** ⚪ NOT STARTED
@@ -1007,7 +1009,7 @@ Latest verified gameplay commit for the core: `89926f8`.
 
 ## Phase U4 — New Hunter build cards — **NEXT ACTIVE PHASE**
 - [ ] Finalize 10–12-card initial pool. — **Status:** 🟢 NEXT
-- [ ] Add mechanical projectile upgrades incrementally. — **Status:** 🔵 IN PROGRESS — Piercing Rivets + Ricochet complete; further U4 projectile cards remain
+- [ ] Add mechanical projectile upgrades incrementally. — **Status:** 🔵 IN PROGRESS — Piercing Rivets + Ricochet + Shrapnel Impact complete; further U4 projectile cards remain
 - [ ] Add crit only with combat integration/tests. — **Status:** ⚪ NOT STARTED
 - [ ] Verify at least 3 viable build identities. — **Status:** ⚪ NOT STARTED
 
@@ -1046,7 +1048,7 @@ Upgrade System 2.0 is complete only when:
 - [x] Runner remains visually and mechanically the correct character. — **Status:** ✅ CORE VERIFIED
 - [x] There is one canonical ownership path for touched character/weapon/upgrade/stat responsibilities. — **Status:** ✅ CORE VERIFIED
 - [x] Existing cards have been safely migrated. — **Status:** ✅ CORE VERIFIED
-- [ ] New cards create multiple real builds rather than only larger numbers. — **Status:** 🔵 U4 IN PROGRESS — Piercing Rivets + Ricochet add mechanical projectile branching; more U4 cards/build validation remain
+- [ ] New cards create multiple real builds rather than only larger numbers. — **Status:** 🔵 U4 IN PROGRESS — Piercing Rivets + Ricochet + Shrapnel Impact add mechanical projectile branching; more U4 cards/build validation remain
 - [ ] Rarity/levels/prerequisites work predictably for the **expanded** card pool. — **Status:** 🔵 CORE PARTIAL; U4 prerequisite/build validation remains
 - [ ] Stats shown to the player match actual combat in the planned build/run-stats UI. — **Status:** 🔵 debug/read-only data exists; player-facing panel remains
 - [ ] The expanded system remains performant and readable on mobile. — **Status:** ⚪ requires U4/U5 content/UI validation
