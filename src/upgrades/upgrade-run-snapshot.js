@@ -1,6 +1,6 @@
 import { STAT_MODIFIER_TYPES } from '../stats/stat-resolver.js';
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js?v=4';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=10';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=11';
 import { UPGRADE_MECHANICAL_EFFECT_IDS } from './upgrade-mechanical-effects.js?v=4';
 import { resolveUpgradeRarityForDefinition } from './upgrade-rarity.js?v=1';
 

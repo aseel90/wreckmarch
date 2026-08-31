@@ -6,6 +6,7 @@ import { TWIN_RIVETER_UPGRADE } from './definitions/twin-riveter.js?v=2';
 import { PIERCING_RIVETS_UPGRADE } from './definitions/piercing-rivets.js';
 import { RICOCHET_UPGRADE } from './definitions/ricochet.js';
 import { SHRAPNEL_IMPACT_UPGRADE } from './definitions/shrapnel-impact.js';
+import { CRITICAL_RIVET_UPGRADE } from './definitions/critical-rivet.js';
 import { FLEET_FEET_UPGRADE } from './definitions/fleet-feet.js';
 import { SCRAP_MAGNET_UPGRADE } from './definitions/scrap-magnet.js';
 import { ARMOR_PLATE_UPGRADE } from './definitions/armor-plate.js';
@@ -19,6 +20,7 @@ const DEFAULT_UPGRADE_REGISTRY = createUpgradeRegistry([
   PIERCING_RIVETS_UPGRADE,
   RICOCHET_UPGRADE,
   SHRAPNEL_IMPACT_UPGRADE,
+  CRITICAL_RIVET_UPGRADE,
   FLEET_FEET_UPGRADE,
   SCRAP_MAGNET_UPGRADE,
   ARMOR_PLATE_UPGRADE,
