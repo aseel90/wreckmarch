@@ -1,5 +1,5 @@
 /* WRECKMARCH — installs measurement-only telemetry without owning gameplay */
-import { installRunTelemetry } from './run-telemetry-gated.js?v=1';
+import { installRunTelemetry } from './run-telemetry.js?v=2';
 
 function getScene(game) {
   return game?.scene?.getScene?.('Wreckmarch') || null;
