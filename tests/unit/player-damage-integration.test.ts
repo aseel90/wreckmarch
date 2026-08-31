@@ -32,6 +32,14 @@ describe('live PlayerDamageSystem integration', () => {
     expect(scene.heroInvulnMs).toBe(450);
   });
 
+  it('finalizes telemetry at the lethal-damage boundary before endRun', () => {
+    const finalizeAt = playerDamage.indexOf("telemetry.finalize('RUNNER DOWN')");
+    const endRunAt = playerDamage.indexOf("scene.endRun('RUNNER DOWN')");
+    expect(finalizeAt).toBeGreaterThan(-1);
+    expect(endRunAt).toBeGreaterThan(finalizeAt);
+    expect(playerDamage).toContain('if (telemetry && !telemetry.finalized)');
+  });
+
   it('uses a brief detail-preserving hit tint instead of a solid red fill', () => {
     expect(playerDamage).toContain('const hitFlashColor = 0xff9a8c');
     expect(playerDamage).toContain('const hitFlashAlpha = .88');

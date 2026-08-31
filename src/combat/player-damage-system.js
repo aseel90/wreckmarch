@@ -77,7 +77,16 @@ export class PlayerDamageSystem {
       onComplete: () => damageText.destroy()
     });
 
-    if (result.killed) scene.endRun('RUNNER DOWN');
+    if (result.killed) {
+      // Finalize telemetry at the authoritative lethal-damage boundary before any game-over runtime can pause or replace endRun.
+      try {
+        const telemetry = scene.runTelemetry;
+        if (telemetry && !telemetry.finalized) telemetry.finalize('RUNNER DOWN');
+      } catch (error) {
+        globalThis.__WM_LOG__?.(`Run Telemetry lethal finalize failed: ${error?.message || error}`);
+      }
+      scene.endRun('RUNNER DOWN');
+    }
     return result;
   }
 }
