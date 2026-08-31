@@ -7,9 +7,11 @@ function getScene(game) {
 }
 
 export function installEndRunTelemetryHook(scene) {
-  if (!scene || typeof scene.endRun !== 'function' || scene.__wreckmarchTelemetryEndRunHook) return false;
+  if (!scene || typeof scene.endRun !== 'function') return false;
+  const previousHook = scene.__wreckmarchTelemetryEndRunHook;
+  if (previousHook?.wrapper === scene.endRun) return false;
   const originalEndRun = scene.endRun;
-  scene.endRun = function telemetryAwareEndRun(reason, ...args) {
+  const wrapper = function telemetryAwareEndRun(reason, ...args) {
     const telemetry = this.runTelemetry;
     if (telemetry && !telemetry.finalized) {
       try { telemetry.finalize(reason); }
@@ -17,7 +19,8 @@ export function installEndRunTelemetryHook(scene) {
     }
     return originalEndRun.call(this, reason, ...args);
   };
-  scene.__wreckmarchTelemetryEndRunHook = { originalEndRun };
+  scene.endRun = wrapper;
+  scene.__wreckmarchTelemetryEndRunHook = { originalEndRun, wrapper };
   return true;
 }
 
@@ -42,6 +45,7 @@ export function installTelemetryRuntime(game = globalThis.__WM_GAME__) {
       telemetry = installSceneTelemetry(scene);
       globalThis.__WM_LOG__?.(`Run Telemetry session: remote reporting ${telemetry.remoteReportingEnabled ? 'ENABLED' : 'disabled'}`);
     }
+    installEndRunTelemetryHook(scene);
     telemetry.update(Number.isFinite(Number(delta)) ? Number(delta) : Number(game.loop?.delta) || 0);
     if (scene.gameOver && !telemetry.finalized) telemetry.finalize();
   };

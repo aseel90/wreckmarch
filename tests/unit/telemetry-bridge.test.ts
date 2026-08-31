@@ -23,8 +23,11 @@ describe('balance run report bridge contract', () => {
     expect(provider).toContain('MAX_KEEPALIVE_BYTES');
     expect(provider).toContain('wreckmarch-telemetry-probe');
     expect(runtime).toContain("./run-report-provider.js?v=3");
-    expect(runtime).toContain('scene.endRun = function telemetryAwareEndRun');
+    expect(runtime).toContain('const wrapper = function telemetryAwareEndRun');
+    expect(runtime).toContain('scene.endRun = wrapper');
     expect(runtime).toContain('telemetry.finalize(reason)');
-    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=4');
+    expect(runtime).toContain('previousHook?.wrapper === scene.endRun');
+    expect(runtime).toContain('installEndRunTelemetryHook(scene);');
+    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=5');
   });
 });
