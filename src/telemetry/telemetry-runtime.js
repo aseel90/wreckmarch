@@ -6,10 +6,26 @@ function getScene(game) {
   return game?.scene?.getScene?.('Wreckmarch') || null;
 }
 
+export function installEndRunTelemetryHook(scene) {
+  if (!scene || typeof scene.endRun !== 'function' || scene.__wreckmarchTelemetryEndRunHook) return false;
+  const originalEndRun = scene.endRun;
+  scene.endRun = function telemetryAwareEndRun(reason, ...args) {
+    const telemetry = this.runTelemetry;
+    if (telemetry && !telemetry.finalized) {
+      try { telemetry.finalize(reason); }
+      catch (error) { globalThis.__WM_LOG__?.(`Run Telemetry finalize failed: ${error?.message || error}`); }
+    }
+    return originalEndRun.call(this, reason, ...args);
+  };
+  scene.__wreckmarchTelemetryEndRunHook = { originalEndRun };
+  return true;
+}
+
 function installSceneTelemetry(scene) {
   const remoteReportingEnabled = isRemoteRunReportingEnabled();
   const provider = remoteReportingEnabled && typeof globalThis.fetch === 'function' ? new RunReportProvider() : undefined;
   const telemetry = installRunTelemetry(scene, { remoteReportingEnabled, ...(provider ? { provider } : {}) });
+  installEndRunTelemetryHook(scene);
   if (provider) Promise.resolve(provider.probe()).catch(() => {});
   return telemetry;
 }
