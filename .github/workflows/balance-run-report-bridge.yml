@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/balance-run-report-bridge.yml'
+      - 'infra/cloudflare/wreckmarch-run-reports/**'
 
 permissions:
   contents: read
@@ -72,6 +73,31 @@ jobs:
                   core.info(`Created ${report.runId} as issue #${issue.number}`);
                 } else {
                   core.info(`Reusing existing issue #${issue.number} for ${report.runId}`);
+                }
+
+                const expectedComments = Array.isArray(report.issueComments) ? report.issueComments : [];
+                if (expectedComments.length > 0) {
+                  const existingComments = await github.paginate(github.rest.issues.listComments, {
+                    owner,
+                    repo,
+                    issue_number: issue.number,
+                    per_page: 100
+                  });
+                  const existingBodies = existingComments.map(comment => String(comment.body || ''));
+                  for (const body of expectedComments) {
+                    const marker = String(body).split('\n', 1)[0];
+                    if (marker && existingBodies.some(existing => existing.includes(marker))) {
+                      core.info(`Reusing telemetry chunk ${marker}`);
+                      continue;
+                    }
+                    await github.rest.issues.createComment({
+                      owner,
+                      repo,
+                      issue_number: issue.number,
+                      body
+                    });
+                    existingBodies.push(String(body));
+                  }
                 }
 
                 const ackResponse = await fetch(`${baseUrl}/bridge/ack`, {
