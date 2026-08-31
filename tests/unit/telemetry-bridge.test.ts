@@ -32,7 +32,9 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain('telemetry.finalize(reason)');
     expect(runtime).toContain('previousHook?.wrapper === scene.endRun');
     expect(runtime).toContain('installEndRunTelemetryHook(scene);');
-    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=5');
+    expect(runtime).toContain('game.__wreckmarchRunReportProvider');
+    expect(runtime).toContain('telemetry.provider = transport.provider');
+    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=6');
     expect(worker).toContain('INSERT OR IGNORE INTO run_reports');
     expect(worker).toContain("stage: 'd1_insert'");
     expect(worker).toContain('issueComments');
