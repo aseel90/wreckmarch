@@ -18,12 +18,7 @@ export class ProjectileSystem {
   /** @param {any} scene */
   constructor(scene) {
     this.scene = scene;
-    this.bounds = {
-      minX: -80,
-      maxX: 2280,
-      minY: -80,
-      maxY: 2280
-    };
+    this.bounds = { minX: -80, maxX: 2280, minY: -80, maxY: 2280 };
   }
 
   configureBounds(bounds = {}) {
@@ -31,27 +26,14 @@ export class ProjectileSystem {
     return this;
   }
 
-  spawn({
-    x,
-    y,
-    angle,
-    speed,
-    damage,
-    pierceCount = 0,
-    lifeMs,
-    scale = .74,
-    tint = null,
-    depth = 30,
-    radius = 8,
-    offsetX = 2,
-    offsetY = 2,
-    texture = 'bullet'
-  }) {
+  spawn({ x, y, angle, speed, damage, pierceCount = 0, ricochetCount = 0, ricochetRange = 360, lifeMs, scale = .74, tint = null, depth = 30, radius = 8, offsetX = 2, offsetY = 2, texture = 'bullet' }) {
     const bullet = this.scene.bullets.create(x, y, texture).setDepth(depth).setScale(scale);
     if (tint != null) bullet.setTint(tint);
     bullet.setCircle(radius, offsetX, offsetY);
     bullet.damage = damage;
     bullet.pierceRemaining = Math.max(0, Math.floor(Number(pierceCount) || 0));
+    bullet.ricochetRemaining = Math.max(0, Math.floor(Number(ricochetCount) || 0));
+    bullet.ricochetRange = Math.max(0, Number(ricochetRange) || 0);
     bullet.hitEnemies = new Set();
     bullet.life = lifeMs;
     bullet.prevX = x;
@@ -77,12 +59,44 @@ export class ProjectileSystem {
     return bestEnemy;
   }
 
+  findRicochetTarget(bullet, originEnemy) {
+    let bestEnemy = null;
+    let bestDistanceSq = Math.max(0, Number(bullet.ricochetRange) || 0) ** 2;
+    this.scene.enemies.children.iterate(enemy => {
+      if (!enemy?.active || enemy.hp <= 0 || enemy === originEnemy || bullet.hitEnemies?.has?.(enemy)) return;
+      const dx = enemy.x - originEnemy.x;
+      const dy = enemy.y - originEnemy.y;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq < bestDistanceSq) {
+        bestEnemy = enemy;
+        bestDistanceSq = distanceSq;
+      }
+    });
+    return bestEnemy;
+  }
+
+  redirectRicochet(bullet, originEnemy) {
+    const target = this.findRicochetTarget(bullet, originEnemy);
+    if (!target) {
+      bullet.destroy();
+      return false;
+    }
+    const speed = Math.hypot(Number(bullet.body?.velocity?.x) || 0, Number(bullet.body?.velocity?.y) || 0);
+    const angle = Math.atan2(target.y - originEnemy.y, target.x - originEnemy.x);
+    bullet.ricochetRemaining = Math.max(0, bullet.ricochetRemaining - 1);
+    bullet.setPosition?.(originEnemy.x, originEnemy.y);
+    if (bullet.body?.velocity?.setToPolar) bullet.body.velocity.setToPolar(angle, speed);
+    else bullet.setVelocity?.(Math.cos(angle) * speed, Math.sin(angle) * speed);
+    bullet.prevX = originEnemy.x;
+    bullet.prevY = originEnemy.y;
+    return true;
+  }
+
   update(delta) {
     const scene = this.scene;
     scene.bullets.children.iterate(bullet => {
       if (!bullet?.active) return;
       bullet.life -= delta;
-
       const x2 = bullet.x;
       const y2 = bullet.y;
       const x1 = Number.isFinite(bullet.prevX) ? bullet.prevX : x2;
@@ -93,19 +107,22 @@ export class ProjectileSystem {
           const enemy = this.findEarliestEnemyHit(bullet, x1, y1, x2, y2);
           if (!enemy) break;
           const beforeHits = bullet.hitEnemies?.size || 0;
+          const shouldRicochet = bullet.pierceRemaining <= 0 && bullet.ricochetRemaining > 0;
+          if (shouldRicochet) bullet.pierceRemaining = 1;
           hitEnemy.call(scene.combatSystem, bullet, enemy);
           const afterHits = bullet.hitEnemies?.size || 0;
+          if (shouldRicochet && bullet.active) {
+            this.redirectRicochet(bullet, enemy);
+            break;
+          }
           if (bullet.active && afterHits <= beforeHits) break;
         }
       }
       if (!bullet.active) return;
-
-      bullet.prevX = x2;
-      bullet.prevY = y2;
+      bullet.prevX = bullet.x;
+      bullet.prevY = bullet.y;
       const b = this.bounds;
-      if (bullet.life <= 0 || bullet.x < b.minX || bullet.x > b.maxX || bullet.y < b.minY || bullet.y > b.maxY) {
-        bullet.destroy();
-      }
+      if (bullet.life <= 0 || bullet.x < b.minX || bullet.x > b.maxX || bullet.y < b.minY || bullet.y > b.maxY) bullet.destroy();
     });
   }
 }
