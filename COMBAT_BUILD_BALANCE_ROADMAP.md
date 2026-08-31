@@ -126,6 +126,15 @@ Do **not** send one remote analytics event for every projectile, hit, ricochet, 
 
 The report must be machine-readable (for example JSON) and accessible to Playwright/CI without scraping visible UI text.
 
+## 1.5A Automatic run submission
+
+- Balance-test runs submit their finalized report automatically when the run ends normally or the player dies; no manual submit button is required.
+- Each accepted remote report receives a stable sequential display label such as `RUN-0001`, `RUN-0002`, `RUN-0003`, generated server-side to avoid client-side collisions.
+- The game records locally during play and sends one finalized run summary at the end, rather than streaming per-shot/per-hit events remotely.
+- Submission failure must not affect gameplay or destroy the local report; failed reports remain locally recoverable for retry/debugging.
+- Remote submission uses an isolated Wreckmarch telemetry endpoint/provider. No GitHub credential may ship in the game client.
+- The intended first remote transport is an isolated Cloudflare Worker that forwards validated finalized reports to GitHub, without modifying unrelated Cloudflare Workers/Pages/DNS projects.
+
 ## 1.6 Deterministic balance scenarios
 
 Balance comparisons must not depend on a lucky random run. Use controlled RNG/seed and controlled upgrade acquisition so the same scenario can be replayed before and after a balance change.
@@ -168,6 +177,7 @@ These observations complement telemetry; they do not replace it.
 - [ ] Add projectile/mechanical counters. — **Status:** ⚪ NOT IMPLEMENTED
 - [ ] Add browser-appropriate performance metrics. — **Status:** ⚪ NOT IMPLEMENTED
 - [ ] Expose a machine-readable run report to deterministic Playwright scenarios. — **Status:** ⚪ NOT IMPLEMENTED
+- [ ] Implement automatic end-of-run/death submission with server-assigned sequential `RUN-####` labels and local failure recovery. — **Status:** ⚪ NOT IMPLEMENTED
 - [ ] Implement the initial deterministic balance-scenario suite. — **Status:** ⚪ NOT IMPLEMENTED
 - [ ] Verify normal gameplay remains unchanged when telemetry is disabled/no-op. — **Status:** ⚪ NOT IMPLEMENTED
 - [ ] Verify no Firebase/external analytics dependency is required. — **Status:** ⚪ NOT IMPLEMENTED
