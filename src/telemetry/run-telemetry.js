@@ -1,5 +1,5 @@
 /* WRECKMARCH — canonical measurement-only run telemetry owner */
-import { NoopRunReportProvider, RunReportProvider } from './run-report-provider.js?v=1';
+import { isRemoteRunReportingEnabled, NoopRunReportProvider, RunReportProvider } from './run-report-provider.js?v=2';
 
 const LONG_FRAME_MS = 33.34;
 const MAX_FRAME_SPIKE_SAMPLES = 32;
@@ -243,10 +243,17 @@ export class RunTelemetry {
 export function installRunTelemetry(scene, options = {}) {
   if (!scene) throw new TypeError('RunTelemetry requires a scene');
   if (scene.runTelemetry && !scene.runTelemetry.finalized) return scene.runTelemetry;
-  const provider = options.provider || (typeof globalThis.fetch === 'function' ? new RunReportProvider(options.providerOptions) : new NoopRunReportProvider());
+  const remoteReportingEnabled = options.remoteReportingEnabled ?? isRemoteRunReportingEnabled(options.remoteReportingOptions);
+  const provider = options.provider || (remoteReportingEnabled && typeof globalThis.fetch === 'function'
+    ? new RunReportProvider(options.providerOptions)
+    : new NoopRunReportProvider());
   const telemetry = new RunTelemetry(scene, { ...options, provider });
+  telemetry.remoteReportingEnabled = remoteReportingEnabled;
   scene.runTelemetry = telemetry;
-  try { globalThis.__WM_TELEMETRY__ = telemetry; } catch {}
+  try {
+    globalThis.__WM_TELEMETRY__ = telemetry;
+    globalThis.__WM_TELEMETRY_REMOTE_ENABLED__ = remoteReportingEnabled;
+  } catch {}
   Promise.resolve(provider.flushPending?.()).catch(() => {});
   return telemetry;
 }

@@ -1,0 +1,98 @@
+name: Balance Run Report Bridge
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/balance-run-report-bridge.yml'
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+concurrency:
+  group: balance-run-report-bridge
+  cancel-in-progress: false
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Forward pending Wreckmarch run reports
+        uses: actions/github-script@v7
+        env:
+          REPORT_BRIDGE_URL: https://wreckmarch-run-reports.salahaseel82.workers.dev
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const baseUrl = process.env.REPORT_BRIDGE_URL;
+            const token = await core.getIDToken('wreckmarch-run-reports');
+            core.setSecret(token);
+            const headers = {
+              authorization: `Bearer ${token}`,
+              'content-type': 'application/json'
+            };
+
+            const pendingResponse = await fetch(`${baseUrl}/bridge/pending`, {
+              method: 'POST',
+              headers,
+              body: '{}'
+            });
+            const pendingPayload = await pendingResponse.json().catch(() => ({}));
+            if (!pendingResponse.ok) {
+              core.setFailed(`Telemetry bridge fetch failed (${pendingResponse.status}): ${JSON.stringify(pendingPayload)}`);
+              return;
+            }
+
+            const reports = Array.isArray(pendingPayload.reports) ? pendingPayload.reports : [];
+            core.info(`Pending Wreckmarch run reports: ${reports.length}`);
+            let failures = 0;
+
+            for (const report of reports) {
+              try {
+                const search = await github.rest.search.issuesAndPullRequests({
+                  q: `repo:${owner}/${repo} is:issue in:title "${report.runId}"`,
+                  per_page: 20
+                });
+                let issue = search.data.items.find(item => item.title === report.issueTitle);
+
+                if (!issue) {
+                  const created = await github.rest.issues.create({
+                    owner,
+                    repo,
+                    title: report.issueTitle,
+                    body: report.issueBody
+                  });
+                  issue = created.data;
+                  core.info(`Created ${report.runId} as issue #${issue.number}`);
+                } else {
+                  core.info(`Reusing existing issue #${issue.number} for ${report.runId}`);
+                }
+
+                const ackResponse = await fetch(`${baseUrl}/bridge/ack`, {
+                  method: 'POST',
+                  headers,
+                  body: JSON.stringify({
+                    reportId: report.reportId,
+                    issueNumber: issue.number,
+                    issueUrl: issue.html_url
+                  })
+                });
+                if (!ackResponse.ok) throw new Error(`ack failed (${ackResponse.status})`);
+              } catch (error) {
+                failures += 1;
+                core.warning(`${report.runId}: ${error?.stack || error}`);
+                await fetch(`${baseUrl}/bridge/error`, {
+                  method: 'POST',
+                  headers,
+                  body: JSON.stringify({ reportId: report.reportId, error: String(error?.message || error) })
+                }).catch(() => {});
+              }
+            }
+
+            if (failures > 0) core.setFailed(`${failures} run report(s) failed to bridge.`);
