@@ -2,9 +2,9 @@
 import { EnemyFactory } from './enemy-factory.js?v=6';
 import { SpawnSystem } from './spawn-system.js?v=1';
 import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=6';
-import { CombatSystem } from '../combat/combat-system.js?v=6';
-import { ProjectileSystem } from '../combat/projectile-system.js?v=2';
-import { WeaponSystem } from '../combat/weapon-system.js?v=3';
+import { CombatSystem } from '../combat/combat-system.js?v=7';
+import { ProjectileSystem } from '../combat/projectile-system.js?v=3';
+import { WeaponSystem } from '../combat/weapon-system.js?v=4';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
