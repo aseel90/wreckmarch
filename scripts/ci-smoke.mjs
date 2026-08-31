@@ -1,6 +1,7 @@
 import { chromium } from '@playwright/test';
 
 const URL = process.env.WM_SMOKE_URL || 'http://127.0.0.1:4173/?autotest=1&debug=1';
+const TELEMETRY_SMOKE = /(?:[?&])wmTelemetry=1(?:&|$)/.test(URL);
 const CHROME = process.env.WM_CHROME_PATH || null;
 
 const launchOptions = {
@@ -21,6 +22,24 @@ try {
   });
   page.on('pageerror', error => browserEvents.push(`pageerror: ${error?.stack || error}`));
   page.on('requestfailed', request => browserEvents.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
+
+  if (TELEMETRY_SMOKE) {
+    await page.addInitScript(() => {
+      const nativeFetch = globalThis.fetch.bind(globalThis);
+      globalThis.fetch = (input, init) => {
+        const url = typeof input === 'string' ? input : input?.url || String(input);
+        if (url.startsWith('https://wreckmarch-run-reports.salahaseel82.workers.dev/') ||
+            url.startsWith('https://wreckmarch-telemetry-probe.salahaseel82.workers.dev/')) {
+          return Promise.resolve(new Response(JSON.stringify({ ok: true, accepted: true, submitted: true }), {
+            status: 202,
+            headers: { 'content-type': 'application/json' }
+          }));
+        }
+        return nativeFetch(input, init);
+      };
+    });
+  }
+
   await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 15_000 });
 
   const readState = () => page.evaluate(() => {
@@ -69,10 +88,57 @@ try {
   }, { timeout: 30_000 });
 
   const state = await readState();
+
+  let telemetryState = null;
+  if (TELEMETRY_SMOKE) {
+    telemetryState = await page.evaluate(async () => {
+      const game = window.__WM_GAME__;
+      const scene = game?.scene?.getScene?.('Wreckmarch');
+      if (!scene?.sys?.isActive?.()) throw new Error('telemetry live smoke scene unavailable');
+      scene.spawnEvent && (scene.spawnEvent.paused = true);
+      scene.waveEvent && (scene.waveEvent.paused = true);
+      scene.enemies?.clear?.(true, true);
+
+      scene.endRun('LIVE TELEMETRY SMOKE');
+      await new Promise(resolve => setTimeout(resolve, 80));
+
+      const layout = window.__WM_END_RUN_LAYOUT__;
+      const before = {
+        endRunVersion: document.documentElement.dataset.wreckmarchEndRunLayout || null,
+        ownerVersion: scene.__mobileHudEndRunOwnerVersion || null,
+        buttonActive: layout?.reportBtn?.active === true,
+        buttonVisible: layout?.reportBtn?.visible === true,
+        label: layout?.reportLabel?.text || null,
+        status: layout?.reportStatus?.text || null
+      };
+
+      if (!before.buttonActive || !before.buttonVisible || before.label !== 'SEND REPORT') {
+        throw new Error(`live SEND REPORT control missing: ${JSON.stringify(before)}`);
+      }
+      if (before.endRunVersion !== 'runtime-v4' || before.ownerVersion !== 'runtime-v4') {
+        throw new Error(`stale end-run owner: ${JSON.stringify(before)}`);
+      }
+
+      layout.reportBtn.emit('pointerdown');
+      await new Promise(resolve => setTimeout(resolve, 120));
+
+      return {
+        before,
+        label: layout?.reportLabel?.text || null,
+        status: layout?.reportStatus?.text || null,
+        manualState: document.documentElement.dataset.wreckmarchManualReport || null
+      };
+    });
+
+    if (telemetryState.label !== 'REPORT SENT' || telemetryState.manualState !== 'sent') {
+      throw new Error(`live manual telemetry send failed: ${JSON.stringify(telemetryState)}`);
+    }
+  }
+
   if (browserEvents.length) {
     throw new Error(`Browser emitted ${browserEvents.length} error event(s):\n${browserEvents.slice(-40).join('\n')}`);
   }
-  console.log(JSON.stringify({ ok: true, url: URL, state, browserEvents }, null, 2));
+  console.log(JSON.stringify({ ok: true, url: URL, state, telemetryState, browserEvents }, null, 2));
 } catch (error) {
   console.error(error?.stack || String(error));
   try {
