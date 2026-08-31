@@ -12,7 +12,7 @@ describe('balance run report bridge contract', () => {
     expect(workflow).toContain('id-token: write');
     expect(workflow).toContain('issues: write');
     expect(workflow).toContain("core.getIDToken('wreckmarch-run-reports')");
-    expect(workflow).toContain("cron: '17 * * * *'");
+    expect(workflow).toContain("cron: '*/5 * * * *'");
     expect(workflow).toContain('/bridge/pending');
     expect(workflow).toContain('/bridge/ack');
     expect(provider).toContain("wmTelemetry') === '1'");

@@ -2,7 +2,7 @@ name: Balance Run Report Bridge
 
 on:
   schedule:
-    - cron: '17 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
