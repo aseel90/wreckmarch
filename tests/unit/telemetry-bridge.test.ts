@@ -11,7 +11,8 @@ describe('balance run report bridge contract', () => {
     const html = read('index.html');
     const worker = read('infra/cloudflare/wreckmarch-run-reports/worker.js');
     const migration = read('infra/cloudflare/wreckmarch-run-reports/migrations/001_run_reports.sql');
-    const debugUi = read('src/telemetry/telemetry-debug-ui.js');
+    const hud = read('src/mobile-hud-polish.js');
+    const phaseD1 = read('src/phase-d1-runtime.js');
 
     expect(workflow).toContain('id-token: write');
     expect(workflow).toContain('issues: write');
@@ -40,12 +41,15 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain('await provider.submit(report)');
     expect(runtime).toContain("manualReportFailure('finalize'");
     expect(runtime).toContain("manualReportFailure('transport'");
-    expect(debugUi).toContain("'SEND REPORT'");
-    expect(debugUi).toContain("'Telemetry debug ready'");
-    expect(debugUi).toContain('FINALIZE → QUEUE → HTTP');
-    expect(debugUi).toContain('__WM_LAST_MANUAL_REPORT_RESULT__');
-    expect(html).toContain('./src/telemetry/telemetry-debug-ui.js?v=1');
     expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=8');
+    expect(html).toContain('./src/phase-d1-runtime.js?v=21');
+    expect(html).not.toContain('./src/telemetry/telemetry-debug-ui.js');
+    expect(phaseD1).toContain('./mobile-hud-polish.js?v=3');
+    expect(hud).toContain("'SEND REPORT'");
+    expect(hud).toContain("window.__WM_TELEMETRY_RUNTIME__?.sendReport");
+    expect(hud).toContain('FINALIZE → QUEUE → HTTP');
+    expect(hud).toContain('__WM_LAST_MANUAL_REPORT_RESULT__');
+    expect(hud).toContain("wreckmarchEndRunLayout = 'runtime-v3'");
     expect(worker).toContain('INSERT OR IGNORE INTO run_reports');
     expect(worker).toContain("stage: 'd1_insert'");
     expect(worker).toContain('issueComments');

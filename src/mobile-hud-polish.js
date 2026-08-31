@@ -206,8 +206,68 @@ function installOverlayStateOwnership(scene) {
       fontFamily: 'Arial Black, Arial', fontSize: '18px', color: '#171d26'
     }).setOrigin(.5).setDepth(6002).setScrollFactor(0).setName('run-end-button-label');
 
-    window.__WM_END_RUN_LAYOUT__ = { width: W, height: H, overlay, kicker, heading, summary, btn, buttonLabel };
-    document.documentElement.dataset.wreckmarchEndRunLayout = 'runtime-v2';
+    let reportBtn = null;
+    let reportLabel = null;
+    let reportStatus = null;
+    const telemetryTestMode = (() => {
+      try { return new URLSearchParams(window.location.search).get('wmTelemetry') === '1'; }
+      catch { return false; }
+    })();
+    if (telemetryTestMode) {
+      reportBtn = this.add.rectangle(W / 2, centerY + 142, 220, 42, 0x28333d, .98)
+        .setStrokeStyle(1.5, 0x69c8d5, .78)
+        .setDepth(6001).setScrollFactor(0).setName('run-end-report-button').setInteractive({ useHandCursor: true });
+      reportLabel = this.add.text(W / 2, centerY + 142, 'SEND REPORT', {
+        fontFamily: 'Arial Black, Arial', fontSize: '14px', color: '#d7f5f8'
+      }).setOrigin(.5).setDepth(6002).setScrollFactor(0).setName('run-end-report-button-label');
+      reportStatus = this.add.text(W / 2, centerY + 177, 'Telemetry: ready', {
+        fontFamily: 'Arial, sans-serif', fontSize: '10px', color: '#8f9ca8', align: 'center', wordWrap: { width: Math.max(280, W - 80) }
+      }).setOrigin(.5).setDepth(6002).setScrollFactor(0).setName('run-end-report-status');
+      reportBtn.on('pointerdown', async () => {
+        if (this.__manualReportSending) return;
+        this.__manualReportSending = true;
+        reportBtn.disableInteractive?.().setAlpha?.(.72);
+        reportLabel.setText('SENDING…');
+        reportStatus.setColor?.('#c7d0d8');
+        reportStatus.setText('Telemetry: FINALIZE → QUEUE → HTTP');
+        try {
+          const sendReport = window.__WM_TELEMETRY_RUNTIME__?.sendReport;
+          if (typeof sendReport !== 'function') throw new Error('telemetry sendReport unavailable');
+          const result = await sendReport(reason || 'MANUAL REPORT');
+          window.__WM_LAST_MANUAL_REPORT_RESULT__ = result;
+          if (result?.ok) {
+            reportLabel.setText('REPORT SENT');
+            reportStatus.setColor?.('#87d79b');
+            const http = result.httpStatus ? ` • HTTP ${result.httpStatus}` : '';
+            const bytes = result.bytes ? ` • ${result.bytes} B` : '';
+            reportStatus.setText(`SENT • ${result.reportId || 'report'}${http}${bytes}`);
+            document.documentElement.dataset.wreckmarchManualReport = 'sent';
+          } else {
+            reportLabel.setText('RETRY REPORT');
+            reportStatus.setColor?.('#f0a082');
+            const stage = String(result?.stage || 'unknown').toUpperCase();
+            const error = String(result?.error || 'send failed').replace(/\s+/g, ' ').slice(0, 88);
+            const http = result?.httpStatus ? ` • HTTP ${result.httpStatus}` : '';
+            reportStatus.setText(`ERROR ${stage} • ${error}${http}`);
+            document.documentElement.dataset.wreckmarchManualReport = `error-${String(result?.stage || 'unknown')}`;
+            reportBtn.setInteractive?.({ useHandCursor: true }).setAlpha?.(1);
+          }
+        } catch (error) {
+          const result = { ok: false, stage: 'ui', error: String(error?.message || error) };
+          window.__WM_LAST_MANUAL_REPORT_RESULT__ = result;
+          reportLabel.setText('RETRY REPORT');
+          reportStatus.setColor?.('#f0a082');
+          reportStatus.setText(`ERROR UI • ${result.error}`);
+          document.documentElement.dataset.wreckmarchManualReport = 'error-ui';
+          reportBtn.setInteractive?.({ useHandCursor: true }).setAlpha?.(1);
+        } finally {
+          this.__manualReportSending = false;
+        }
+      });
+    }
+
+    window.__WM_END_RUN_LAYOUT__ = { width: W, height: H, overlay, kicker, heading, summary, btn, buttonLabel, reportBtn, reportLabel, reportStatus };
+    document.documentElement.dataset.wreckmarchEndRunLayout = 'runtime-v3';
     this.restartRun = () => {
       if (this.__runRestarting) return;
       this.__runRestarting = true;
