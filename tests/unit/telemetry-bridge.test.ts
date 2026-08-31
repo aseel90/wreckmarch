@@ -7,6 +7,7 @@ describe('balance run report bridge contract', () => {
   it('keeps GitHub credentials out of the client and uses the OIDC workflow bridge', () => {
     const workflow = read('.github/workflows/balance-run-report-bridge.yml');
     const provider = read('src/telemetry/run-report-provider.js');
+    const runtime = read('src/telemetry/telemetry-runtime.js');
     const html = read('index.html');
 
     expect(workflow).toContain('id-token: write');
@@ -17,6 +18,11 @@ describe('balance run report bridge contract', () => {
     expect(workflow).toContain('/bridge/ack');
     expect(provider).toContain("wmTelemetry') === '1'");
     expect(provider).not.toContain('GITHUB_TOKEN');
-    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=2');
+    expect(provider).toContain("mode: 'cors'");
+    expect(provider).toContain("credentials: 'omit'");
+    expect(provider).toContain('MAX_KEEPALIVE_BYTES');
+    expect(provider).toContain('wreckmarch-telemetry-probe');
+    expect(runtime).toContain("./run-report-provider.js?v=3");
+    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=3');
   });
 });
