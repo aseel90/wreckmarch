@@ -23,7 +23,7 @@ describe('final presentation polish', () => {
     expect(hud).toContain('safe-area-inset-bottom');
     expect(hud).toContain('clampJoystickOrigin');
     expect(hud).toContain("wreckmarchMobileHud = 'compact-v2'");
-    expect(hud).toContain("wreckmarchEndRunLayout = 'runtime-v2'");
+    expect(hud).toContain("wreckmarchEndRunLayout = 'runtime-v3'");
   });
 
   it('adds presentation feedback without changing balance or spawn rules', () => {
