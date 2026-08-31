@@ -24,12 +24,17 @@ export function installEndRunTelemetryHook(scene) {
   return true;
 }
 
-function installSceneTelemetry(scene) {
+function getOrCreateRunReportProvider(game) {
   const remoteReportingEnabled = isRemoteRunReportingEnabled();
-  const provider = remoteReportingEnabled && typeof globalThis.fetch === 'function' ? new RunReportProvider() : undefined;
+  if (!remoteReportingEnabled || typeof globalThis.fetch !== 'function') return { remoteReportingEnabled, provider: undefined };
+  if (!game.__wreckmarchRunReportProvider) game.__wreckmarchRunReportProvider = new RunReportProvider();
+  return { remoteReportingEnabled, provider: game.__wreckmarchRunReportProvider };
+}
+
+function installSceneTelemetry(scene, game) {
+  const { remoteReportingEnabled, provider } = getOrCreateRunReportProvider(game);
   const telemetry = installRunTelemetry(scene, { remoteReportingEnabled, ...(provider ? { provider } : {}) });
   installEndRunTelemetryHook(scene);
-  if (provider) Promise.resolve(provider.probe()).catch(() => {});
   return telemetry;
 }
 
@@ -37,13 +42,22 @@ export function installTelemetryRuntime(game = globalThis.__WM_GAME__) {
   if (!game?.events) return false;
   if (game.__wreckmarchTelemetryRuntime) return true;
 
+  const transport = getOrCreateRunReportProvider(game);
+  if (transport.provider) {
+    Promise.resolve(transport.provider.flushPending()).catch(() => {});
+    Promise.resolve(transport.provider.probe()).catch(() => {});
+  }
+
   const tick = (_time, delta) => {
     const scene = getScene(game);
     if (!scene?.sys?.isActive?.()) return;
     let telemetry = scene.runTelemetry;
     if (!telemetry || (telemetry.finalized && !scene.gameOver)) {
-      telemetry = installSceneTelemetry(scene);
+      telemetry = installSceneTelemetry(scene, game);
       globalThis.__WM_LOG__?.(`Run Telemetry session: remote reporting ${telemetry.remoteReportingEnabled ? 'ENABLED' : 'disabled'}`);
+    } else if (transport.provider && telemetry.provider !== transport.provider) {
+      telemetry.provider = transport.provider;
+      telemetry.remoteReportingEnabled = true;
     }
     installEndRunTelemetryHook(scene);
     telemetry.update(Number.isFinite(Number(delta)) ? Number(delta) : Number(game.loop?.delta) || 0);
