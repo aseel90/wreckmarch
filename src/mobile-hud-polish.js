@@ -1,4 +1,5 @@
 /* WRECKMARCH mobile polish — safe-area-aware compact landscape HUD rail */
+const END_RUN_OWNER_VERSION = 'runtime-v4';
 function gameplayHudObjects(scene) {
   const refs = [
     scene.titleText, scene.waveText, scene.timerText, scene.levelText, scene.scrapText,
@@ -143,26 +144,32 @@ function layout(scene) {
 }
 
 function installOverlayStateOwnership(scene) {
-  if (scene.__mobileHudOverlayOwnershipInstalled) return;
-  scene.__mobileHudOverlayOwnershipInstalled = true;
-  const priorOpen = scene.openUpgradeCards?.bind(scene);
-  const priorClose = scene.closeUpgradeCards?.bind(scene);
+  // Upgrade-overlay visibility hooks are installed once. End-run ownership is versioned
+  // independently so a newer production owner can replace a stale cached implementation.
+  if (!scene.__mobileHudOverlayOwnershipInstalled) {
+    scene.__mobileHudOverlayOwnershipInstalled = true;
+    const priorOpen = scene.openUpgradeCards?.bind(scene);
+    const priorClose = scene.closeUpgradeCards?.bind(scene);
 
-  if (priorOpen) {
-    scene.openUpgradeCards = function(...args) {
-      const result = priorOpen(...args);
-      if (this.upgradeOpen) this.setGameplayHudVisible?.(false);
-      return result;
-    };
+    if (priorOpen) {
+      scene.openUpgradeCards = function(...args) {
+        const result = priorOpen(...args);
+        if (this.upgradeOpen) this.setGameplayHudVisible?.(false);
+        return result;
+      };
+    }
+
+    if (priorClose) {
+      scene.closeUpgradeCards = function(...args) {
+        const result = priorClose(...args);
+        if (!this.gameOver) this.setGameplayHudVisible?.(true);
+        return result;
+      };
+    }
   }
 
-  if (priorClose) {
-    scene.closeUpgradeCards = function(...args) {
-      const result = priorClose(...args);
-      if (!this.gameOver) this.setGameplayHudVisible?.(true);
-      return result;
-    };
-  }
+  if (scene.__mobileHudEndRunOwnerVersion === END_RUN_OWNER_VERSION) return;
+  scene.__mobileHudEndRunOwnerVersion = END_RUN_OWNER_VERSION;
 
   scene.endRun = function(reason) {
     if (this.gameOver) return;
@@ -267,7 +274,7 @@ function installOverlayStateOwnership(scene) {
     }
 
     window.__WM_END_RUN_LAYOUT__ = { width: W, height: H, overlay, kicker, heading, summary, btn, buttonLabel, reportBtn, reportLabel, reportStatus };
-    document.documentElement.dataset.wreckmarchEndRunLayout = 'runtime-v3';
+    document.documentElement.dataset.wreckmarchEndRunLayout = END_RUN_OWNER_VERSION;
     this.restartRun = () => {
       if (this.__runRestarting) return;
       this.__runRestarting = true;
