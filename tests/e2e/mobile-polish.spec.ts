@@ -35,7 +35,7 @@ test('mobile landscape HUD stays compact and Runner has a readable run cycle', a
   });
 
   expect(baseline.viewport).toBe('960x540');
-  expect(baseline.hudVersion).toBe('compact-v2');
+  expect(baseline.hudVersion).toBe('compact-v5-test');
   expect(baseline.finalPolish).toBe('presentation-v1');
   expect(baseline.safeInsets).toMatchObject({ top: 0, right: 0, bottom: 0, left: 0 });
   expect(baseline.railHeight).toBe(62);
