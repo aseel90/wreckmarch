@@ -120,6 +120,13 @@ export class ProjectileSystem {
       if (!bullet?.active) return;
       bullet.life -= delta;
 
+      if (bullet.ricochetPending) {
+        const origin = bullet.ricochetPending;
+        bullet.ricochetPending = null;
+        this.redirectRicochet(bullet, origin.x, origin.y);
+        if (!bullet.active) return;
+      }
+
       const x2 = bullet.x;
       const y2 = bullet.y;
       const x1 = Number.isFinite(bullet.prevX) ? bullet.prevX : x2;
@@ -137,6 +144,7 @@ export class ProjectileSystem {
           const afterHits = bullet.hitEnemies?.size || 0;
           const shouldRicochet = !hadPierce && bullet.active && Math.max(0, Math.floor(Number(bullet.ricochetRemaining) || 0)) > 0;
           if (shouldRicochet) {
+            bullet.ricochetPending = null;
             this.redirectRicochet(bullet, originX, originY);
             break;
           }
