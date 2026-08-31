@@ -10,7 +10,7 @@ describe('final presentation polish', () => {
     const html = read('index.html');
     const rat = html.indexOf("./src/enemies/scrap-rat-visuals.js");
     const phaseD1 = html.indexOf("./src/phase-d1-runtime.js?v=22");
-    const hud = html.indexOf("./src/mobile-hud-polish.js?v=4");
+    const hud = html.indexOf("./src/mobile-hud-loader-telemetry-v1.js");
     const polish = html.indexOf("./src/final-polish-runtime.js?v=2");
     expect(rat).toBeGreaterThan(-1);
     expect(phaseD1).toBeGreaterThan(-1);
@@ -26,9 +26,9 @@ describe('final presentation polish', () => {
     expect(hud).toContain('safe-area-inset-right');
     expect(hud).toContain('safe-area-inset-bottom');
     expect(hud).toContain('clampJoystickOrigin');
-    expect(hud).toContain("wreckmarchMobileHud = 'compact-v2'");
-    expect(hud).toContain("const END_RUN_OWNER_VERSION = 'runtime-v4'");
-    expect(hud).toContain('wreckmarchEndRunLayout = END_RUN_OWNER_VERSION');
+    expect(hud).toContain("wreckmarchMobileHud='compact-v5-test'");
+    expect(hud).toContain("END_RUN_OWNER_VERSION='runtime-v5-test'");
+    expect(hud).toContain('wreckmarchEndRunLayout=END_RUN_OWNER_VERSION');
   });
 
   it('adds presentation feedback without changing balance or spawn rules', () => {
