@@ -29,7 +29,8 @@ test('Ricochet redirects a Hunter rivet to a nearby valid enemy after final impa
       'armor-plate': 99,
       'call-rig': 99,
       'piercing-rivets': 99,
-      'shrapnel-impact': 99
+      'shrapnel-impact': 99,
+      'critical-rivet': 99
     });
 
     const originalRandom = Math.random;

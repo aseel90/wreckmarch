@@ -22,6 +22,7 @@ test('upgrade run snapshot round-trips canonical state in Chromium without repla
     const statsApi = await import(browserModule('/src/stats/run-stat-state.js'));
 
     runtime.applyRegisteredUpgrade(scene, 'heavy-rivets', { rarity: 'LEGENDARY' });
+    runtime.applyRegisteredUpgrade(scene, 'critical-rivet', { rarity: 'COMMON' });
     runtime.applyRegisteredUpgrade(scene, 'armor-plate', { rarity: 'LEGENDARY' });
     runtime.applyRegisteredUpgrade(scene, 'twin-riveter', { rarity: 'COMMON' });
 
@@ -52,6 +53,8 @@ test('upgrade run snapshot round-trips canonical state in Chromium without repla
       maxHp: target.heroMaxHp,
       heroHp: target.heroHp,
       twinShots: target.twinShots,
+      critChance: target.runCombatStats.critChance,
+      critDamageMultiplier: target.runCombatStats.critDamageMultiplier,
       twinState: target.upgradeMechanicalState['twin-riveter'],
       hasArmorMechanicalSnapshot: Boolean(snapshot.mechanical.effects['armor-plate'])
     };
@@ -59,12 +62,15 @@ test('upgrade run snapshot round-trips canonical state in Chromium without repla
 
   expect(result.schema).toBe('wreckmarch.upgrade-run-state');
   expect(result.version).toBe(1);
-  expect(result.levels).toMatchObject({ 'heavy-rivets': 1, 'armor-plate': 1, 'twin-riveter': 1 });
+  expect(result.levels).toMatchObject({ 'heavy-rivets': 1, 'critical-rivet': 1, 'armor-plate': 1, 'twin-riveter': 1 });
   expect(result.rarities['heavy-rivets']).toEqual(['LEGENDARY']);
   expect(result.rarities['armor-plate']).toEqual(['LEGENDARY']);
+  expect(result.rarities['critical-rivet']).toEqual(['COMMON']);
   expect(result.damage).toBeCloseTo(31.2);
   expect(result.maxHp).toBeCloseTo(122.5);
   expect(result.heroHp).toBe(7);
+  expect(result.critChance).toBeCloseTo(0.05);
+  expect(result.critDamageMultiplier).toBeCloseTo(1.5);
   expect(result.twinShots).toBe(2);
   expect(result.twinState).toMatchObject({ effectId: 'TWIN_RIVETER', projectileCount: 2 });
   expect(result.hasArmorMechanicalSnapshot).toBe(false);

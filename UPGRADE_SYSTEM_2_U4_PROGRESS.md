@@ -78,6 +78,32 @@ Merged implementation: PR #111 from `u4-shrapnel-impact` → `main` as `440611c8
 - [x] No open `[CI] main is failing` or `[LIVE] deployed main smoke failed` issue remains after the production gate.
 - [x] After the production gate, Shrapnel Impact is marked DONE in the canonical roadmap.
 
+
+## Critical Rivet — IN PROGRESS (`u4-critical-rivet-v2`)
+
+Current implementation values are provisional U4 test values, not locked U7 balance: +5% Crit Chance per level, max level 4, Runner critical-damage multiplier x1.5, and a declarative 35% hard chance cap.
+
+- [x] Canonical registry definition exists.
+- [x] `critChance` remains in the character/combat-stat domain; no duplicate weapon crit stat is introduced.
+- [x] Runner's existing `critDamageMultiplier = 1.5` remains the canonical damage multiplier baseline.
+- [x] WeaponSystem resolves one deterministic crit roll per Hero projectile and writes the final damage onto that projectile.
+- [x] The projectile retains its critical outcome for its lifetime, so Pierce/Ricochet do not reroll the same projectile.
+- [x] Shrapnel does not roll Crit recursively; it only receives normal secondary-projectile behavior from its source impact.
+- [x] Rig/support volleys do not consume Hero crit chance.
+- [x] Critical Rivet state is snapshot-compatible through canonical character stat modifiers and upgrade level/rarity history.
+- [x] Dedicated Wreckmarch-style Critical Rivet card icon is routed through the shared D1 `upgrade-card-art.js` owner.
+- [x] Browser module graph is cache-busted for WeaponSystem, upgrade catalog/runtime, C1 pool and D1 card art.
+- [x] Unit coverage added for definition/stat state and deterministic crit resolution/Support isolation.
+- [x] Deterministic Chromium E2E added for forced UpgradeSceneV4 offer, custom art, critical Hero damage, normal Hero damage and Support isolation.
+- [x] Existing forced-card E2Es explicitly max Critical Rivet so single-offer assumptions remain deterministic.
+- [ ] PR Quality passes.
+- [ ] PR Smoke passes.
+- [ ] PR E2E shards 1/3, 2/3, 3/3 pass.
+- [ ] Aggregate E2E passes.
+- [ ] Merge to `main`.
+- [ ] Production exact-SHA Live verification passes.
+- [ ] After the production gate, Critical Rivet is marked DONE in the canonical roadmap.
+
 ## Future fixes / polish
 
 - [ ] Stabilize per-card rarity identity: the same upgrade card (observed example: Fleet Feet / speed card) should not randomly reappear as COMMON, EPIC, or LEGENDARY unless that card explicitly opts into a designed multi-rarity progression model. Keep this deferred until the U7 rarity/balance cleanup pass; do not block current U4 projectile-card implementation.

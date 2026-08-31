@@ -1,5 +1,32 @@
 /* WRECKMARCH — authoritative target acquisition and weapon firing owner */
 
+export function resolveHeroCriticalHit(combatStats = {}, rng = Math.random) {
+  const critChance = Math.min(1, Math.max(0, Number(combatStats?.critChance) || 0));
+  const critDamageMultiplier = Math.max(1, Number(combatStats?.critDamageMultiplier) || 1);
+  if (critChance <= 0) {
+    return Object.freeze({
+      isCritical: false,
+      critChance,
+      critDamageMultiplier,
+      roll: null,
+      damageMultiplier: 1
+    });
+  }
+  if (typeof rng !== 'function') throw new TypeError('Critical hit RNG must be a function');
+  const roll = Number(rng());
+  if (!Number.isFinite(roll) || roll < 0 || roll >= 1) {
+    throw new RangeError(`Critical hit RNG must return a value in [0, 1): ${String(roll)}`);
+  }
+  const isCritical = roll < critChance;
+  return Object.freeze({
+    isCritical,
+    critChance,
+    critDamageMultiplier,
+    roll,
+    damageMultiplier: isCritical ? critDamageMultiplier : 1
+  });
+}
+
 const DEFAULT_HERO_PROFILE = Object.freeze({
   aimYOffset: 6,
   targetTurnRate: .22,
@@ -27,6 +54,7 @@ export class WeaponSystem {
     };
     this.muzzleResolver = null;
     this.fireFeedback = null;
+    this.randomSource = Math.random;
   }
 
   configureHero(profile = {}) {
@@ -46,6 +74,12 @@ export class WeaponSystem {
 
   setFireFeedback(handler) {
     this.fireFeedback = typeof handler === 'function' ? handler : null;
+    return this;
+  }
+
+  setRandomSource(source) {
+    if (typeof source !== 'function') throw new TypeError('WeaponSystem random source must be a function');
+    this.randomSource = source;
     return this;
   }
 
@@ -91,12 +125,14 @@ export class WeaponSystem {
     const muzzle = this.getMuzzle(angle - scene.weaponAim);
     const p = this.heroProfile.projectile;
     const resolvedWeapon = scene.runStatState?.resolve?.()?.weapon || {};
+    const baseDamage = weapon.damage * damageScale;
+    const critical = resolveHeroCriticalHit(scene.runCombatStats, this.randomSource);
     const bullet = this.projectiles.spawn({
       x: muzzle.x,
       y: muzzle.y,
       angle,
       speed: weapon.projectileSpeed,
-      damage: weapon.damage * damageScale,
+      damage: baseDamage * critical.damageMultiplier,
       pierceCount: Math.max(0, Math.floor(Number(resolvedWeapon.pierceCount ?? weapon.pierceCount) || 0)),
       ricochetCount: Math.max(0, Math.floor(Number(resolvedWeapon.ricochetCount ?? weapon.ricochetCount) || 0)),
       shrapnelCount: Math.max(0, Math.floor(Number(resolvedWeapon.shrapnelCount ?? weapon.shrapnelCount) || 0)),
@@ -106,7 +142,12 @@ export class WeaponSystem {
       offsetX: p.offsetX,
       offsetY: p.offsetY
     });
-    return { bullet, muzzle };
+    bullet.baseDamage = baseDamage;
+    bullet.isCritical = critical.isCritical;
+    bullet.criticalChance = critical.critChance;
+    bullet.criticalDamageMultiplier = critical.critDamageMultiplier;
+    bullet.criticalRoll = critical.roll;
+    return { bullet, muzzle, critical };
   }
 
   update(time) {

@@ -53,6 +53,7 @@ function makeScene(heroHp = 40) {
 function buildMixedSourceScene() {
   const scene = makeScene();
   applyRegisteredUpgrade(scene, 'heavy-rivets', { rarity: 'RARE' });
+  applyRegisteredUpgrade(scene, 'critical-rivet', { rarity: 'COMMON' });
   applyRegisteredUpgrade(scene, 'armor-plate', { rarity: 'LEGENDARY' });
   applyRegisteredUpgrade(scene, 'twin-riveter', { rarity: 'COMMON' });
   applyRegisteredUpgrade(scene, 'twin-riveter', { rarity: 'COMMON' });
@@ -71,18 +72,21 @@ describe('Upgrade System 2.0 run-state snapshot readiness', () => {
 
     expect(levels.levels).toEqual({
       'heavy-rivets': 1,
+      'critical-rivet': 1,
       'armor-plate': 1,
       'twin-riveter': 2,
       'call-rig': 1
     });
     expect(levels.rarityHistory).toEqual({
       'heavy-rivets': ['RARE'],
+      'critical-rivet': ['COMMON'],
       'armor-plate': ['LEGENDARY'],
       'twin-riveter': ['COMMON', 'COMMON'],
       'call-rig': ['COMMON']
     });
     expect(stats.modifiers.weapon.damage[0]).toMatchObject({ id: 'heavy-rivets@1:0', value: 0.23 });
     expect(stats.modifiers.character.maxHp[0]).toMatchObject({ id: 'armor-plate@1:0', value: 22.5 });
+    expect(stats.modifiers.character.critChance[0]).toMatchObject({ id: 'critical-rivet@1:0', value: 0.05 });
     expect(mechanical.effects['twin-riveter']).toMatchObject({
       effectId: 'TWIN_RIVETER',
       level: 2,
@@ -110,7 +114,7 @@ describe('Upgrade System 2.0 run-state snapshot readiness', () => {
       schema: UPGRADE_RUN_SNAPSHOT_SCHEMA,
       version: UPGRADE_RUN_SNAPSHOT_VERSION
     });
-    expect(new Set(restored.restoredUpgradeIds)).toEqual(new Set(['heavy-rivets', 'armor-plate', 'twin-riveter', 'call-rig']));
+    expect(new Set(restored.restoredUpgradeIds)).toEqual(new Set(['heavy-rivets', 'critical-rivet', 'armor-plate', 'twin-riveter', 'call-rig']));
     expect(target.upgradeLevels).toEqual(source.upgradeLevels);
     expect(target.upgradeRarityHistory).toEqual(source.upgradeRarityHistory);
     expect(target.runStatState.state.modifiers).toEqual(source.runStatState.state.modifiers);
@@ -118,6 +122,7 @@ describe('Upgrade System 2.0 run-state snapshot readiness', () => {
     expect(target.runStatState.resolve()).toEqual(sourceResolved);
     expect(target.primaryWeapon.damage).toBeCloseTo(source.primaryWeapon.damage);
     expect(target.heroMaxHp).toBeCloseTo(source.heroMaxHp);
+    expect(target.runCombatStats.critChance).toBeCloseTo(0.05);
     expect(target.heroHp).toBe(9);
     expect(target.upgradeMechanicalState['twin-riveter']).toMatchObject({ level: 2, projectileCount: 3 });
     expect(target.twinShots).toBe(3);
