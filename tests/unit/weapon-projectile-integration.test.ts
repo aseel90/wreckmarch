@@ -76,7 +76,7 @@ describe('Weapon / Projectile ownership integration', () => {
 
   it('cache-busts the U4 projectile-upgrade live owners from the boot graph', () => {
     const html = read('index.html');
-    expect(html).toContain("./src/enemies/enemy-system.js?v=18");
+    expect(html).toContain("./src/enemies/enemy-system.js?v=19");
     expect(html).toContain("./src/phase-c-runtime.js?v=17");
     expect(html).toContain("./src/phase-c1-runtime.js?v=15");
     expect(html).toContain("./src/phase-d1-runtime.js?v=20");
