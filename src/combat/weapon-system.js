@@ -90,13 +90,15 @@ export class WeaponSystem {
     if (!weapon) return null;
     const muzzle = this.getMuzzle(angle - scene.weaponAim);
     const p = this.heroProfile.projectile;
+    const resolvedWeapon = scene.runStatState?.resolve?.()?.weapon || {};
     const bullet = this.projectiles.spawn({
       x: muzzle.x,
       y: muzzle.y,
       angle,
       speed: weapon.projectileSpeed,
       damage: weapon.damage * damageScale,
-      pierceCount: Math.max(0, Math.floor(Number(scene.runStatState?.resolve?.()?.weapon?.pierceCount ?? weapon.pierceCount) || 0)),
+      pierceCount: Math.max(0, Math.floor(Number(resolvedWeapon.pierceCount ?? weapon.pierceCount) || 0)),
+      ricochetCount: Math.max(0, Math.floor(Number(resolvedWeapon.ricochetCount ?? weapon.ricochetCount) || 0)),
       lifeMs: p.lifeMs,
       scale: p.scale,
       radius: p.radius,
