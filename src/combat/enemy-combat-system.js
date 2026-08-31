@@ -45,8 +45,9 @@ export class EnemyCombatSystem {
     });
 
     const pierceRemaining = Math.max(0, Math.floor(Number(bullet.pierceRemaining) || 0));
+    const ricochetRemaining = Math.max(0, Math.floor(Number(bullet.ricochetRemaining) || 0));
     if (pierceRemaining > 0) bullet.pierceRemaining = pierceRemaining - 1;
-    else bullet.destroy();
+    else if (ricochetRemaining <= 0) bullet.destroy();
     enemy.hp = result.nextHp;
 
     const enemyId = enemy.enemyId;
