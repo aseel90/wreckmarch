@@ -43,10 +43,10 @@ Current implementation branch: `u4-ricochet-v2`.
 - [x] Browser module graph is cache-busted for changed live owners.
 - [x] Unit coverage added, including Pierce→Ricochet ordering and overlap-first handling.
 - [x] Deterministic Chromium E2E added.
-- [ ] PR Quality passes.
-- [ ] PR Smoke passes.
-- [ ] PR E2E shards 1/3, 2/3, 3/3 pass.
-- [ ] Aggregate E2E passes.
+- [x] PR Quality passes — PR #109 head `21d85b5274826ebffedf761ca8aaf5f3abc59a28`.
+- [x] PR Smoke passes — PR #109 head `21d85b5274826ebffedf761ca8aaf5f3abc59a28`.
+- [x] PR E2E shards 1/3, 2/3, 3/3 pass — PR #109 head `21d85b5274826ebffedf761ca8aaf5f3abc59a28`.
+- [x] Aggregate E2E passes — PR #109 head `21d85b5274826ebffedf761ca8aaf5f3abc59a28`.
 - [ ] Merge to `main`.
 - [ ] Production Live verification passes on the merged exact SHA.
 - [ ] Only after the production gate: mark Ricochet DONE in the canonical roadmap.
