@@ -1,5 +1,5 @@
 /* WRECKMARCH — installs measurement-only telemetry without owning gameplay */
-import { installRunTelemetry } from './run-telemetry.js?v=1';
+import { installRunTelemetry } from './run-telemetry-gated.js?v=1';
 
 function getScene(game) {
   return game?.scene?.getScene?.('Wreckmarch') || null;
@@ -24,6 +24,7 @@ export function installTelemetryRuntime(game = globalThis.__WM_GAME__) {
   try {
     globalThis.__WM_TELEMETRY_RUNTIME__ = { active: true, eventName, report: () => getScene(game)?.runTelemetry?.getReport?.() || null };
   } catch {}
-  globalThis.__WM_LOG__?.('Run Telemetry active: local/CI metrics + automatic end-of-run report queue');
+  const remote = Boolean(getScene(game)?.runTelemetry?.remoteReportingEnabled);
+  globalThis.__WM_LOG__?.(`Run Telemetry active: local/CI metrics${remote ? ' + remote RUN report queue' : ' (remote reporting disabled)'}`);
   return true;
 }

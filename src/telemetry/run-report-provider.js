@@ -5,6 +5,15 @@ export const RUN_REPORT_QUEUE_KEY = 'wreckmarch:telemetry:queue:v1';
 export const LAST_RUN_REPORT_KEY = 'wreckmarch:telemetry:last-run:v1';
 const MAX_QUEUED_REPORTS = 12;
 
+export function isRemoteRunReportingEnabled({
+  search = globalThis.location?.search || '',
+  override = globalThis.__WM_ENABLE_RUN_REPORTS__
+} = {}) {
+  if (override === true) return true;
+  try { return new URLSearchParams(search).get('wmTelemetry') === '1'; }
+  catch { return false; }
+}
+
 function readJson(storage, key, fallback) {
   try {
     const raw = storage?.getItem?.(key);
