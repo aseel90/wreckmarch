@@ -15,7 +15,7 @@ describe('RunTelemetry', () => {
     t.update(16);
     enemy.hp = 20; bullet.hitEnemies.add(enemy); bullet.pierceRemaining = 0; scene.runTime = 2; scene.lastShot = 100; t.update(40);
     enemy.hp = -5; scene.heroHp = 90; scene.upgradeLevels = { 'heavy-rivets': 1 }; scene.upgradeRarityHistory = { 'heavy-rivets': ['COMMON'] }; scene.runTime = 3; t.update(16);
-    const report = t.finalize('RUNNER DOWN');
+    const report: any = t.finalize();
     expect(report.combat.damageDealt).toBe(54);
     expect(report.combat.damageTaken).toBe(10);
     expect(report.combat.killsByEnemy['scrap-rat']).toBe(1);
@@ -31,7 +31,7 @@ describe('RunTelemetry', () => {
 describe('RunReportProvider', () => {
   it('retains failed reports and removes them after remote acceptance', async () => {
     const values = new Map<string, string>();
-    const storage = { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) } as Storage;
+    const storage = { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) } as unknown as Storage;
     const fetchFn = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ ok: true, status: 201, json: async () => ({ submitted: true, runId: 'RUN-0001' }) });
     const provider = new RunReportProvider({ endpoint: 'https://example.test/report', storage, fetchFn: fetchFn as any });
     await provider.submit({ schemaVersion: 1, reportId: 'wm-provider-test', run: {} } as any);
