@@ -101,9 +101,59 @@ test('end-run overlay uses the live landscape viewport instead of legacy portrai
   expect(result.button.y).toBeCloseTo(342, 1);
   expect(result.titleVisible).toBe(false);
   expect(result.hudState).toBe('suppressed');
-  expect(result.endRunVersion).toBe('runtime-v2');
+  expect(result.endRunVersion).toBe('runtime-v3');
   expect(result.canvas.left).toBeCloseTo(0, 1);
   expect(result.canvas.top).toBeCloseTo(0, 1);
   expect(result.canvas.width).toBeCloseTo(960, 1);
   expect(result.canvas.height).toBeCloseTo(540, 1);
+});
+
+test('telemetry mode end-run exposes the authoritative SEND REPORT control', async ({ page }) => {
+  await waitForGame(page);
+
+  const result = await page.evaluate(async () => {
+    history.replaceState(null, '', '/?debug=1&autotest=1&wmTelemetry=1');
+    const w = window as typeof window & {
+      __WM_GAME__?: any;
+      __WM_END_RUN_LAYOUT__?: any;
+      __WM_TELEMETRY_RUNTIME__?: any;
+    };
+    const scene = w.__WM_GAME__.scene.getScene('Wreckmarch');
+    scene.spawnEvent.paused = true;
+    scene.enemies.clear(true, true);
+    w.__WM_TELEMETRY_RUNTIME__.sendReport = async () => ({
+      ok: true,
+      reportId: 'wm-e2e-manual',
+      httpStatus: 202,
+      bytes: 2048
+    });
+
+    scene.endRun('SYSTEM FAILURE');
+    const layout = w.__WM_END_RUN_LAYOUT__;
+    const before = {
+      buttonActive: layout.reportBtn?.active === true,
+      buttonVisible: layout.reportBtn?.visible === true,
+      label: layout.reportLabel?.text,
+      status: layout.reportStatus?.text
+    };
+    layout.reportBtn.emit('pointerdown');
+    await new Promise(resolve => setTimeout(resolve, 20));
+    return {
+      before,
+      label: layout.reportLabel?.text,
+      status: layout.reportStatus?.text,
+      manualState: document.documentElement.dataset.wreckmarchManualReport
+    };
+  });
+
+  expect(result.before).toMatchObject({
+    buttonActive: true,
+    buttonVisible: true,
+    label: 'SEND REPORT',
+    status: 'Telemetry: ready'
+  });
+  expect(result.label).toBe('REPORT SENT');
+  expect(result.status).toContain('SENT • wm-e2e-manual');
+  expect(result.status).toContain('HTTP 202');
+  expect(result.manualState).toBe('sent');
 });
