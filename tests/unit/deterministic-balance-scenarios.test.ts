@@ -23,7 +23,7 @@ describe('deterministic balance scenario suite', () => {
     expect(runAllDeterministicBalanceScenarios()).toEqual(runAllDeterministicBalanceScenarios());
     for (const snapshot of runAllDeterministicBalanceScenarios()) {
       if (snapshot.id === 'BASELINE_RUNNER_NO_UPGRADES') expect(snapshot.upgrades).toHaveLength(0);
-      else expect(snapshot.upgrades.every(entry => entry.levels >= 1)).toBe(true);
+      else expect(snapshot.upgrades.every((entry: { levels: number }) => entry.levels >= 1)).toBe(true);
       expect(Object.values(snapshot.rarityHistory).flat().every(rarity => rarity === 'COMMON')).toBe(true);
       expect(snapshot.derived.criticalRollSample.sampleSize).toBe(128);
       expect(snapshot.derived.criticalRollSample.firstRolls).toHaveLength(8);
