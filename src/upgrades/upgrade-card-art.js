@@ -1,6 +1,7 @@
 export const UPGRADE_CARD_ART_TEXTURES = Object.freeze({
   'piercing-rivets': 'upgrade-icon-piercing-rivets',
-  'ricochet': 'upgrade-icon-ricochet'
+  'ricochet': 'upgrade-icon-ricochet',
+  'shrapnel-impact': 'upgrade-icon-shrapnel-impact'
 });
 
 function buildPiercingRivetsIcon(scene) {
@@ -63,10 +64,37 @@ function buildRicochetIcon(scene) {
   return textureKey;
 }
 
+function buildShrapnelImpactIcon(scene) {
+  const textureKey = UPGRADE_CARD_ART_TEXTURES['shrapnel-impact'];
+  if (scene.textures.exists(textureKey)) return textureKey;
+
+  const g = scene.make.graphics({ add: false });
+  g.fillStyle(0x10171c, 1).fillRoundedRect(18, 18, 92, 76, 12);
+  g.lineStyle(4, 0x4b565c, 1).strokeRoundedRect(18, 18, 92, 76, 12);
+  g.fillStyle(0x4c555a, 1).fillRoundedRect(54, 25, 20, 62, 6);
+  g.lineStyle(3, 0x1f2529, 1).strokeRoundedRect(54, 25, 20, 62, 6);
+  g.lineStyle(7, 0xc66c32, 1).lineBetween(6, 56, 61, 56);
+  g.lineStyle(3, 0xffd07a, 1).lineBetween(10, 53, 60, 53);
+  g.fillStyle(0xffe4a4, 1).fillCircle(64, 56, 6);
+  g.lineStyle(4, 0x55d8e5, .96);
+  g.lineBetween(68, 54, 108, 31);
+  g.lineBetween(69, 57, 116, 57);
+  g.lineBetween(68, 60, 108, 83);
+  g.fillStyle(0xbff8ff, 1)
+    .fillTriangle(103, 25, 120, 27, 110, 40)
+    .fillTriangle(111, 50, 126, 57, 111, 64)
+    .fillTriangle(103, 87, 120, 85, 110, 74);
+  g.fillStyle(0xf0b84a, 1).fillCircle(79, 42, 3).fillCircle(84, 57, 3).fillCircle(79, 72, 3);
+  g.generateTexture(textureKey, 128, 112);
+  g.destroy();
+  return textureKey;
+}
+
 export function installUpgradeCardArt(scene) {
   if (!scene?.textures || !scene?.make?.graphics) throw new TypeError('Upgrade card art requires a Phaser scene');
   buildPiercingRivetsIcon(scene);
   buildRicochetIcon(scene);
+  buildShrapnelImpactIcon(scene);
   scene.__upgradeCardArtReady = true;
   return scene;
 }
