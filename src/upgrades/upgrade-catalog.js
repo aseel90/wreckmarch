@@ -4,6 +4,7 @@ import { OVERCLOCK_UPGRADE } from './definitions/overclock.js';
 import { LONG_BARREL_UPGRADE } from './definitions/long-barrel.js';
 import { TWIN_RIVETER_UPGRADE } from './definitions/twin-riveter.js?v=2';
 import { PIERCING_RIVETS_UPGRADE } from './definitions/piercing-rivets.js';
+import { RICOCHET_UPGRADE } from './definitions/ricochet.js';
 import { FLEET_FEET_UPGRADE } from './definitions/fleet-feet.js';
 import { SCRAP_MAGNET_UPGRADE } from './definitions/scrap-magnet.js';
 import { ARMOR_PLATE_UPGRADE } from './definitions/armor-plate.js';
@@ -15,6 +16,7 @@ const DEFAULT_UPGRADE_REGISTRY = createUpgradeRegistry([
   LONG_BARREL_UPGRADE,
   TWIN_RIVETER_UPGRADE,
   PIERCING_RIVETS_UPGRADE,
+  RICOCHET_UPGRADE,
   FLEET_FEET_UPGRADE,
   SCRAP_MAGNET_UPGRADE,
   ARMOR_PLATE_UPGRADE,
