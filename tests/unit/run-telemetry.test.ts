@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { RunTelemetry } from '../../src/telemetry/run-telemetry.js';
-import { isRemoteRunReportingEnabled, RunReportProvider, RUN_REPORT_QUEUE_KEY } from '../../src/telemetry/run-report-provider.js';
+import { isRemoteRunReportingEnabled, RunReportProvider, RUN_REPORT_QUEUE_KEY, RUN_REPORT_TRANSPORT_STATUS_KEY } from '../../src/telemetry/run-report-provider.js';
 const group = (items: any[]) => ({ getChildren: () => items });
 const baseScene = () => ({ runTime: 1, level: 1, scrap: 0, heroHp: 100, heroMaxHp: 100, hero: { x: 0, y: 0 }, lastShot: 0, enemies: group([]), bullets: group([]), __runDirectorState: { wave: 1, pressurePhase: 'lull', threatBudget: 15, activeCap: 26, spawnIntervalMs: 720, hpMultiplier: 1, damageMultiplier: 1, speedMultiplier: 1 }, upgradeLevels: {}, upgradeRarityHistory: {}, runStatState: { resolve: () => ({ weapon: { damage: 24 } }) } }) as any;
 
@@ -32,11 +32,48 @@ describe('RunReportProvider', () => {
   it('retains failed reports and removes them after remote acceptance', async () => {
     const values = new Map<string, string>();
     const storage = { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) } as unknown as Storage;
-    const fetchFn = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ ok: true, status: 201, json: async () => ({ submitted: true, runId: 'RUN-0001' }) });
+    const fetchFn = vi.fn().mockRejectedValueOnce(new Error('offline')).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ ok: true, status: 201, json: async () => ({ submitted: true, runId: 'RUN-0001' }) });
     const provider = new RunReportProvider({ endpoint: 'https://example.test/report', storage, fetchFn: fetchFn as any });
     await provider.submit({ schemaVersion: 1, reportId: 'wm-provider-test', run: {} } as any);
     expect(JSON.parse(values.get(RUN_REPORT_QUEUE_KEY) || '[]')).toHaveLength(1);
     await provider.flushPending();
+    expect(JSON.parse(values.get(RUN_REPORT_QUEUE_KEY) || '[]')).toHaveLength(0);
+  });
+
+  it('uses explicit browser-safe transport options and disables keepalive for reports above the safe budget', async () => {
+    const values = new Map<string, string>();
+    const storage = { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) } as unknown as Storage;
+    const fetchFn = vi.fn().mockResolvedValue({ ok: true, status: 202, json: async () => ({ queued: true }) });
+    const provider = new RunReportProvider({ endpoint: 'https://example.test/report', storage, fetchFn: fetchFn as any });
+    await provider.submit({ schemaVersion: 1, reportId: 'wm-large-report', run: {}, diagnosticPadding: 'x'.repeat(70 * 1024) } as any);
+    const [, options] = fetchFn.mock.calls[0];
+    expect(options).toMatchObject({ method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store', keepalive: false });
+    const status = JSON.parse(values.get(RUN_REPORT_TRANSPORT_STATUS_KEY) || '{}');
+    expect(status).toMatchObject({ lastReportId: 'wm-large-report', lastReportOk: true, lastReportKeepalive: false });
+    expect(status.lastReportBytes).toBeGreaterThan(64 * 1024);
+  });
+
+  it('sends a lightweight connectivity probe without creating a run report', async () => {
+    const values = new Map<string, string>();
+    const storage = { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) } as unknown as Storage;
+    const fetchFn = vi.fn().mockResolvedValue({ ok: true, status: 202, json: async () => ({ ok: true, accepted: true }) });
+    const provider = new RunReportProvider({ endpoint: 'https://example.test/report', storage, fetchFn: fetchFn as any });
+    const result = await provider.probe();
+    expect(result.ok).toBe(true);
+    expect(fetchFn.mock.calls[0][0]).toBe('https://wreckmarch-telemetry-probe.salahaseel82.workers.dev/probe');
+    expect(fetchFn.mock.calls[0][1]).toMatchObject({ method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store', keepalive: true });
+    expect(JSON.parse(values.get(RUN_REPORT_QUEUE_KEY) || '[]')).toHaveLength(0);
+  });
+
+  it('retries a browser keepalive transport failure once without keepalive', async () => {
+    const values = new Map<string, string>();
+    const storage = { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) } as unknown as Storage;
+    const fetchFn = vi.fn().mockRejectedValueOnce(new TypeError('keepalive transport failed')).mockResolvedValueOnce({ ok: true, status: 202, json: async () => ({ queued: true }) });
+    const provider = new RunReportProvider({ endpoint: 'https://example.test/report', storage, fetchFn: fetchFn as any });
+    await provider.submit({ schemaVersion: 1, reportId: 'wm-retry-report', run: {} } as any);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(fetchFn.mock.calls[0][1].keepalive).toBe(true);
+    expect(fetchFn.mock.calls[1][1].keepalive).toBe(false);
     expect(JSON.parse(values.get(RUN_REPORT_QUEUE_KEY) || '[]')).toHaveLength(0);
   });
 });
