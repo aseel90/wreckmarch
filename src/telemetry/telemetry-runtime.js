@@ -1,5 +1,5 @@
 /* WRECKMARCH — installs measurement-only telemetry without owning gameplay */
-import { installRunTelemetry } from './run-telemetry.js?v=2';
+import { installRunTelemetry } from './run-telemetry.js?v=3';
 import { isRemoteRunReportingEnabled, RunReportProvider } from './run-report-provider.js?v=3';
 
 function getScene(game) {
@@ -29,6 +29,78 @@ function getOrCreateRunReportProvider(game) {
   if (!remoteReportingEnabled || typeof globalThis.fetch !== 'function') return { remoteReportingEnabled, provider: undefined };
   if (!game.__wreckmarchRunReportProvider) game.__wreckmarchRunReportProvider = new RunReportProvider();
   return { remoteReportingEnabled, provider: game.__wreckmarchRunReportProvider };
+}
+
+function manualReportFailure(stage, error, extra = {}) {
+  return {
+    ok: false,
+    stage,
+    error: String(error?.message || error || 'unknown_error'),
+    ...extra
+  };
+}
+
+export async function sendCurrentRunReport(game = globalThis.__WM_GAME__, reason = 'MANUAL REPORT') {
+  const scene = getScene(game);
+  if (!scene) return manualReportFailure('scene', 'wreckmarch_scene_unavailable');
+
+  const { remoteReportingEnabled, provider } = getOrCreateRunReportProvider(game);
+  if (!remoteReportingEnabled || !provider) {
+    return manualReportFailure('transport', 'remote_reporting_disabled');
+  }
+
+  const telemetry = scene.runTelemetry;
+  if (!telemetry) return manualReportFailure('session', 'run_telemetry_missing');
+
+  telemetry.provider = provider;
+  telemetry.remoteReportingEnabled = true;
+
+  let report;
+  try {
+    report = telemetry.finalized ? telemetry.getReport?.() : telemetry.finalize(reason);
+  } catch (error) {
+    return manualReportFailure('finalize', error);
+  }
+
+  const reportId = report?.reportId;
+  if (!reportId) return manualReportFailure('finalize', 'report_id_missing');
+
+  try {
+    if (!telemetry.lastSubmission) telemetry.lastSubmission = Promise.resolve(provider.submit(report));
+    await telemetry.lastSubmission;
+    const flushResults = await provider.flushPending();
+    const queue = provider.getQueue();
+    const stillQueued = queue.some(entry => entry?.report?.reportId === reportId);
+    const status = globalThis.__WM_TELEMETRY_REMOTE_STATUS__ || null;
+
+    if (stillQueued) {
+      return manualReportFailure('transport', status?.lastReportError || 'report_still_queued', {
+        reportId,
+        httpStatus: Number(status?.lastReportStatus) || 0,
+        bytes: Number(status?.lastReportBytes) || 0,
+        queueDepth: queue.length,
+        flushResults
+      });
+    }
+
+    return {
+      ok: true,
+      stage: 'sent',
+      reportId,
+      httpStatus: Number(status?.lastReportStatus) || 0,
+      bytes: Number(status?.lastReportBytes) || 0,
+      queueDepth: queue.length,
+      flushResults
+    };
+  } catch (error) {
+    const status = globalThis.__WM_TELEMETRY_REMOTE_STATUS__ || null;
+    return manualReportFailure('transport', error, {
+      reportId,
+      httpStatus: Number(status?.lastReportStatus) || 0,
+      bytes: Number(status?.lastReportBytes) || 0,
+      queueDepth: provider.getQueue().length
+    });
+  }
 }
 
 function installSceneTelemetry(scene, game) {
@@ -68,7 +140,13 @@ export function installTelemetryRuntime(game = globalThis.__WM_GAME__) {
   game.events.on(eventName, tick);
   game.__wreckmarchTelemetryRuntime = { eventName, tick };
   try {
-    globalThis.__WM_TELEMETRY_RUNTIME__ = { active: true, eventName, report: () => getScene(game)?.runTelemetry?.getReport?.() || null };
+    globalThis.__WM_TELEMETRY_RUNTIME__ = {
+      active: true,
+      eventName,
+      report: () => getScene(game)?.runTelemetry?.getReport?.() || null,
+      status: () => globalThis.__WM_TELEMETRY_REMOTE_STATUS__ || null,
+      sendReport: reason => sendCurrentRunReport(game, reason)
+    };
   } catch {}
   globalThis.__WM_LOG__?.('Run Telemetry runtime armed');
   return true;
