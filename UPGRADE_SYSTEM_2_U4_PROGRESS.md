@@ -26,6 +26,8 @@ This is a narrow verification record for U4 implementation work. The canonical r
 
 ## Ricochet — IN PROGRESS (PR #109)
 
+Current implementation branch: `u4-ricochet-v2`.
+
 - [x] Canonical registry definition exists.
 - [x] Weapon-scoped `ricochetCount` modifier is capped at 2.
 - [x] Discrete ricochet count is fixed to COMMON for the current implementation so rarity power scaling cannot create fractional ricochet counts; final rarity remains a later balance decision.
