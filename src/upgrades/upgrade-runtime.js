@@ -1,5 +1,5 @@
-import { mirrorResolvedRunStats } from '../stats/run-stat-state.js?v=2';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=8';
+import { mirrorResolvedRunStats } from '../stats/run-stat-state.js?v=3';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=9';
 import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=4';
 import { UPGRADE_RARITIES, getUpgradeRarityRule, resolveUpgradeRarityForDefinition, scaleUpgradeModifierValue } from './upgrade-rarity.js?v=1';
 
