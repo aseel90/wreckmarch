@@ -24,9 +24,9 @@ This is a narrow verification record for U4 implementation work. The canonical r
 - [x] Production Live verification passes on the merged SHA — iOS Live verification and Pages recovery both passed on `0b33898e66d0f9932330cd0cb53c7651596076e8`.
 - [x] After the production gate, Piercing Rivets is marked DONE in the canonical roadmap.
 
-## Ricochet — IN PROGRESS (PR #109)
+## Ricochet — DONE (PR #109 / `6b499451bb5ff7fc29f184180d420db96fef88c6`)
 
-Current implementation branch: `u4-ricochet-v2`.
+Merged implementation: PR #109 from `u4-ricochet-v2` → `main` as `6b499451bb5ff7fc29f184180d420db96fef88c6`.
 
 - [x] Canonical registry definition exists.
 - [x] Weapon-scoped `ricochetCount` modifier is capped at 2.
@@ -43,10 +43,10 @@ Current implementation branch: `u4-ricochet-v2`.
 - [x] Browser module graph is cache-busted for changed live owners.
 - [x] Unit coverage added, including Pierce→Ricochet ordering and overlap-first handling.
 - [x] Deterministic Chromium E2E added.
-- [ ] PR Quality passes.
-- [ ] PR Smoke passes.
-- [ ] PR E2E shards 1/3, 2/3, 3/3 pass.
-- [ ] Aggregate E2E passes.
-- [ ] Merge to `main`.
-- [ ] Production Live verification passes on the merged exact SHA.
-- [ ] Only after the production gate: mark Ricochet DONE in the canonical roadmap.
+- [x] PR Quality passes.
+- [x] PR Smoke passes.
+- [x] PR E2E shards 1/3, 2/3, 3/3 pass.
+- [x] Aggregate E2E passes.
+- [x] Merge to `main` — squash merge `6b499451bb5ff7fc29f184180d420db96fef88c6`.
+- [x] Production Live verification passes on the merged exact SHA — iOS Live verification and Pages recovery passed on `6b499451bb5ff7fc29f184180d420db96fef88c6`; no open Live Chromium or main CI failure remained for that SHA.
+- [x] After the production gate, Ricochet is marked DONE in the canonical roadmap.
