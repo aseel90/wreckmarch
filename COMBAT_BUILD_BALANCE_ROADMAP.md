@@ -186,7 +186,7 @@ These observations complement telemetry; they do not replace it.
 - [ ] Capture the first real baseline reports before applying balance changes. — **Status:** ⚪ NEXT GATE
 - [ ] Complete the manual gameplay-pressure review. — **Status:** ⚪ NOT IMPLEMENTED
 
-## 1.9 Gate rule
+## 1.9 gate rule
 
 **Baseline Metrics records what Wreckmarch does now. It does not yet decide what Wreckmarch should do.**
 
@@ -273,6 +273,16 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 21 | Mobile projectile/effect performance budget | ⚪ PENDING BASELINE | Set hard ceilings from measured active projectiles, fragments, long frames and late-wave pressure |
 | 22 | Deterministic interaction matrix / regression scenarios | ⚪ PENDING | Lock reproducible no-upgrade, single-card, pair-synergy and max-power scenarios for before/after comparisons |
 | 23 | U4 balance gate + master-roadmap reintegration | ⚪ PENDING | After workstreams 1–22: validate three viable builds, final interaction/performance gate, then merge approved decisions back into `UPGRADE_SYSTEM_2_ROADMAP.md` without deleting protected scope |
+
+### Open design note — Ricochet target selection / bounce damage
+
+User gameplay note captured during live balance testing:
+
+- Current ricochet behavior should **not be treated as final**.
+- Preferred option to test first: a bounced rivet chooses its next valid target **randomly among eligible enemies** rather than always homing to the nearest enemy, so the mechanic reads as a true ricochet instead of assisted auto-targeting.
+- Alternative if nearest-target guidance is retained: each bounce must use a **reduced secondary-damage coefficient** so guided ricochets do not become free full-damage chain DPS.
+- Final choice is deferred to **Workstream 7 — Ricochet interaction limits** after Baseline Metrics are available. Compare both options for readability, crowd-clear value, single-target leakage, proc-chain multiplication and mobile projectile cost before locking numbers.
+- Do not implement this as an ad-hoc patch inside projectile code; the final rule must live in the canonical projectile/combat balance owner with automated regression coverage.
 
 ## Execution rule
 
