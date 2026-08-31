@@ -20,7 +20,7 @@ describe('Upgrade System 2.0 Ricochet', () => {
     const definition = getUpgradeDefinition('ricochet');
     if (!definition) throw new Error('Ricochet definition is missing');
     expect(definition.name).toBe('RICOCHET');
-    expect(definition.rarity).toBe('RARE');
+    expect(definition.rarity).toBe('COMMON');
     expect(definition.scope).toBe('WEAPON');
     expect(definition.tags).toEqual(expect.arrayContaining(['PROJECTILE', 'RICOCHET', 'RIVET']));
     expect(Object.isFrozen(definition)).toBe(true);

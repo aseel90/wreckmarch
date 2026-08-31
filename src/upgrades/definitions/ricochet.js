@@ -6,7 +6,7 @@ export const RICOCHET_UPGRADE = Object.freeze({
   id: 'ricochet',
   name: 'RICOCHET',
   description: 'Rivets redirect to +1 nearby enemy after their final impact.',
-  rarity: 'RARE',
+  rarity: 'COMMON',
   maxLevel: 2,
   scope: UPGRADE_SCOPES.WEAPON,
   tags: ['PROJECTILE', 'RICOCHET', 'RIVET'],
