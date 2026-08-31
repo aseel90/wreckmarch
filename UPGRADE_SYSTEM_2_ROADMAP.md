@@ -528,7 +528,7 @@ Rivets penetrate additional enemies.
 ### Ricochet
 Rivets can redirect/bounce to a nearby valid enemy after impact.
 
-**Implementation status:** 🔵 IN PROGRESS — PR #109. Canonical `ricochetCount`, Pierce-first/final-impact redirect behavior, duplicate-target prevention, overlap/sweep ordering protection, D1-owned card art and deterministic Chromium coverage are implemented on the feature branch. Production gates are not yet complete; do not mark DONE until merge + exact-SHA Live verification pass.
+**Implementation status:** ✅ DONE — PR #109; squash merge `6b499451bb5ff7fc29f184180d420db96fef88c6`. Canonical `ricochetCount`, Pierce-first/final-impact redirect behavior, duplicate-target prevention, overlap/sweep ordering protection, D1-owned card art and deterministic Chromium coverage passed PR gates. Exact-SHA production verification passed via iOS Live + Pages recovery on the merged SHA, with no open Live Chromium or main CI failure remaining.
 
 ### Shrapnel Impact
 Impact releases short-range damaging fragments or equivalent controlled secondary projectiles.
@@ -555,7 +555,7 @@ Exact names, values, rarities and requirements require balance passes.
 - [ ] Finalize initial 10–12 card pool. — **Status:** ⚪ NOT STARTED
 - [x] Implement first new mechanical card. — **Status:** ✅ DONE — Piercing Rivets, PR #105 / `0b33898e66d0f9932330cd0cb53c7651596076e8`
 - [x] Implement Piercing Rivets. — **Status:** ✅ DONE — canonical weapon `pierceCount` + live projectile chain + dedicated card art; production exact-SHA verification passed
-- [ ] Implement Ricochet. — **Status:** 🔵 IN PROGRESS — PR #109; implementation exists on `u4-ricochet-v2`, CI/merge/production verification still pending
+- [x] Implement Ricochet. — **Status:** ✅ DONE — PR #109; squash merge `6b499451bb5ff7fc29f184180d420db96fef88c6`; exact-SHA production verification passed
 - [ ] Implement Shrapnel Impact. — **Status:** ⚪ NOT STARTED
 - [ ] Implement Critical Rivet + crit combat support. — **Status:** ⚪ NOT STARTED
 - [ ] Implement Explosive Rivet. — **Status:** ⚪ NOT STARTED
