@@ -37,6 +37,7 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain('telemetry.provider = transport.provider');
     expect(runtime).toContain('export async function sendCurrentRunReport');
     expect(runtime).toContain('sendReport: reason => sendCurrentRunReport(game, reason)');
+    expect(runtime).toContain('await provider.submit(report)');
     expect(runtime).toContain("manualReportFailure('finalize'");
     expect(runtime).toContain("manualReportFailure('transport'");
     expect(debugUi).toContain("'SEND REPORT'");
@@ -44,7 +45,7 @@ describe('balance run report bridge contract', () => {
     expect(debugUi).toContain('FINALIZE → QUEUE → HTTP');
     expect(debugUi).toContain('__WM_LAST_MANUAL_REPORT_RESULT__');
     expect(html).toContain('./src/telemetry/telemetry-debug-ui.js?v=1');
-    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=7');
+    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=8');
     expect(worker).toContain('INSERT OR IGNORE INTO run_reports');
     expect(worker).toContain("stage: 'd1_insert'");
     expect(worker).toContain('issueComments');
