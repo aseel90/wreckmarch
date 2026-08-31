@@ -11,6 +11,7 @@ describe('balance run report bridge contract', () => {
     const html = read('index.html');
     const worker = read('infra/cloudflare/wreckmarch-run-reports/worker.js');
     const migration = read('infra/cloudflare/wreckmarch-run-reports/migrations/001_run_reports.sql');
+    const debugUi = read('src/telemetry/telemetry-debug-ui.js');
 
     expect(workflow).toContain('id-token: write');
     expect(workflow).toContain('issues: write');
@@ -34,7 +35,16 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain('installEndRunTelemetryHook(scene);');
     expect(runtime).toContain('game.__wreckmarchRunReportProvider');
     expect(runtime).toContain('telemetry.provider = transport.provider');
-    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=6');
+    expect(runtime).toContain('export async function sendCurrentRunReport');
+    expect(runtime).toContain('sendReport: reason => sendCurrentRunReport(game, reason)');
+    expect(runtime).toContain("manualReportFailure('finalize'");
+    expect(runtime).toContain("manualReportFailure('transport'");
+    expect(debugUi).toContain("'SEND REPORT'");
+    expect(debugUi).toContain("'Telemetry debug ready'");
+    expect(debugUi).toContain('FINALIZE → QUEUE → HTTP');
+    expect(debugUi).toContain('__WM_LAST_MANUAL_REPORT_RESULT__');
+    expect(html).toContain('./src/telemetry/telemetry-debug-ui.js?v=1');
+    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=7');
     expect(worker).toContain('INSERT OR IGNORE INTO run_reports');
     expect(worker).toContain("stage: 'd1_insert'");
     expect(worker).toContain('issueComments');

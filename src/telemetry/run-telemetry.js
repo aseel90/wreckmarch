@@ -1,5 +1,5 @@
 /* WRECKMARCH — canonical measurement-only run telemetry owner */
-import { isRemoteRunReportingEnabled, NoopRunReportProvider, RunReportProvider } from './run-report-provider.js?v=2';
+import { isRemoteRunReportingEnabled, NoopRunReportProvider, RunReportProvider } from './run-report-provider.js?v=3';
 
 const LONG_FRAME_MS = 33.34;
 const MAX_FRAME_SPIKE_SAMPLES = 32;
@@ -213,7 +213,6 @@ export class RunTelemetry {
   finalize(reason = null) {
     if (this.finalized) return this.report;
     this.update(0);
-    this.finalized = true;
     this.report.finishReason = String(reason || (n(this.scene?.heroHp) <= 0 ? 'RUNNER DOWN' : 'RUN ENDED'));
     this.report.finishedAt = new Date(this.now()).toISOString();
     const duration = Math.max(.001, n(this.report.run.durationSeconds));
@@ -232,6 +231,7 @@ export class RunTelemetry {
     this.report.upgrades.resolvedStats = safeClone(this.scene?.runStatState?.resolve?.());
     this.report.run.killsPerMinute = round(combat.kills / (duration / 60));
     this.report.run.completed = /COMPLETE|SURVIVED|VICTORY/i.test(this.report.finishReason);
+    this.finalized = true;
     try { globalThis.__WM_LAST_RUN_REPORT__ = this.report; } catch {}
     this.lastSubmission = Promise.resolve(this.provider?.submit?.(this.report)).catch(error => ({ submitted: false, error: String(error?.message || error) }));
     return this.report;
