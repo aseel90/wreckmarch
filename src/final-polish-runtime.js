@@ -1,4 +1,3 @@
-import { installMobileHudPolish } from './mobile-hud-polish.js?v=3';
 /* WRECKMARCH — final presentation polish layer. No balance or spawn changes. */
 const VERSION = 'presentation-v1';
 
@@ -103,7 +102,6 @@ function installPickupPolish(scene) {
 export function applyFinalPolish(scene) {
   if (!scene?.sys?.isActive?.()) throw new Error('Final polish requires an active Wreckmarch scene');
   if (scene.__finalPolishVersion === VERSION) return true;
-  installMobileHudPolish(scene);
   installImpactFx(scene);
   installWaveBanner(scene);
   installLowHealthReadability(scene);
