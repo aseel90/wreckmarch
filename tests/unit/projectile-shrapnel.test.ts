@@ -26,7 +26,7 @@ describe('Shrapnel Impact projectile ownership', () => {
       damage: 24,
       count: 2,
       texture: 'hunter-rivet',
-      excludedEnemies: new Set([first, prior])
+      excludedEnemies: new Set([first, prior]) as any
     });
 
     expect(fragments).toHaveLength(2);

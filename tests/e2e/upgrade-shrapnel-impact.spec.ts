@@ -135,12 +135,12 @@ test('Shrapnel Impact emits bounded secondary rivet fragments that damage a near
   expect(result.initialShrapnelCount).toBe(2);
   expect(result.sourceActive).toBe(false);
   expect(result.fragmentSnapshot).toHaveLength(2);
-  expect(result.fragmentSnapshot.every(fragment => fragment.secondary)).toBe(true);
-  expect(result.fragmentSnapshot.every(fragment => fragment.excludesFirst)).toBe(true);
-  expect(result.fragmentSnapshot.every(fragment => fragment.pierceRemaining === 0)).toBe(true);
-  expect(result.fragmentSnapshot.every(fragment => fragment.ricochetRemaining === 0)).toBe(true);
-  expect(result.fragmentSnapshot.every(fragment => fragment.shrapnelCount === 0)).toBe(true);
-  expect(result.fragmentSnapshot.every(fragment => Math.abs(fragment.damage - 8.4) < .001)).toBe(true);
+  expect(result.fragmentSnapshot.every((fragment: any) => fragment.secondary)).toBe(true);
+  expect(result.fragmentSnapshot.every((fragment: any) => fragment.excludesFirst)).toBe(true);
+  expect(result.fragmentSnapshot.every((fragment: any) => fragment.pierceRemaining === 0)).toBe(true);
+  expect(result.fragmentSnapshot.every((fragment: any) => fragment.ricochetRemaining === 0)).toBe(true);
+  expect(result.fragmentSnapshot.every((fragment: any) => fragment.shrapnelCount === 0)).toBe(true);
+  expect(result.fragmentSnapshot.every((fragment: any) => Math.abs(fragment.damage - 8.4) < .001)).toBe(true);
   expect(result.enemyHp[0]).toBe(76);
   expect(result.enemyHp[1]).toBeCloseTo(91.6, 4);
   expect(result.positiveActive).toBe(false);
