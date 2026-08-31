@@ -23,7 +23,8 @@ test('Call the Rig is offered at level 2 and delegates the summon to the canonic
       'fleet-feet': 3,
       'scrap-magnet': 4,
       'armor-plate': 4,
-      'piercing-rivets': 3
+      'piercing-rivets': 3,
+      'ricochet': 2
     });
     scene.level = 2;
     scene.rigSummoned = false;
