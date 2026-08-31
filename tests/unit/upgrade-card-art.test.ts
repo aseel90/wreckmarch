@@ -25,7 +25,7 @@ describe('canonical Upgrade System card art', () => {
     expect(art).toContain("'shrapnel-impact': 'upgrade-icon-shrapnel-impact'");
     expect(art).toContain("'critical-rivet': 'upgrade-icon-critical-rivet'");
     expect(art).not.toContain('UpgradeSceneV4.card');
-    expect(html).toContain("./src/phase-d1-runtime.js?v=20");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=21");
     expect(html).not.toContain('piercing-rivets-live.js');
   });
 });
