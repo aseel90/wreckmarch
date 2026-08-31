@@ -31,7 +31,8 @@ test('Scrap Magnet uses canonical pickup radius stats in the final upgrade scene
       'fleet-feet': 3,
       'armor-plate': 4,
       'piercing-rivets': 3,
-      'ricochet': 2
+      'ricochet': 2,
+      'shrapnel-impact': 2
     });
     scene.level = 1;
     scene.rigSummoned = false;

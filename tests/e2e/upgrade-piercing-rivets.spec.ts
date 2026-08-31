@@ -28,7 +28,8 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
       'scrap-magnet': 99,
       'armor-plate': 99,
       'call-rig': 99,
-      'ricochet': 99
+      'ricochet': 99,
+      'shrapnel-impact': 99
     });
 
     const originalRandom = Math.random;
@@ -71,9 +72,6 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
     const bullet = shot.bullet;
     const initialPierceRemaining = bullet.pierceRemaining;
 
-    // Drive one deterministic swept segment through both live enemies. This exercises
-    // the real WeaponSystem -> ProjectileSystem -> CombatSystem path without relying
-    // on frame timing or enemy movement in CI.
     bullet.setVelocity?.(0, 0);
     bullet.prevX = muzzle.x;
     bullet.prevY = muzzle.y - 1;

@@ -32,7 +32,8 @@ test('Fleet Feet uses canonical character stats in the final upgrade scene', asy
       'scrap-magnet': 4,
       'armor-plate': 4,
       'piercing-rivets': 3,
-      'ricochet': 2
+      'ricochet': 2,
+      'shrapnel-impact': 2
     });
     scene.level = 1;
     scene.rigSummoned = false;

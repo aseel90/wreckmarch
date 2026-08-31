@@ -12,7 +12,7 @@ describe('authoritative CombatSystem integration', () => {
     expect(game).not.toContain('this.physics.add.overlap(this.bullets, this.enemies');
     expect(game).not.toContain('onBulletHit(bullet, enemy)');
     expect(game).not.toContain('killEnemy(enemy)');
-    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=7'");
+    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=8'");
     expect(system).toContain('scene.combatSystem = new CombatSystem(scene)');
     expect(system).toContain('scene.combatSystem.installOverlaps()');
     expect(system).not.toContain('scene.onBulletHit');
@@ -21,7 +21,7 @@ describe('authoritative CombatSystem integration', () => {
     expect(combat).toContain('return result');
   });
 
-  it('routes swept projectile hits directly from ProjectileSystem to CombatSystem, including pierce and ricochet chains', () => {
+  it('routes swept projectile hits directly from ProjectileSystem to CombatSystem, including pierce, ricochet and impact-shrapnel chains', () => {
     expect(enemyCombat).toContain('resolveEnemyProjectileHit');
     expect(enemyCombat).toContain('resolveEnemyScrapDropCount');
     expect(projectileSystem).toContain('const hitEnemy = scene.combatSystem?.hitEnemyByProjectile');
@@ -29,6 +29,9 @@ describe('authoritative CombatSystem integration', () => {
     expect(projectileSystem).toContain('while (bullet.active)');
     expect(projectileSystem).toContain('this.redirectRicochet(bullet, originX, originY)');
     expect(combat).toContain('bullet.ricochetPending = { x: Number(enemy?.x) || 0, y: Number(enemy?.y) || 0 }');
+    expect(combat).toContain('this.scene.projectileSystem?.spawnImpactShrapnel?.({');
+    expect(projectileSystem).toContain('spawnImpactShrapnel({');
+    expect(projectileSystem).toContain("fragment.projectileKind = 'shrapnel'");
     expect(enemyCombat).toContain('const ricochetRemaining = Math.max(0, Math.floor(Number(bullet.ricochetRemaining) || 0))');
     expect(projectileSystem).not.toContain('this.onBulletHit(bullet, enemy)');
   });

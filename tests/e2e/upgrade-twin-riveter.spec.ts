@@ -17,7 +17,8 @@ async function forceOnlyTwinRiveter(page: any) {
       'scrap-magnet': 4,
       'armor-plate': 4,
       'piercing-rivets': 3,
-      'ricochet': 2
+      'ricochet': 2,
+      'shrapnel-impact': 2
     });
     scene.level = 1;
     scene.rigSummoned = false;
@@ -67,7 +68,6 @@ test('Twin Riveter uses the canonical mechanical upgrade path through both level
     { timeout: 30_000 }
   ).toBe(true);
 
-  // Prove the final UpgradeSceneV4 offers and applies the registered mechanical card.
   await forceOnlyTwinRiveter(page);
   await chooseTwinRiveter(page);
 
@@ -90,8 +90,6 @@ test('Twin Riveter uses the canonical mechanical upgrade path through both level
     spreads: [-0.055, 0.055]
   });
 
-  // After removing the legacy companion upgrade-level monkeypatch, the second level
-  // must remain available through the same final UpgradeSceneV4 the player uses.
   await page.evaluate(() => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');

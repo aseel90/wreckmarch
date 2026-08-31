@@ -28,7 +28,8 @@ test('Ricochet redirects a Hunter rivet to a nearby valid enemy after final impa
       'scrap-magnet': 99,
       'armor-plate': 99,
       'call-rig': 99,
-      'piercing-rivets': 99
+      'piercing-rivets': 99,
+      'shrapnel-impact': 99
     });
 
     const originalRandom = Math.random;
@@ -74,7 +75,6 @@ test('Ricochet redirects a Hunter rivet to a nearby valid enemy after final impa
     const bullet = shot.bullet;
     const initialRicochetRemaining = bullet.ricochetRemaining;
 
-    // Deterministically drive the first swept impact, which must redirect the real projectile.
     bullet.setVelocity?.(0, 0);
     bullet.body.velocity.x = 800;
     bullet.body.velocity.y = 0;
@@ -94,7 +94,6 @@ test('Ricochet redirects a Hunter rivet to a nearby valid enemy after final impa
       hitCount: bullet.hitEnemies?.size ?? 0
     };
 
-    // Drive the redirected segment through the second target.
     bullet.prevX = first.x;
     bullet.prevY = first.y;
     bullet.x = second.x;

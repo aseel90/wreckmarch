@@ -84,6 +84,9 @@ export function mirrorResolvedRunStats(scene, resolved) {
     if (Number.isFinite(weapon.ricochetCount)) {
       scene.primaryWeapon.ricochetCount = Math.max(0, Math.floor(weapon.ricochetCount));
     }
+    if (Number.isFinite(weapon.shrapnelCount)) {
+      scene.primaryWeapon.shrapnelCount = Math.max(0, Math.floor(weapon.shrapnelCount));
+    }
   }
   if (Number.isFinite(weapon.damage)) scene.damage = weapon.damage;
   if (Number.isFinite(weapon.fireDelay)) scene.fireDelay = weapon.fireDelay;
