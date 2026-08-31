@@ -29,7 +29,8 @@ test('Shrapnel Impact emits bounded secondary rivet fragments that damage a near
       'armor-plate': 99,
       'call-rig': 99,
       'piercing-rivets': 99,
-      ricochet: 99
+      ricochet: 99,
+      'critical-rivet': 99
     });
 
     const originalRandom = Math.random;
