@@ -179,11 +179,11 @@ These observations complement telemetry; they do not replace it.
 - [x] Add browser-appropriate performance metrics. — **Status:** ✅ IMPLEMENTED
 - [x] Expose a machine-readable run report to Playwright/CI. — **Status:** ✅ IMPLEMENTED — `__WM_TELEMETRY__`, `__WM_TELEMETRY_RUNTIME__`, `__WM_LAST_RUN_REPORT__`
 - [x] Implement automatic end-of-run/death submission with server-assigned sequential `RUN-####` labels and local failure recovery. — **Status:** ✅ IMPLEMENTED THROUGH CLOUDFLARE/D1
-- [ ] Verify secure OIDC Worker → GitHub Issue bridge on `main` and one real `RUN-####` Issue. — **Status:** 🔵 IN PROGRESS — no PAT required
-- [ ] Implement the initial deterministic balance-scenario suite. — **Status:** ⚪ NOT IMPLEMENTED
+- [x] Verify secure OIDC Worker → GitHub Issue bridge on `main` and one real `RUN-####` Issue. — **Status:** ✅ VERIFIED — real D1 report `wm-baddb2f5-fd07-49fb-9ed2-77cd992dd632` submitted as GitHub Issue #138 / `RUN-0006`; full telemetry JSON preserved in issue comments; no PAT required
+- [x] Implement the initial deterministic balance-scenario suite. — **Status:** ✅ IMPLEMENTED — eight fixed-seed scenarios use canonical `RunStatState`, `applyRegisteredUpgrade` and `WeaponSystem` paths with machine-readable deterministic snapshots; PR #146 CI verified
 - [x] Verify the telemetry change does not alter current gameplay/balance values. — **Status:** ✅ VERIFIED — PR #118 Quality/Smoke/E2E all passed; no card/enemy/wave/damage values changed
 - [x] Verify no Firebase/external analytics dependency is required. — **Status:** ✅ VERIFIED
-- [ ] Capture the first real baseline reports before applying balance changes. — **Status:** ⚪ NEXT GATE
+- [x] Capture the first real baseline reports before applying balance changes. — **Status:** ✅ CAPTURED — multiple real reports stored in D1 and bridged to GitHub Issues; representative `RUN-0006` reached Wave 3 with complete run/wave/combat/projectile/upgrade/performance telemetry
 - [ ] Complete the manual gameplay-pressure review. — **Status:** ⚪ NOT IMPLEMENTED
 
 ## 1.9 gate rule
@@ -250,7 +250,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 
 | # | Workstream | Current status | Gate / intent |
 |---:|---|---|---|
-| 1 | Baseline Metrics & automated run telemetry | 🔵 IN PROGRESS | Core telemetry is live; secure OIDC bridge verification, first real baseline runs + deterministic scenario suite remain before balance changes |
+| 1 | Baseline Metrics & automated run telemetry | 🔵 IN PROGRESS | Telemetry, real D1 reports, secure GitHub Issue bridge and deterministic scenario suite are verified; manual gameplay-pressure review is the final gate before balance changes |
 | 2 | Multi-axis Power Budget | ✅ APPROVED DESIGN / ⚪ NUMBERS PENDING | Derive numeric envelopes only after baseline data |
 | 3 | Heavy Rivets rebalance | ⚪ PENDING BASELINE | Remove unintended exponential/hidden multiplication while preserving heavy-hit identity |
 | 4 | Overclock rebalance | ⚪ PENDING BASELINE | Rework fire-delay stacking into a readable fire-rate budget |
