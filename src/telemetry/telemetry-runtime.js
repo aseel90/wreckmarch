@@ -66,9 +66,10 @@ export async function sendCurrentRunReport(game = globalThis.__WM_GAME__, reason
   if (!reportId) return manualReportFailure('finalize', 'report_id_missing');
 
   try {
-    if (!telemetry.lastSubmission) telemetry.lastSubmission = Promise.resolve(provider.submit(report));
-    await telemetry.lastSubmission;
-    const flushResults = await provider.flushPending();
+    // Manual send must always push the finalized report through the canonical provider.
+    // This recovers reports that were finalized while an old/Noop provider was attached.
+    const flushResults = await provider.submit(report);
+    telemetry.lastSubmission = Promise.resolve(flushResults);
     const queue = provider.getQueue();
     const stillQueued = queue.some(entry => entry?.report?.reportId === reportId);
     const status = globalThis.__WM_TELEMETRY_REMOTE_STATUS__ || null;
