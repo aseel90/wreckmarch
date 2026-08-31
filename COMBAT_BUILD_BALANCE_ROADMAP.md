@@ -182,9 +182,53 @@ No balance nerf/buff should be justified from this new balance pass until the ba
 
 ---
 
-# 2. Power Budget — 🟨 NEXT DISCUSSION
+# 2. Power Budget — ✅ APPROVED DESIGN
 
-To be discussed and approved point-by-point before implementation requirements are written here.
+## 2.1 Core rule
+
+Power is not defined by one DPS ceiling. Balance must consider single-target power, crowd clear, burst, range/safety, control, survivability and mobile performance together. Different characters may distribute that budget differently while remaining comparably viable.
+
+## 2.2 Character identity rule
+
+- Runner may spend more of its budget on range, sustained fire and safety.
+- A future Shotgun character may spend more on short-range burst/crowd control while paying for that power with lower range and higher positioning risk.
+- Future characters must not be forced into identical DPS/range profiles.
+
+## 2.3 Card-growth rule
+
+- A normal card should primarily strengthen a clear axis rather than silently multiplying several systems at once.
+- Repeated levels must not create unintended exponential growth. Stacking should be readable and budgeted from a known base/resolved stat model.
+- No card should become an automatic mandatory pick across unrelated builds.
+
+## 2.4 Multishot / volley rule
+
+Additional projectiles redistribute a trigger/volley damage budget; they do not automatically grant 2x/3x full damage. Twin/Triple should increase coverage and mechanical opportunities while keeping single-target growth controlled. Exact coefficients remain open until Baseline Metrics are captured.
+
+## 2.5 Crowd-mechanic rule
+
+Pierce, Ricochet, Shrapnel and future Explosion should primarily increase crowd-clear/coverage value. Cross-mechanic synergies may be strong, but each mechanic must not freely multiply every downstream mechanic at full strength. Caps, proc budgets, secondary-damage coefficients or non-recursion rules may be used after measurement.
+
+## 2.6 Late-run power fantasy rule
+
+Late-game builds should feel substantially stronger than early-game builds, but even a top build should still need movement/positioning and respect SURGE pressure, Rust Hound and Sawbug threats. Standing still while the screen is erased is a balance failure signal.
+
+## 2.7 Numeric-gate rule
+
+Exact DPS, TTK, Twin/Triple coefficients, card values and wave targets are **not approved yet**. They must be derived after Baseline Metrics produce repeatable data.
+
+## 2.8 Power-budget implementation checklist
+
+- [ ] Capture Baseline Metrics before changing numeric balance. — **Status:** ⚪ BLOCKED ON SECTION 1 IMPLEMENTATION
+- [ ] Define target single-target / crowd / burst / safety / survivability envelopes from baseline data. — **Status:** ⚪ NOT IMPLEMENTED
+- [ ] Define a canonical trigger/volley damage-budget model for multishot weapons. — **Status:** ⚪ NOT IMPLEMENTED
+- [ ] Define anti-exponential stacking rules for repeated card levels. — **Status:** ⚪ NOT IMPLEMENTED
+- [ ] Define interaction ceilings/proc budgets for chained projectile mechanics. — **Status:** ⚪ NOT IMPLEMENTED
+- [ ] Define anti-mandatory-card acceptance criteria for build balance. — **Status:** ⚪ NOT IMPLEMENTED
+- [ ] Define mobile projectile/effect ceilings from performance data. — **Status:** ⚪ NOT IMPLEMENTED
+
+## 2.9 Gate rule
+
+Explosive Rivet and Triple/advanced multishot remain paused until Baseline Metrics exist and the numeric Power Budget is derived from those measurements.
 
 ---
 
