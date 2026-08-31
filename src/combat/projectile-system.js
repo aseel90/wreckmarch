@@ -38,6 +38,8 @@ export class ProjectileSystem {
     speed,
     damage,
     pierceCount = 0,
+    ricochetCount = 0,
+    ricochetRange = 360,
     lifeMs,
     scale = .74,
     tint = null,
@@ -52,6 +54,9 @@ export class ProjectileSystem {
     bullet.setCircle(radius, offsetX, offsetY);
     bullet.damage = damage;
     bullet.pierceRemaining = Math.max(0, Math.floor(Number(pierceCount) || 0));
+    bullet.ricochetRemaining = Math.max(0, Math.floor(Number(ricochetCount) || 0));
+    bullet.ricochetRange = Math.max(0, Number(ricochetRange) || 0);
+    bullet.ricochetPending = false;
     bullet.hitEnemies = new Set();
     bullet.life = lifeMs;
     bullet.prevX = x;
@@ -77,6 +82,46 @@ export class ProjectileSystem {
     return bestEnemy;
   }
 
+  findRicochetTarget(bullet, originEnemy) {
+    let bestEnemy = null;
+    let bestDistanceSq = Math.max(0, Number(bullet.ricochetRange) || 0) ** 2;
+    const originX = Number(originEnemy?.x) || Number(bullet.x) || 0;
+    const originY = Number(originEnemy?.y) || Number(bullet.y) || 0;
+    this.scene.enemies.children.iterate(enemy => {
+      if (!enemy?.active || enemy.hp <= 0 || enemy === originEnemy || bullet.hitEnemies?.has?.(enemy)) return;
+      const dx = enemy.x - originX;
+      const dy = enemy.y - originY;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq < bestDistanceSq) {
+        bestEnemy = enemy;
+        bestDistanceSq = distanceSq;
+      }
+    });
+    return bestEnemy;
+  }
+
+  redirectRicochet(bullet, originEnemy) {
+    if (!bullet?.active || !bullet.ricochetPending || bullet.ricochetRemaining <= 0) return false;
+    const target = this.findRicochetTarget(bullet, originEnemy);
+    if (!target) {
+      bullet.destroy();
+      return false;
+    }
+
+    const originX = Number(originEnemy?.x) || Number(bullet.x) || 0;
+    const originY = Number(originEnemy?.y) || Number(bullet.y) || 0;
+    const speed = Math.hypot(Number(bullet.body?.velocity?.x) || 0, Number(bullet.body?.velocity?.y) || 0);
+    const angle = Math.atan2(target.y - originY, target.x - originX);
+    bullet.ricochetRemaining -= 1;
+    bullet.ricochetPending = false;
+    bullet.setPosition?.(originX, originY);
+    if (bullet.body?.velocity?.setToPolar) bullet.body.velocity.setToPolar(angle, speed);
+    else bullet.setVelocity?.(Math.cos(angle) * speed, Math.sin(angle) * speed);
+    bullet.prevX = originX;
+    bullet.prevY = originY;
+    return true;
+  }
+
   update(delta) {
     const scene = this.scene;
     scene.bullets.children.iterate(bullet => {
@@ -95,13 +140,17 @@ export class ProjectileSystem {
           const beforeHits = bullet.hitEnemies?.size || 0;
           hitEnemy.call(scene.combatSystem, bullet, enemy);
           const afterHits = bullet.hitEnemies?.size || 0;
+          if (bullet.active && bullet.ricochetPending) {
+            this.redirectRicochet(bullet, enemy);
+            break;
+          }
           if (bullet.active && afterHits <= beforeHits) break;
         }
       }
       if (!bullet.active) return;
 
-      bullet.prevX = x2;
-      bullet.prevY = y2;
+      bullet.prevX = bullet.x;
+      bullet.prevY = bullet.y;
       const b = this.bounds;
       if (bullet.life <= 0 || bullet.x < b.minX || bullet.x > b.maxX || bullet.y < b.minY || bullet.y > b.maxY) {
         bullet.destroy();
