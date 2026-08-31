@@ -1,7 +1,6 @@
 /* WRECKMARCH Phase D.1 — Hunter runner + integrated compact weapon + premium PNG cards + real roads + vehicle scale */
 import { CharacterSystem } from './characters/character-system.js?v=8';
 import { loadRunnerLocomotionArt } from './characters/runner-locomotion-art.js?v=4';
-import { installMobileHudPolish } from './mobile-hud-polish.js?v=3';
 import { UPGRADE_RARITIES, UPGRADE_RARITY_RULES, getUpgradeRarityRule } from './upgrades/upgrade-rarity.js?v=1';
 import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrades/upgrade-card-art.js?v=4';
 const WORLD_W=2200,WORLD_H=2200;
@@ -181,4 +180,4 @@ function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_D1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchD1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`D1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase D.1 self-test failed: '+detail)
 }
 
-export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installMobileHudPolish(s);installVehicleScale(s);installUpgradeCardArt(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: Hunter Runner + integrated compact weapon + dynamic canonical rarity cards + visible asphalt + real vehicle scale');selfTest(s);return true}
+export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installVehicleScale(s);installUpgradeCardArt(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: Hunter Runner + integrated compact weapon + dynamic canonical rarity cards + visible asphalt + real vehicle scale');selfTest(s);return true}

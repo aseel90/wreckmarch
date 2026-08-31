@@ -406,11 +406,35 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-live-playwright-install.log
+      - name: Verify deployed telemetry UI asset graph
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          BASE="${PAGE_URL%/}/"
+          curl -fsSL --retry 5 "${BASE}?build=${SHA}" -o wm-live-index.html
+          curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?v=4" -o wm-live-mobile-hud.js
+          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=22" -o wm-live-phase-d1.js
+          curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
+          grep -F "./src/phase-d1-runtime.js?v=22" wm-live-index.html
+          grep -F "./src/mobile-hud-polish.js?v=4" wm-live-index.html
+          grep -F "./src/final-polish-runtime.js?v=2" wm-live-index.html
+          grep -F "const END_RUN_OWNER_VERSION = 'runtime-v4';" wm-live-mobile-hud.js
+          grep -F "'SEND REPORT'" wm-live-mobile-hud.js
+          if grep -Fq "mobile-hud-polish" wm-live-phase-d1.js; then
+            echo "phase-d1 still owns mobile HUD"
+            exit 1
+          fi
+          if grep -Fq "mobile-hud-polish" wm-live-final-polish.js; then
+            echo "final-polish still owns mobile HUD"
+            exit 1
+          fi
       - name: Smoke test deployed Pages build
         id: live_smoke
         continue-on-error: true
         env:
-          WM_SMOKE_URL: ${{ needs.deploy.outputs.page_url }}?autotest=1&debug=1
+          WM_SMOKE_URL: ${{ needs.deploy.outputs.page_url }}?autotest=1&debug=1&wmTelemetry=1&build=${{ github.sha }}
         run: |
           set -o pipefail
           timeout 45s node scripts/ci-smoke.mjs 2>&1 | tee wm-live-smoke.log
@@ -424,6 +448,10 @@ jobs:
             wm-live-smoke.log
             wm-live-install.log
             wm-live-playwright-install.log
+            wm-live-index.html
+            wm-live-mobile-hud.js
+            wm-live-phase-d1.js
+            wm-live-final-polish.js
       - name: Open, update, or close live failure issue
         if: always()
         env:
@@ -447,7 +475,7 @@ jobs:
             printf 'Live URL: %s\n' "$PAGE_URL"
             printf 'Run: https://github.com/%s/actions/runs/%s\n\n' "$REPO" "${{ github.run_id }}"
             printf 'The smoke gate treats these browser signals as failures:\n'
-            printf -- '- console.error\n- pageerror\n- requestfailed\n- boot/playability assertion timeout\n\n'
+            printf -- '- console.error\n- pageerror\n- requestfailed\n- boot/playability assertion timeout\n- stale deployed asset graph\n- missing SEND REPORT control in wmTelemetry mode\n\n'
             if [ -f wm-live-smoke.log ]; then
               printf '### wm-live-smoke.log\n```text\n'
               tail -c 16000 wm-live-smoke.log
