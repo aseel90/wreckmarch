@@ -1,6 +1,6 @@
 # Wreckmarch — Combat & Build Balance Decision Roadmap
 
-> **Status:** Active design-decision roadmap
+> **Status:** Active implementation roadmap — U4-B balance foundation in progress
 > **Purpose:** Capture the Combat/Balance decisions approved with the project owner before implementation resumes.
 > **Relationship to master roadmap:** `UPGRADE_SYSTEM_2_ROADMAP.md` remains the protected Upgrade System 2.0 master roadmap. This document is a cumulative decision/amendment roadmap and must not replace or delete any approved master-roadmap scope. After the design review is complete, the approved decisions will be merged back into the appropriate U4/U7/master-roadmap sections in a controlled update.
 > **Implementation rule:** Approval of a design decision does **not** mean implementation is complete. Implementation checkboxes remain `[ ]` until code, automated tests and the required game verification pass.
@@ -168,20 +168,21 @@ These observations complement telemetry; they do not replace it.
 
 ## 1.8 Baseline implementation checklist
 
-- [ ] Identify canonical telemetry event/reporting touchpoints without duplicate gameplay ownership. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Implement the telemetry provider/no-op boundary. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Implement local/CI run telemetry aggregation. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Add structured run/wave metrics. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Add combat/kills/survivability metrics. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Add upgrade/build-history metrics. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Add projectile/mechanical counters. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Add browser-appropriate performance metrics. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Expose a machine-readable run report to deterministic Playwright scenarios. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Implement automatic end-of-run/death submission with server-assigned sequential `RUN-####` labels and local failure recovery. — **Status:** ⚪ NOT IMPLEMENTED
+- [x] Identify canonical telemetry event/reporting touchpoints without duplicate gameplay ownership. — **Status:** ✅ IMPLEMENTED — PR #118 / `e046971258628e9a7db8892e7fd21daadace958f`
+- [x] Implement the telemetry provider/no-op boundary. — **Status:** ✅ IMPLEMENTED — `RunReportProvider` + `NoopRunReportProvider`
+- [x] Implement local/CI run telemetry aggregation. — **Status:** ✅ IMPLEMENTED — canonical `RunTelemetry` owner
+- [x] Add structured run/wave metrics. — **Status:** ✅ IMPLEMENTED
+- [x] Add combat/kills/survivability metrics. — **Status:** ✅ IMPLEMENTED
+- [x] Add upgrade/build-history metrics. — **Status:** ✅ IMPLEMENTED
+- [x] Add projectile/mechanical counters. — **Status:** ✅ IMPLEMENTED
+- [x] Add browser-appropriate performance metrics. — **Status:** ✅ IMPLEMENTED
+- [x] Expose a machine-readable run report to Playwright/CI. — **Status:** ✅ IMPLEMENTED — `__WM_TELEMETRY__`, `__WM_TELEMETRY_RUNTIME__`, `__WM_LAST_RUN_REPORT__`
+- [x] Implement automatic end-of-run/death submission with server-assigned sequential `RUN-####` labels and local failure recovery. — **Status:** ✅ IMPLEMENTED THROUGH CLOUDFLARE/D1; GitHub Issue forwarding credential remains a deployment follow-up and does not block report preservation
+- [ ] Configure secure Worker → GitHub Issue forwarding credential and verify one real Issue is created. — **Status:** 🔵 IN PROGRESS — reports are already preserved as `pending_github` when forwarding is unavailable
 - [ ] Implement the initial deterministic balance-scenario suite. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Verify normal gameplay remains unchanged when telemetry is disabled/no-op. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Verify no Firebase/external analytics dependency is required. — **Status:** ⚪ NOT IMPLEMENTED
-- [ ] Capture the first baseline reports before applying balance changes. — **Status:** ⚪ NOT IMPLEMENTED
+- [x] Verify the telemetry change does not alter current gameplay/balance values. — **Status:** ✅ VERIFIED — PR #118 Quality/Smoke/E2E all passed; no card/enemy/wave/damage values changed
+- [x] Verify no Firebase/external analytics dependency is required. — **Status:** ✅ VERIFIED
+- [ ] Capture the first real baseline reports before applying balance changes. — **Status:** ⚪ NEXT GATE
 - [ ] Complete the manual gameplay-pressure review. — **Status:** ⚪ NOT IMPLEMENTED
 
 ## 1.9 Gate rule
@@ -242,21 +243,39 @@ Explosive Rivet and Triple/advanced multishot remain paused until Baseline Metri
 
 ---
 
-# Remaining analysis topics — ⚪ NOT DISCUSSED
+# 3. Twenty-three-workstream implementation register
 
-These headings intentionally reserve the analysis sequence; their contents will be written only after discussion and approval so the roadmap records decisions rather than assumptions.
+This register is the canonical execution order for the Combat & Build Balance Foundation. Items stay separate so a broad heading cannot hide unfinished work. Section 1 and Section 2 above contain the approved detail for workstreams 1–2; later workstreams receive their detailed decision sections as they are discussed and approved.
 
-- Existing-card rebalance (Heavy / Overclock / Twin and interaction scaling).
-- Projectile/mechanical interaction limits (Pierce / Ricochet / Shrapnel / future Explosion).
-- Requirements/prerequisites and Triple Riveter progression.
-- Weapon/character compatibility filtering.
-- Weapon Registry / signature-weapon architecture for future characters.
-- Shotgun Character combat identity and damage-budget model.
-- Enemy roles, ranges and future-character matchup safety.
-- Wave/difficulty scaling relative to player power.
-- Rarity identity/scaling.
-- Rig/support damage ownership and compatibility.
-- Armor/stat semantics and future character survivability.
-- Build identities and anti-mandatory-card rules.
-- Mobile projectile/performance ceilings.
-- Final U4/U7 integration and verification gates.
+| # | Workstream | Current status | Gate / intent |
+|---:|---|---|---|
+| 1 | Baseline Metrics & automated run telemetry | 🔵 IN PROGRESS | Core telemetry is live; first real baseline runs + deterministic scenario suite remain before balance changes |
+| 2 | Multi-axis Power Budget | ✅ APPROVED DESIGN / ⚪ NUMBERS PENDING | Derive numeric envelopes only after baseline data |
+| 3 | Heavy Rivets rebalance | ⚪ PENDING BASELINE | Remove unintended exponential/hidden multiplication while preserving heavy-hit identity |
+| 4 | Overclock rebalance | ⚪ PENDING BASELINE | Rework fire-delay stacking into a readable fire-rate budget |
+| 5 | Twin Riveter rebalance | ⚪ PENDING BASELINE | Twin becomes true two-shot progression with controlled volley damage; no hidden Triple at level 2 |
+| 6 | Piercing Rivets interaction limits | ⚪ PENDING BASELINE | Measure and cap downstream impact multiplication without deleting penetration identity |
+| 7 | Ricochet interaction limits | ⚪ PENDING BASELINE | Control bounce/proc multiplication and keep target-selection behavior readable |
+| 8 | Shrapnel Impact interaction limits | ⚪ PENDING BASELINE | Bound fragment count, secondary damage and recursion/performance cost |
+| 9 | Explosive Rivet design + integration | ⏸️ PAUSED | Add only after interaction/proc budgets exist; explosion must not freely multiply every impact chain |
+| 10 | Triple Riveter / advanced multishot | ⏸️ PAUSED | Separate advanced card after Twin; use volley damage budget and hard projectile ceilings |
+| 11 | Canonical requirements / prerequisite resolver | ⚪ PENDING | Runtime must actually enforce prerequisites such as Twin → Triple rather than relying on metadata/hardcode |
+| 12 | Weapon/character card compatibility filtering | ⚪ PENDING | Rivet-only cards must not appear for incompatible future weapons/characters |
+| 13 | Canonical Weapon Registry / signature-weapon resolution | ⚪ PENDING | Clean deterministic weapon ownership for Runner, Shotgun and future characters |
+| 14 | Shotgun Character combat identity | ⚪ PENDING | Define short-range burst/coverage, spread, risk and volley budget without making it Runner-with-more-projectiles |
+| 15 | Enemy role/range matchup safety | ⚪ PENDING BASELINE | Verify Rat/Hound/Sawbug remain meaningful against both long-range and future short-range characters |
+| 16 | Wave/difficulty scaling vs player power | ⚪ PENDING BASELINE | Rebalance pressure after player multipliers are corrected; do not hide power creep by blindly inflating HP |
+| 17 | Rarity identity + power scaling | ⚪ PENDING BASELINE / U7 | Resolve same-card rarity identity and prevent rarity from magnifying already-multiplicative stats excessively |
+| 18 | Rig/support damage ownership | ⚪ PENDING | Decouple support balance from ambiguous `primaryWeapon.damage` semantics and future shotgun pellet damage |
+| 19 | Armor/stat combat semantics | ⚪ PENDING | Define one canonical mitigation/armor contract before armor becomes a character identity axis |
+| 20 | Build identities + anti-mandatory-card validation | ⚪ PENDING BASELINE | Validate multiple viable builds; no Twin/Heavy/Overclock-style automatic pick should dominate unrelated builds |
+| 21 | Mobile projectile/effect performance budget | ⚪ PENDING BASELINE | Set hard ceilings from measured active projectiles, fragments, long frames and late-wave pressure |
+| 22 | Deterministic interaction matrix / regression scenarios | ⚪ PENDING | Lock reproducible no-upgrade, single-card, pair-synergy and max-power scenarios for before/after comparisons |
+| 23 | U4 balance gate + master-roadmap reintegration | ⚪ PENDING | After workstreams 1–22: validate three viable builds, final interaction/performance gate, then merge approved decisions back into `UPGRADE_SYSTEM_2_ROADMAP.md` without deleting protected scope |
+
+## Execution rule
+
+- Workstream 1 is the active implementation gate.
+- No numeric nerf/buff to workstreams 3–8 or 15–21 should be finalized before the first baseline dataset is captured and reviewed.
+- Explosive Rivet and Triple Riveter remain paused behind this foundation.
+- The 23 workstreams are resolved one by one; a workstream becomes `[x]`/DONE only after implementation, automated tests and the required gameplay/production verification pass.
