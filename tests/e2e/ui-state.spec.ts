@@ -101,7 +101,7 @@ test('end-run overlay uses the live landscape viewport instead of legacy portrai
   expect(result.button.y).toBeCloseTo(342, 1);
   expect(result.titleVisible).toBe(false);
   expect(result.hudState).toBe('suppressed');
-  expect(result.endRunVersion).toBe('runtime-v3');
+  expect(result.endRunVersion).toBe('runtime-v4');
   expect(result.canvas.left).toBeCloseTo(0, 1);
   expect(result.canvas.top).toBeCloseTo(0, 1);
   expect(result.canvas.width).toBeCloseTo(960, 1);
@@ -134,7 +134,9 @@ test('telemetry mode end-run exposes the authoritative SEND REPORT control', asy
       buttonActive: layout.reportBtn?.active === true,
       buttonVisible: layout.reportBtn?.visible === true,
       label: layout.reportLabel?.text,
-      status: layout.reportStatus?.text
+      status: layout.reportStatus?.text,
+      endRunVersion: document.documentElement.dataset.wreckmarchEndRunLayout,
+      ownerVersion: scene.__mobileHudEndRunOwnerVersion
     };
     layout.reportBtn.emit('pointerdown');
     await new Promise(resolve => setTimeout(resolve, 20));
@@ -150,7 +152,9 @@ test('telemetry mode end-run exposes the authoritative SEND REPORT control', asy
     buttonActive: true,
     buttonVisible: true,
     label: 'SEND REPORT',
-    status: 'Telemetry: ready'
+    status: 'Telemetry: ready',
+    endRunVersion: 'runtime-v4',
+    ownerVersion: 'runtime-v4'
   });
   expect(result.label).toBe('REPORT SENT');
   expect(result.status).toContain('SENT • wm-e2e-manual');
