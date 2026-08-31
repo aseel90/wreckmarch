@@ -31,7 +31,7 @@ describe('Shrapnel Impact projectile ownership', () => {
 
     expect(fragments).toHaveLength(2);
     expect(spawned).toHaveLength(2);
-    expect(spawned.every(fragment => fragment.damage === 8.4)).toBe(true);
+    spawned.forEach(fragment => expect(fragment.damage).toBeCloseTo(8.4, 6));
     expect(spawned.every(fragment => fragment.lifeMs === 260)).toBe(true);
     expect(spawned.every(fragment => fragment.texture === 'hunter-rivet')).toBe(true);
     expect(fragments.every(fragment => fragment.isSecondaryProjectile === true)).toBe(true);
