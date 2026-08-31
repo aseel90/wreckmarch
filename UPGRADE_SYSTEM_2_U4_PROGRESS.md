@@ -51,6 +51,33 @@ Merged implementation: PR #109 from `u4-ricochet-v2` → `main` as `6b499451bb5f
 - [x] Production Live verification passes on the merged exact SHA — iOS Live verification and Pages recovery passed on `6b499451bb5ff7fc29f184180d420db96fef88c6`; no open Live Chromium or main CI failure remained for that SHA.
 - [x] After the production gate, Ricochet is marked DONE in the canonical roadmap.
 
+## Shrapnel Impact — DONE (PR #111 / `440611c87fdfae9ad36374700e6a5831afd49b7e`)
+
+Merged implementation: PR #111 from `u4-shrapnel-impact` → `main` as `440611c87fdfae9ad36374700e6a5831afd49b7e`.
+
+- [x] Canonical registry definition exists.
+- [x] Weapon-scoped `shrapnelCount` modifier adds 2 fragments per level and is capped at 4.
+- [x] Current discrete implementation is fixed to COMMON so rarity scaling cannot create fractional fragment counts; final rarity/balance remains a later U7 decision.
+- [x] Hero WeaponSystem consumes canonical resolved Shrapnel state; Rig/support volleys remain unchanged.
+- [x] ProjectileSystem exclusively owns secondary-fragment creation, movement, lifetime and safety cap.
+- [x] CombatSystem emits fragments only after a real successful primary impact, including impacts inside Pierce/Ricochet chains.
+- [x] Secondary fragments inherit the source projectile's already-hit enemy set, preventing damage to the impact target or prior chain targets.
+- [x] Secondary fragments have zero Pierce, zero Ricochet and zero Shrapnel, preventing recursive projectile chains.
+- [x] Snapshot/debug state remains compatible through canonical upgrade levels + stat modifiers.
+- [x] Dedicated Wreckmarch-style Shrapnel Impact card icon routes through the final D1 card owner and shared `upgrade-card-art.js` registry.
+- [x] Browser module graph is cache-busted for all changed live owners.
+- [x] Unit/integration coverage added for stat caps, projectile ownership, impact routing, recursion prevention and live-owner cache versions.
+- [x] Deterministic Chromium E2E verifies the real UpgradeSceneV4 offer, custom art, Hero projectile impact, bounded fragment creation and damage to a nearby new enemy.
+- [x] Existing forced-card E2Es explicitly max Shrapnel Impact so adding the card does not invalidate single-offer test assumptions.
+- [x] PR Quality passes.
+- [x] PR Smoke passes.
+- [x] PR E2E shards 1/3, 2/3, 3/3 pass.
+- [x] Aggregate E2E passes.
+- [x] Merge to `main` — squash merge `440611c87fdfae9ad36374700e6a5831afd49b7e`.
+- [x] Production exact-SHA verification passes — iOS Live verification and Pages recovery both passed on `440611c87fdfae9ad36374700e6a5831afd49b7e`.
+- [x] No open `[CI] main is failing` or `[LIVE] deployed main smoke failed` issue remains after the production gate.
+- [x] After the production gate, Shrapnel Impact is marked DONE in the canonical roadmap.
+
 ## Future fixes / polish
 
 - [ ] Stabilize per-card rarity identity: the same upgrade card (observed example: Fleet Feet / speed card) should not randomly reappear as COMMON, EPIC, or LEGENDARY unless that card explicitly opts into a designed multi-rarity progression model. Keep this deferred until the U7 rarity/balance cleanup pass; do not block current U4 projectile-card implementation.
