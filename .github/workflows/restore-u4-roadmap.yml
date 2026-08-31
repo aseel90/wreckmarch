@@ -1,0 +1,27 @@
+name: Restore protected U4 roadmap
+
+on:
+  push:
+    branches:
+      - u4-ricochet-v2
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore roadmap and remove temporary workflow
+        run: |
+          git fetch origin main
+          git checkout origin/main -- UPGRADE_SYSTEM_2_ROADMAP.md
+          rm .github/workflows/restore-u4-roadmap.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add UPGRADE_SYSTEM_2_ROADMAP.md .github/workflows/restore-u4-roadmap.yml
+          git commit -m "Restore protected Upgrade System roadmap"
+          git push origin HEAD:u4-ricochet-v2
