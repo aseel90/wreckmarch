@@ -414,13 +414,15 @@ jobs:
           set -euo pipefail
           BASE="${PAGE_URL%/}/"
           curl -fsSL --retry 5 "${BASE}?build=${SHA}" -o wm-live-index.html
-          curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?v=4" -o wm-live-mobile-hud.js
+          curl -fsSL --retry 5 "${BASE}src/mobile-hud-loader-telemetry-v1.js" -o wm-live-mobile-hud-loader.js
+          curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" -o wm-live-mobile-hud.js
           curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=22" -o wm-live-phase-d1.js
           curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
           grep -F "./src/phase-d1-runtime.js?v=22" wm-live-index.html
-          grep -F "./src/mobile-hud-polish.js?v=4" wm-live-index.html
+          grep -F "./src/mobile-hud-loader-telemetry-v1.js" wm-live-index.html
+          grep -F "./mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" wm-live-mobile-hud-loader.js
           grep -F "./src/final-polish-runtime.js?v=2" wm-live-index.html
-          grep -F "const END_RUN_OWNER_VERSION = 'runtime-v4';" wm-live-mobile-hud.js
+          grep -F "END_RUN_OWNER_VERSION='runtime-v5-test'" wm-live-mobile-hud.js
           grep -F "'SEND REPORT'" wm-live-mobile-hud.js
           if grep -Fq "mobile-hud-polish" wm-live-phase-d1.js; then
             echo "phase-d1 still owns mobile HUD"
@@ -450,6 +452,7 @@ jobs:
             wm-live-playwright-install.log
             wm-live-index.html
             wm-live-mobile-hud.js
+            wm-live-mobile-hud-loader.js
             wm-live-phase-d1.js
             wm-live-final-polish.js
       - name: Open, update, or close live failure issue
