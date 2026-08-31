@@ -20,8 +20,8 @@ const historical = [
 describe('Weapon / Projectile ownership integration', () => {
   it('installs authoritative systems with Enemy Foundation', () => {
     const enemySystem = read('src/enemies/enemy-system.js');
-    expect(enemySystem).toContain("import { ProjectileSystem } from '../combat/projectile-system.js?v=3'");
-    expect(enemySystem).toContain("import { WeaponSystem } from '../combat/weapon-system.js?v=4'");
+    expect(enemySystem).toContain("import { ProjectileSystem } from '../combat/projectile-system.js?v=4'");
+    expect(enemySystem).toContain("import { WeaponSystem } from '../combat/weapon-system.js?v=5'");
     expect(enemySystem).toContain('scene.projectileSystem = new ProjectileSystem(scene)');
     expect(enemySystem).toContain('scene.weaponSystem = new WeaponSystem(scene, { projectileSystem: scene.projectileSystem })');
   });
@@ -66,9 +66,9 @@ describe('Weapon / Projectile ownership integration', () => {
 
   it('cache-busts the U4 projectile-upgrade live owners from the boot graph', () => {
     const html = read('index.html');
-    expect(html).toContain("./src/enemies/enemy-system.js?v=16");
+    expect(html).toContain("./src/enemies/enemy-system.js?v=17");
     expect(html).toContain("./src/phase-c-runtime.js?v=17");
-    expect(html).toContain("./src/phase-c1-runtime.js?v=13");
-    expect(html).toContain("./src/phase-d1-runtime.js?v=18");
+    expect(html).toContain("./src/phase-c1-runtime.js?v=14");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=19");
   });
 });

@@ -64,7 +64,7 @@ test('Shrapnel Impact emits bounded secondary rivet fragments that damage a near
     const impactX = muzzle.x + 100;
     const impactY = muzzle.y - 1;
     first.setPosition(impactX, impactY);
-    second.setPosition(impactX + Math.cos(.55) * 105, impactY + Math.sin(.55) * 105);
+    second.setPosition(impactX + 320, impactY + 260);
     for (const enemy of enemies) {
       enemy.setVelocity(0, 0);
       enemy.speed = 0;
@@ -101,8 +101,12 @@ test('Shrapnel Impact emits bounded secondary rivet fragments that damage a near
 
     const positive = fragments.find((fragment: any) => (fragment.body?.velocity?.y || 0) > 0);
     if (!positive) throw new Error('Expected a positive-angle shrapnel fragment');
-    positive.prevX = first.x;
-    positive.prevY = first.y;
+    const shrapnelSpeed = Math.hypot(positive.body?.velocity?.x || 0, positive.body?.velocity?.y || 0) || 1;
+    const shrapnelDirX = (positive.body?.velocity?.x || 0) / shrapnelSpeed;
+    const shrapnelDirY = (positive.body?.velocity?.y || 0) / shrapnelSpeed;
+    second.setPosition(positive.x + shrapnelDirX * 105, positive.y + shrapnelDirY * 105);
+    positive.prevX = positive.x;
+    positive.prevY = positive.y;
     positive.x = second.x;
     positive.y = second.y;
     scene.projectileSystem.update(16);
