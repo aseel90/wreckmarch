@@ -538,6 +538,8 @@ Impact releases short-range damaging fragments or equivalent controlled secondar
 ### Critical Rivet
 Introduces/increases crit-oriented play.
 
+**Implementation status:** ✅ DONE — PR #115, merged as `3af77d101ba1288ee5b349adecf271594fdea2bc`; exact-SHA iOS Live verification and Pages recovery passed, and no open Live Chromium or main CI failure remained after the production gate. Canonical character-domain `critChance`, one-roll-per-Hero-projectile resolution in WeaponSystem, Runner `critDamageMultiplier = 1.5`, Rig/support isolation, D1-owned card art and deterministic Chromium coverage are live.
+
 ### Explosive Rivet
 Controlled impact explosion / area damage.
 
@@ -559,7 +561,7 @@ Exact names, values, rarities and requirements require balance passes.
 - [x] Implement Piercing Rivets. — **Status:** ✅ DONE — canonical weapon `pierceCount` + live projectile chain + dedicated card art; production exact-SHA verification passed
 - [x] Implement Ricochet. — **Status:** ✅ DONE — PR #109 / `6b499451bb5ff7fc29f184180d420db96fef88c6`; canonical ricochet behavior + dedicated card art; production exact-SHA verification passed
 - [x] Implement Shrapnel Impact. — **Status:** ✅ DONE — PR #111 / `440611c87fdfae9ad36374700e6a5831afd49b7e`; canonical bounded impact fragments + dedicated card art; production exact-SHA verification passed
-- [ ] Implement Critical Rivet + crit combat support. — **Status:** ⚪ NOT STARTED
+- [x] Implement Critical Rivet + crit combat support. — **Status:** ✅ DONE — PR #115 / `3af77d101ba1288ee5b349adecf271594fdea2bc`; canonical Hero projectile crit resolution + dedicated card art; production exact-SHA verification passed
 - [ ] Implement Explosive Rivet. — **Status:** ⚪ NOT STARTED
 - [ ] Implement advanced multishot progression. — **Status:** ⚪ NOT STARTED
 - [ ] Test projectile-count/performance limits. — **Status:** ⚪ NOT STARTED
@@ -1009,8 +1011,8 @@ Latest verified gameplay commit for the core: `89926f8`.
 
 ## Phase U4 — New Hunter build cards — **NEXT ACTIVE PHASE**
 - [ ] Finalize 10–12-card initial pool. — **Status:** 🟢 NEXT
-- [ ] Add mechanical projectile upgrades incrementally. — **Status:** 🔵 IN PROGRESS — Piercing Rivets + Ricochet + Shrapnel Impact complete; further U4 projectile cards remain
-- [ ] Add crit only with combat integration/tests. — **Status:** ⚪ NOT STARTED
+- [ ] Add mechanical projectile upgrades incrementally. — **Status:** 🔵 IN PROGRESS — Piercing Rivets + Ricochet + Shrapnel Impact + Critical Rivet complete; Explosive Rivet and advanced multishot remain
+- [x] Add crit only with combat integration/tests. — **Status:** ✅ DONE — Critical Rivet / PR #115 / `3af77d101ba1288ee5b349adecf271594fdea2bc`; exact-SHA production verification passed
 - [ ] Verify at least 3 viable build identities. — **Status:** ⚪ NOT STARTED
 
 ## Phase U5 — Card visual overhaul
@@ -1048,7 +1050,7 @@ Upgrade System 2.0 is complete only when:
 - [x] Runner remains visually and mechanically the correct character. — **Status:** ✅ CORE VERIFIED
 - [x] There is one canonical ownership path for touched character/weapon/upgrade/stat responsibilities. — **Status:** ✅ CORE VERIFIED
 - [x] Existing cards have been safely migrated. — **Status:** ✅ CORE VERIFIED
-- [ ] New cards create multiple real builds rather than only larger numbers. — **Status:** 🔵 U4 IN PROGRESS — Piercing Rivets + Ricochet + Shrapnel Impact add mechanical projectile branching; more U4 cards/build validation remain
+- [ ] New cards create multiple real builds rather than only larger numbers. — **Status:** 🔵 U4 IN PROGRESS — Piercing Rivets + Ricochet + Shrapnel Impact + Critical Rivet now cover projectile branching and a precision/crit axis; Explosive Rivet, advanced multishot and build validation remain
 - [ ] Rarity/levels/prerequisites work predictably for the **expanded** card pool. — **Status:** 🔵 CORE PARTIAL; U4 prerequisite/build validation remains
 - [ ] Stats shown to the player match actual combat in the planned build/run-stats UI. — **Status:** 🔵 debug/read-only data exists; player-facing panel remains
 - [ ] The expanded system remains performant and readable on mobile. — **Status:** ⚪ requires U4/U5 content/UI validation
