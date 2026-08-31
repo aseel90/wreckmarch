@@ -50,3 +50,7 @@ Merged implementation: PR #109 from `u4-ricochet-v2` → `main` as `6b499451bb5f
 - [x] Merge to `main` — squash merge `6b499451bb5ff7fc29f184180d420db96fef88c6`.
 - [x] Production Live verification passes on the merged exact SHA — iOS Live verification and Pages recovery passed on `6b499451bb5ff7fc29f184180d420db96fef88c6`; no open Live Chromium or main CI failure remained for that SHA.
 - [x] After the production gate, Ricochet is marked DONE in the canonical roadmap.
+
+## Future fixes / polish
+
+- [ ] Stabilize per-card rarity identity: the same upgrade card (observed example: Fleet Feet / speed card) should not randomly reappear as COMMON, EPIC, or LEGENDARY unless that card explicitly opts into a designed multi-rarity progression model. Keep this deferred until the U7 rarity/balance cleanup pass; do not block current U4 projectile-card implementation.
