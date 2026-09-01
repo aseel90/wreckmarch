@@ -53,12 +53,14 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain("manualReportFailure('finalize'");
     expect(runtime).toContain("manualReportFailure('transport'");
     expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=14');
-    expect(html).toContain('./src/phase-d1-runtime.js?v=24');
-    expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=17');
-    expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=24');
+    expect(html).toContain('./src/phase-d1-runtime.js?v=25');
+    expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=18');
+    expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=25');
     expect(pagesWorkflow).not.toContain('src/phase-d1-runtime.js?v=23');
     expect(pagesWorkflow).toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })");
     expect(pagesWorkflow).toContain('upgrade-icon-explosive-rivet');
+    expect(pagesWorkflow).toContain("createRegisteredUpgradeChoice(scene, 'triple-riveter', { category: 'EVOLUTION' })");
+    expect(pagesWorkflow).toContain('upgrade-icon-triple-riveter');
     expect(html).not.toContain('./src/telemetry/telemetry-debug-ui.js');
     expect(html).toContain('./src/mobile-hud-loader-telemetry-v1.js');
     expect(hudLoader).toContain('./mobile-hud-polish.js?asset=telemetry-hud-20260831-213754');

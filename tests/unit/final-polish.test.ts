@@ -9,7 +9,7 @@ describe('final presentation polish', () => {
   it('boots final polish after the production enemy visuals', () => {
     const html = read('index.html');
     const rat = html.indexOf("./src/enemies/scrap-rat-visuals.js");
-    const phaseD1 = html.indexOf("./src/phase-d1-runtime.js?v=24");
+    const phaseD1 = html.indexOf("./src/phase-d1-runtime.js?v=25");
     const hud = html.indexOf("./src/mobile-hud-loader-telemetry-v1.js");
     const polish = html.indexOf("./src/final-polish-runtime.js?v=2");
     expect(rat).toBeGreaterThan(-1);

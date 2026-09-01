@@ -21,7 +21,7 @@ describe('Weapon / Projectile ownership integration', () => {
   it('installs authoritative systems with Enemy Foundation', () => {
     const enemySystem = read('src/enemies/enemy-system.js');
     expect(enemySystem).toContain("import { ProjectileSystem } from '../combat/projectile-system.js?v=5'");
-    expect(enemySystem).toContain("import { WeaponSystem } from '../combat/weapon-system.js?v=6'");
+    expect(enemySystem).toContain("import { WeaponSystem } from '../combat/weapon-system.js?v=7'");
     expect(enemySystem).toContain('scene.projectileSystem = new ProjectileSystem(scene)');
     expect(enemySystem).toContain('scene.weaponSystem = new WeaponSystem(scene, { projectileSystem: scene.projectileSystem })');
   });
@@ -83,6 +83,16 @@ describe('Weapon / Projectile ownership integration', () => {
     expect(phaseC1).toContain('rollUpgradeChoices(c1UpgradePool(this), { count: 3 })');
   });
 
+  it('keeps Triple Riveter in every live upgrade pool owner behind canonical requirements', () => {
+    const phaseC = read('src/phase-c-runtime.js');
+    const phaseC1 = read('src/phase-c1-runtime.js');
+    const registration = "createRegisteredUpgradeChoice(scene, 'triple-riveter', { category: 'EVOLUTION' })";
+    expect(phaseC).toContain(registration);
+    expect(phaseC1).toContain(registration);
+    expect(phaseC).not.toContain("upgradeLevels?.['twin-riveter'] >= 2");
+    expect(phaseC1).not.toContain("upgradeLevels?.['twin-riveter'] >= 2");
+  });
+
   it('provides canonical card art for Explosive Rivet', () => {
     const art = read('src/upgrades/upgrade-card-art.js');
     expect(art).toContain("'explosive-rivet': 'upgrade-icon-explosive-rivet'");
@@ -92,9 +102,9 @@ describe('Weapon / Projectile ownership integration', () => {
 
   it('cache-busts the U4 projectile-upgrade live owners from the boot graph', () => {
     const html = read('index.html');
-    expect(html).toContain("./src/enemies/enemy-system.js?v=22");
-    expect(html).toContain("./src/phase-c-runtime.js?v=19");
-    expect(html).toContain("./src/phase-c1-runtime.js?v=17");
-    expect(html).toContain("./src/phase-d1-runtime.js?v=24");
+    expect(html).toContain("./src/enemies/enemy-system.js?v=23");
+    expect(html).toContain("./src/phase-c-runtime.js?v=20");
+    expect(html).toContain("./src/phase-c1-runtime.js?v=18");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=25");
   });
 });
