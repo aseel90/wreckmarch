@@ -122,11 +122,11 @@ Cloudflare/D1 may bridge real reports into GitHub Issues, but GitHub delivery is
 
 The baseline dataset and manual gameplay-pressure review are complete. The 459.506s scalar-heavy run exposed excessive player-power growth (Wave 8, 769 kills, 100.412 KPM, peak active enemies 14 against a SURGE cap of 42), while the 242.157s crowd/utility-focused run showed materially lower direct pressure (Wave 5, 309 kills, 76.562 KPM) and substantially harder survival. These measurements are now the reference used to derive Power Budget v1.
 
-Do not rewrite or reinterpret these baseline values after balance changes. New runs are post-change validation data. Explosive Rivet and Triple/advanced multishot remain paused until workstreams 3–8 revalidate the new budget in production gameplay.
+Do not rewrite or reinterpret these baseline values after balance changes. New runs are post-change validation data. The former Explosive Rivet / Triple hold condition was satisfied by production RUN-0026; the frozen pre-change baseline remains the comparison reference.
 
 ---
 
-# 2. Power Budget — ✅ APPROVED DESIGN
+# 2. Power Budget — ✅ APPROVED & PRODUCTION-VALIDATED
 
 ## 2.1 Core rule
 
@@ -146,7 +146,7 @@ Power is not defined by one DPS ceiling. Balance must consider single-target pow
 
 ## 2.4 Multishot / volley rule
 
-Additional projectiles redistribute a trigger/volley damage budget; they do not automatically grant 2x/3x full damage. Twin/Triple should increase coverage and mechanical opportunities while keeping single-target growth controlled. Exact coefficients remain open until Baseline Metrics are captured.
+Additional projectiles redistribute a trigger/volley damage budget; they do not automatically grant 2x/3x full damage. Twin/Triple should increase coverage and mechanical opportunities while keeping single-target growth controlled. The current live Twin/PB1 coefficients are defined in Sections 2.7–2.10; future Triple coefficients must be derived from the same volley-budget rule.
 
 ## 2.5 Crowd-mechanic rule
 
@@ -186,9 +186,9 @@ The numeric gate is now defined in `src/balance/power-budget.js` (`U4-B-PB1`) fr
 
 ## 2.9 Gate rule
 
-Explosive Rivet and Triple/advanced multishot remain paused while workstreams 3–8 revalidate Power Budget v1. They may resume only after the post-change gameplay/telemetry run confirms that the corrected scalar and chained-mechanic rules still leave usable crowd-clear, enemy pressure and mobile-performance headroom.
+The PB1 revalidation hold is **cleared** by RUN-0026 plus the green Quality/Chromium E2E/Smoke gate. Explosive Rivet and Triple/advanced multishot may now enter their own design workstreams, but neither may ship without its own deterministic interaction, production-pressure and mobile-performance acceptance gate.
 
-## 2.10 PB1 implementation decisions — 🟡 REVALIDATION PENDING
+## 2.10 PB1 implementation decisions — ✅ PRODUCTION REVALIDATED
 
 - **Heavy Rivets:** +12% base-relative additive damage per Common level; five Common levels resolve to **1.60x**, not exponential compounding.
 - **Overclock:** +12% base-relative fire-rate budget per Common level; five Common levels resolve to **1.60x fire rate** (`390 ms → 243.75 ms`) instead of repeatedly shrinking the already-resolved delay.
@@ -198,7 +198,52 @@ Explosive Rivet and Triple/advanced multishot remain paused while workstreams 3�
 - **Shrapnel Impact:** 2/4 fragments, triggers **once on the first primary impact**, standalone added-damage budgets **+0.50x / +0.70x**; secondary fragments cannot recursively create more shrapnel.
 - **Combined crowd mechanics:** maximum standalone request is `0.90 + 0.75 + 0.70 = 2.35x`; when combined, the secondary owner proportionally scales the three mechanics to the shared **+1.50x** ceiling.
 - **Ownership:** numeric envelopes live in `src/balance/power-budget.js`; allocation/targeting lives in canonical `ProjectileSystem`; first-impact/non-recursion enforcement lives at the canonical `CombatSystem` boundary.
-- Regression contracts have been added for PB1 secondary allocation, reduced ricochet damage/random targeting, pierce secondary damage and first-impact shrapnel ownership. Full suite + production gameplay revalidation remain required before workstreams 3–8 can be marked DONE.
+- Regression contracts cover PB1 secondary allocation, reduced ricochet damage/random targeting, pierce secondary damage and first-impact shrapnel ownership. The full Quality + Chromium E2E + Smoke gate recovered on `main` at `86e8d6e1a17f0b44537b25e1a17394f727c1475b`, and the production D1 validation run below passed the gameplay/performance gate for workstreams 3–8.
+
+## 2.11 Production validation checkpoint — ✅ RUN-0026 PASS
+
+**Source of truth:** Cloudflare D1 report `wm-fc962a54-f6db-47a6-805c-490152990d74` (D1 row 26 / RUN-0026). The report was received at `2026-09-01 15:27:05 UTC`. At review time it was still `pending_github` with `last_error = null`, proving that GitHub-Issue bridge delay is downstream latency and must not be interpreted as a missing gameplay report. D1 remains the canonical reporting source when the bridge is backlogged.
+
+**Run result**
+
+- Duration: **572.977 s (9:33)**
+- Final wave: **10** — death occurred during the Wave 10 `surge` phase
+- Level: **20**
+- Kills: **906** / **94.873 KPM**
+- Average DPS: **147.426**
+- Peak 1-second DPS: **499.897**
+- Peak/average burst ratio: **3.39x**
+- Damage taken: **147.5** across **13 player hits**
+- Peak active enemies: **31**
+- Peak active projectiles: **24**
+- Max frame time: **18.6 ms** / long frames: **0**
+
+**Final build**
+
+- Shrapnel Impact 1
+- Twin Riveter 2
+- Piercing Rivets 2
+- Overclock 5
+- Ricochet 1
+- Critical Rivet 3
+- Heavy Rivets 2
+- Field Repair 1
+- Armor Plate 1
+- Impact Shield 1
+
+The run included unusually strong Overclock rarity rolls (`LEGENDARY`, `LEGENDARY`, `RARE`, `RARE`, `EPIC`) plus an Epic+Common Heavy sequence. This is therefore a useful high-power stress case rather than a weak/average build. Despite that, the run still required movement, accumulated late-run enemy pressure, and ended in Wave 10 instead of producing an effectively stationary screen-clear state.
+
+**PB1 interpretation**
+
+- Compared with the frozen pre-change scalar-heavy RUN-0013, burst compression is materially improved: the old run reached **679.373 peak / 143.190 average DPS = 4.74x**, while RUN-0026 reached **499.897 / 147.426 = 3.39x** despite stronger rarity rolls and surviving two additional waves.
+- Enemy pressure remains visible instead of being erased: RUN-0026 reached **31 peak active enemies**, versus **14** in the old scalar-heavy baseline.
+- Sample median TTK remained readable at approximately **6.48 s Scrap Rat / 5.27 s Rust Hound / 8.81 s Sawbug**, so late-run enemies still have time to express their combat roles.
+- Path-attributed damage remained distributed across the build rather than collapsing into one mechanic: Primary **61.1k**, Pierce **10.2k**, Ricochet **4.87k**, Shrapnel **8.54k**.
+- **Shrapnel watch item:** Level 1 produced **6,664 fragments** and about **8.54k path-attributed damage (~10% of path-attributed output)**. Performance stayed healthy (`18.6 ms` max frame, zero long frames), so no nerf is justified from this run alone; continue monitoring fragment count/damage in later high-level runs before changing its coefficients.
+- **Survivability foundation worked in production:** Field Repair delivered **47.5 healing**; Impact Shield absorbed **1 hit** and prevented **11 damage**. These cards extended mistake tolerance without preventing eventual death.
+- No immediate numeric change is approved for **Heavy Rivets, Overclock, Twin Riveter, Piercing Rivets, Ricochet or Shrapnel Impact** from this checkpoint. PB1 values are frozen for the next workstream unless later telemetry produces a repeatable regression.
+
+**Decision:** workstreams **3–8 pass production revalidation**. Future runs may continue to monitor Shrapnel and survivability, but monitoring alone does not keep the PB1 rebalance gate open. Explosive Rivet / advanced multishot may now move forward under the existing PB1 constraints rather than waiting on another scalar rebalance pass.
 
 ---
 
@@ -209,15 +254,15 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | # | Workstream | Current status | Gate / intent |
 |---:|---|---|---|
 | 1 | Baseline Metrics & automated run telemetry | ✅ COMPLETE | Real D1 telemetry + deterministic scenarios + manual pressure review are frozen as pre-change evidence |
-| 2 | Multi-axis Power Budget | ✅ POWER BUDGET V1 DEFINED | `U4-B-PB1` numeric envelopes derived from real baseline data and implemented as the canonical balance reference |
-| 3 | Heavy Rivets rebalance | 🟡 IMPLEMENTED / REVALIDATION PENDING | +12% base-relative additive Common scaling; production telemetry revalidation required |
-| 4 | Overclock rebalance | 🟡 IMPLEMENTED / REVALIDATION PENDING | Base-relative fire-rate budget replaces exponential delay shrink; production telemetry revalidation required |
-| 5 | Twin Riveter rebalance | 🟡 IMPLEMENTED / REVALIDATION PENDING | True two-shot progression with 1.20x → 1.40x total volley budget; no hidden Triple |
-| 6 | Piercing Rivets interaction limits | 🟡 IMPLEMENTED / REVALIDATION PENDING | Standalone +0.30/+0.60/+0.90 secondary budget and shared chained-mechanic ceiling |
-| 7 | Ricochet interaction limits | 🟡 IMPLEMENTED / REVALIDATION PENDING | Random eligible targeting + reduced bounce damage under shared PB1 secondary budget |
-| 8 | Shrapnel Impact interaction limits | 🟡 IMPLEMENTED / REVALIDATION PENDING | 2/4 fragments, first-impact-only trigger, no recursive shrapnel, shared PB1 budget |
-| 9 | Explosive Rivet design + integration | ⏸️ PAUSED | Add only after interaction/proc budgets exist; explosion must not freely multiply every impact chain |
-| 10 | Triple Riveter / advanced multishot | ⏸️ PAUSED | Separate advanced card after Twin; use volley damage budget and hard projectile ceilings |
+| 2 | Multi-axis Power Budget | ✅ POWER BUDGET V1 VALIDATED | `U4-B-PB1` passed full CI plus production D1 RUN-0026; values frozen for the next workstream |
+| 3 | Heavy Rivets rebalance | ✅ COMPLETE / PROD VALIDATED | +12% base-relative additive scaling passed RUN-0026 high-power stress validation |
+| 4 | Overclock rebalance | ✅ COMPLETE / PROD VALIDATED | Base-relative fire-rate budget passed RUN-0026 even with two Legendary + two Rare + one Epic roll |
+| 5 | Twin Riveter rebalance | ✅ COMPLETE / PROD VALIDATED | True two-shot 1.20x → 1.40x volley budget passed production validation; no hidden Triple |
+| 6 | Piercing Rivets interaction limits | ✅ COMPLETE / PROD VALIDATED | Secondary budget + shared chained-mechanic ceiling passed RUN-0026 |
+| 7 | Ricochet interaction limits | ✅ COMPLETE / PROD VALIDATED | Random eligible targeting + reduced bounce damage passed RUN-0026 |
+| 8 | Shrapnel Impact interaction limits | ✅ COMPLETE / PROD VALIDATED — MONITOR | PB1 rules passed RUN-0026; monitor high fragment volume before any future coefficient change |
+| 9 | Explosive Rivet design + integration | ⚪ READY FOR DESIGN | PB1 gate is clear; explosion must stay inside the shared secondary/proc budget and must not freely multiply impact chains |
+| 10 | Triple Riveter / advanced multishot | ⚪ READY FOR DESIGN | PB1 gate is clear; keep it separate after Twin and enforce volley damage + projectile ceilings |
 | 11 | Canonical requirements / prerequisite resolver | ⚪ PENDING | Runtime must actually enforce prerequisites such as Twin → Triple rather than relying on metadata/hardcode |
 | 12 | Weapon/character card compatibility filtering | ⚪ PENDING | Rivet-only cards must not appear for incompatible future weapons/characters |
 | 13 | Canonical Weapon Registry / signature-weapon resolution | ⚪ PENDING | Clean deterministic weapon ownership for Runner, Shotgun and future characters |
@@ -226,7 +271,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 16 | Wave/difficulty scaling vs player power | ⚪ PENDING BASELINE | Rebalance pressure after player multipliers are corrected; do not hide power creep by blindly inflating HP |
 | 17 | Rarity identity + power scaling | ⚪ PENDING BASELINE / U7 | Resolve same-card rarity identity and prevent rarity from magnifying already-multiplicative stats excessively |
 | 18 | Rig/support damage ownership | ⚪ PENDING | Decouple support balance from ambiguous `primaryWeapon.damage` semantics and future shotgun pellet damage |
-| 19 | Armor/stat combat semantics + survivability utility | 🟡 FOUNDATION IMPLEMENTED / REVALIDATION PENDING | Keep armor mitigation separate; bounded heal/shield utility is now part of build diversity and must be validated from telemetry |
+| 19 | Armor/stat combat semantics + survivability utility | 🟡 FOUNDATION PROD-VALIDATED / BROADER SEMANTICS PENDING | RUN-0026 verified Field Repair + Impact Shield telemetry; canonical armor-mitigation semantics remain future work |
 | 20 | Build identities + anti-mandatory-card validation | ⚪ PENDING BASELINE | Validate multiple viable builds; no Twin/Heavy/Overclock-style automatic pick should dominate unrelated builds |
 | 21 | Mobile projectile/effect performance budget | ⚪ PENDING BASELINE | Set hard ceilings from measured active projectiles, fragments, long frames and late-wave pressure |
 | 22 | Deterministic interaction matrix / regression scenarios | ⚪ PENDING | Lock reproducible no-upgrade, single-card, pair-synergy and max-power scenarios for before/after comparisons |
@@ -237,9 +282,9 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 - PB1 now uses **random selection among eligible in-range enemies** so Ricochet reads as a bounce rather than assisted nearest-target homing.
 - Every bounce uses a **reduced secondary-damage coefficient** from the shared chained-mechanic budget; full-damage bounce chains are not allowed.
 - The nearest-target mode remains only as an explicit internal mode for controlled tests/future experiments; it is not the current PB1 live default.
-- This rule lives in the canonical projectile/combat balance owners and has regression coverage. Production gameplay revalidation is still required before Workstream 7 is DONE.
+- This rule lives in the canonical projectile/combat balance owners and has regression coverage. Production RUN-0026 completed the remaining gameplay gate; Workstream 7 is DONE under PB1.
 
-### Survivability cards roadmap — 🟡 FOUNDATION IMPLEMENTED / FUTURE EXPANSION PLANNED
+### Survivability cards roadmap — 🟡 FOUNDATION PROD-VALIDATED / FUTURE EXPANSION PLANNED
 
 Survivability is now a formal build axis alongside single-target damage, crowd clear, mobility and support. The goal is to let a player recover from a limited number of mistakes **without** making stationary/infinite-sustain builds optimal.
 
@@ -264,13 +309,13 @@ Survivability is now a formal build axis alongside single-target damage, crowd c
 - No unconditional lifesteal, endless passive regeneration or uncapped permanent percentage mitigation in this phase.
 - Healing, shields and mitigation must have a measurable charge, cooldown, rarity, wave, or missing-HP budget.
 - Survival cards must not erase Sawbug movement pressure or let Rust Hound/SURGE hits be ignored indefinitely.
-- At least one post-change telemetry run must compare survival-card builds against damage-heavy builds before expanding this family further.
+- RUN-0026 is the first production reference showing survival utility inside a high-power damage build (47.5 healing + one shield absorption). Continue comparing future survival-heavy and damage-heavy builds before expanding this family substantially.
 
 ## Execution rule
 
-- Workstreams **1–2 are complete/defined**; workstreams **3–8 are the active PB1 revalidation gate**.
+- Workstreams **1–8 are now complete / production-validated** under PB1. The next numbered workstream is **9 — Explosive Rivet design + integration** unless a newly observed regression requires reopening a completed gate.
 - The original baseline is frozen as pre-change evidence. New reports are compared against it; they do not replace it.
-- Heavy/Overclock/Twin/Pierce/Ricochet/Shrapnel are implemented under PB1 but are **not DONE** until regression verification plus a real production telemetry run confirm pressure, build value and mobile performance.
-- Critical Rivet is flagged for post-PB1 revalidation because the crowd/utility baseline showed its level-1 direct contribution was weak; do not change it simultaneously with the first PB1 validation run or attribution will be lost.
-- Explosive Rivet and Triple Riveter remain paused behind the PB1 revalidation gate.
+- Heavy/Overclock/Twin/Pierce/Ricochet/Shrapnel values are frozen after green regression coverage plus RUN-0026 production validation; do not rebalance them again from a single noisy run.
+- Critical Rivet remains an observation item for later rarity/build-diversity work. RUN-0026 reached Critical Rivet 3 without producing a clear standalone reason to change it immediately.
+- Explosive Rivet and Triple Riveter are **no longer blocked by PB1 revalidation**, but each remains a separate workstream with its own prerequisite, interaction and performance gates.
 - The 23 workstreams are resolved one by one; a workstream becomes `[x]`/DONE only after implementation, automated tests and the required gameplay/production verification pass.
