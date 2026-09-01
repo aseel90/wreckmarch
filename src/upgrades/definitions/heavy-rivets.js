@@ -5,7 +5,7 @@ import { UPGRADE_SCOPES } from '../upgrade-schema.js';
 export const HEAVY_RIVETS_UPGRADE = Object.freeze({
   id: 'heavy-rivets',
   name: 'HEAVY RIVETS',
-  description: '+20% Rivet Gun damage.',
+  description: '+12% Rivet Gun damage.',
   rarity: null,
   maxLevel: 5,
   scope: UPGRADE_SCOPES.WEAPON,
@@ -16,8 +16,8 @@ export const HEAVY_RIVETS_UPGRADE = Object.freeze({
   modifiers: Object.freeze([Object.freeze({
     domain: D.WEAPON,
     stat: 'damage',
-    type: T.MULTIPLICATIVE_PERCENT,
-    value: 0.2
+    type: T.ADDITIVE_PERCENT,
+    value: 0.12
   })]),
   mechanicalEffect: null,
   artId: 'heavy-rivets'

@@ -57,8 +57,8 @@ describe('Upgrade System 2.0 rarity model', () => {
   it('scales numeric modifier power without changing the source definition', () => {
     const definition = getUpgradeDefinition('heavy-rivets');
     if (!definition) throw new Error('Heavy Rivets definition is missing');
-    expect(scaleUpgradeModifierValue(definition.modifiers[0], 'LEGENDARY')).toBeCloseTo(0.3);
-    expect(definition.modifiers[0].value).toBe(0.2);
+    expect(scaleUpgradeModifierValue(definition.modifiers[0], 'LEGENDARY')).toBeCloseTo(0.18);
+    expect(definition.modifiers[0].value).toBe(0.12);
   });
 
   it('applies Legendary as one level, records rarity metadata and preserves hard caps', () => {
@@ -67,8 +67,8 @@ describe('Upgrade System 2.0 rarity model', () => {
 
     expect(scene.upgradeLevels['heavy-rivets']).toBe(1);
     expect((scene as any).upgradeRarityHistory['heavy-rivets']).toEqual(['LEGENDARY']);
-    expect(scene.runStatState.state.modifiers.weapon.damage[0].value).toBeCloseTo(0.3);
-    expect(scene.primaryWeapon.damage).toBeCloseTo(24 * 1.3);
+    expect(scene.runStatState.state.modifiers.weapon.damage[0].value).toBeCloseTo(0.18);
+    expect(scene.primaryWeapon.damage).toBeCloseTo(24 * 1.18);
 
     const capped = makeScene(279);
     applyRegisteredUpgrade(capped, 'fleet-feet', { rarity: 'LEGENDARY' });
