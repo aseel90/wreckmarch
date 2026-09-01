@@ -24,9 +24,10 @@ export function installEndRunTelemetryHook(scene) {
   return true;
 }
 
-function getOrCreateRunReportProvider(game) {
+function getOrCreateRunReportProvider(game, { allowManual = false } = {}) {
   const remoteReportingEnabled = isRemoteRunReportingEnabled();
-  if (!remoteReportingEnabled || typeof globalThis.fetch !== 'function') return { remoteReportingEnabled, provider: undefined };
+  const transportAllowed = remoteReportingEnabled || allowManual;
+  if (!transportAllowed || typeof globalThis.fetch !== 'function') return { remoteReportingEnabled, provider: undefined };
   if (!game.__wreckmarchRunReportProvider) game.__wreckmarchRunReportProvider = new RunReportProvider();
   return { remoteReportingEnabled, provider: game.__wreckmarchRunReportProvider };
 }
@@ -44,9 +45,11 @@ export async function sendCurrentRunReport(game = globalThis.__WM_GAME__, reason
   const scene = getScene(game);
   if (!scene) return manualReportFailure('scene', 'wreckmarch_scene_unavailable');
 
-  const { remoteReportingEnabled, provider } = getOrCreateRunReportProvider(game);
-  if (!remoteReportingEnabled || !provider) {
-    return manualReportFailure('transport', 'remote_reporting_disabled');
+  // Manual end-run reporting is user initiated and must work on every live URL.
+  // The wmTelemetry flag continues to control automatic remote reporting only.
+  const { provider } = getOrCreateRunReportProvider(game, { allowManual: true });
+  if (!provider) {
+    return manualReportFailure('transport', 'remote_reporting_unavailable');
   }
 
   const telemetry = scene.runTelemetry;
