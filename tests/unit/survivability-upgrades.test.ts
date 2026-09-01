@@ -20,7 +20,10 @@ describe('survivability utility cards', () => {
 
   it('Impact Shield is Common-only and capped at two charges', () => {
     const s = scene();
-    applyRegisteredUpgrade(s, 'impact-shield', { rarity: 'LEGENDARY' });
+    expect(() => applyRegisteredUpgrade(s, 'impact-shield', { rarity: 'LEGENDARY' })).toThrow(/fixed to COMMON rarity/);
+    expect(s.heroShieldCharges).toBe(0);
+    expect(s.upgradeLevels['impact-shield']).toBeUndefined();
+    applyRegisteredUpgrade(s, 'impact-shield');
     expect(s.heroShieldCharges).toBe(1);
     expect(s.upgradeRarityHistory['impact-shield']).toEqual(['COMMON']);
     applyRegisteredUpgrade(s, 'impact-shield');

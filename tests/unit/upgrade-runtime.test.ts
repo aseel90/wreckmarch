@@ -28,15 +28,15 @@ describe('registered upgrade runtime', () => {
       id: 'heavy-rivets',
       category: 'HERO',
       title: 'HEAVY RIVETS',
-      desc: '+20% Rivet Gun damage.',
+      desc: '+12% Rivet Gun damage.',
       weight: 1.25
     });
     expect(choice.available()).toBe(true);
 
     choice.apply();
     expect(scene.upgradeLevels['heavy-rivets']).toBe(1);
-    expect(scene.primaryWeapon.damage).toBeCloseTo(28.8);
-    expect(scene.damage).toBeCloseTo(28.8);
+    expect(scene.primaryWeapon.damage).toBeCloseTo(26.88);
+    expect(scene.damage).toBeCloseTo(26.88);
     expect(scene.runStatState.state.base.weapon.damage).toBe(24);
   });
 
@@ -46,7 +46,7 @@ describe('registered upgrade runtime', () => {
     for (let level = 1; level <= 5; level += 1) {
       expect(canApplyRegisteredStatUpgrade(scene, 'heavy-rivets')).toBe(true);
       applyRegisteredStatUpgrade(scene, 'heavy-rivets');
-      expect(scene.primaryWeapon.damage).toBeCloseTo(24 * (1.2 ** level));
+      expect(scene.primaryWeapon.damage).toBeCloseTo(24 * (1 + 0.12 * level));
     }
 
     expect(canApplyRegisteredStatUpgrade(scene, 'heavy-rivets')).toBe(false);

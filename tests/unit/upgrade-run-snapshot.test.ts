@@ -84,14 +84,16 @@ describe('Upgrade System 2.0 run-state snapshot readiness', () => {
       'twin-riveter': ['COMMON', 'COMMON'],
       'call-rig': ['COMMON']
     });
-    expect(stats.modifiers.weapon.damage[0]).toMatchObject({ id: 'heavy-rivets@1:0', value: 0.23 });
+    expect(stats.modifiers.weapon.damage[0]).toMatchObject({ id: 'heavy-rivets@1:0', value: 0.138 });
     expect(stats.modifiers.character.maxHp[0]).toMatchObject({ id: 'armor-plate@1:0', value: 22.5 });
     expect(stats.modifiers.character.critChance[0]).toMatchObject({ id: 'critical-rivet@1:0', value: 0.05 });
     expect(mechanical.effects['twin-riveter']).toMatchObject({
       effectId: 'TWIN_RIVETER',
       level: 2,
       rarity: 'COMMON',
-      projectileCount: 3
+      projectileCount: 2,
+      volleyDamageMultiplier: 1.4,
+      projectileDamageScale: 0.7
     });
     expect(mechanical.effects['call-rig']).toMatchObject({ effectId: 'SUMMON_RIG', summoned: true });
     expect(mechanical.effects['armor-plate']).toBeUndefined();
@@ -124,8 +126,8 @@ describe('Upgrade System 2.0 run-state snapshot readiness', () => {
     expect(target.heroMaxHp).toBeCloseTo(source.heroMaxHp);
     expect(target.runCombatStats.critChance).toBeCloseTo(0.05);
     expect(target.heroHp).toBe(9);
-    expect(target.upgradeMechanicalState['twin-riveter']).toMatchObject({ level: 2, projectileCount: 3 });
-    expect(target.twinShots).toBe(3);
+    expect(target.upgradeMechanicalState['twin-riveter']).toMatchObject({ level: 2, projectileCount: 2, volleyDamageMultiplier: 1.4, projectileDamageScale: 0.7 });
+    expect(target.twinShots).toBe(2);
     expect(target.rigSystem.summon).toHaveBeenCalledTimes(1);
     expect(target.rigSummoned).toBe(true);
   });
