@@ -20,6 +20,7 @@ test('Long Barrel uses both canonical weapon modifiers in the final upgrade scen
       'heavy-rivets': 5,
       'overclock': 5,
       'twin-riveter': 2,
+      'triple-riveter': 1,
       'fleet-feet': 4,
       'scrap-magnet': 4,
       'armor-plate': 4,
