@@ -10,6 +10,8 @@ import { CRITICAL_RIVET_UPGRADE } from './definitions/critical-rivet.js';
 import { FLEET_FEET_UPGRADE } from './definitions/fleet-feet.js';
 import { SCRAP_MAGNET_UPGRADE } from './definitions/scrap-magnet.js';
 import { ARMOR_PLATE_UPGRADE } from './definitions/armor-plate.js';
+import { FIELD_REPAIR_UPGRADE } from './definitions/field-repair.js?v=1';
+import { IMPACT_SHIELD_UPGRADE } from './definitions/impact-shield.js?v=1';
 import { CALL_RIG_UPGRADE } from './definitions/call-rig.js?v=2';
 
 const DEFAULT_UPGRADE_REGISTRY = createUpgradeRegistry([
@@ -24,6 +26,8 @@ const DEFAULT_UPGRADE_REGISTRY = createUpgradeRegistry([
   FLEET_FEET_UPGRADE,
   SCRAP_MAGNET_UPGRADE,
   ARMOR_PLATE_UPGRADE,
+  FIELD_REPAIR_UPGRADE,
+  IMPACT_SHIELD_UPGRADE,
   CALL_RIG_UPGRADE
 ]);
 

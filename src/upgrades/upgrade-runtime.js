@@ -1,6 +1,6 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js?v=4';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=11';
-import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=4';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=12';
+import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=5';
 import { UPGRADE_RARITIES, getUpgradeRarityRule, resolveUpgradeRarityForDefinition, scaleUpgradeModifierValue } from './upgrade-rarity.js?v=1';
 
 function mergeModifierCaps(existing = {}, modifier) {

@@ -1,6 +1,7 @@
 export const UPGRADE_MECHANICAL_EFFECT_IDS = Object.freeze({
   TWIN_RIVETER: 'TWIN_RIVETER',
   RESTORE_HP: 'RESTORE_HP',
+  GRANT_SHIELD: 'GRANT_SHIELD',
   SUMMON_RIG: 'SUMMON_RIG'
 });
 
@@ -56,10 +57,11 @@ const TRANSACTION_FACTORIES = Object.freeze({
   },
 
   [UPGRADE_MECHANICAL_EFFECT_IDS.RESTORE_HP]: ({ scene, definition, level, config, rarity, powerMultiplier }) => {
-    const baseAmount = Number(config.amount);
-    const amount = baseAmount * powerMultiplier;
-    if (!Number.isFinite(baseAmount) || baseAmount < 0) throw new TypeError('RESTORE_HP amount must be a finite number >= 0');
-    if (!Number.isFinite(amount) || amount < 0) throw new TypeError('RESTORE_HP scaled amount must be a finite number >= 0');
+    const flatAmount = config.amount == null ? null : Number(config.amount);
+    const percentMaxHp = config.percentMaxHp == null ? null : Number(config.percentMaxHp);
+    if (flatAmount == null && percentMaxHp == null) throw new TypeError('RESTORE_HP requires amount or percentMaxHp');
+    if (flatAmount != null && (!Number.isFinite(flatAmount) || flatAmount < 0)) throw new TypeError('RESTORE_HP amount must be a finite number >= 0');
+    if (percentMaxHp != null && (!Number.isFinite(percentMaxHp) || percentMaxHp < 0)) throw new TypeError('RESTORE_HP percentMaxHp must be a finite number >= 0');
     const previousHp = Number(scene.heroHp);
     if (!Number.isFinite(previousHp)) throw new TypeError('RESTORE_HP requires finite scene.heroHp');
 
@@ -67,6 +69,9 @@ const TRANSACTION_FACTORIES = Object.freeze({
       apply() {
         const maxHp = Number(scene.heroMaxHp);
         if (!Number.isFinite(maxHp)) throw new TypeError('RESTORE_HP requires finite scene.heroMaxHp');
+        const baseAmount = flatAmount != null ? flatAmount : maxHp * percentMaxHp;
+        const amount = baseAmount * powerMultiplier;
+        if (!Number.isFinite(amount) || amount < 0) throw new TypeError('RESTORE_HP scaled amount must be a finite number >= 0');
         const nextHp = Math.min(maxHp, previousHp + amount);
         scene.heroHp = nextHp;
         return Object.freeze({
@@ -75,6 +80,7 @@ const TRANSACTION_FACTORIES = Object.freeze({
           level,
           rarity,
           amount,
+          healed: Math.max(0, nextHp - previousHp),
           previousHp,
           heroHp: nextHp,
           heroMaxHp: maxHp
@@ -82,6 +88,30 @@ const TRANSACTION_FACTORIES = Object.freeze({
       },
       rollback() {
         scene.heroHp = previousHp;
+      }
+    });
+  },
+
+  [UPGRADE_MECHANICAL_EFFECT_IDS.GRANT_SHIELD]: ({ scene, definition, level, config, rarity }) => {
+    const charges = Math.max(1, Math.floor(Number(config.charges) || 1));
+    const maxCharges = Math.max(charges, Math.floor(Number(config.maxCharges) || 2));
+    const previousCharges = Math.max(0, Math.floor(Number(scene.heroShieldCharges) || 0));
+    return Object.freeze({
+      apply() {
+        const nextCharges = Math.min(maxCharges, previousCharges + charges);
+        scene.heroShieldCharges = nextCharges;
+        return Object.freeze({
+          id: definition.id,
+          effectId: UPGRADE_MECHANICAL_EFFECT_IDS.GRANT_SHIELD,
+          level,
+          rarity,
+          chargesGranted: nextCharges - previousCharges,
+          heroShieldCharges: nextCharges,
+          maxCharges
+        });
+      },
+      rollback() {
+        scene.heroShieldCharges = previousCharges;
       }
     });
   },
@@ -108,6 +138,19 @@ const TRANSACTION_FACTORIES = Object.freeze({
 });
 
 const EFFECT_AVAILABILITY = Object.freeze({
+  [UPGRADE_MECHANICAL_EFFECT_IDS.RESTORE_HP]: (scene, definition) => {
+    const config = definition?.mechanicalEffect?.config || {};
+    if (!config.requireMissingHp) return true;
+    const hp = Number(scene?.heroHp);
+    const maxHp = Number(scene?.heroMaxHp);
+    if (!Number.isFinite(hp) || !Number.isFinite(maxHp) || maxHp <= 0) return false;
+    const missingFraction = Math.max(0, (maxHp - hp) / maxHp);
+    return missingFraction >= Math.max(0, Number(config.minMissingFraction) || 0);
+  },
+  [UPGRADE_MECHANICAL_EFFECT_IDS.GRANT_SHIELD]: (scene, definition) => {
+    const maxCharges = Math.max(1, Math.floor(Number(definition?.mechanicalEffect?.config?.maxCharges) || 2));
+    return Math.max(0, Math.floor(Number(scene?.heroShieldCharges) || 0)) < maxCharges;
+  },
   [UPGRADE_MECHANICAL_EFFECT_IDS.SUMMON_RIG]: (scene) => Boolean(
     scene?.rigSystem &&
     typeof scene.rigSystem.summon === 'function' &&
