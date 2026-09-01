@@ -1,4 +1,4 @@
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=12';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=13';
 import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
@@ -7,7 +7,7 @@ const H = 540;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const ICON_IDS = [
   'heavy-rivets', 'overclock', 'long-barrel', 'twin-riveter', 'fleet-feet',
-  'scrap-magnet', 'armor-plate', 'call-rig', 'rig-overdrive', 'twin-cannon'
+  'scrap-magnet', 'armor-plate', 'field-repair', 'impact-shield', 'call-rig', 'rig-overdrive', 'twin-cannon'
 ];
 const CATEGORY_COLORS = {
   HERO: 0xd98446,
@@ -207,6 +207,8 @@ function c1UpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
     createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),
+    createRegisteredUpgradeChoice(scene, 'field-repair', { category: 'UTILITY' }),
+    createRegisteredUpgradeChoice(scene, 'impact-shield', { category: 'UTILITY' }),
     createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' })
   ];
 }
