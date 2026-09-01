@@ -6,6 +6,7 @@ const read = (path: string) => readFileSync(path, 'utf8');
 describe('balance run report bridge contract', () => {
   it('keeps GitHub credentials out of the client and uses the OIDC workflow bridge', () => {
     const workflow = read('.github/workflows/balance-run-report-bridge.yml');
+    const pagesWorkflow = read('.github/workflows/pages.yml');
     const provider = read('src/telemetry/run-report-provider.js');
     const runtime = read('src/telemetry/telemetry-runtime.js');
     const html = read('index.html');
@@ -46,6 +47,11 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain("manualReportFailure('transport'");
     expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=13');
     expect(html).toContain('./src/phase-d1-runtime.js?v=24');
+    expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=17');
+    expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=24');
+    expect(pagesWorkflow).not.toContain('src/phase-d1-runtime.js?v=23');
+    expect(pagesWorkflow).toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })");
+    expect(pagesWorkflow).toContain('upgrade-icon-explosive-rivet');
     expect(html).not.toContain('./src/telemetry/telemetry-debug-ui.js');
     expect(html).toContain('./src/mobile-hud-loader-telemetry-v1.js');
     expect(hudLoader).toContain('./mobile-hud-polish.js?asset=telemetry-hud-20260831-213754');
