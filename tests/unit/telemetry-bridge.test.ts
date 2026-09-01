@@ -21,9 +21,15 @@ describe('balance run report bridge contract', () => {
     expect(workflow).toContain('id-token: write');
     expect(workflow).toContain('issues: write');
     expect(workflow).toContain("core.getIDToken('wreckmarch-run-reports')");
-    expect(workflow).toContain("cron: '*/5 * * * *'");
+    expect(workflow).toContain("cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'");
     expect(workflow).toContain('/bridge/pending');
     expect(workflow).toContain('/bridge/ack');
+    expect(workflow).toContain('const MAX_BRIDGE_PASSES = 20');
+    expect(workflow).toContain('for (let pass = 1; pass <= MAX_BRIDGE_PASSES; pass += 1)');
+    expect(workflow).toContain('if (reports.length === 0) break');
+    expect(workflow).toContain('if (passFailures > 0) break');
+    expect(workflow).toContain('Submitted Wreckmarch run reports this bridge run');
+    expect(workflow).not.toContain('paths:');
     expect(workflow).toContain('github.rest.issues.createComment');
     expect(workflow).toContain('report.issueComments');
     expect(provider).toContain("wmTelemetry') === '1'");
