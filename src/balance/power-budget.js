@@ -110,7 +110,23 @@ export const POWER_BUDGET = freeze({
       ricochet: 0.75,
       shrapnel: 0.70
     }),
-    combinedAddedDamageSoftCap: 1.50
+    combinedAddedDamageSoftCap: 1.50,
+    profiles: freeze({
+      pierce: freeze({
+        maxAdditionalTargets: 3,
+        standaloneAddedDamageByCount: freeze([0, 0.30, 0.60, 0.90])
+      }),
+      ricochet: freeze({
+        maxBounces: 2,
+        targetMode: 'RANDOM_ELIGIBLE',
+        standaloneAddedDamageByCount: freeze([0, 0.50, 0.75])
+      }),
+      shrapnel: freeze({
+        maxFragments: 4,
+        maxTriggersPerPrimaryProjectile: 1,
+        standaloneAddedDamageByFragmentCount: freeze({ 0: 0, 2: 0.50, 4: 0.70 })
+      })
+    })
   }),
   buildDiversity: freeze({
     maxSingleCardShareOfFinalDirectPowerBudget: 0.35,
