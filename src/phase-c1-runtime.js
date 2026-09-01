@@ -204,6 +204,7 @@ function c1UpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'shrapnel-impact', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'critical-rivet', { category: 'HERO' }),
     createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
+    createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
     createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),

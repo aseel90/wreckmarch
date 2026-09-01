@@ -27,7 +27,8 @@ test('Legendary rarity is shown by UpgradeSceneV4 and applies one scaled canonic
       'shrapnel-impact': 2,
       'critical-rivet': 4,
       'field-repair': 3,
-      'impact-shield': 2
+      'impact-shield': 2,
+      'explosive-rivet': 3
     });
     scene.level = 1;
 

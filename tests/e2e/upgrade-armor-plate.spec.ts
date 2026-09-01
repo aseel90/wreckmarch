@@ -34,7 +34,8 @@ test('Armor Plate applies canonical max HP and restore HP in the final upgrade s
       'shrapnel-impact': 2,
       'critical-rivet': 4,
       'field-repair': 3,
-      'impact-shield': 2
+      'impact-shield': 2,
+      'explosive-rivet': 3
     });
     scene.level = 1;
     scene.rigSummoned = false;
