@@ -68,7 +68,7 @@ test('Heavy Rivets uses the canonical registry path in the final upgrade scene',
   expect(result.choiceIds).toEqual(['heavy-rivets']);
   expect(result.level).toBe(1);
   expect(result.damage).toBeCloseTo(result.beforeDamage * 1.12);
-  expect(result.mirrorFireDelay).toBeCloseTo(result.fireDelay);
+  expect(result.mirrorDamage).toBeCloseTo(result.damage);
   expect(result.baseDamage).toBe(result.beforeDamage);
   expect(result.modifierIds).toContain('heavy-rivets@1:0');
 });
