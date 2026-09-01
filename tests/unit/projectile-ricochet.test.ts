@@ -8,7 +8,8 @@ function iterableGroup(items: any[]) {
 function makeBullet(overrides: Record<string, any> = {}) {
   return {
     active: true, x: 100, y: 0, prevX: 0, prevY: 0, life: 1000,
-    pierceRemaining: 0, ricochetRemaining: 1, ricochetRange: 360,
+    damage: 24, primaryDamage: 24, pierceRemaining: 0, ricochetRemaining: 1, ricochetRange: 360,
+    ricochetDamageScale: .5, ricochetTargetMode: 'random',
     hitEnemies: new Set(),
     body: { velocity: { x: 100, y: 0, setToPolar(angle: number, speed: number) { this.x = Math.cos(angle) * speed; this.y = Math.sin(angle) * speed; } } },
     destroy() { this.active = false; },
@@ -32,6 +33,7 @@ describe('ProjectileSystem ricochet', () => {
     expect(bullet.prevX).toBe(first.x);
     expect(bullet.prevY).toBe(first.y);
     expect(bullet.body.velocity.y).toBeGreaterThan(0);
+    expect(bullet.damage).toBeCloseTo(12, 6);
   });
 
   it('lets pierce continue straight before ricochet becomes eligible', () => {
@@ -71,6 +73,16 @@ describe('ProjectileSystem ricochet', () => {
     expect(bullet.active).toBe(true);
     expect(bullet.body.velocity.y).toBeGreaterThan(0);
     expect(hitEnemyByProjectile).not.toHaveBeenCalled();
+  });
+
+  it('uses deterministic RNG to choose among valid random ricochet targets', () => {
+    const first = { id: 'first', active: true, hp: 100, x: 40, y: 0, hitRadius: 7 };
+    const near = { id: 'near', active: true, hp: 100, x: 60, y: 30, hitRadius: 7 };
+    const far = { id: 'far', active: true, hp: 100, x: 120, y: 70, hitRadius: 7 };
+    const bullet = makeBullet({ hitEnemies: new Set([first]) });
+    const scene: any = { enemies: iterableGroup([near, far]) };
+    const system = new ProjectileSystem(scene).setRandomSource(() => .99);
+    expect(system.findRicochetTarget(bullet, first.x, first.y)).toBe(far);
   });
 
   it('destroys the projectile if no valid ricochet target exists', () => {
