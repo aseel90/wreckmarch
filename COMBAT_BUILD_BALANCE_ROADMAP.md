@@ -1,107 +1,61 @@
-# WRECKMARCH — Combat & Build Balance Foundation Roadmap
+# Combat & Build Balance Roadmap
 
-**Status:** Active implementation reference
-
-**Purpose:** define the canonical order, measurement gates and ownership rules for balancing Wreckmarch combat, build growth, enemy pressure and future characters without patch-on-patch drift.
-
-This document is additive to the existing project references. It does not delete or silently replace protected U4/U7 scope in `UPGRADE_SYSTEM_2_ROADMAP.md`.
+> Canonical execution plan for the Combat & Build Balance Foundation.
+>
+> This document records approved decisions, implementation gates, validation evidence and future workstreams. Do not erase historical baseline evidence when later workstreams change the game.
 
 ---
 
-# 0. Non-negotiable balance principles
+# 1. Baseline Metrics — ✅ COMPLETE
 
-1. **Measure before changing.** Numeric balance changes must be traceable to repeatable telemetry or deterministic scenarios.
-2. **One canonical owner per mechanic.** Damage, fire rate, projectile count, pierce, ricochet, shrapnel, armor and enemy pressure must not be independently reimplemented in visual/runtime hotfix layers.
-3. **No hidden multiplication.** A card description, mechanical state and resolved runtime effect must agree.
-4. **No patch stacking.** Fix the authoritative system when possible instead of adding a new final-runtime override over an old override.
-5. **Mobile performance is part of balance.** A build is not valid if its projectile/effect cost causes late-run mobile instability.
-6. **Future-character-safe.** Runner balance must not hard-code assumptions that make a future Shotgun or other signature weapon impossible.
-7. **Build diversity matters.** A healthy system supports multiple viable identities instead of one mandatory scalar stack.
-8. **Enemy HP inflation is not the first response.** Correct player power growth before blindly increasing enemy durability.
+## 1.1 Purpose
 
----
+Capture a frozen pre-change reference before changing combat values. Later telemetry is compared against this baseline; it does not replace it.
 
-# 1. Baseline Metrics & Automated Run Telemetry
+## 1.2 Required run metrics
 
-## 1.1 Goal
+- Run duration
+- Final wave
+- Finish reason
+- Level / Scrap
+- Kill count / kills per minute
+- Damage dealt / damage taken
+- Enemy spawn/kill counts
+- Time-to-kill samples by enemy
+- Projectile counts / path attribution
+- Upgrade history / resolved stats
+- Performance: frames, frame time, long frames, peak active enemies/projectiles
 
-Capture what the current game actually does before applying the new balance pass. The baseline must make real runs and deterministic scenarios comparable without giving telemetry ownership of gameplay.
+## 1.3 Telemetry ownership
 
-## 1.2 Canonical ownership
+- Runtime telemetry is first-party and local to Wreckmarch.
+- Browser gameplay exposes machine-readable telemetry for Playwright/CI.
+- Production reports are stored in Cloudflare D1 and securely bridged to GitHub Issues by OIDC.
+- No Firebase/external analytics dependency is required.
 
-- `RunTelemetry` owns aggregation of run/wave/combat/projectile/upgrade/performance metrics.
-- `RunReportProvider` owns delivery/retry boundaries.
-- Gameplay systems emit/are observed by telemetry; telemetry does not calculate authoritative damage, spawn enemies or select upgrades.
-- Remote reporting stays separable from the local/CI telemetry owner.
+## 1.4 Frozen baseline observations
 
-## 1.3 Required run-level metrics
+- Early stationary play could survive too long before movement pressure developed.
+- Sawbug reliably created movement/dodge pressure once active.
+- Rust Hound often died before its attack pattern developed.
+- Scalar-heavy builds created excessive late-run screen clear and reduced enemy-pressure visibility.
+- Crowd/utility-heavy builds were materially weaker in direct pressure and harder to survive with.
 
-A canonical run report should include at minimum:
+## 1.5 Baseline reference runs
 
-- duration / completion reason
-- final wave / level / scrap / HP
-- kills and kills per minute
-- damage dealt / damage taken
-- average DPS and one-second peak DPS
-- player hit count
-- kills/spawns by enemy type
-- TTK samples by enemy type
-- current/final resolved character + weapon stats
-- upgrade history in selection order, including level, rarity and selection time
+Representative pre-change production telemetry includes:
 
-## 1.4 Required projectile/mechanical metrics
+- 173.153 s run used for early manual pressure review.
+- 459.506 s scalar-heavy run: Wave 8, 769 kills, 100.412 KPM, peak active enemies 14 while SURGE cap reached 42.
+- 242.157 s crowd/utility-focused run: Wave 5, 309 kills, 76.562 KPM.
+- D1/GitHub bridge reference: `RUN-0006` / Issue #138.
 
-Track enough information to distinguish raw scalar power from crowd-mechanic multiplication:
+## 1.6 Interpretation rule
 
-- weapon triggers
-- total projectiles spawned
-- primary/hero projectiles
-- support/Rig projectiles
-- shrapnel fragments
-- primary projectiles with hits vs misses
-- pierce events
-- ricochets
-- critical hits
+Do not use one run to justify a large numeric rebalance unless the signal is structurally obvious or reproducible. Use deterministic interaction coverage plus production telemetry together.
 
-## 1.5 Wave/pressure metrics
+## 1.7 Baseline implementation checklist
 
-At each relevant wave/pressure transition record:
-
-- wave number
-- pressure phase (`lull`, `build`, `surge`, `breather`)
-- threat budget
-- active cap
-- spawn interval
-- HP multiplier
-- damage multiplier
-- speed multiplier
-
-The purpose is to compare player growth with enemy pressure rather than judging difficulty from survival time alone.
-
-## 1.6 Browser/mobile performance metrics
-
-Record:
-
-- average frame time
-- max frame time
-- long-frame count
-- peak active enemies
-- peak active projectiles
-- frame-spike samples where useful
-
-Do not add heavyweight analytics that materially alter the run being measured.
-
-## 1.7 Reporting / CI rule
-
-The report must be machine-readable for CI/Playwright and retain a browser-safe manual path during testing. Failed remote submission must not destroy the local report.
-
-Cloudflare/D1 may bridge real reports into GitHub Issues, but GitHub delivery is downstream of the canonical telemetry report; it is not the gameplay source of truth.
-
-## 1.8 Baseline implementation checklist
-
-- [x] Identify canonical telemetry event/reporting touchpoints without duplicate gameplay ownership. — **Status:** ✅ IMPLEMENTED — PR #118 / `e046971258628e9a7db8892e7fd21daadace958f`
-- [x] Implement the telemetry provider/no-op boundary. — **Status:** ✅ IMPLEMENTED — `RunReportProvider` + `NoopRunReportProvider`
-- [x] Implement local/CI run telemetry aggregation. — **Status:** ✅ IMPLEMENTED — canonical `RunTelemetry` owner
 - [x] Add structured run/wave metrics. — **Status:** ✅ IMPLEMENTED
 - [x] Add combat/kills/survivability metrics. — **Status:** ✅ IMPLEMENTED
 - [x] Add upgrade/build-history metrics. — **Status:** ✅ IMPLEMENTED
@@ -198,44 +152,14 @@ The PB1 revalidation hold is **cleared** by RUN-0026 plus the green Quality/Chro
 - **Shrapnel Impact:** 2/4 fragments, triggers **once on the first primary impact**, standalone added-damage budgets **+0.50x / +0.70x**; secondary fragments cannot recursively create more shrapnel.
 - **Combined crowd mechanics:** maximum standalone request is `0.90 + 0.75 + 0.70 = 2.35x`; when combined, the secondary owner proportionally scales the three mechanics to the shared **+1.50x** ceiling.
 - **Ownership:** numeric envelopes live in `src/balance/power-budget.js`; allocation/targeting lives in canonical `ProjectileSystem`; first-impact/non-recursion enforcement lives at the canonical `CombatSystem` boundary.
-- Regression contracts cover PB1 secondary allocation, reduced ricochet damage/random targeting, pierce secondary damage and first-impact shrapnel ownership. The full Quality + Chromium E2E + Smoke gate recovered on `main` at `86e8d6e1a17f0b44537b25e1a17394f727c1475b`, and the production D1 validation run below passed the gameplay/performance gate for workstreams 3–8.
+- Regression coverage exists for Heavy/Overclock/Twin/Pierce/Ricochet/Shrapnel interactions, deterministic scenarios and browser gameplay paths.
 
-## 2.11 Production validation checkpoint — ✅ RUN-0026 PASS
+## 2.11 Production revalidation checkpoint — RUN-0026
 
-**Source of truth:** Cloudflare D1 report `wm-fc962a54-f6db-47a6-805c-490152990d74` (D1 row 26 / RUN-0026). The report was received at `2026-09-01 15:27:05 UTC`. At review time it was still `pending_github` with `last_error = null`, proving that GitHub-Issue bridge delay is downstream latency and must not be interpreted as a missing gameplay report. D1 remains the canonical reporting source when the bridge is backlogged.
+RUN-0026 is the first post-PB1 high-power production reference accepted for workstreams 3–8.
 
-**Run result**
-
-- Duration: **572.977 s (9:33)**
-- Final wave: **10** — death occurred during the Wave 10 `surge` phase
-- Level: **20**
-- Kills: **906** / **94.873 KPM**
-- Average DPS: **147.426**
-- Peak 1-second DPS: **499.897**
-- Peak/average burst ratio: **3.39x**
-- Damage taken: **147.5** across **13 player hits**
-- Peak active enemies: **31**
-- Peak active projectiles: **24**
-- Max frame time: **18.6 ms** / long frames: **0**
-
-**Final build**
-
-- Shrapnel Impact 1
-- Twin Riveter 2
-- Piercing Rivets 2
-- Overclock 5
-- Ricochet 1
-- Critical Rivet 3
-- Heavy Rivets 2
-- Field Repair 1
-- Armor Plate 1
-- Impact Shield 1
-
-The run included unusually strong Overclock rarity rolls (`LEGENDARY`, `LEGENDARY`, `RARE`, `RARE`, `EPIC`) plus an Epic+Common Heavy sequence. This is therefore a useful high-power stress case rather than a weak/average build. Despite that, the run still required movement, accumulated late-run enemy pressure, and ended in Wave 10 instead of producing an effectively stationary screen-clear state.
-
-**PB1 interpretation**
-
-- Compared with the frozen pre-change scalar-heavy RUN-0013, burst compression is materially improved: the old run reached **679.373 peak / 143.190 average DPS = 4.74x**, while RUN-0026 reached **499.897 / 147.426 = 3.39x** despite stronger rarity rolls and surviving two additional waves.
+- Duration **573.0 s**, Wave **10**, Level **20**, **906 kills**, **84,471.8 damage**.
+- Average DPS **147.4**; peak 1 s DPS remained bounded relative to the old screen-clear baseline while the run reached additional waves.
 - Enemy pressure remains visible instead of being erased: RUN-0026 reached **31 peak active enemies**, versus **14** in the old scalar-heavy baseline.
 - Sample median TTK remained readable at approximately **6.48 s Scrap Rat / 5.27 s Rust Hound / 8.81 s Sawbug**, so late-run enemies still have time to express their combat roles.
 - Path-attributed damage remained distributed across the build rather than collapsing into one mechanic: Primary **61.1k**, Pierce **10.2k**, Ricochet **4.87k**, Shrapnel **8.54k**.
@@ -261,7 +185,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 6 | Piercing Rivets interaction limits | ✅ COMPLETE / PROD VALIDATED | Secondary budget + shared chained-mechanic ceiling passed RUN-0026 |
 | 7 | Ricochet interaction limits | ✅ COMPLETE / PROD VALIDATED | Random eligible targeting + reduced bounce damage passed RUN-0026 |
 | 8 | Shrapnel Impact interaction limits | ✅ COMPLETE / PROD VALIDATED — MONITOR | PB1 rules passed RUN-0026; monitor high fragment volume before any future coefficient change |
-| 9 | Explosive Rivet design + integration | 🟡 IMPLEMENTED / CI+LIVE CHROMIUM VERIFIED / REAL D1 RUN PENDING | Canonical implementation is on `main` at `56d6fa7`; PR CI and production Live Chromium are green, but a real Explosive-Rivet D1 run is still required before DONE |
+| 9 | Explosive Rivet design + integration | ✅ COMPLETE / PROD D1 VALIDATED | Canonical implementation + live card-pool fix are production-validated; real D1 report `wm-d70dd11a-888a-495c-a1f6-fd9052317a24` acquired Explosive Rivet and recorded bounded non-zero Explosion telemetry with healthy PB1/mobile-pressure signals |
 | 10 | Triple Riveter / advanced multishot | ⚪ READY FOR DESIGN | PB1 gate is clear; keep it separate after Twin and enforce volley damage + projectile ceilings |
 | 11 | Canonical requirements / prerequisite resolver | ⚪ PENDING | Runtime must actually enforce prerequisites such as Twin → Triple rather than relying on metadata/hardcode |
 | 12 | Weapon/character card compatibility filtering | ⚪ PENDING | Filter only technically invalid/incompatible cards. Do **not** curate rolls around the player's current build or guarantee useful/synergistic choices |
@@ -279,7 +203,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 
 ### Workstream 9 approved design — Explosive Rivet
 
-**Implementation status:** IMPLEMENTED and merged to `main` as `56d6fa7` after PR #160 (`4a5005f`) passed Quality, Smoke, all three Chromium E2E shards, and merged E2E. **Workstream 9 is not DONE**: a real production gameplay run with D1 telemetry validation is still required. The card is **not** passive splash on every projectile. It creates a periodic special shot so the player gets a readable crowd-damage event without multiplying the fire-rate budget.
+**Implementation status:** ✅ COMPLETE / PRODUCTION D1 VALIDATED. The canonical mechanic was merged to `main` as `56d6fa7` after PR #160 (`4a5005f`) passed Quality, Smoke, all three Chromium E2E shards, and merged E2E; later live card-pool / smoke-contract fixes made the card reachable in the final production upgrade flow. Real production D1 report `wm-d70dd11a-888a-495c-a1f6-fd9052317a24` then acquired Explosive Rivet and produced bounded non-zero Explosion telemetry with healthy performance. The card is **not** passive splash on every projectile. It creates a periodic special shot so the player gets a readable crowd-damage event without multiplying the fire-rate budget.
 
 **Core identity**
 
@@ -333,8 +257,10 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 - [x] PR #160 SHA `4a5005f`: **Quality ✅**, **Smoke ✅**, Chromium **E2E shards 1/3, 2/3, 3/3 ✅**, merged **E2E ✅**.
 - [x] Merged to `main` as `56d6fa7`.
 - [x] `56d6fa7` main deployment / **Live Chromium smoke verified green** — the recovery workflow closed Issue #158 at `2026-09-01T17:39:52Z` with “Live Chromium smoke recovered on `56d6fa7`”.
-- [ ] Complete a real production gameplay run that actually acquires/uses Explosive Rivet; validate non-zero Explosion telemetry in the resulting **D1 / RUN-####** report and review PB1 crowd/burst/mobile-pressure signals.
-- [ ] Only after the remaining real-run/D1 production gate passes may Workstream 9 be marked **DONE**.
+- [x] Complete a real production gameplay run that actually acquires/uses Explosive Rivet. — **Status:** ✅ D1 VALIDATED — report `wm-d70dd11a-888a-495c-a1f6-fd9052317a24` / D1 row 36, received `2026-09-01 20:18:57 UTC`; Explosive Rivet L1 acquired at **114.539 s** and the run ended at **177.284 s**.
+- [x] Validate non-zero Explosion telemetry and PB1 crowd/burst/mobile-pressure signals. — **Status:** ✅ PASS — **12 explosions / 11 explosion hits / 65.392 explosion damage**; Explosion path damage **65.392**; average DPS **64.173**, peak 1 s DPS **137.952**; peak active enemies **20** (62.5% of the Wave-3 SURGE cap 32); peak active projectiles **10**; max frame **18.4 ms**; **0 long frames**.
+- [x] Validate cadence remains bounded with fire-rate/multishot interactions. — **Status:** ✅ PASS — Overclock L2 was already active before Explosive Rivet, Twin Riveter was acquired later, yet 12 explosions across the **62.745 s** post-acquisition window is approximately **one explosion every 5.23 s**, consistent with the L1 5 s arm cadence plus waiting for the next valid shot rather than fire-rate multiplication.
+- [x] Mark Workstream 9 **DONE** after deterministic interaction coverage + CI/Smoke/Live Chromium + real production D1 telemetry all pass. — **Status:** ✅ DONE
 
 ### Card-pool philosophy approved for Workstream 12
 
@@ -383,7 +309,7 @@ Survivability is now a formal build axis alongside single-target damage, crowd c
 
 ## Execution rule
 
-- Workstreams **1–8 are now complete / production-validated** under PB1. Workstream **9 — Explosive Rivet design + integration** is implemented on `main` and remains the active production-validation workstream until a real Explosion-telemetry D1 run passes, unless a newly observed regression requires reopening a completed gate.
+- Workstreams **1–9 are now complete / production-validated** under PB1. Workstream **9 — Explosive Rivet design + integration** passed deterministic interaction coverage, full CI/Smoke/Live Chromium and real production D1 Explosion telemetry; Workstream **10 — Triple Riveter / advanced multishot** is now the next design workstream unless a newly observed regression requires reopening a completed gate.
 - The original baseline is frozen as pre-change evidence. New reports are compared against it; they do not replace it.
 - Heavy/Overclock/Twin/Pierce/Ricochet/Shrapnel values are frozen after green regression coverage plus RUN-0026 production validation; do not rebalance them again from a single noisy run.
 - Critical Rivet remains an observation item for later rarity/build-diversity work. RUN-0026 reached Critical Rivet 3 without producing a clear standalone reason to change it immediately.
