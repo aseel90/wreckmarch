@@ -1,4 +1,4 @@
-import { UPGRADE_SCOPES } from '../upgrade-schema.js?v=2';
+import { UPGRADE_SCOPES } from '../upgrade-schema.js?v=4';
 import { UPGRADE_MECHANICAL_EFFECT_IDS } from '../upgrade-mechanical-effects.js?v=1';
 
 export const TWIN_RIVETER_UPGRADE = Object.freeze({
@@ -9,6 +9,7 @@ export const TWIN_RIVETER_UPGRADE = Object.freeze({
   maxLevel: 2,
   scope: UPGRADE_SCOPES.WEAPON,
   tags: ['PROJECTILE_COUNT', 'RIVET'],
+  compatibility: Object.freeze({ weaponIds: Object.freeze(['rivet-gun']) }),
   requirements: [],
   weight: 0.72,
   offerRules: {},
