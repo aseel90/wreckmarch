@@ -1,7 +1,8 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js?v=4';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=13';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=14';
 import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=7';
 import { assertUpgradeRequirements, meetsUpgradeRequirements } from './upgrade-requirements.js?v=1';
+import { assertUpgradeCompatibility, meetsUpgradeCompatibility } from './upgrade-compatibility.js?v=1';
 import { UPGRADE_RARITIES, getUpgradeRarityRule, resolveUpgradeRarityForDefinition, scaleUpgradeModifierValue } from './upgrade-rarity.js?v=1';
 
 function mergeModifierCaps(existing = {}, modifier) {
@@ -184,6 +185,7 @@ export function canApplyRegisteredUpgrade(scene, id) {
   const { hasMechanicalEffect } = requireSupportedRegisteredUpgrade(definition);
   if (getSceneUpgradeLevel(scene, id) >= definition.maxLevel) return false;
   if (!meetsOfferRules(scene, definition)) return false;
+  if (!meetsUpgradeCompatibility(scene, definition)) return false;
   if (!meetsUpgradeRequirements(scene, definition)) return false;
   if (hasMechanicalEffect && !canApplyUpgradeMechanicalEffect(scene, definition)) return false;
   return true;
@@ -224,6 +226,7 @@ export function applyRegisteredUpgrade(scene, id, { rarity = null } = {}) {
   if (nextLevel > definition.maxLevel) {
     throw new RangeError(`${definition.id} is already at max level ${definition.maxLevel}`);
   }
+  assertUpgradeCompatibility(scene, definition);
   assertUpgradeRequirements(scene, definition);
   const resolvedRarity = resolveUpgradeRarityForDefinition(definition, rarity);
   const rarityHistory = planUpgradeRarityHistory(scene, definition, currentLevel, resolvedRarity);
@@ -244,6 +247,8 @@ export function applyRegisteredUpgrade(scene, id, { rarity = null } = {}) {
 export function createRegisteredUpgradeChoice(scene, id, { category = 'HERO' } = {}) {
   const definition = requireRegisteredUpgrade(id);
   requireSupportedRegisteredUpgrade(definition);
+  /** @param {string | null} [rarity] */
+  const applyChoice = (rarity = null) => applyRegisteredUpgrade(scene, definition.id, { rarity });
   return {
     id: definition.id,
     category,
@@ -252,7 +257,7 @@ export function createRegisteredUpgradeChoice(scene, id, { category = 'HERO' } =
     weight: definition.weight,
     rarityConstraint: definition.rarity,
     available: () => canApplyRegisteredUpgrade(scene, definition.id),
-    apply: (rarity = null) => applyRegisteredUpgrade(scene, definition.id, { rarity })
+    apply: applyChoice
   };
 }
 
