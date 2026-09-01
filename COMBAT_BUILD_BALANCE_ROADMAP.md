@@ -261,7 +261,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 6 | Piercing Rivets interaction limits | ✅ COMPLETE / PROD VALIDATED | Secondary budget + shared chained-mechanic ceiling passed RUN-0026 |
 | 7 | Ricochet interaction limits | ✅ COMPLETE / PROD VALIDATED | Random eligible targeting + reduced bounce damage passed RUN-0026 |
 | 8 | Shrapnel Impact interaction limits | ✅ COMPLETE / PROD VALIDATED — MONITOR | PB1 rules passed RUN-0026; monitor high fragment volume before any future coefficient change |
-| 9 | Explosive Rivet design + integration | 🟡 DESIGN APPROVED / IMPLEMENTING | Armed special Rivet every few seconds; one explosion per armed shot; no recursive proc chains; tune through its own PB1/production gate |
+| 9 | Explosive Rivet design + integration | 🟡 IMPLEMENTED / CI+LIVE CHROMIUM VERIFIED / REAL D1 RUN PENDING | Canonical implementation is on `main` at `56d6fa7`; PR CI and production Live Chromium are green, but a real Explosive-Rivet D1 run is still required before DONE |
 | 10 | Triple Riveter / advanced multishot | ⚪ READY FOR DESIGN | PB1 gate is clear; keep it separate after Twin and enforce volley damage + projectile ceilings |
 | 11 | Canonical requirements / prerequisite resolver | ⚪ PENDING | Runtime must actually enforce prerequisites such as Twin → Triple rather than relying on metadata/hardcode |
 | 12 | Weapon/character card compatibility filtering | ⚪ PENDING | Filter only technically invalid/incompatible cards. Do **not** curate rolls around the player's current build or guarantee useful/synergistic choices |
@@ -279,7 +279,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 
 ### Workstream 9 approved design — Explosive Rivet
 
-**Design status:** APPROVED for implementation. The card is **not** passive splash on every projectile. It creates a periodic special shot so the player gets a readable crowd-damage event without multiplying the fire-rate budget.
+**Implementation status:** IMPLEMENTED and merged to `main` as `56d6fa7` after PR #160 (`4a5005f`) passed Quality, Smoke, all three Chromium E2E shards, and merged E2E. **Workstream 9 is not DONE**: a real production gameplay run with D1 telemetry validation is still required. The card is **not** passive splash on every projectile. It creates a periodic special shot so the player gets a readable crowd-damage event without multiplying the fire-rate budget.
 
 **Core identity**
 
@@ -320,6 +320,21 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 - Overclock must not multiply explosion frequency beyond the cooldown cadence.
 - Heavy may raise the resolved base used by the explosion, but the secondary coefficient remains bounded.
 - The card is not DONE until deterministic interaction tests, Chromium gameplay coverage, CI/Smoke, and a real production telemetry run confirm that explosion count, DPS burst, crowd value, and performance remain inside PB1.
+
+**Implementation / validation record — 2026-09-01**
+
+- [x] Canonical card/mechanical state added as `explosive-rivet`; cadence resolves to **5000 / 4500 / 4000 ms**.
+- [x] `WeaponSystem` owns arming/consumption and fires **one armed projectile per trigger/volley**; an armed charge waits without stacking, and Overclock/fire-delay changes do not alter its cadence.
+- [x] Twin interaction preserves the existing volley redistribution and arms only one Twin projectile; Heavy raises the pre-Crit resolved primary reference used by Explosion.
+- [x] `ProjectileSystem` includes Explosion in the existing **PB1 shared +1.50x chained/secondary budget**, with a bounded **0.33** standalone coefficient and level-bounded radius/target caps.
+- [x] `CombatSystem` enforces first-valid-impact and one explosion for the projectile lifetime; Explosion damage is proc-isolated and cannot Crit, Pierce, Ricochet, Shrapnel, or recurse into Explosion.
+- [x] Telemetry records `projectiles.explosions`, `projectiles.explosionHits`, `combat.explosionDamageDealt`, and the `explosion` projectile damage/hit path.
+- [x] Deterministic/unit coverage added for cadence, no charge stacking, one explosion only, Pierce/Ricochet follow-ups, proc isolation, Overclock, Heavy, Twin, PB1 budget, and telemetry.
+- [x] PR #160 SHA `4a5005f`: **Quality ✅**, **Smoke ✅**, Chromium **E2E shards 1/3, 2/3, 3/3 ✅**, merged **E2E ✅**.
+- [x] Merged to `main` as `56d6fa7`.
+- [x] `56d6fa7` main deployment / **Live Chromium smoke verified green** — the recovery workflow closed Issue #158 at `2026-09-01T17:39:52Z` with “Live Chromium smoke recovered on `56d6fa7`”.
+- [ ] Complete a real production gameplay run that actually acquires/uses Explosive Rivet; validate non-zero Explosion telemetry in the resulting **D1 / RUN-####** report and review PB1 crowd/burst/mobile-pressure signals.
+- [ ] Only after the remaining real-run/D1 production gate passes may Workstream 9 be marked **DONE**.
 
 ### Card-pool philosophy approved for Workstream 12
 
@@ -368,7 +383,7 @@ Survivability is now a formal build axis alongside single-target damage, crowd c
 
 ## Execution rule
 
-- Workstreams **1–8 are now complete / production-validated** under PB1. Workstream **9 — Explosive Rivet design + integration** has an approved design and is now the active implementation workstream unless a newly observed regression requires reopening a completed gate.
+- Workstreams **1–8 are now complete / production-validated** under PB1. Workstream **9 — Explosive Rivet design + integration** is implemented on `main` and remains the active production-validation workstream until a real Explosion-telemetry D1 run passes, unless a newly observed regression requires reopening a completed gate.
 - The original baseline is frozen as pre-change evidence. New reports are compared against it; they do not replace it.
 - Heavy/Overclock/Twin/Pierce/Ricochet/Shrapnel values are frozen after green regression coverage plus RUN-0026 production validation; do not rebalance them again from a single noisy run.
 - Critical Rivet remains an observation item for later rarity/build-diversity work. RUN-0026 reached Critical Rivet 3 without producing a clear standalone reason to change it immediately.
