@@ -152,6 +152,16 @@ export function expectedCriticalDamageMultiplier(critChance = 0, critDamageMulti
   return 1 + chance * (critMultiplier - 1);
 }
 
+/**
+ * @param {{
+ *   damage?: number,
+ *   fireDelayMs?: number,
+ *   projectileCount?: number,
+ *   projectileDamageScale?: number,
+ *   critChance?: number,
+ *   critDamageMultiplier?: number
+ * }} [input]
+ */
 export function estimateNominalDirectPower({
   damage = POWER_BUDGET_REFERENCE.runnerBaseDamage,
   fireDelayMs = POWER_BUDGET_REFERENCE.runnerBaseFireDelayMs,
