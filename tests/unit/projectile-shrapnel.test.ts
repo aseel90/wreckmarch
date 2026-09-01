@@ -25,13 +25,14 @@ describe('Shrapnel Impact projectile ownership', () => {
       speed: 780,
       damage: 24,
       count: 2,
+      damageScale: .25,
       texture: 'hunter-rivet',
       excludedEnemies: new Set([first, prior]) as any
     });
 
     expect(fragments).toHaveLength(2);
     expect(spawned).toHaveLength(2);
-    spawned.forEach(fragment => expect(fragment.damage).toBeCloseTo(8.4, 6));
+    spawned.forEach(fragment => expect(fragment.damage).toBeCloseTo(6, 6));
     expect(spawned.every(fragment => fragment.lifeMs === 260)).toBe(true);
     expect(spawned.every(fragment => fragment.texture === 'hunter-rivet')).toBe(true);
     expect(fragments.every(fragment => fragment.isSecondaryProjectile === true)).toBe(true);
@@ -50,7 +51,7 @@ describe('Shrapnel Impact projectile ownership', () => {
     expect(system.spawn).toHaveBeenCalledTimes(4);
   });
 
-  it('CombatSystem emits shrapnel after every primary impact without taking movement ownership', () => {
+  it('CombatSystem emits shrapnel once on the first primary impact without taking movement ownership', () => {
     const spawnImpactShrapnel = vi.fn();
     const scene: any = { damage: 24, projectileSystem: { spawnImpactShrapnel } };
     const combat = new CombatSystem(scene);
@@ -64,8 +65,11 @@ describe('Shrapnel Impact projectile ownership', () => {
     const bullet: any = {
       active: true,
       damage: 24,
+      primaryDamage: 24,
       shrapnelCount: 2,
+      shrapnelDamageScale: .25,
       pierceRemaining: 1,
+      pierceDamageScale: .3,
       ricochetRemaining: 0,
       hitEnemies: new Set(),
       texture: { key: 'hunter-rivet' },
@@ -82,10 +86,14 @@ describe('Shrapnel Impact projectile ownership', () => {
       speed: 800,
       damage: 24,
       count: 2,
+      damageScale: .25,
       texture: 'hunter-rivet'
     }));
     const excluded = spawnImpactShrapnel.mock.calls[0][0].excludedEnemies;
     expect(excluded.has(enemy)).toBe(true);
+
+    combat.hitEnemyByProjectile(bullet, { active: true, x: 120, y: 20 });
+    expect(spawnImpactShrapnel).toHaveBeenCalledTimes(1);
   });
 
   it('secondary shrapnel can never recursively create more shrapnel', () => {
