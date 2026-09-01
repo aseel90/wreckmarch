@@ -32,7 +32,8 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
       'shrapnel-impact': 99,
       'critical-rivet': 99,
       'field-repair': 3,
-      'impact-shield': 2
+      'impact-shield': 2,
+      'explosive-rivet': 3
     });
 
     const originalRandom = Math.random;
