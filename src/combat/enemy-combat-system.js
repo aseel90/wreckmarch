@@ -66,6 +66,7 @@ export class EnemyCombatSystem {
     const hitFlashMs = Math.max(0, Number(enemy.combatProfile?.hitFlashMs) || 55);
 
     this.spawnRivetImpactFx(impactX, impactY, velocityX, velocityY, enemyId);
+    if (bullet.isCritical && result.appliedDamage > 0) this.spawnCriticalHitFx(impactX, impactY, result.appliedDamage);
 
     if (isScrapRat) {
       this.applyTexturePreservingHitTint(enemy, SCRAP_RAT_HIT_TINT, Math.min(hitFlashMs, 46));
@@ -96,6 +97,37 @@ export class EnemyCombatSystem {
     this.scene.playTone(265, .012, 'triangle', .004, -95);
     if (result.killed) this.killEnemy(enemy);
     return result;
+  }
+
+  spawnCriticalHitFx(x, y, damage) {
+    const scene = this.scene;
+    const label = scene.add.text(x, y - 30, `CRIT! ${Math.max(1, Math.round(Number(damage) || 0))}`, {
+      fontFamily: 'Arial Black, Arial',
+      fontSize: '16px',
+      color: '#ffe08a',
+      stroke: '#271607',
+      strokeThickness: 4
+    }).setOrigin(.5).setDepth(82).setScale(.88);
+    scene.tweens.add({
+      targets: label,
+      y: label.y - 28,
+      scale: 1.08,
+      alpha: 0,
+      duration: 430,
+      ease: 'Cubic.Out',
+      onComplete: () => label.destroy()
+    });
+    const ring = scene.add.circle(x, y, 8, 0xffc85b, .04)
+      .setStrokeStyle(2, 0xffdf83, .9)
+      .setDepth(34);
+    scene.tweens.add({
+      targets: ring,
+      scale: 2.15,
+      alpha: 0,
+      duration: 150,
+      ease: 'Quad.Out',
+      onComplete: () => ring.destroy()
+    });
   }
 
   applyTexturePreservingHitTint(enemy, tint, durationMs) {

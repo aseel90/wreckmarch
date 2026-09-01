@@ -56,7 +56,7 @@ export class RunTelemetry {
       finishReason: null,
       run: { durationSeconds: 0, finalWave: 1, level: 1, scrap: 0, hp: 0, maxHp: 0 },
       waves: [],
-      combat: { damageDealt: 0, damageTaken: 0, hits: 0, playerHits: 0, kills: 0, killsByEnemy: {}, spawnedByEnemy: {}, ttkSecondsByEnemy: {}, criticalHits: 0, criticalDamageDealt: 0, damageByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, support: 0 }, hitsByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, support: 0 }, lastDamageSource: null, averageDps: 0, peakDps1s: 0 },
+      combat: { damageDealt: 0, damageTaken: 0, hits: 0, playerHits: 0, kills: 0, killsByEnemy: {}, spawnedByEnemy: {}, ttkSecondsByEnemy: {}, criticalHits: 0, criticalDamageDealt: 0, healingReceived: 0, shieldHitsAbsorbed: 0, shieldDamagePrevented: 0, damageByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, support: 0 }, hitsByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, support: 0 }, lastDamageSource: null, averageDps: 0, peakDps1s: 0 },
       projectiles: { triggers: 0, spawned: 0, heroSpawned: 0, supportSpawned: 0, shrapnelSpawned: 0, heroProjectilesWithHit: 0, heroMisses: 0, pierceHits: 0, ricochets: 0 },
       upgrades: { history: [], finalLevels: {}, rarityHistory: {}, resolvedStats: null },
       performance: { frames: 0, averageFrameMs: 0, maxFrameMs: 0, longFrames: 0, peakActiveEnemies: 0, peakActiveProjectiles: 0, frameSpikes: [] }
@@ -114,6 +114,16 @@ export class RunTelemetry {
     return effectiveDamage;
   }
 
+  recordShieldAbsorb({ preventedDamage = 0 } = {}) {
+    if (this.finalized) return 0;
+    const prevented = Math.max(0, n(preventedDamage));
+    if (prevented <= 0) return 0;
+    const combat = this.report.combat;
+    combat.shieldHitsAbsorbed = n(combat.shieldHitsAbsorbed) + 1;
+    combat.shieldDamagePrevented = n(combat.shieldDamagePrevented) + prevented;
+    return prevented;
+  }
+
   observeProjectile(projectile) {
     if (!projectile?.active) return;
     const hitCount = projectile.hitEnemies instanceof Set ? projectile.hitEnemies.size : 0;
@@ -149,6 +159,9 @@ export class RunTelemetry {
 
   observePlayerDamage(enemies) {
     const hp = n(this.scene?.heroHp);
+    if (hp > this.previousHeroHp) {
+      this.report.combat.healingReceived += Math.max(0, hp - this.previousHeroHp);
+    }
     if (hp < this.previousHeroHp) {
       const damage = Math.max(0, this.previousHeroHp - hp);
       const c = this.report.combat;
@@ -241,6 +254,8 @@ export class RunTelemetry {
     const combat = this.report.combat;
     combat.damageDealt = round(combat.damageDealt);
     combat.criticalDamageDealt = round(combat.criticalDamageDealt);
+    combat.healingReceived = round(combat.healingReceived);
+    combat.shieldDamagePrevented = round(combat.shieldDamagePrevented);
     for (const key of Object.keys(combat.damageByProjectilePath || {})) combat.damageByProjectilePath[key] = round(combat.damageByProjectilePath[key]);
     combat.damageTaken = round(combat.damageTaken);
     combat.averageDps = round(combat.damageDealt / duration);
