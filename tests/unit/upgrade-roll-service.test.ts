@@ -47,6 +47,25 @@ describe('upgrade roll service', () => {
     expect(calls).toBe(1);
   });
 
+  it('renders the actual rarity-scaled effect in the rolled card description', () => {
+    const heavy = { ...choice('heavy-rivets', 1), desc: '+12% Rivet Gun damage.' };
+    const values = [0, 0.999];
+    const rolled = rollUpgradeChoices([heavy], { count: 1, rng: () => values.shift() ?? 0 });
+    expect(rolled[0].rarity).toBe('LEGENDARY');
+    expect(rolled[0].rarityPowerMultiplier).toBe(1.5);
+    expect((rolled[0] as any).desc).toBe('+18% Rivet Gun damage.');
+  });
+
+  it('makes both Twin levels explicit instead of implying that level two adds another projectile', () => {
+    const twin = {
+      ...choice('twin-riveter', 1),
+      desc: 'Fire two rivets; repeated level strengthens their shared volley.',
+      rarityConstraint: 'COMMON'
+    };
+    const rolled = rollUpgradeChoices([twin], { count: 1, rng: () => 0 });
+    expect((rolled[0] as any).desc).toBe('LV1: 2 rivets at 60% damage each. LV2: 2 rivets at 70% damage each.');
+  });
+
   it('returns an empty list when no valid choices remain', () => {
     expect(rollUpgradeChoices([
       choice('maxed', 1, false),

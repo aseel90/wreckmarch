@@ -60,12 +60,32 @@ function normalizeChoice(choice, index) {
   return choice;
 }
 
+function formatDisplayNumber(value) {
+  const rounded = Math.round(Number(value) * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+function resolveRolledDescription(choice, powerMultiplier) {
+  const description = String(choice?.desc || '');
+  if (choice?.id === 'twin-riveter') {
+    return 'LV1: 2 rivets at 60% damage each. LV2: 2 rivets at 70% damage each.';
+  }
+  if (!description || powerMultiplier === 1) return description;
+  let resolved = description.replace(/(\d+(?:\.\d+)?)%/g, (_, raw) => `${formatDisplayNumber(Number(raw) * powerMultiplier)}%`);
+  if (choice?.id === 'armor-plate') {
+    resolved = resolved.replace(/\b15\b/g, formatDisplayNumber(15 * powerMultiplier));
+  }
+  return resolved;
+}
+
 function attachRolledRarity(choice, rng) {
   const rarity = rollUpgradeRarity(rng, choice.rarityConstraint ?? null);
   const rule = getUpgradeRarityRule(rarity);
   const originalApply = typeof choice.apply === 'function' ? choice.apply : null;
+  const desc = resolveRolledDescription(choice, rule.powerMultiplier);
   return Object.freeze({
     ...choice,
+    ...(desc ? { desc } : {}),
     rarity,
     rarityLabel: rule.label,
     rarityColor: rule.color,
