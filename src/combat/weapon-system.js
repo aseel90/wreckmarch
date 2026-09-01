@@ -55,6 +55,7 @@ export class WeaponSystem {
     this.muzzleResolver = null;
     this.fireFeedback = null;
     this.randomSource = Math.random;
+    this.explosiveRivetRuntime = { level: 0, cadenceMs: 0, armed: false, nextArmAt: null };
   }
 
   configureHero(profile = {}) {
@@ -126,7 +127,43 @@ export class WeaponSystem {
     return count > 1 ? this.heroProfile.multiShotDamageScale : 1;
   }
 
-  fireHeroProjectile(angle, damageScale = 1) {
+  syncExplosiveRivet(time) {
+    const state = this.scene.upgradeMechanicalState?.['explosive-rivet'];
+    const level = Math.max(0, Math.floor(Number(state?.level) || 0));
+    const cadenceMs = Math.max(0, Number(state?.cadenceMs) || 0);
+    const runtime = this.explosiveRivetRuntime;
+    if (level <= 0 || cadenceMs <= 0) {
+      runtime.level = 0;
+      runtime.cadenceMs = 0;
+      runtime.armed = false;
+      runtime.nextArmAt = null;
+      return null;
+    }
+    if (runtime.level !== level || runtime.cadenceMs !== cadenceMs || runtime.nextArmAt == null) {
+      runtime.level = level;
+      runtime.cadenceMs = cadenceMs;
+      runtime.armed = false;
+      runtime.nextArmAt = Number(time) + cadenceMs;
+    }
+    if (!runtime.armed && Number(time) >= runtime.nextArmAt) runtime.armed = true;
+    return state;
+  }
+
+  consumeExplosiveRivet(time) {
+    const runtime = this.explosiveRivetRuntime;
+    if (!runtime.armed || runtime.level <= 0 || runtime.cadenceMs <= 0) return false;
+    runtime.armed = false;
+    runtime.nextArmAt = Number(time) + runtime.cadenceMs;
+    return true;
+  }
+
+  /**
+   * @param {number} angle
+   * @param {number} [damageScale]
+   * @param {{ explosiveRivet?: any }} [options]
+   */
+  fireHeroProjectile(angle, damageScale = 1, options = {}) {
+    const explosiveRivet = options.explosiveRivet ?? null;
     const scene = this.scene;
     const weapon = scene.primaryWeapon;
     if (!weapon) return null;
@@ -144,6 +181,9 @@ export class WeaponSystem {
       pierceCount: Math.max(0, Math.floor(Number(resolvedWeapon.pierceCount ?? weapon.pierceCount) || 0)),
       ricochetCount: Math.max(0, Math.floor(Number(resolvedWeapon.ricochetCount ?? weapon.ricochetCount) || 0)),
       shrapnelCount: Math.max(0, Math.floor(Number(resolvedWeapon.shrapnelCount ?? weapon.shrapnelCount) || 0)),
+      explosionLevel: explosiveRivet ? Math.max(0, Math.floor(Number(explosiveRivet.level) || 0)) : 0,
+      explosionRadius: explosiveRivet ? Math.max(0, Number(explosiveRivet.radius) || 0) : 0,
+      explosiveRivetArmed: Boolean(explosiveRivet),
       lifeMs: p.lifeMs,
       scale: p.scale,
       radius: p.radius,
@@ -155,6 +195,10 @@ export class WeaponSystem {
     bullet.criticalChance = critical.critChance;
     bullet.criticalDamageMultiplier = critical.critDamageMultiplier;
     bullet.criticalRoll = critical.roll;
+    if (explosiveRivet) {
+      bullet.explosiveRivetDamageCoefficient = Math.max(0, Number(explosiveRivet.damageCoefficient) || 0);
+      bullet.setTint?.(0xffa85c);
+    }
     return { bullet, muzzle, critical };
   }
 
@@ -172,6 +216,7 @@ export class WeaponSystem {
     }
     scene.updateWeaponPose?.();
 
+    const explosiveRivetState = this.syncExplosiveRivet(time);
     const fireDelay = Number.isFinite(Number(scene.fireDelay)) ? Number(scene.fireDelay) : Number(weapon.fireDelay);
     if (!target || time < (scene.lastShot || 0) + fireDelay) return;
     scene.lastShot = time;
@@ -180,13 +225,17 @@ export class WeaponSystem {
     const shots = [];
     let flashPoint = null;
     const projectileDamageScale = this.heroProjectileDamageScale(spreads.length);
+    const explosiveShotIndex = this.explosiveRivetRuntime.armed ? Math.floor(spreads.length / 2) : -1;
     spreads.forEach((spread, index) => {
-      const shot = this.fireHeroProjectile(scene.weaponAim + spread, projectileDamageScale);
+      const shot = this.fireHeroProjectile(scene.weaponAim + spread, projectileDamageScale, {
+        explosiveRivet: index === explosiveShotIndex ? explosiveRivetState : null
+      });
       if (!shot) return;
       shots.push(shot);
       if (index === Math.floor(spreads.length / 2) || !flashPoint) flashPoint = shot.muzzle;
     });
     if (!shots.length) return;
+    if (explosiveShotIndex >= 0 && shots[explosiveShotIndex]?.bullet?.explosiveRivetArmed) this.consumeExplosiveRivet(time);
 
     this.fireFeedback?.({
       scene,

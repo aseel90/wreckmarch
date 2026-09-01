@@ -18,12 +18,14 @@ function activeChildren(group) {
 }
 
 function projectileKind(projectile) {
+  if (projectile?.projectileKind === 'explosion') return 'explosion';
   if (projectile?.projectileKind === 'shrapnel' || projectile?.isSecondaryProjectile) return 'shrapnel';
   if (Object.prototype.hasOwnProperty.call(projectile || {}, 'isCritical')) return 'hero';
   return 'support';
 }
 
 function projectileDamagePath(projectile) {
+  if (projectile?.projectileKind === 'explosion' || projectile?.projectilePath === 'explosion') return 'explosion';
   if (projectile?.projectileKind === 'shrapnel' || projectile?.isSecondaryProjectile) return 'shrapnel';
   if (projectile?.projectilePath === 'pierce') return 'pierce';
   if (projectile?.projectilePath === 'ricochet') return 'ricochet';
@@ -56,8 +58,8 @@ export class RunTelemetry {
       finishReason: null,
       run: { durationSeconds: 0, finalWave: 1, level: 1, scrap: 0, hp: 0, maxHp: 0 },
       waves: [],
-      combat: { damageDealt: 0, damageTaken: 0, hits: 0, playerHits: 0, kills: 0, killsByEnemy: {}, spawnedByEnemy: {}, ttkSecondsByEnemy: {}, criticalHits: 0, criticalDamageDealt: 0, healingReceived: 0, shieldHitsAbsorbed: 0, shieldDamagePrevented: 0, damageByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, support: 0 }, hitsByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, support: 0 }, lastDamageSource: null, averageDps: 0, peakDps1s: 0 },
-      projectiles: { triggers: 0, spawned: 0, heroSpawned: 0, supportSpawned: 0, shrapnelSpawned: 0, heroProjectilesWithHit: 0, heroMisses: 0, pierceHits: 0, ricochets: 0 },
+      combat: { damageDealt: 0, damageTaken: 0, hits: 0, playerHits: 0, kills: 0, killsByEnemy: {}, spawnedByEnemy: {}, ttkSecondsByEnemy: {}, criticalHits: 0, criticalDamageDealt: 0, healingReceived: 0, shieldHitsAbsorbed: 0, shieldDamagePrevented: 0, damageByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, explosion: 0, support: 0 }, hitsByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, explosion: 0, support: 0 }, explosionDamageDealt: 0, lastDamageSource: null, averageDps: 0, peakDps1s: 0 },
+      projectiles: { triggers: 0, spawned: 0, heroSpawned: 0, supportSpawned: 0, shrapnelSpawned: 0, heroProjectilesWithHit: 0, heroMisses: 0, pierceHits: 0, ricochets: 0, explosions: 0, explosionHits: 0 },
       upgrades: { history: [], finalLevels: {}, rarityHistory: {}, resolvedStats: null },
       performance: { frames: 0, averageFrameMs: 0, maxFrameMs: 0, longFrames: 0, peakActiveEnemies: 0, peakActiveProjectiles: 0, frameSpikes: [] }
     };
@@ -111,7 +113,16 @@ export class RunTelemetry {
     combat.damageByProjectilePath[path] = n(combat.damageByProjectilePath[path]) + effectiveDamage;
     combat.hitsByProjectilePath[path] = n(combat.hitsByProjectilePath[path]) + 1;
     if (projectile.isCritical) combat.criticalDamageDealt += effectiveDamage;
+    if (path === 'explosion') combat.explosionDamageDealt = n(combat.explosionDamageDealt) + effectiveDamage;
     return effectiveDamage;
+  }
+
+  recordExplosion({ hits = 0 } = {}) {
+    if (this.finalized) return 0;
+    const projectiles = this.report.projectiles;
+    projectiles.explosions = n(projectiles.explosions) + 1;
+    projectiles.explosionHits = n(projectiles.explosionHits) + Math.max(0, Math.floor(n(hits)));
+    return projectiles.explosions;
   }
 
   recordShieldAbsorb({ preventedDamage = 0 } = {}) {
@@ -138,7 +149,7 @@ export class RunTelemetry {
       p.spawned += 1;
       if (state.kind === 'hero') p.heroSpawned += 1;
       else if (state.kind === 'shrapnel') p.shrapnelSpawned += 1;
-      else p.supportSpawned += 1;
+      else if (state.kind !== 'explosion') p.supportSpawned += 1;
       return;
     }
 
@@ -254,6 +265,7 @@ export class RunTelemetry {
     const combat = this.report.combat;
     combat.damageDealt = round(combat.damageDealt);
     combat.criticalDamageDealt = round(combat.criticalDamageDealt);
+    combat.explosionDamageDealt = round(combat.explosionDamageDealt);
     combat.healingReceived = round(combat.healingReceived);
     combat.shieldDamagePrevented = round(combat.shieldDamagePrevented);
     for (const key of Object.keys(combat.damageByProjectilePath || {})) combat.damageByProjectilePath[key] = round(combat.damageByProjectilePath[key]);

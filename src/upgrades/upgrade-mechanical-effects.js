@@ -1,11 +1,57 @@
 export const UPGRADE_MECHANICAL_EFFECT_IDS = Object.freeze({
   TWIN_RIVETER: 'TWIN_RIVETER',
+  EXPLOSIVE_RIVET: 'EXPLOSIVE_RIVET',
   RESTORE_HP: 'RESTORE_HP',
   GRANT_SHIELD: 'GRANT_SHIELD',
   SUMMON_RIG: 'SUMMON_RIG'
 });
 
 const TRANSACTION_FACTORIES = Object.freeze({
+  [UPGRADE_MECHANICAL_EFFECT_IDS.EXPLOSIVE_RIVET]: ({ scene, definition, level, config, rarity }) => {
+    const cadenceByLevel = Array.isArray(config.cadenceMsByLevel) ? config.cadenceMsByLevel : [5000, 4500, 4000];
+    const radiusByLevel = Array.isArray(config.radiusByLevel) ? config.radiusByLevel : [90, 105, 120];
+    const targetCapByLevel = Array.isArray(config.targetCapByLevel) ? config.targetCapByLevel : [3, 3, 4];
+    const cadenceMs = Number(cadenceByLevel[level - 1]);
+    const radius = Number(radiusByLevel[level - 1]);
+    const targetCap = Math.floor(Number(targetCapByLevel[level - 1]));
+    const damageCoefficient = Number(config.damageCoefficient ?? .33);
+    if (!Number.isFinite(cadenceMs) || cadenceMs <= 0) throw new TypeError(`EXPLOSIVE_RIVET missing valid cadence for level ${level}`);
+    if (!Number.isFinite(radius) || radius <= 0) throw new TypeError(`EXPLOSIVE_RIVET missing valid radius for level ${level}`);
+    if (!Number.isInteger(targetCap) || targetCap <= 0) throw new TypeError(`EXPLOSIVE_RIVET missing valid target cap for level ${level}`);
+    if (!Number.isFinite(damageCoefficient) || damageCoefficient <= 0) throw new TypeError('EXPLOSIVE_RIVET damageCoefficient must be > 0');
+    const previousContainer = scene.upgradeMechanicalState;
+    const hadContainer = Boolean(previousContainer && typeof previousContainer === 'object');
+    const hadState = hadContainer && Object.prototype.hasOwnProperty.call(previousContainer, definition.id);
+    const previousState = hadState ? previousContainer[definition.id] : undefined;
+
+    return Object.freeze({
+      apply() {
+        if (!scene.upgradeMechanicalState || typeof scene.upgradeMechanicalState !== 'object') scene.upgradeMechanicalState = {};
+        const state = Object.freeze({
+          id: definition.id,
+          effectId: UPGRADE_MECHANICAL_EFFECT_IDS.EXPLOSIVE_RIVET,
+          level,
+          rarity,
+          cadenceMs,
+          damageCoefficient,
+          radius,
+          targetCap
+        });
+        scene.upgradeMechanicalState[definition.id] = state;
+        return state;
+      },
+      rollback() {
+        if (hadContainer) {
+          scene.upgradeMechanicalState = previousContainer;
+          if (hadState) previousContainer[definition.id] = previousState;
+          else delete previousContainer[definition.id];
+        } else {
+          delete scene.upgradeMechanicalState;
+        }
+      }
+    });
+  },
+
   [UPGRADE_MECHANICAL_EFFECT_IDS.TWIN_RIVETER]: ({ scene, definition, level, config, rarity }) => {
     const projectileCount = Number.isInteger(config.projectileCount) ? config.projectileCount : 2;
     const volleyDamageMultipliers = Array.isArray(config.volleyDamageMultipliers) ? config.volleyDamageMultipliers : [1.2, 1.4];

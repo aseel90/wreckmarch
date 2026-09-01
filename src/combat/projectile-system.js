@@ -34,11 +34,12 @@ function boundedInteger(value, max) {
   return Math.min(max, Math.max(0, Math.floor(Number(value) || 0)));
 }
 
-export function resolveProjectileSecondaryDamageBudget({ pierceCount = 0, ricochetCount = 0, shrapnelCount = 0 } = {}) {
+export function resolveProjectileSecondaryDamageBudget({ pierceCount = 0, ricochetCount = 0, shrapnelCount = 0, explosionLevel = 0 } = {}) {
   const profiles = SECONDARY_DAMAGE_BUDGET.profiles;
   const pierce = boundedInteger(pierceCount, profiles.pierce.maxAdditionalTargets);
   const ricochet = boundedInteger(ricochetCount, profiles.ricochet.maxBounces);
   const shrapnel = boundedInteger(shrapnelCount, profiles.shrapnel.maxFragments);
+  const explosion = boundedInteger(explosionLevel, profiles.explosion.targetCapByLevel.length - 1);
 
   const requestedPierce = Number(profiles.pierce.standaloneAddedDamageByCount[pierce]) || 0;
   const requestedRicochet = Number(profiles.ricochet.standaloneAddedDamageByCount[ricochet]) || 0;
@@ -47,7 +48,9 @@ export function resolveProjectileSecondaryDamageBudget({ pierceCount = 0, ricoch
     SECONDARY_DAMAGE_BUDGET.perMechanicAddedDamageSoftCaps.shrapnel,
     shrapnel * .25
   );
-  const requestedCombined = requestedPierce + requestedRicochet + requestedShrapnel;
+  const explosionTargetCap = Number(profiles.explosion.targetCapByLevel[explosion]) || 0;
+  const requestedExplosion = explosionTargetCap * (Number(profiles.explosion.damageCoefficient) || 0);
+  const requestedCombined = requestedPierce + requestedRicochet + requestedShrapnel + requestedExplosion;
   const combinedScale = requestedCombined > SECONDARY_DAMAGE_BUDGET.combinedAddedDamageSoftCap
     ? SECONDARY_DAMAGE_BUDGET.combinedAddedDamageSoftCap / requestedCombined
     : 1;
@@ -55,20 +58,25 @@ export function resolveProjectileSecondaryDamageBudget({ pierceCount = 0, ricoch
   const pierceAddedDamage = requestedPierce * combinedScale;
   const ricochetAddedDamage = requestedRicochet * combinedScale;
   const shrapnelAddedDamage = requestedShrapnel * combinedScale;
+  const explosionAddedDamage = requestedExplosion * combinedScale;
 
   return Object.freeze({
     pierceCount: pierce,
     ricochetCount: ricochet,
     shrapnelCount: shrapnel,
+    explosionLevel: explosion,
+    explosionTargetCap,
     requestedCombinedAddedDamage: requestedCombined,
-    combinedAddedDamage: pierceAddedDamage + ricochetAddedDamage + shrapnelAddedDamage,
+    combinedAddedDamage: pierceAddedDamage + ricochetAddedDamage + shrapnelAddedDamage + explosionAddedDamage,
     combinedScale,
     pierceAddedDamage,
     ricochetAddedDamage,
     shrapnelAddedDamage,
+    explosionAddedDamage,
     piercePerHitDamageScale: pierce > 0 ? pierceAddedDamage / pierce : 0,
     ricochetPerHitDamageScale: ricochet > 0 ? ricochetAddedDamage / ricochet : 0,
-    shrapnelPerFragmentDamageScale: shrapnel > 0 ? shrapnelAddedDamage / shrapnel : 0
+    shrapnelPerFragmentDamageScale: shrapnel > 0 ? shrapnelAddedDamage / shrapnel : 0,
+    explosionDamageScale: explosionTargetCap > 0 ? explosionAddedDamage / explosionTargetCap : 0
   });
 }
 
@@ -107,6 +115,9 @@ export class ProjectileSystem {
     ricochetRange = 360,
     ricochetTargetMode = 'random',
     shrapnelCount = 0,
+    explosionLevel = 0,
+    explosionRadius = 0,
+    explosiveRivetArmed = false,
     lifeMs,
     scale = .74,
     tint = null,
@@ -119,7 +130,7 @@ export class ProjectileSystem {
     const bullet = this.scene.bullets.create(x, y, texture).setDepth(depth).setScale(scale);
     if (tint != null) bullet.setTint(tint);
     bullet.setCircle(radius, offsetX, offsetY);
-    const secondaryBudget = resolveProjectileSecondaryDamageBudget({ pierceCount, ricochetCount, shrapnelCount });
+    const secondaryBudget = resolveProjectileSecondaryDamageBudget({ pierceCount, ricochetCount, shrapnelCount, explosionLevel });
     bullet.damage = damage;
     bullet.primaryDamage = Math.max(0, Number(damage) || 0);
     bullet.secondaryDamageBudget = secondaryBudget;
@@ -132,12 +143,53 @@ export class ProjectileSystem {
     bullet.shrapnelCount = secondaryBudget.shrapnelCount;
     bullet.shrapnelDamageScale = secondaryBudget.shrapnelPerFragmentDamageScale;
     bullet.shrapnelTriggered = false;
+    bullet.explosiveRivetArmed = Boolean(explosiveRivetArmed && secondaryBudget.explosionLevel > 0);
+    bullet.explosionTriggered = false;
+    bullet.explosionLevel = secondaryBudget.explosionLevel;
+    bullet.explosionDamageScale = secondaryBudget.explosionDamageScale;
+    bullet.explosionTargetCap = secondaryBudget.explosionTargetCap;
+    bullet.explosionRadius = Math.max(0, Number(explosionRadius) || Number(SECONDARY_DAMAGE_BUDGET.profiles.explosion.radiusByLevel[secondaryBudget.explosionLevel]) || 0);
     bullet.hitEnemies = new Set();
     bullet.life = lifeMs;
     bullet.prevX = x;
     bullet.prevY = y;
     bullet.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
     return bullet;
+  }
+
+  findExplosionTargets(originX, originY, radius, targetCap) {
+    const maxDistanceSq = Math.max(0, Number(radius) || 0) ** 2;
+    const cap = Math.max(0, Math.floor(Number(targetCap) || 0));
+    if (cap <= 0 || maxDistanceSq <= 0) return [];
+    const candidates = [];
+    this.scene.enemies.children.iterate(enemy => {
+      if (!enemy?.active || enemy.hp <= 0) return;
+      const dx = Number(enemy.x) - originX;
+      const dy = Number(enemy.y) - originY;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq <= maxDistanceSq) candidates.push({ enemy, distanceSq });
+    });
+    candidates.sort((a, b) => a.distanceSq - b.distanceSq);
+    return candidates.slice(0, cap).map(entry => entry.enemy);
+  }
+
+  spawnImpactExplosionFx(x, y, radius) {
+    const scene = this.scene;
+    if (!scene?.add?.circle || !scene?.tweens?.add) return null;
+    const ring = scene.add.circle(x, y, 10, 0xd86d31, .05)
+      .setStrokeStyle?.(2, 0xffbd69, .9)
+      ?.setDepth?.(35) || null;
+    if (!ring) return null;
+    const targetScale = Math.max(1, Math.max(10, Number(radius) || 0) / 10);
+    scene.tweens.add({
+      targets: ring,
+      scale: targetScale,
+      alpha: 0,
+      duration: 150,
+      ease: 'Quad.Out',
+      onComplete: () => ring.destroy?.()
+    });
+    return ring;
   }
 
   spawnImpactShrapnel({
