@@ -358,6 +358,10 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [quality, smoke]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -416,9 +420,14 @@ jobs:
           curl -fsSL --retry 5 "${BASE}?build=${SHA}" -o wm-live-index.html
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-loader-telemetry-v1.js" -o wm-live-mobile-hud-loader.js
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" -o wm-live-mobile-hud.js
-          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=23" -o wm-live-phase-d1.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=17" -o wm-live-phase-c1.js
+          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=24" -o wm-live-phase-d1.js
           curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
-          grep -F "./src/phase-d1-runtime.js?v=23" wm-live-index.html
+          grep -F "./src/phase-c1-runtime.js?v=17" wm-live-index.html
+          grep -F "./src/phase-d1-runtime.js?v=24" wm-live-index.html
+          grep -F "createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })" wm-live-phase-c1.js
+          grep -F "./upgrades/upgrade-card-art.js?v=6" wm-live-phase-d1.js
+          grep -F "upgrade-icon-explosive-rivet" wm-live-phase-d1.js
           grep -F "./src/mobile-hud-loader-telemetry-v1.js" wm-live-index.html
           grep -F "./mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" wm-live-mobile-hud-loader.js
           grep -F "./src/final-polish-runtime.js?v=2" wm-live-index.html
@@ -453,6 +462,7 @@ jobs:
             wm-live-index.html
             wm-live-mobile-hud.js
             wm-live-mobile-hud-loader.js
+            wm-live-phase-c1.js
             wm-live-phase-d1.js
             wm-live-final-polish.js
       - name: Open, update, or close live failure issue
