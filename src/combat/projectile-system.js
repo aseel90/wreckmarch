@@ -1,4 +1,5 @@
 /* WRECKMARCH — authoritative projectile creation, swept collision and lifetime owner */
+import { POWER_BUDGET } from '../balance/power-budget.js?v=1';
 
 export function segmentCircleHit(x1, y1, x2, y2, cx, cy, radius) {
   const dx = x2 - x1;
@@ -15,7 +16,7 @@ export function segmentCircleHit(x1, y1, x2, y2, cx, cy, radius) {
 }
 
 const DEFAULT_SHRAPNEL_PROFILE = Object.freeze({
-  damageScale: .35,
+  fallbackDamageScale: .25,
   speedScale: .68,
   minSpeed: 420,
   lifeMs: 260,
@@ -27,10 +28,55 @@ const DEFAULT_SHRAPNEL_PROFILE = Object.freeze({
   maxFragments: 4
 });
 
+const SECONDARY_DAMAGE_BUDGET = POWER_BUDGET.chainedMechanics;
+
+function boundedInteger(value, max) {
+  return Math.min(max, Math.max(0, Math.floor(Number(value) || 0)));
+}
+
+export function resolveProjectileSecondaryDamageBudget({ pierceCount = 0, ricochetCount = 0, shrapnelCount = 0 } = {}) {
+  const profiles = SECONDARY_DAMAGE_BUDGET.profiles;
+  const pierce = boundedInteger(pierceCount, profiles.pierce.maxAdditionalTargets);
+  const ricochet = boundedInteger(ricochetCount, profiles.ricochet.maxBounces);
+  const shrapnel = boundedInteger(shrapnelCount, profiles.shrapnel.maxFragments);
+
+  const requestedPierce = Number(profiles.pierce.standaloneAddedDamageByCount[pierce]) || 0;
+  const requestedRicochet = Number(profiles.ricochet.standaloneAddedDamageByCount[ricochet]) || 0;
+  const shrapnelTable = profiles.shrapnel.standaloneAddedDamageByFragmentCount;
+  const requestedShrapnel = Number(shrapnelTable[shrapnel]) || Math.min(
+    SECONDARY_DAMAGE_BUDGET.perMechanicAddedDamageSoftCaps.shrapnel,
+    shrapnel * .25
+  );
+  const requestedCombined = requestedPierce + requestedRicochet + requestedShrapnel;
+  const combinedScale = requestedCombined > SECONDARY_DAMAGE_BUDGET.combinedAddedDamageSoftCap
+    ? SECONDARY_DAMAGE_BUDGET.combinedAddedDamageSoftCap / requestedCombined
+    : 1;
+
+  const pierceAddedDamage = requestedPierce * combinedScale;
+  const ricochetAddedDamage = requestedRicochet * combinedScale;
+  const shrapnelAddedDamage = requestedShrapnel * combinedScale;
+
+  return Object.freeze({
+    pierceCount: pierce,
+    ricochetCount: ricochet,
+    shrapnelCount: shrapnel,
+    requestedCombinedAddedDamage: requestedCombined,
+    combinedAddedDamage: pierceAddedDamage + ricochetAddedDamage + shrapnelAddedDamage,
+    combinedScale,
+    pierceAddedDamage,
+    ricochetAddedDamage,
+    shrapnelAddedDamage,
+    piercePerHitDamageScale: pierce > 0 ? pierceAddedDamage / pierce : 0,
+    ricochetPerHitDamageScale: ricochet > 0 ? ricochetAddedDamage / ricochet : 0,
+    shrapnelPerFragmentDamageScale: shrapnel > 0 ? shrapnelAddedDamage / shrapnel : 0
+  });
+}
+
 export class ProjectileSystem {
   /** @param {any} scene */
   constructor(scene) {
     this.scene = scene;
+    this.randomSource = Math.random;
     this.bounds = {
       minX: -80,
       maxX: 2280,
@@ -44,6 +90,12 @@ export class ProjectileSystem {
     return this;
   }
 
+  setRandomSource(source) {
+    if (typeof source !== 'function') throw new TypeError('ProjectileSystem random source must be a function');
+    this.randomSource = source;
+    return this;
+  }
+
   spawn({
     x,
     y,
@@ -53,6 +105,7 @@ export class ProjectileSystem {
     pierceCount = 0,
     ricochetCount = 0,
     ricochetRange = 360,
+    ricochetTargetMode = 'random',
     shrapnelCount = 0,
     lifeMs,
     scale = .74,
@@ -66,11 +119,19 @@ export class ProjectileSystem {
     const bullet = this.scene.bullets.create(x, y, texture).setDepth(depth).setScale(scale);
     if (tint != null) bullet.setTint(tint);
     bullet.setCircle(radius, offsetX, offsetY);
+    const secondaryBudget = resolveProjectileSecondaryDamageBudget({ pierceCount, ricochetCount, shrapnelCount });
     bullet.damage = damage;
-    bullet.pierceRemaining = Math.max(0, Math.floor(Number(pierceCount) || 0));
-    bullet.ricochetRemaining = Math.max(0, Math.floor(Number(ricochetCount) || 0));
+    bullet.primaryDamage = Math.max(0, Number(damage) || 0);
+    bullet.secondaryDamageBudget = secondaryBudget;
+    bullet.pierceRemaining = secondaryBudget.pierceCount;
+    bullet.pierceDamageScale = secondaryBudget.piercePerHitDamageScale;
+    bullet.ricochetRemaining = secondaryBudget.ricochetCount;
+    bullet.ricochetDamageScale = secondaryBudget.ricochetPerHitDamageScale;
     bullet.ricochetRange = Math.max(0, Number(ricochetRange) || 0);
-    bullet.shrapnelCount = Math.max(0, Math.floor(Number(shrapnelCount) || 0));
+    bullet.ricochetTargetMode = ricochetTargetMode === 'nearest' ? 'nearest' : 'random';
+    bullet.shrapnelCount = secondaryBudget.shrapnelCount;
+    bullet.shrapnelDamageScale = secondaryBudget.shrapnelPerFragmentDamageScale;
+    bullet.shrapnelTriggered = false;
     bullet.hitEnemies = new Set();
     bullet.life = lifeMs;
     bullet.prevX = x;
@@ -86,6 +147,7 @@ export class ProjectileSystem {
     speed,
     damage,
     count,
+    damageScale = null,
     texture = 'bullet',
     excludedEnemies = []
   }) {
@@ -95,7 +157,10 @@ export class ProjectileSystem {
 
     const sourceSpeed = Math.max(0, Number(speed) || 0);
     const fragmentSpeed = Math.max(profile.minSpeed, sourceSpeed * profile.speedScale);
-    const fragmentDamage = Math.max(1, (Number(damage) || 0) * profile.damageScale);
+    const resolvedDamageScale = Number.isFinite(Number(damageScale)) && Number(damageScale) >= 0
+      ? Number(damageScale)
+      : profile.fallbackDamageScale;
+    const fragmentDamage = Math.max(1, (Number(damage) || 0) * resolvedDamageScale);
     const excluded = excludedEnemies instanceof Set ? excludedEnemies : new Set(excludedEnemies || []);
     const fragments = [];
 
@@ -142,19 +207,23 @@ export class ProjectileSystem {
   }
 
   findRicochetTarget(bullet, originX, originY) {
-    let bestEnemy = null;
-    let bestDistanceSq = Math.max(0, Number(bullet.ricochetRange) || 0) ** 2;
+    const maxDistanceSq = Math.max(0, Number(bullet.ricochetRange) || 0) ** 2;
+    const eligible = [];
     this.scene.enemies.children.iterate(enemy => {
       if (!enemy?.active || enemy.hp <= 0 || bullet.hitEnemies?.has?.(enemy)) return;
       const dx = enemy.x - originX;
       const dy = enemy.y - originY;
       const distanceSq = dx * dx + dy * dy;
-      if (distanceSq < bestDistanceSq) {
-        bestEnemy = enemy;
-        bestDistanceSq = distanceSq;
-      }
+      if (distanceSq <= maxDistanceSq) eligible.push({ enemy, distanceSq });
     });
-    return bestEnemy;
+    if (!eligible.length) return null;
+    if (bullet.ricochetTargetMode === 'nearest') {
+      eligible.sort((a, b) => a.distanceSq - b.distanceSq);
+      return eligible[0].enemy;
+    }
+    const roll = Number(this.randomSource());
+    const normalizedRoll = Number.isFinite(roll) ? Math.min(.999999999, Math.max(0, roll)) : 0;
+    return eligible[Math.floor(normalizedRoll * eligible.length)].enemy;
   }
 
   redirectRicochet(bullet, originX, originY) {
@@ -166,6 +235,10 @@ export class ProjectileSystem {
     const speed = Math.hypot(Number(bullet.body?.velocity?.x) || 0, Number(bullet.body?.velocity?.y) || 0);
     const angle = Math.atan2(target.y - originY, target.x - originX);
     bullet.ricochetRemaining = Math.max(0, Math.floor(Number(bullet.ricochetRemaining) || 0) - 1);
+    const primaryDamage = Math.max(0, Number(bullet.primaryDamage ?? bullet.damage) || 0);
+    const ricochetDamageScale = Math.max(0, Number(bullet.ricochetDamageScale) || 0);
+    bullet.damage = primaryDamage * ricochetDamageScale;
+    bullet.projectilePath = 'ricochet';
     bullet.setPosition?.(originX, originY);
     if (bullet.body?.velocity?.setToPolar) bullet.body.velocity.setToPolar(angle, speed);
     else bullet.setVelocity?.(Math.cos(angle) * speed, Math.sin(angle) * speed);
