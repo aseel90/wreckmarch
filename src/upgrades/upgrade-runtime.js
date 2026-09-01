@@ -1,6 +1,7 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js?v=4';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=12';
-import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=5';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=13';
+import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=7';
+import { assertUpgradeRequirements, meetsUpgradeRequirements } from './upgrade-requirements.js?v=1';
 import { UPGRADE_RARITIES, getUpgradeRarityRule, resolveUpgradeRarityForDefinition, scaleUpgradeModifierValue } from './upgrade-rarity.js?v=1';
 
 function mergeModifierCaps(existing = {}, modifier) {
@@ -183,6 +184,7 @@ export function canApplyRegisteredUpgrade(scene, id) {
   const { hasMechanicalEffect } = requireSupportedRegisteredUpgrade(definition);
   if (getSceneUpgradeLevel(scene, id) >= definition.maxLevel) return false;
   if (!meetsOfferRules(scene, definition)) return false;
+  if (!meetsUpgradeRequirements(scene, definition)) return false;
   if (hasMechanicalEffect && !canApplyUpgradeMechanicalEffect(scene, definition)) return false;
   return true;
 }
@@ -222,6 +224,7 @@ export function applyRegisteredUpgrade(scene, id, { rarity = null } = {}) {
   if (nextLevel > definition.maxLevel) {
     throw new RangeError(`${definition.id} is already at max level ${definition.maxLevel}`);
   }
+  assertUpgradeRequirements(scene, definition);
   const resolvedRarity = resolveUpgradeRarityForDefinition(definition, rarity);
   const rarityHistory = planUpgradeRarityHistory(scene, definition, currentLevel, resolvedRarity);
   const powerMultiplier = getUpgradeRarityRule(resolvedRarity).powerMultiplier;
