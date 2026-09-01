@@ -68,6 +68,16 @@ describe('player contact damage rules', () => {
     expect(result.knockbackY).toBeCloseTo(0, 6);
   });
 
+  it('absorbs one valid hit with a shield charge before HP is reduced', () => {
+    const result = resolvePlayerContactHit({ currentHp: 55, shieldCharges: 1, lastHitAt: 0, now: 1000, enemyDamage: 12, heroX: 0, heroY: 0, enemyX: -10, enemyY: 0, profile: DEFAULT_PLAYER_COMBAT_PROFILE });
+    expect(result.shieldAbsorbed).toBe(true);
+    expect(result.preventedDamage).toBe(12);
+    expect(result.appliedDamage).toBe(0);
+    expect(result.nextShieldCharges).toBe(0);
+    expect(result.nextHp).toBe(55);
+    expect(result.killed).toBe(false);
+  });
+
   it('reports lethal contact without allowing negative HP', () => {
     const result = resolvePlayerContactHit({
       currentHp: 5,
