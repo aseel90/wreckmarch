@@ -2,7 +2,7 @@
 import { CharacterSystem } from './characters/character-system.js?v=8';
 import { loadRunnerLocomotionArt } from './characters/runner-locomotion-art.js?v=4';
 import { UPGRADE_RARITIES, UPGRADE_RARITY_RULES, getUpgradeRarityRule } from './upgrades/upgrade-rarity.js?v=1';
-import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrades/upgrade-card-art.js?v=4';
+import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrades/upgrade-card-art.js?v=5';
 const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const COLORS={HERO:0xd98446,UTILITY:0x4fc8d8,FORTRESS:0xd4ad62,EVOLUTION:0x9d6be8};
