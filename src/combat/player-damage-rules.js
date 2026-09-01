@@ -24,7 +24,8 @@ export function resolvePlayerContactHit({
   heroY,
   enemyX,
   enemyY,
-  profile = {}
+  profile = {},
+  shieldCharges = 0
 }) {
   const combat = { ...DEFAULT_PLAYER_COMBAT_PROFILE, ...profile };
   const hitAt = finiteOr(lastHitAt, -Infinity);
@@ -35,6 +36,9 @@ export function resolvePlayerContactHit({
     return {
       ignored: true,
       appliedDamage: 0,
+      preventedDamage: 0,
+      shieldAbsorbed: false,
+      nextShieldCharges: Math.max(0, Math.floor(finiteOr(shieldCharges, 0))),
       nextHp: Math.max(0, finiteOr(currentHp, 0)),
       killed: false,
       invulnerableUntil: hitAt + invulnerabilityMs,
@@ -48,7 +52,11 @@ export function resolvePlayerContactHit({
   const baseDamage = Math.max(1, Math.round(finiteOr(enemyDamage, 1)));
   const appliedDamage = Math.max(1, Math.round(baseDamage * incomingDamageMultiplier));
   const hp = Math.max(0, finiteOr(currentHp, 0));
-  const nextHp = Math.max(0, hp - appliedDamage);
+  const availableShieldCharges = Math.max(0, Math.floor(finiteOr(shieldCharges, 0)));
+  const shieldAbsorbed = availableShieldCharges > 0;
+  const nextShieldCharges = shieldAbsorbed ? availableShieldCharges - 1 : availableShieldCharges;
+  const preventedDamage = shieldAbsorbed ? appliedDamage : 0;
+  const nextHp = shieldAbsorbed ? hp : Math.max(0, hp - appliedDamage);
 
   let dx = finiteOr(heroX, 0) - finiteOr(enemyX, 0);
   let dy = finiteOr(heroY, 0) - finiteOr(enemyY, 0);
@@ -67,9 +75,12 @@ export function resolvePlayerContactHit({
 
   return {
     ignored: false,
-    appliedDamage,
+    appliedDamage: shieldAbsorbed ? 0 : appliedDamage,
+    preventedDamage,
+    shieldAbsorbed,
+    nextShieldCharges,
     nextHp,
-    killed: nextHp <= 0,
+    killed: !shieldAbsorbed && nextHp <= 0,
     invulnerableUntil: hitNow + invulnerabilityMs,
     knockbackX: dx * knockbackStrength,
     knockbackY: dy * knockbackStrength,
