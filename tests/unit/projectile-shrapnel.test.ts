@@ -28,7 +28,7 @@ describe('Shrapnel Impact projectile ownership', () => {
       damageScale: .25,
       texture: 'hunter-rivet',
       excludedEnemies: new Set([first, prior]) as any
-    });
+    } as any);
 
     expect(fragments).toHaveLength(2);
     expect(spawned).toHaveLength(2);

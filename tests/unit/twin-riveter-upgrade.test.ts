@@ -83,11 +83,11 @@ describe('Upgrade System 2.0 Twin Riveter power-budget migration', () => {
     const weaponSystem = new WeaponSystem(scene, { projectileSystem: {} as any });
 
     expect(weaponSystem.heroSpreads()).toEqual([-0.055, 0.055]);
-    expect(weaponSystem.heroProjectileDamageScale(2)).toBeCloseTo(0.7);
+    expect((weaponSystem.heroProjectileDamageScale as any)(2)).toBeCloseTo(0.7);
 
     delete scene.upgradeMechanicalState['twin-riveter'];
     scene.twinShots = 2;
     expect(weaponSystem.heroSpreads()).toEqual([-0.055, 0.055]);
-    expect(weaponSystem.heroProjectileDamageScale(2)).toBeCloseTo(0.9);
+    expect((weaponSystem.heroProjectileDamageScale as any)(2)).toBeCloseTo(0.9);
   });
 });

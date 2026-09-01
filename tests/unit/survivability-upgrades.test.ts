@@ -5,7 +5,7 @@ import { RunTelemetry } from '../../src/telemetry/run-telemetry.js';
 import { getUpgradeDefinition } from '../../src/upgrades/upgrade-catalog.js';
 import { applyRegisteredUpgrade, canApplyRegisteredUpgrade } from '../../src/upgrades/upgrade-runtime.js';
 
-const scene = (heroHp = 50, heroMaxHp = 100) => ({ heroHp, heroMaxHp, heroShieldCharges: 0, upgradeLevels: {}, upgradeRarityHistory: {}, runTime: 0, level: 1, scrap: 0 });
+const scene = (heroHp = 50, heroMaxHp = 100) => ({ heroHp, heroMaxHp, heroShieldCharges: 0, upgradeLevels: {} as Record<string, number>, upgradeRarityHistory: {} as Record<string, string[]>, runTime: 0, level: 1, scrap: 0 });
 
 describe('survivability utility cards', () => {
   it('Field Repair restores rarity-scaled max-HP percentage and hides near full HP', () => {

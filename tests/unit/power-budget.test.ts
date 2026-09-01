@@ -38,16 +38,16 @@ describe('U4-B multi-axis power budget', () => {
     const strong = POWER_BUDGET_BASELINE_EVIDENCE.strongScalarBuild;
     const utility = POWER_BUDGET_BASELINE_EVIDENCE.crowdUtilityBuild;
     const strongDirect = estimateNominalDirectPower({
-      damage: strong.finalDamage,
-      fireDelayMs: strong.finalFireDelayMs,
+      damage: Number(strong.finalDamage),
+      fireDelayMs: Number(strong.finalFireDelayMs),
       projectileCount: strong.projectileCount,
       projectileDamageScale: strong.multiShotDamageScale,
       critChance: strong.critChance,
       critDamageMultiplier: strong.critDamageMultiplier
     });
     const utilityDirect = estimateNominalDirectPower({
-      damage: utility.finalDamage,
-      fireDelayMs: utility.finalFireDelayMs,
+      damage: Number(utility.finalDamage),
+      fireDelayMs: Number(utility.finalFireDelayMs),
       projectileCount: utility.projectileCount,
       projectileDamageScale: utility.multiShotDamageScale,
       critChance: utility.critChance,
