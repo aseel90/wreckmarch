@@ -66,6 +66,30 @@ function normalizeMechanicalEffect(effect) {
   });
 }
 
+function normalizeCompatibility(compatibility) {
+  if (compatibility == null) return Object.freeze({});
+  if (!isPlainObject(compatibility)) throw new TypeError('Upgrade compatibility must be a plain object');
+  const allowedKeys = new Set(['characterIds', 'weaponIds']);
+  for (const key of Object.keys(compatibility)) {
+    if (!allowedKeys.has(key)) throw new TypeError(`Unknown upgrade compatibility key: ${key}`);
+  }
+  const normalizeIds = (value, label) => {
+    if (value == null) return null;
+    if (!Array.isArray(value) || value.some((id) => !nonEmptyString(id))) {
+      throw new TypeError(`Upgrade compatibility ${label} must be an array of non-empty strings`);
+    }
+    const ids = value.map((id) => id.trim());
+    if (new Set(ids).size !== ids.length) throw new TypeError(`Upgrade compatibility ${label} must not contain duplicates`);
+    return Object.freeze(ids);
+  };
+  const characterIds = normalizeIds(compatibility.characterIds, 'characterIds');
+  const weaponIds = normalizeIds(compatibility.weaponIds, 'weaponIds');
+  return Object.freeze({
+    ...(characterIds == null ? {} : { characterIds }),
+    ...(weaponIds == null ? {} : { weaponIds })
+  });
+}
+
 function normalizeRequirements(requirements) {
   if (!Array.isArray(requirements)) throw new TypeError('Upgrade requirements must be an array');
   return Object.freeze(requirements.map((requirement) => {
@@ -93,6 +117,7 @@ export function normalizeUpgradeDefinition(definition) {
   if (new Set(normalizedTags).size !== normalizedTags.length) throw new TypeError('Upgrade tags must not contain duplicates');
 
   const requirements = normalizeRequirements(definition.requirements ?? []);
+  const compatibility = normalizeCompatibility(definition.compatibility);
   const modifiers = definition.modifiers ?? [];
   if (!Array.isArray(modifiers)) throw new TypeError('Upgrade modifiers must be an array');
   const normalizedModifiers = Object.freeze(modifiers.map(normalizeModifier));
@@ -112,6 +137,7 @@ export function normalizeUpgradeDefinition(definition) {
     scope: definition.scope,
     tags: Object.freeze(normalizedTags),
     requirements,
+    compatibility,
     weight: Number(definition.weight),
     offerRules: freezeConfig(definition.offerRules || {}),
     modifiers: normalizedModifiers,
