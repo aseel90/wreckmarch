@@ -1,5 +1,5 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=9';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=13';
 import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
@@ -212,6 +212,8 @@ function createUpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
     createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),
+    createRegisteredUpgradeChoice(scene, 'field-repair', { category: 'UTILITY' }),
+    createRegisteredUpgradeChoice(scene, 'impact-shield', { category: 'UTILITY' }),
     createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' })
   ];
 }
