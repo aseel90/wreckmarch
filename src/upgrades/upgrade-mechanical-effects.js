@@ -1,5 +1,6 @@
 export const UPGRADE_MECHANICAL_EFFECT_IDS = Object.freeze({
   TWIN_RIVETER: 'TWIN_RIVETER',
+  TRIPLE_RIVETER: 'TRIPLE_RIVETER',
   EXPLOSIVE_RIVET: 'EXPLOSIVE_RIVET',
   RESTORE_HP: 'RESTORE_HP',
   GRANT_SHIELD: 'GRANT_SHIELD',
@@ -98,6 +99,47 @@ const TRANSACTION_FACTORIES = Object.freeze({
         }
         if (hadTwinShots) scene.twinShots = previousTwinShots;
         else delete scene.twinShots;
+      }
+    });
+  },
+
+  [UPGRADE_MECHANICAL_EFFECT_IDS.TRIPLE_RIVETER]: ({ scene, definition, level, config, rarity }) => {
+    const projectileCount = Number.isInteger(config.projectileCount) ? config.projectileCount : 3;
+    const volleyDamageMultiplier = Number(config.volleyDamageMultiplier ?? 1.6);
+    if (level !== 1) throw new RangeError('TRIPLE_RIVETER supports exactly one level');
+    if (projectileCount !== 3) throw new RangeError('TRIPLE_RIVETER requires exactly three projectiles');
+    if (!Number.isFinite(volleyDamageMultiplier) || volleyDamageMultiplier <= 0) {
+      throw new TypeError('TRIPLE_RIVETER requires a valid volleyDamageMultiplier > 0');
+    }
+    const projectileDamageScale = volleyDamageMultiplier / projectileCount;
+    const previousContainer = scene.upgradeMechanicalState;
+    const hadContainer = Boolean(previousContainer && typeof previousContainer === 'object');
+    const hadState = hadContainer && Object.prototype.hasOwnProperty.call(previousContainer, definition.id);
+    const previousState = hadState ? previousContainer[definition.id] : undefined;
+
+    return Object.freeze({
+      apply() {
+        if (!scene.upgradeMechanicalState || typeof scene.upgradeMechanicalState !== 'object') scene.upgradeMechanicalState = {};
+        const state = Object.freeze({
+          id: definition.id,
+          effectId: UPGRADE_MECHANICAL_EFFECT_IDS.TRIPLE_RIVETER,
+          level,
+          rarity,
+          projectileCount,
+          volleyDamageMultiplier,
+          projectileDamageScale
+        });
+        scene.upgradeMechanicalState[definition.id] = state;
+        return state;
+      },
+      rollback() {
+        if (hadContainer) {
+          scene.upgradeMechanicalState = previousContainer;
+          if (hadState) previousContainer[definition.id] = previousState;
+          else delete previousContainer[definition.id];
+        } else {
+          delete scene.upgradeMechanicalState;
+        }
       }
     });
   },
