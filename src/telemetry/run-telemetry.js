@@ -23,6 +23,14 @@ function projectileKind(projectile) {
   return 'support';
 }
 
+function projectileDamagePath(projectile) {
+  if (projectile?.projectileKind === 'shrapnel' || projectile?.isSecondaryProjectile) return 'shrapnel';
+  if (projectile?.projectilePath === 'pierce') return 'pierce';
+  if (projectile?.projectilePath === 'ricochet') return 'ricochet';
+  if (Object.prototype.hasOwnProperty.call(projectile || {}, 'isCritical')) return 'primary';
+  return 'support';
+}
+
 export class RunTelemetry {
   constructor(scene, { provider = new NoopRunReportProvider(), now = () => Date.now(), reportIdFactory = createReportId } = {}) {
     this.scene = scene;
@@ -48,7 +56,7 @@ export class RunTelemetry {
       finishReason: null,
       run: { durationSeconds: 0, finalWave: 1, level: 1, scrap: 0, hp: 0, maxHp: 0 },
       waves: [],
-      combat: { damageDealt: 0, damageTaken: 0, hits: 0, playerHits: 0, kills: 0, killsByEnemy: {}, spawnedByEnemy: {}, ttkSecondsByEnemy: {}, criticalHits: 0, lastDamageSource: null, averageDps: 0, peakDps1s: 0 },
+      combat: { damageDealt: 0, damageTaken: 0, hits: 0, playerHits: 0, kills: 0, killsByEnemy: {}, spawnedByEnemy: {}, ttkSecondsByEnemy: {}, criticalHits: 0, criticalDamageDealt: 0, damageByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, support: 0 }, hitsByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, support: 0 }, lastDamageSource: null, averageDps: 0, peakDps1s: 0 },
       projectiles: { triggers: 0, spawned: 0, heroSpawned: 0, supportSpawned: 0, shrapnelSpawned: 0, heroProjectilesWithHit: 0, heroMisses: 0, pierceHits: 0, ricochets: 0 },
       upgrades: { history: [], finalLevels: {}, rarityHistory: {}, resolvedStats: null },
       performance: { frames: 0, averageFrameMs: 0, maxFrameMs: 0, longFrames: 0, peakActiveEnemies: 0, peakActiveProjectiles: 0, frameSpikes: [] }
@@ -90,6 +98,20 @@ export class RunTelemetry {
     c.killsByEnemy[id] = n(c.killsByEnemy[id]) + 1;
     const list = c.ttkSecondsByEnemy[id] || (c.ttkSecondsByEnemy[id] = []);
     if (list.length < MAX_TTK_SAMPLES_PER_ENEMY) list.push(round(this.runTime - state.spawnTime));
+  }
+
+  recordProjectileDamage(projectile, { appliedDamage = 0, currentHp = Infinity } = {}) {
+    if (this.finalized || !projectile) return 0;
+    const rawApplied = Math.max(0, n(appliedDamage));
+    const hpBefore = Math.max(0, n(currentHp, rawApplied));
+    const effectiveDamage = Math.max(0, Math.min(hpBefore, rawApplied));
+    if (effectiveDamage <= 0) return 0;
+    const path = projectileDamagePath(projectile);
+    const combat = this.report.combat;
+    combat.damageByProjectilePath[path] = n(combat.damageByProjectilePath[path]) + effectiveDamage;
+    combat.hitsByProjectilePath[path] = n(combat.hitsByProjectilePath[path]) + 1;
+    if (projectile.isCritical) combat.criticalDamageDealt += effectiveDamage;
+    return effectiveDamage;
   }
 
   observeProjectile(projectile) {
@@ -218,11 +240,13 @@ export class RunTelemetry {
     const duration = Math.max(.001, n(this.report.run.durationSeconds));
     const combat = this.report.combat;
     combat.damageDealt = round(combat.damageDealt);
+    combat.criticalDamageDealt = round(combat.criticalDamageDealt);
+    for (const key of Object.keys(combat.damageByProjectilePath || {})) combat.damageByProjectilePath[key] = round(combat.damageByProjectilePath[key]);
     combat.damageTaken = round(combat.damageTaken);
     combat.averageDps = round(combat.damageDealt / duration);
     combat.peakDps1s = round(Math.max(0, ...this.damageBuckets.values()));
     const p = this.report.projectiles;
-    p.heroMisses = Math.max(0, p.heroSpawned - p.heroProjectilesWithHit);
+    p.heroMisses = Math.max(0, p.heroSpawned - p.heroProjectileHits);
     const perf = this.report.performance;
     perf.averageFrameMs = round(perf.frames ? n(perf._totalFrameMs) / perf.frames : 0, 2);
     delete perf._totalFrameMs;
