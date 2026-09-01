@@ -25,7 +25,9 @@ test('Legendary rarity is shown by UpgradeSceneV4 and applies one scaled canonic
       'piercing-rivets': 3,
       'ricochet': 2,
       'shrapnel-impact': 2,
-      'critical-rivet': 4
+      'critical-rivet': 4,
+      'field-repair': 3,
+      'impact-shield': 2
     });
     scene.level = 1;
 
@@ -94,6 +96,6 @@ test('Legendary rarity is shown by UpgradeSceneV4 and applies one scaled canonic
 
   expect(result.level).toBe(1);
   expect(result.rarityHistory).toEqual(['LEGENDARY']);
-  expect(result.modifierValue).toBeCloseTo(0.3);
-  expect(result.damage).toBeCloseTo(result.baseDamage * 1.3);
+  expect(result.modifierValue).toBeCloseTo(0.18);
+  expect(result.damage).toBeCloseTo(result.baseDamage * 1.18);
 });

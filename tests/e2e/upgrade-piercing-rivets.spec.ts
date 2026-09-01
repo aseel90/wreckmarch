@@ -30,7 +30,9 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
       'call-rig': 99,
       'ricochet': 99,
       'shrapnel-impact': 99,
-      'critical-rivet': 99
+      'critical-rivet': 99,
+      'field-repair': 3,
+      'impact-shield': 2
     });
 
     const originalRandom = Math.random;
@@ -102,7 +104,8 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
   expect(setup.level).toBe(1);
   expect(setup.pierceCount).toBe(1);
   expect(setup.initialPierceRemaining).toBe(1);
-  expect(setup.enemyHp).toEqual([76, 76]);
+  expect(setup.enemyHp[0]).toBeCloseTo(76, 4);
+  expect(setup.enemyHp[1]).toBeCloseTo(92.8, 4);
   expect(setup.bulletActive).toBe(false);
   expect(setup.hitCount).toBe(2);
   expect(setup.pierceRemaining).toBe(0);

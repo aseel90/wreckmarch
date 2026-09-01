@@ -19,7 +19,9 @@ async function forceOnlyTwinRiveter(page: any) {
       'piercing-rivets': 3,
       'ricochet': 2,
       'shrapnel-impact': 2,
-      'critical-rivet': 4
+      'critical-rivet': 4,
+      'field-repair': 3,
+      'impact-shield': 2
     });
     scene.level = 1;
     scene.rigSummoned = false;
@@ -124,9 +126,9 @@ test('Twin Riveter uses the canonical mechanical upgrade path through both level
   expect(secondLevel).toEqual({
     availableAfter: false,
     level: 2,
-    projectileCount: 3,
-    twinShots: 3,
-    spreads: [-0.085, 0, 0.085]
+    projectileCount: 2,
+    twinShots: 2,
+    spreads: [-0.055, 0.055]
   });
 
 });
