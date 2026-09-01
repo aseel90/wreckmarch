@@ -41,7 +41,8 @@ describe('RunTelemetry projectile damage attribution', () => {
     expect(report.combat.damageByProjectilePath).toMatchObject({ primary: 24, pierce: 7.2, ricochet: 10, shrapnel: 4, support: 0 });
     expect(report.combat.hitsByProjectilePath).toMatchObject({ primary: 1, pierce: 1, ricochet: 1, shrapnel: 1, support: 0 });
     expect(report.combat.criticalDamageDealt).toBe(10);
-    expect(report.projectiles.heroMisses).toBe(3);
+    expect(report.projectiles.heroProjectilesWithHit).toBe(3);
+    expect(report.projectiles.heroMisses).toBe(0);
     expect(Number.isFinite(report.projectiles.heroMisses)).toBe(true);
   });
 });

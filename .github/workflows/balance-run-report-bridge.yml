@@ -2,13 +2,10 @@ name: Balance Run Report Bridge
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/balance-run-report-bridge.yml'
-      - 'infra/cloudflare/wreckmarch-run-reports/**'
 
 permissions:
   contents: read
@@ -39,86 +36,102 @@ jobs:
               'content-type': 'application/json'
             };
 
-            const pendingResponse = await fetch(`${baseUrl}/bridge/pending`, {
-              method: 'POST',
-              headers,
-              body: '{}'
-            });
-            const pendingPayload = await pendingResponse.json().catch(() => ({}));
-            if (!pendingResponse.ok) {
-              core.setFailed(`Telemetry bridge fetch failed (${pendingResponse.status}): ${JSON.stringify(pendingPayload)}`);
-              return;
-            }
-
-            const reports = Array.isArray(pendingPayload.reports) ? pendingPayload.reports : [];
-            core.info(`Pending Wreckmarch run reports: ${reports.length}`);
+            const MAX_BRIDGE_PASSES = 20;
             let failures = 0;
+            let submitted = 0;
+            let exhaustedPassBudget = false;
 
-            for (const report of reports) {
-              try {
-                const search = await github.rest.search.issuesAndPullRequests({
-                  q: `repo:${owner}/${repo} is:issue in:title "${report.runId}"`,
-                  per_page: 20
-                });
-                let issue = search.data.items.find(item => item.title === report.issueTitle);
+            for (let pass = 1; pass <= MAX_BRIDGE_PASSES; pass += 1) {
+              const pendingResponse = await fetch(`${baseUrl}/bridge/pending`, {
+                method: 'POST',
+                headers,
+                body: '{}'
+              });
+              const pendingPayload = await pendingResponse.json().catch(() => ({}));
+              if (!pendingResponse.ok) {
+                core.setFailed(`Telemetry bridge fetch failed (${pendingResponse.status}): ${JSON.stringify(pendingPayload)}`);
+                return;
+              }
 
-                if (!issue) {
-                  const created = await github.rest.issues.create({
-                    owner,
-                    repo,
-                    title: report.issueTitle,
-                    body: report.issueBody
+              const reports = Array.isArray(pendingPayload.reports) ? pendingPayload.reports : [];
+              core.info(`Pending Wreckmarch run reports (pass ${pass}/${MAX_BRIDGE_PASSES}): ${reports.length}`);
+              if (reports.length === 0) break;
+
+              let passFailures = 0;
+              for (const report of reports) {
+                try {
+                  const search = await github.rest.search.issuesAndPullRequests({
+                    q: `repo:${owner}/${repo} is:issue in:title "${report.runId}"`,
+                    per_page: 20
                   });
-                  issue = created.data;
-                  core.info(`Created ${report.runId} as issue #${issue.number}`);
-                } else {
-                  core.info(`Reusing existing issue #${issue.number} for ${report.runId}`);
-                }
+                  let issue = search.data.items.find(item => item.title === report.issueTitle);
 
-                const expectedComments = Array.isArray(report.issueComments) ? report.issueComments : [];
-                if (expectedComments.length > 0) {
-                  const existingComments = await github.paginate(github.rest.issues.listComments, {
-                    owner,
-                    repo,
-                    issue_number: issue.number,
-                    per_page: 100
-                  });
-                  const existingBodies = existingComments.map(comment => String(comment.body || ''));
-                  for (const body of expectedComments) {
-                    const marker = String(body).split('\n', 1)[0];
-                    if (marker && existingBodies.some(existing => existing.includes(marker))) {
-                      core.info(`Reusing telemetry chunk ${marker}`);
-                      continue;
-                    }
-                    await github.rest.issues.createComment({
+                  if (!issue) {
+                    const created = await github.rest.issues.create({
+                      owner,
+                      repo,
+                      title: report.issueTitle,
+                      body: report.issueBody
+                    });
+                    issue = created.data;
+                    core.info(`Created ${report.runId} as issue #${issue.number}`);
+                  } else {
+                    core.info(`Reusing existing issue #${issue.number} for ${report.runId}`);
+                  }
+
+                  const expectedComments = Array.isArray(report.issueComments) ? report.issueComments : [];
+                  if (expectedComments.length > 0) {
+                    const existingComments = await github.paginate(github.rest.issues.listComments, {
                       owner,
                       repo,
                       issue_number: issue.number,
-                      body
+                      per_page: 100
                     });
-                    existingBodies.push(String(body));
+                    const existingBodies = existingComments.map(comment => String(comment.body || ''));
+                    for (const body of expectedComments) {
+                      const marker = String(body).split('\n', 1)[0];
+                      if (marker && existingBodies.some(existing => existing.includes(marker))) {
+                        core.info(`Reusing telemetry chunk ${marker}`);
+                        continue;
+                      }
+                      await github.rest.issues.createComment({
+                        owner,
+                        repo,
+                        issue_number: issue.number,
+                        body
+                      });
+                      existingBodies.push(String(body));
+                    }
                   }
-                }
 
-                const ackResponse = await fetch(`${baseUrl}/bridge/ack`, {
-                  method: 'POST',
-                  headers,
-                  body: JSON.stringify({
-                    reportId: report.reportId,
-                    issueNumber: issue.number,
-                    issueUrl: issue.html_url
-                  })
-                });
-                if (!ackResponse.ok) throw new Error(`ack failed (${ackResponse.status})`);
-              } catch (error) {
-                failures += 1;
-                core.warning(`${report.runId}: ${error?.stack || error}`);
-                await fetch(`${baseUrl}/bridge/error`, {
-                  method: 'POST',
-                  headers,
-                  body: JSON.stringify({ reportId: report.reportId, error: String(error?.message || error) })
-                }).catch(() => {});
+                  const ackResponse = await fetch(`${baseUrl}/bridge/ack`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                      reportId: report.reportId,
+                      issueNumber: issue.number,
+                      issueUrl: issue.html_url
+                    })
+                  });
+                  if (!ackResponse.ok) throw new Error(`ack failed (${ackResponse.status})`);
+                  submitted += 1;
+                } catch (error) {
+                  failures += 1;
+                  passFailures += 1;
+                  core.warning(`${report.runId}: ${error?.stack || error}`);
+                  await fetch(`${baseUrl}/bridge/error`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ reportId: report.reportId, error: String(error?.message || error) })
+                  }).catch(() => {});
+                }
               }
+
+              // Failed rows stay pending. Stop this run so one bad report cannot create a tight retry loop.
+              if (passFailures > 0) break;
+              if (pass === MAX_BRIDGE_PASSES) exhaustedPassBudget = true;
             }
 
-            if (failures > 0) core.setFailed(`${failures} run report(s) failed to bridge.`);
+            core.info(`Submitted Wreckmarch run reports this bridge run: ${submitted}`);
+            if (exhaustedPassBudget) core.setFailed(`Bridge pass budget exhausted after ${MAX_BRIDGE_PASSES} batches; pending reports may remain.`);
+            else if (failures > 0) core.setFailed(`${failures} run report(s) failed to bridge.`);

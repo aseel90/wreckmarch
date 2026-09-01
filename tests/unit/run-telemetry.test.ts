@@ -5,6 +5,27 @@ const group = (items: any[]) => ({ getChildren: () => items });
 const baseScene = () => ({ runTime: 1, level: 1, scrap: 0, heroHp: 100, heroMaxHp: 100, hero: { x: 0, y: 0 }, lastShot: 0, enemies: group([]), bullets: group([]), __runDirectorState: { wave: 1, pressurePhase: 'lull', threatBudget: 15, activeCap: 26, spawnIntervalMs: 720, hpMultiplier: 1, damageMultiplier: 1, speedMultiplier: 1 }, upgradeLevels: {}, upgradeRarityHistory: {}, runStatState: { resolve: () => ({ weapon: { damage: 24 } }) } }) as any;
 
 describe('RunTelemetry', () => {
+  it('counts a hero projectile hit from the damage event even if collision deactivates it before the next frame', () => {
+    const scene = baseScene();
+    const t = new RunTelemetry(scene, { reportIdFactory: () => 'wm-hit-event-test', now: () => 1000 });
+    const enemy: any = { active: true, enemyId: 'scrap-rat', hp: 50, x: 10, y: 0 };
+    const bullet: any = { active: true, isCritical: true, hitEnemies: new Set(), pierceRemaining: 1, ricochetRemaining: 0 };
+    scene.enemies = group([enemy]);
+    scene.bullets = group([bullet]);
+
+    t.update(16);
+    bullet.active = false;
+    scene.bullets = group([]);
+    t.recordProjectileDamage(bullet, { appliedDamage: 20, currentHp: 50 });
+    t.recordProjectileDamage(bullet, { appliedDamage: 10, currentHp: 30 });
+
+    const report: any = t.finalize();
+    expect(report.projectiles.heroSpawned).toBe(1);
+    expect(report.projectiles.heroProjectilesWithHit).toBe(1);
+    expect(report.projectiles.heroMisses).toBe(0);
+    expect(report.combat.criticalDamageDealt).toBe(30);
+  });
+
   it('observes gameplay state without becoming a combat owner', () => {
     const scene = baseScene();
     const submit = vi.fn(async () => ({ submitted: true }));

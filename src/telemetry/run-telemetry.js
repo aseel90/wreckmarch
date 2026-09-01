@@ -102,6 +102,13 @@ export class RunTelemetry {
     if (list.length < MAX_TTK_SAMPLES_PER_ENEMY) list.push(round(this.runTime - state.spawnTime));
   }
 
+  markHeroProjectileHit(projectile) {
+    if (!projectile || projectileKind(projectile) !== 'hero' || this.heroProjectileHits.has(projectile)) return false;
+    this.heroProjectileHits.add(projectile);
+    this.report.projectiles.heroProjectilesWithHit += 1;
+    return true;
+  }
+
   recordProjectileDamage(projectile, { appliedDamage = 0, currentHp = Infinity } = {}) {
     if (this.finalized || !projectile) return 0;
     const rawApplied = Math.max(0, n(appliedDamage));
@@ -112,6 +119,7 @@ export class RunTelemetry {
     const combat = this.report.combat;
     combat.damageByProjectilePath[path] = n(combat.damageByProjectilePath[path]) + effectiveDamage;
     combat.hitsByProjectilePath[path] = n(combat.hitsByProjectilePath[path]) + 1;
+    this.markHeroProjectileHit(projectile);
     if (projectile.isCritical) combat.criticalDamageDealt += effectiveDamage;
     if (path === 'explosion') combat.explosionDamageDealt = n(combat.explosionDamageDealt) + effectiveDamage;
     return effectiveDamage;
@@ -155,10 +163,7 @@ export class RunTelemetry {
 
     const newHits = Math.max(0, hitCount - state.hitCount);
     if (newHits > 0) {
-      if (state.kind === 'hero' && !this.heroProjectileHits.has(projectile)) {
-        this.heroProjectileHits.add(projectile);
-        this.report.projectiles.heroProjectilesWithHit += 1;
-      }
+      if (state.kind === 'hero') this.markHeroProjectileHit(projectile);
       if (projectile.isCritical) this.report.combat.criticalHits += newHits;
     }
     this.report.projectiles.pierceHits += Math.max(0, state.pierce - pierce);
