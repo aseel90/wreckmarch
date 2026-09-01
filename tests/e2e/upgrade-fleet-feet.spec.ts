@@ -29,6 +29,7 @@ test('Fleet Feet uses canonical character stats in the final upgrade scene', asy
       'overclock': 5,
       'long-barrel': 4,
       'twin-riveter': 2,
+      'triple-riveter': 1,
       'scrap-magnet': 4,
       'armor-plate': 4,
       'piercing-rivets': 3,
