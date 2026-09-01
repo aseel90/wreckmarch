@@ -39,6 +39,7 @@ describe('balance run report bridge contract', () => {
     expect(provider).toContain('MAX_KEEPALIVE_BYTES');
     expect(provider).toContain('wreckmarch-telemetry-probe');
     expect(runtime).toContain("./run-report-provider.js?v=3");
+    expect(runtime).toContain("./run-telemetry.js?v=6");
     expect(runtime).toContain('const wrapper = function telemetryAwareEndRun');
     expect(runtime).toContain('scene.endRun = wrapper');
     expect(runtime).toContain('telemetry.finalize(reason)');
@@ -51,7 +52,7 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain('await provider.submit(report)');
     expect(runtime).toContain("manualReportFailure('finalize'");
     expect(runtime).toContain("manualReportFailure('transport'");
-    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=13');
+    expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=14');
     expect(html).toContain('./src/phase-d1-runtime.js?v=24');
     expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=17');
     expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=24');
