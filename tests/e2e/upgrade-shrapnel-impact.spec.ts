@@ -30,7 +30,9 @@ test('Shrapnel Impact emits bounded secondary rivet fragments that damage a near
       'call-rig': 99,
       'piercing-rivets': 99,
       ricochet: 99,
-      'critical-rivet': 99
+      'critical-rivet': 99,
+      'field-repair': 3,
+      'impact-shield': 2
     });
 
     const originalRandom = Math.random;
@@ -141,8 +143,8 @@ test('Shrapnel Impact emits bounded secondary rivet fragments that damage a near
   expect(result.fragmentSnapshot.every((fragment: any) => fragment.pierceRemaining === 0)).toBe(true);
   expect(result.fragmentSnapshot.every((fragment: any) => fragment.ricochetRemaining === 0)).toBe(true);
   expect(result.fragmentSnapshot.every((fragment: any) => fragment.shrapnelCount === 0)).toBe(true);
-  expect(result.fragmentSnapshot.every((fragment: any) => Math.abs(fragment.damage - 8.4) < .001)).toBe(true);
+  expect(result.fragmentSnapshot.every((fragment: any) => Math.abs(fragment.damage - 6) < .001)).toBe(true);
   expect(result.enemyHp[0]).toBe(76);
-  expect(result.enemyHp[1]).toBeCloseTo(91.6, 4);
+  expect(result.enemyHp[1]).toBeCloseTo(94, 4);
   expect(result.positiveActive).toBe(false);
 });

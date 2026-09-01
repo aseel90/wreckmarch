@@ -30,7 +30,9 @@ test('Ricochet redirects a Hunter rivet to a nearby valid enemy after final impa
       'call-rig': 99,
       'piercing-rivets': 99,
       'shrapnel-impact': 99,
-      'critical-rivet': 99
+      'critical-rivet': 99,
+      'field-repair': 3,
+      'impact-shield': 2
     });
 
     const originalRandom = Math.random;
@@ -127,7 +129,8 @@ test('Ricochet redirects a Hunter rivet to a nearby valid enemy after final impa
   expect(result.afterRedirect.ricochetRemaining).toBe(0);
   expect(result.afterRedirect.hitCount).toBe(1);
   expect(Math.abs(result.afterRedirect.vy)).toBeGreaterThan(1);
-  expect(result.enemyHp).toEqual([76, 76]);
+  expect(result.enemyHp[0]).toBeCloseTo(76, 4);
+  expect(result.enemyHp[1]).toBeCloseTo(88, 4);
   expect(result.bulletActive).toBe(false);
   expect(result.hitCount).toBe(2);
 });

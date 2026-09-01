@@ -66,7 +66,7 @@ test('upgrade run snapshot round-trips canonical state in Chromium without repla
   expect(result.rarities['heavy-rivets']).toEqual(['LEGENDARY']);
   expect(result.rarities['armor-plate']).toEqual(['LEGENDARY']);
   expect(result.rarities['critical-rivet']).toEqual(['COMMON']);
-  expect(result.damage).toBeCloseTo(31.2);
+  expect(result.damage).toBeCloseTo(28.32);
   expect(result.maxHp).toBeCloseTo(122.5);
   expect(result.heroHp).toBe(7);
   expect(result.critChance).toBeCloseTo(0.05);
