@@ -126,9 +126,11 @@ export function runDeterministicBalanceScenario(id) {
   const weaponSystem = new WeaponSystem(scene, { projectileSystem: {} });
   const spreads = weaponSystem.heroSpreads();
   const projectileCount = spreads.length;
+  const projectileDamageScale = weaponSystem.heroProjectileDamageScale(projectileCount);
+  const volleyDamageMultiplier = projectileCount * projectileDamageScale;
   const weapon = resolved.weapon;
   const character = resolved.character;
-  const nominalVolleyDamage = weapon.damage * projectileCount;
+  const nominalVolleyDamage = weapon.damage * volleyDamageMultiplier;
   const nominalTriggerDps = nominalVolleyDamage * (1000 / weapon.fireDelay);
 
   return Object.freeze({
@@ -144,6 +146,8 @@ export function runDeterministicBalanceScenario(id) {
     }),
     mechanics: Object.freeze({
       projectileCount,
+      projectileDamageScale: round(projectileDamageScale),
+      volleyDamageMultiplier: round(volleyDamageMultiplier),
       spreads: Object.freeze([...spreads]),
       pierceCount: Number(weapon.pierceCount || 0),
       ricochetCount: Number(weapon.ricochetCount || 0),

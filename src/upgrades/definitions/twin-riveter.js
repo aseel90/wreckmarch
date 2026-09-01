@@ -4,7 +4,7 @@ import { UPGRADE_MECHANICAL_EFFECT_IDS } from '../upgrade-mechanical-effects.js?
 export const TWIN_RIVETER_UPGRADE = Object.freeze({
   id: 'twin-riveter',
   name: 'TWIN RIVETER',
-  description: 'Fire an extra rivet with slight spread.',
+  description: 'Fire two rivets; repeated level strengthens their shared volley.',
   rarity: 'COMMON',
   maxLevel: 2,
   scope: UPGRADE_SCOPES.WEAPON,
@@ -16,8 +16,8 @@ export const TWIN_RIVETER_UPGRADE = Object.freeze({
   mechanicalEffect: Object.freeze({
     id: UPGRADE_MECHANICAL_EFFECT_IDS.TWIN_RIVETER,
     config: Object.freeze({
-      baseProjectileCount: 1,
-      maxProjectileCount: 3
+      projectileCount: 2,
+      volleyDamageMultipliers: Object.freeze([1.2, 1.4])
     })
   }),
   artId: 'twin-riveter'

@@ -6,9 +6,14 @@ export const UPGRADE_MECHANICAL_EFFECT_IDS = Object.freeze({
 
 const TRANSACTION_FACTORIES = Object.freeze({
   [UPGRADE_MECHANICAL_EFFECT_IDS.TWIN_RIVETER]: ({ scene, definition, level, config, rarity }) => {
-    const baseProjectileCount = Number.isInteger(config.baseProjectileCount) ? config.baseProjectileCount : 1;
-    const maxProjectileCount = Number.isInteger(config.maxProjectileCount) ? config.maxProjectileCount : 3;
-    const projectileCount = Math.min(maxProjectileCount, baseProjectileCount + level);
+    const projectileCount = Number.isInteger(config.projectileCount) ? config.projectileCount : 2;
+    const volleyDamageMultipliers = Array.isArray(config.volleyDamageMultipliers) ? config.volleyDamageMultipliers : [1.2, 1.4];
+    if (projectileCount !== 2) throw new RangeError('TWIN_RIVETER requires exactly two projectiles');
+    const volleyDamageMultiplier = Number(volleyDamageMultipliers[level - 1]);
+    if (!Number.isFinite(volleyDamageMultiplier) || volleyDamageMultiplier <= 0) {
+      throw new TypeError(`TWIN_RIVETER missing valid volley damage multiplier for level ${level}`);
+    }
+    const projectileDamageScale = volleyDamageMultiplier / projectileCount;
     const previousContainer = scene.upgradeMechanicalState;
     const hadContainer = Boolean(previousContainer && typeof previousContainer === 'object');
     const hadState = hadContainer && Object.prototype.hasOwnProperty.call(previousContainer, definition.id);
@@ -26,7 +31,9 @@ const TRANSACTION_FACTORIES = Object.freeze({
           effectId: UPGRADE_MECHANICAL_EFFECT_IDS.TWIN_RIVETER,
           level,
           rarity,
-          projectileCount
+          projectileCount,
+          volleyDamageMultiplier,
+          projectileDamageScale
         });
         scene.upgradeMechanicalState[definition.id] = state;
 

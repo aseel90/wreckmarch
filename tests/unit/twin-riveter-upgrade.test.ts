@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { POWER_BUDGET } from '../../src/balance/power-budget.js';
 import { WeaponSystem } from '../../src/combat/weapon-system.js';
 import { getUpgradeDefinition } from '../../src/upgrades/upgrade-catalog.js';
 import {
@@ -15,45 +16,43 @@ function makeScene() {
   };
 }
 
-describe('Upgrade System 2.0 Twin Riveter migration', () => {
-  it('publishes Twin Riveter as a canonical mechanical upgrade', () => {
+describe('Upgrade System 2.0 Twin Riveter power-budget migration', () => {
+  it('publishes Twin Riveter as a canonical two-projectile mechanical upgrade', () => {
     const definition = getUpgradeDefinition('twin-riveter');
     if (!definition) throw new Error('Twin Riveter definition is missing');
 
     expect(definition.name).toBe('TWIN RIVETER');
-    expect(definition.description).toBe('Fire an extra rivet with slight spread.');
+    expect(definition.description).toBe('Fire two rivets; repeated level strengthens their shared volley.');
     expect(definition.maxLevel).toBe(2);
     expect(definition.weight).toBe(0.72);
     expect(definition.modifiers).toEqual([]);
     expect(definition.mechanicalEffect).toMatchObject({
       id: 'TWIN_RIVETER',
-      config: { baseProjectileCount: 1, maxProjectileCount: 3 }
+      config: { projectileCount: 2, volleyDamageMultipliers: [1.2, 1.4] }
     });
     expect(Object.isFrozen(definition)).toBe(true);
     expect(Object.isFrozen(definition.mechanicalEffect)).toBe(true);
   });
 
-  it('preserves final C1 parity: level one fires two rivets and level two fires three', () => {
+  it('keeps both levels at two projectiles while strengthening only the shared volley budget', () => {
     const scene = makeScene();
 
     expect(canApplyRegisteredUpgrade(scene, 'twin-riveter')).toBe(true);
     const first = applyRegisteredUpgrade(scene, 'twin-riveter') as any;
-    expect(first).toMatchObject({ level: 1, projectileCount: 2 });
+    expect(first).toMatchObject({ level: 1, projectileCount: 2, volleyDamageMultiplier: 1.2, projectileDamageScale: 0.6 });
     expect(scene.upgradeLevels['twin-riveter']).toBe(1);
     expect(scene.twinShots).toBe(2);
-    expect(scene.upgradeMechanicalState['twin-riveter']).toEqual(first);
 
     expect(canApplyRegisteredUpgrade(scene, 'twin-riveter')).toBe(true);
     const second = applyRegisteredUpgrade(scene, 'twin-riveter') as any;
-    expect(second).toMatchObject({ level: 2, projectileCount: 3 });
+    expect(second).toMatchObject({ level: 2, projectileCount: 2, volleyDamageMultiplier: 1.4, projectileDamageScale: 0.7 });
     expect(scene.upgradeLevels['twin-riveter']).toBe(2);
-    expect(scene.twinShots).toBe(3);
+    expect(scene.twinShots).toBe(2);
     expect(scene.upgradeMechanicalState['twin-riveter']).toEqual(second);
+    expect(second.volleyDamageMultiplier).toBe(POWER_BUDGET.volley.twinLevel2SingleTargetMultiplier);
 
     expect(canApplyRegisteredUpgrade(scene, 'twin-riveter')).toBe(false);
     expect(() => applyRegisteredUpgrade(scene, 'twin-riveter')).toThrow(/max level 2/);
-    expect(scene.upgradeLevels['twin-riveter']).toBe(2);
-    expect(scene.twinShots).toBe(3);
   });
 
   it('adapts the mechanical definition into the same card contract used by Phase C/C1', () => {
@@ -64,7 +63,7 @@ describe('Upgrade System 2.0 Twin Riveter migration', () => {
       id: 'twin-riveter',
       category: 'HERO',
       title: 'TWIN RIVETER',
-      desc: 'Fire an extra rivet with slight spread.',
+      desc: 'Fire two rivets; repeated level strengthens their shared volley.',
       weight: 0.72
     });
     expect(choice.available()).toBe(true);
@@ -74,19 +73,21 @@ describe('Upgrade System 2.0 Twin Riveter migration', () => {
     expect(scene.upgradeMechanicalState['twin-riveter'].projectileCount).toBe(2);
   });
 
-  it('lets WeaponSystem consume canonical mechanical state before the compatibility mirror', () => {
+  it('lets WeaponSystem consume canonical Twin spread and per-projectile damage scale', () => {
     const scene: any = {
       twinShots: 1,
       upgradeMechanicalState: {
-        'twin-riveter': { projectileCount: 3 }
+        'twin-riveter': { projectileCount: 2, projectileDamageScale: 0.7 }
       }
     };
     const weaponSystem = new WeaponSystem(scene, { projectileSystem: {} as any });
 
-    expect(weaponSystem.heroSpreads()).toEqual([-0.085, 0, 0.085]);
+    expect(weaponSystem.heroSpreads()).toEqual([-0.055, 0.055]);
+    expect(weaponSystem.heroProjectileDamageScale(2)).toBeCloseTo(0.7);
 
     delete scene.upgradeMechanicalState['twin-riveter'];
     scene.twinShots = 2;
     expect(weaponSystem.heroSpreads()).toEqual([-0.055, 0.055]);
+    expect(weaponSystem.heroProjectileDamageScale(2)).toBeCloseTo(0.9);
   });
 });

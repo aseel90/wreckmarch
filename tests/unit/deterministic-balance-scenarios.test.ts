@@ -40,11 +40,11 @@ describe('deterministic balance scenario suite', () => {
 
     expect(baseline.resolvedStats.weapon).toMatchObject({ damage: 24, fireDelay: 390, pierceCount: 0, ricochetCount: 0, shrapnelCount: 0 });
     expect(baseline.mechanics.projectileCount).toBe(1);
-    expect(twin.mechanics.projectileCount).toBe(3);
+    expect(twin.mechanics).toMatchObject({ projectileCount: 2, projectileDamageScale: 0.7, volleyDamageMultiplier: 1.4 });
     expect(heavy.resolvedStats.weapon.damage).toBeGreaterThan(baseline.resolvedStats.weapon.damage);
     expect(overclock.resolvedStats.weapon.fireDelay).toBeLessThan(baseline.resolvedStats.weapon.fireDelay);
-    expect(chain.mechanics).toMatchObject({ projectileCount: 3, pierceCount: 3, ricochetCount: 2 });
-    expect(max.mechanics.projectileCount).toBe(3);
+    expect(chain.mechanics).toMatchObject({ projectileCount: 2, projectileDamageScale: 0.7, volleyDamageMultiplier: 1.4, pierceCount: 3, ricochetCount: 2 });
+    expect(max.mechanics.projectileCount).toBe(2);
     expect(max.mechanics.shrapnelCount).toBeGreaterThan(0);
     expect(max.resolvedStats.character.critChance).toBeGreaterThan(0);
     expect(max.derived.nominalTriggerDps).toBeGreaterThan(baseline.derived.nominalTriggerDps);

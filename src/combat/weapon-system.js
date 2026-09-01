@@ -118,6 +118,14 @@ export class WeaponSystem {
     return [-this.heroProfile.twinSpread3, 0, this.heroProfile.twinSpread3];
   }
 
+  heroProjectileDamageScale(projectileCount = null) {
+    const mechanicalState = this.scene.upgradeMechanicalState?.['twin-riveter'];
+    const stateScale = Number(mechanicalState?.projectileDamageScale);
+    if (Number.isFinite(stateScale) && stateScale > 0) return stateScale;
+    const count = projectileCount == null ? this.heroSpreads().length : Math.max(1, Number(projectileCount) || 1);
+    return count > 1 ? this.heroProfile.multiShotDamageScale : 1;
+  }
+
   fireHeroProjectile(angle, damageScale = 1) {
     const scene = this.scene;
     const weapon = scene.primaryWeapon;
@@ -171,8 +179,9 @@ export class WeaponSystem {
     const spreads = this.heroSpreads();
     const shots = [];
     let flashPoint = null;
+    const projectileDamageScale = this.heroProjectileDamageScale(spreads.length);
     spreads.forEach((spread, index) => {
-      const shot = this.fireHeroProjectile(scene.weaponAim + spread, spreads.length > 1 ? this.heroProfile.multiShotDamageScale : 1);
+      const shot = this.fireHeroProjectile(scene.weaponAim + spread, projectileDamageScale);
       if (!shot) return;
       shots.push(shot);
       if (index === Math.floor(spreads.length / 2) || !flashPoint) flashPoint = shot.muzzle;
