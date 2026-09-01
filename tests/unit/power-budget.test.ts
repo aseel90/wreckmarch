@@ -85,6 +85,15 @@ describe('U4-B multi-axis power budget', () => {
     expect(POWER_BUDGET.chainedMechanics.maxSecondaryProcDepth).toBe(1);
     expect(POWER_BUDGET.chainedMechanics.recursiveFullStrengthProcsAllowed).toBe(false);
     expect(POWER_BUDGET.chainedMechanics.combinedAddedDamageSoftCap).toBe(1.5);
+    expect(POWER_BUDGET.chainedMechanics.profiles.pierce.standaloneAddedDamageByCount).toEqual([0, 0.30, 0.60, 0.90]);
+    expect(POWER_BUDGET.chainedMechanics.profiles.ricochet).toMatchObject({
+      maxBounces: 2,
+      targetMode: 'RANDOM_ELIGIBLE'
+    });
+    expect(POWER_BUDGET.chainedMechanics.profiles.shrapnel).toMatchObject({
+      maxFragments: 4,
+      maxTriggersPerPrimaryProjectile: 1
+    });
     expect(POWER_BUDGET.mobilePerformance.peakActiveProjectilesSoftMax).toBeGreaterThan(36);
     expect(POWER_BUDGET.mobilePerformance.sustainedProjectileSpawnsPerSecondSoftMax).toBeGreaterThan(14.3);
   });
