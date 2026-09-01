@@ -1,0 +1,37 @@
+name: Apply survivability foundation
+on:
+  push:
+    paths:
+      - scripts/apply-survivability-foundation.mjs
+      - .github/workflows/apply-survivability-foundation.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/apply-survivability-foundation.mjs
+      - run: pnpm test:unit -- tests/unit/survivability-upgrades.test.ts tests/unit/player-damage-rules.test.ts tests/unit/upgrade-card-art.test.ts tests/unit/armor-plate-upgrade.test.ts tests/unit/weapon-critical-hit.test.ts
+      - run: pnpm build
+      - name: Commit validated source changes
+        run: |
+          git config user.name "wreckmarch-balance-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html COMBAT_BUILD_BALANCE_ROADMAP.md src tests/unit
+          if git diff --cached --quiet; then
+            echo "No source changes to commit"
+            exit 0
+          fi
+          git commit -m "Add critical feedback and survivability utility cards"
+          git push
