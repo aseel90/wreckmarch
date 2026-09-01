@@ -44,6 +44,15 @@ export class EnemyCombatSystem {
       velocityY
     });
 
+    try {
+      this.scene.runTelemetry?.recordProjectileDamage?.(bullet, {
+        appliedDamage: result.appliedDamage,
+        currentHp: result.currentHp
+      });
+    } catch (error) {
+      globalThis.__WM_LOG__?.(`Run Telemetry projectile attribution failed: ${error?.message || error}`);
+    }
+
     const pierceRemaining = Math.max(0, Math.floor(Number(bullet.pierceRemaining) || 0));
     const ricochetRemaining = Math.max(0, Math.floor(Number(bullet.ricochetRemaining) || 0));
     if (pierceRemaining > 0) bullet.pierceRemaining = pierceRemaining - 1;
