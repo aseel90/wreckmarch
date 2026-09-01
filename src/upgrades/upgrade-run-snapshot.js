@@ -156,7 +156,39 @@ function normalizeTwinRiveterState(id, state, upgradeSnapshot) {
   const definition = requireUpgradeDefinition(id);
   const rarity = resolveUpgradeRarityForDefinition(definition, state.rarity ?? lastRarity(upgradeSnapshot, id));
   if (rarity !== lastRarity(upgradeSnapshot, id)) throw new Error(`${id} mechanical rarity does not match rarity history`);
-  return { id, effectId: state.effectId, level, rarity, projectileCount };
+
+  const config = definition.mechanicalEffect?.config || {};
+  const expectedProjectileCount = Number.isInteger(config.projectileCount) ? config.projectileCount : 2;
+  if (projectileCount !== expectedProjectileCount) {
+    throw new RangeError(`${id} projectileCount does not match the registered upgrade definition`);
+  }
+  const volleyDamageMultipliers = Array.isArray(config.volleyDamageMultipliers) ? config.volleyDamageMultipliers : [1.2, 1.4];
+  const expectedVolleyDamageMultiplier = Number(volleyDamageMultipliers[level - 1]);
+  if (!Number.isFinite(expectedVolleyDamageMultiplier) || expectedVolleyDamageMultiplier <= 0) {
+    throw new TypeError(`${id} registered volley damage multiplier is invalid for level ${level}`);
+  }
+  const expectedProjectileDamageScale = expectedVolleyDamageMultiplier / projectileCount;
+  const volleyDamageMultiplier = state.volleyDamageMultiplier == null
+    ? expectedVolleyDamageMultiplier
+    : requireFiniteNumber(state.volleyDamageMultiplier, `mechanical snapshot.effects.${id}.volleyDamageMultiplier`);
+  const projectileDamageScale = state.projectileDamageScale == null
+    ? expectedProjectileDamageScale
+    : requireFiniteNumber(state.projectileDamageScale, `mechanical snapshot.effects.${id}.projectileDamageScale`);
+  if (Math.abs(volleyDamageMultiplier - expectedVolleyDamageMultiplier) > 1e-9) {
+    throw new RangeError(`${id} volleyDamageMultiplier does not match the registered upgrade definition`);
+  }
+  if (Math.abs(projectileDamageScale - expectedProjectileDamageScale) > 1e-9) {
+    throw new RangeError(`${id} projectileDamageScale does not match the registered upgrade definition`);
+  }
+  return {
+    id,
+    effectId: state.effectId,
+    level,
+    rarity,
+    projectileCount,
+    volleyDamageMultiplier,
+    projectileDamageScale
+  };
 }
 
 function normalizeCallRigState(id, state, upgradeSnapshot) {
