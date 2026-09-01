@@ -32,7 +32,8 @@ test('Critical Rivet rolls Hero-projectile crits through canonical combat stats 
       ricochet: 99,
       'shrapnel-impact': 99,
       'field-repair': 3,
-      'impact-shield': 2
+      'impact-shield': 2,
+      'explosive-rivet': 3
     });
 
     const originalRandom = Math.random;
