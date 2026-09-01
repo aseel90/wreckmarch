@@ -74,6 +74,11 @@ describe('Weapon / Projectile ownership integration', () => {
     expect(d1).toContain("bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx))");
   });
 
+  it('keeps Explosive Rivet in the live HERO upgrade pool', () => {
+    const phaseC = read('src/phase-c-runtime.js');
+    expect(phaseC).toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })");
+  });
+
   it('cache-busts the U4 projectile-upgrade live owners from the boot graph', () => {
     const html = read('index.html');
     expect(html).toContain("./src/enemies/enemy-system.js?v=22");
