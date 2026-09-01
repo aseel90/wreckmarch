@@ -47,7 +47,9 @@ export class CombatSystem {
 
   hitEnemyByProjectile(bullet, enemy) {
     const hadPierce = Math.max(0, Math.floor(Number(bullet?.pierceRemaining) || 0)) > 0;
-    const shrapnelCount = bullet?.isSecondaryProjectile ? 0 : Math.max(0, Math.floor(Number(bullet?.shrapnelCount) || 0));
+    const shrapnelCount = bullet?.isSecondaryProjectile || bullet?.shrapnelTriggered
+      ? 0
+      : Math.max(0, Math.floor(Number(bullet?.shrapnelCount) || 0));
     const velocityX = Number(bullet?.body?.velocity?.x) || 0;
     const velocityY = Number(bullet?.body?.velocity?.y) || 0;
     const shrapnelContext = shrapnelCount > 0 ? {
@@ -55,13 +57,25 @@ export class CombatSystem {
       y: Number(enemy?.y) || 0,
       angle: Math.atan2(velocityY, velocityX),
       speed: Math.hypot(velocityX, velocityY),
-      damage: Number(bullet?.damage) || Number(this.scene.damage) || 0,
+      damage: Number(bullet?.primaryDamage ?? bullet?.damage) || Number(this.scene.damage) || 0,
       count: shrapnelCount,
+      damageScale: Number.isFinite(Number(bullet?.shrapnelDamageScale)) && Number(bullet?.shrapnelDamageScale) > 0
+        ? Number(bullet.shrapnelDamageScale)
+        : null,
       texture: bullet?.texture?.key || 'bullet'
     } : null;
 
     const result = this.enemy.hitByProjectile(bullet, enemy);
+    if (result && hadPierce && bullet?.active) {
+      const primaryDamage = Math.max(0, Number(bullet.primaryDamage ?? bullet.damage) || 0);
+      const pierceDamageScale = Number(bullet.pierceDamageScale);
+      if (Number.isFinite(pierceDamageScale) && pierceDamageScale >= 0) {
+        bullet.damage = primaryDamage * pierceDamageScale;
+        bullet.projectilePath = 'pierce';
+      }
+    }
     if (result && shrapnelContext) {
+      bullet.shrapnelTriggered = true;
       this.scene.projectileSystem?.spawnImpactShrapnel?.({
         ...shrapnelContext,
         excludedEnemies: bullet?.hitEnemies instanceof Set ? bullet.hitEnemies : []
