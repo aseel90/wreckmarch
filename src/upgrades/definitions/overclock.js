@@ -16,8 +16,8 @@ export const OVERCLOCK_UPGRADE = Object.freeze({
   modifiers: Object.freeze([Object.freeze({
     domain: D.WEAPON,
     stat: 'fireDelay',
-    type: T.MULTIPLICATIVE_PERCENT,
-    value: -0.12,
+    type: T.INVERSE_ADDITIVE_PERCENT,
+    value: 0.12,
     min: 145
   })]),
   mechanicalEffect: null,

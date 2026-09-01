@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { POWER_BUDGET } from '../../src/balance/power-budget.js';
 import { createRunStatState } from '../../src/stats/run-stat-state.js';
 import { getUpgradeDefinition } from '../../src/upgrades/upgrade-catalog.js';
 import { applyUpgradeStatModifiers } from '../../src/upgrades/upgrade-runtime.js';
@@ -24,28 +25,29 @@ describe('Upgrade System 2.0 Overclock migration', () => {
     expect(definition.description).toBe('12% faster fire rate.');
     expect(definition.maxLevel).toBe(5);
     expect(definition.weight).toBe(1.2);
-    expect(definition.modifiers[0]).toMatchObject({ stat: 'fireDelay', value: -0.12, min: 145 });
+    expect(definition.modifiers[0]).toMatchObject({ stat: 'fireDelay', type: 'INVERSE_ADDITIVE_PERCENT', value: 0.12, min: 145 });
     expect(Object.isFrozen(definition)).toBe(true);
   });
 
-  it('preserves the legacy x0.88 fire-delay result at every current level', () => {
+  it('uses base-relative additive fire-rate growth instead of compounding fire-delay shrinkage', () => {
     const definition = getUpgradeDefinition('overclock');
     if (!definition) throw new Error('Overclock definition is missing');
     const scene = makeScene(390);
 
     for (let level = 1; level <= definition.maxLevel; level++) {
       const resolved = applyUpgradeStatModifiers(scene, definition, level);
-      const expected = Math.max(145, 390 * (0.88 ** level));
+      const expected = Math.max(145, 390 / (1 + 0.12 * level));
       expect(resolved.weapon.fireDelay).toBeCloseTo(expected);
       expect(scene.primaryWeapon.fireDelay).toBeCloseTo(expected);
       expect(scene.fireDelay).toBeCloseTo(expected);
     }
 
+    expect(390 / scene.primaryWeapon.fireDelay).toBeCloseTo(POWER_BUDGET.stacking.commonSingleAxisMaxMultiplier);
     expect(scene.runStatState.state.base.weapon.fireDelay).toBe(390);
     expect(scene.runStatState.state.caps.weapon.fireDelay).toEqual({ min: 145 });
   });
 
-  it('preserves the legacy 145ms minimum fire delay', () => {
+  it('preserves the 145ms safety minimum fire delay', () => {
     const definition = getUpgradeDefinition('overclock');
     if (!definition) throw new Error('Overclock definition is missing');
     const scene = makeScene(160);

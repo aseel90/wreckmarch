@@ -3,6 +3,7 @@ export const STAT_MODIFIER_TYPES = Object.freeze({
   FLAT: 'FLAT',
   ADDITIVE_PERCENT: 'ADDITIVE_PERCENT',
   MULTIPLICATIVE_PERCENT: 'MULTIPLICATIVE_PERCENT',
+  INVERSE_ADDITIVE_PERCENT: 'INVERSE_ADDITIVE_PERCENT',
   OVERRIDE: 'OVERRIDE'
 });
 
@@ -44,8 +45,13 @@ export function resolveStat(baseValue, modifiers = [], { min = -Infinity, max = 
   const multiplicativePercent = normalized
     .filter(modifier => modifier.type === STAT_MODIFIER_TYPES.MULTIPLICATIVE_PERCENT)
     .reduce((product, modifier) => product * (1 + modifier.value), 1);
+  const inverseAdditivePercent = normalized
+    .filter(modifier => modifier.type === STAT_MODIFIER_TYPES.INVERSE_ADDITIVE_PERCENT)
+    .reduce((sum, modifier) => sum + modifier.value, 0);
+  const inverseDivisor = 1 + inverseAdditivePercent;
+  if (inverseDivisor <= 0) throw new RangeError('inverse additive percent modifiers must resolve to a divisor greater than zero');
 
-  let resolved = (base + flat) * (1 + additivePercent) * multiplicativePercent;
+  let resolved = ((base + flat) * (1 + additivePercent) * multiplicativePercent) / inverseDivisor;
   const override = pickOverride(normalized);
   if (override) resolved = override.value;
 

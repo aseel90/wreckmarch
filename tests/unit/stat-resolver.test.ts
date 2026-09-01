@@ -2,14 +2,22 @@ import { describe, expect, it } from 'vitest';
 import { resolveStat, resolveStatBlock, STAT_MODIFIER_TYPES as T } from '../../src/stats/stat-resolver.js';
 
 describe('Upgrade System 2.0 stat resolver', () => {
-  it('resolves FLAT -> ADDITIVE_PERCENT -> MULTIPLICATIVE_PERCENT deterministically', () => {
+  it('resolves FLAT -> ADDITIVE_PERCENT -> MULTIPLICATIVE_PERCENT -> INVERSE_ADDITIVE_PERCENT deterministically', () => {
     const modifiers = [
       { id: 'mult', type: T.MULTIPLICATIVE_PERCENT, value: .2 },
       { id: 'flat', type: T.FLAT, value: 10 },
-      { id: 'additive', type: T.ADDITIVE_PERCENT, value: .5 }
+      { id: 'additive', type: T.ADDITIVE_PERCENT, value: .5 },
+      { id: 'rate', type: T.INVERSE_ADDITIVE_PERCENT, value: .1 }
     ];
-    expect(resolveStat(100, modifiers)).toBe(198);
-    expect(resolveStat(100, modifiers.slice().reverse())).toBe(198);
+    expect(resolveStat(100, modifiers)).toBeCloseTo(180);
+    expect(resolveStat(100, modifiers.slice().reverse())).toBeCloseTo(180);
+  });
+
+  it('models rate increases as base-relative additive gains instead of exponential delay shrinkage', () => {
+    const levels = Array.from({ length: 5 }, (_, index) => ({ id: `rate-${index + 1}`, type: T.INVERSE_ADDITIVE_PERCENT, value: .12 }));
+    expect(resolveStat(390, levels)).toBeCloseTo(243.75);
+    expect(390 / resolveStat(390, levels)).toBeCloseTo(1.6);
+    expect(() => resolveStat(100, [{ id: 'invalid-rate', type: T.INVERSE_ADDITIVE_PERCENT, value: -1 }])).toThrow(/divisor greater than zero/);
   });
 
   it('chooses overrides by priority rather than call order', () => {
