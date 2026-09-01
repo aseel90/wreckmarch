@@ -112,7 +112,8 @@ export class WeaponSystem {
   }
 
   heroSpreads() {
-    const mechanicalCount = this.scene.upgradeMechanicalState?.['twin-riveter']?.projectileCount;
+    const multishotState = this.scene.upgradeMechanicalState?.['triple-riveter'] || this.scene.upgradeMechanicalState?.['twin-riveter'];
+    const mechanicalCount = multishotState?.projectileCount;
     const count = Math.max(1, mechanicalCount || this.scene.twinShots || 1);
     if (count === 1) return [0];
     if (count === 2) return [-this.heroProfile.twinSpread2, this.heroProfile.twinSpread2];
@@ -120,7 +121,7 @@ export class WeaponSystem {
   }
 
   heroProjectileDamageScale(projectileCount = null) {
-    const mechanicalState = this.scene.upgradeMechanicalState?.['twin-riveter'];
+    const mechanicalState = this.scene.upgradeMechanicalState?.['triple-riveter'] || this.scene.upgradeMechanicalState?.['twin-riveter'];
     const stateScale = Number(mechanicalState?.projectileDamageScale);
     if (Number.isFinite(stateScale) && stateScale > 0) return stateScale;
     const count = projectileCount == null ? this.heroSpreads().length : Math.max(1, Number(projectileCount) || 1);
