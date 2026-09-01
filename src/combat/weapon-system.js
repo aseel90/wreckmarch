@@ -157,7 +157,13 @@ export class WeaponSystem {
     return true;
   }
 
-  fireHeroProjectile(angle, damageScale = 1, { explosiveRivet = null } = {}) {
+  /**
+   * @param {number} angle
+   * @param {number} [damageScale]
+   * @param {{ explosiveRivet?: any }} [options]
+   */
+  fireHeroProjectile(angle, damageScale = 1, options = {}) {
+    const explosiveRivet = options.explosiveRivet ?? null;
     const scene = this.scene;
     const weapon = scene.primaryWeapon;
     if (!weapon) return null;
