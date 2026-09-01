@@ -35,4 +35,4 @@ jobs:
           fi
           git commit -m "Add critical feedback and survivability utility cards"
           git push
-# trigger: 2026-09-01 survivability pass
+# validation trigger: 2026-09-01T14:18+02:00
