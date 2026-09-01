@@ -246,7 +246,7 @@ export class RunTelemetry {
     combat.averageDps = round(combat.damageDealt / duration);
     combat.peakDps1s = round(Math.max(0, ...this.damageBuckets.values()));
     const p = this.report.projectiles;
-    p.heroMisses = Math.max(0, p.heroSpawned - p.heroProjectileHits);
+    p.heroMisses = Math.max(0, p.heroSpawned - p.heroProjectilesWithHit);
     const perf = this.report.performance;
     perf.averageFrameMs = round(perf.frames ? n(perf._totalFrameMs) / perf.frames : 0, 2);
     delete perf._totalFrameMs;
