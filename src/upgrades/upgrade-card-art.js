@@ -2,7 +2,9 @@ export const UPGRADE_CARD_ART_TEXTURES = Object.freeze({
   'piercing-rivets': 'upgrade-icon-piercing-rivets',
   'ricochet': 'upgrade-icon-ricochet',
   'shrapnel-impact': 'upgrade-icon-shrapnel-impact',
-  'critical-rivet': 'upgrade-icon-critical-rivet'
+  'critical-rivet': 'upgrade-icon-critical-rivet',
+  'field-repair': 'upgrade-icon-field-repair',
+  'impact-shield': 'upgrade-icon-impact-shield'
 });
 
 function buildPiercingRivetsIcon(scene) {
@@ -122,12 +124,46 @@ function buildCriticalRivetIcon(scene) {
   return textureKey;
 }
 
+function buildFieldRepairIcon(scene) {
+  const textureKey = UPGRADE_CARD_ART_TEXTURES['field-repair'];
+  if (scene.textures.exists(textureKey)) return textureKey;
+  const g = scene.make.graphics({ add: false });
+  g.fillStyle(0x10171c, 1).fillRoundedRect(18, 18, 92, 76, 12);
+  g.lineStyle(4, 0x4b565c, 1).strokeRoundedRect(18, 18, 92, 76, 12);
+  g.fillStyle(0x2f3d42, 1).fillRoundedRect(38, 28, 52, 58, 8);
+  g.lineStyle(3, 0x7a8b91, .9).strokeRoundedRect(38, 28, 52, 58, 8);
+  g.fillStyle(0x55d8e5, .95).fillRoundedRect(58, 38, 12, 38, 3).fillRoundedRect(45, 51, 38, 12, 3);
+  g.fillStyle(0xbff8ff, 1).fillCircle(64, 57, 4);
+  g.lineStyle(5, 0xc66c32, 1).lineBetween(22, 88, 47, 70);
+  g.lineStyle(3, 0xffd07a, 1).lineBetween(24, 85, 48, 68);
+  g.generateTexture(textureKey, 128, 112);
+  g.destroy();
+  return textureKey;
+}
+
+function buildImpactShieldIcon(scene) {
+  const textureKey = UPGRADE_CARD_ART_TEXTURES['impact-shield'];
+  if (scene.textures.exists(textureKey)) return textureKey;
+  const g = scene.make.graphics({ add: false });
+  g.fillStyle(0x10171c, 1).fillRoundedRect(18, 18, 92, 76, 12);
+  g.lineStyle(4, 0x4b565c, 1).strokeRoundedRect(18, 18, 92, 76, 12);
+  g.fillStyle(0x25343b, 1).fillTriangle(64, 23, 101, 37, 92, 78).fillTriangle(64, 23, 27, 37, 36, 78).fillTriangle(36, 78, 92, 78, 64, 98);
+  g.lineStyle(4, 0x55d8e5, .95).beginPath().moveTo(64, 23).lineTo(101, 37).lineTo(92, 78).lineTo(64, 98).lineTo(36, 78).lineTo(27, 37).closePath().strokePath();
+  g.lineStyle(2, 0xbff8ff, .78).strokeCircle(64, 58, 19);
+  g.fillStyle(0xbff8ff, .95).fillCircle(64, 58, 6);
+  g.generateTexture(textureKey, 128, 112);
+  g.destroy();
+  return textureKey;
+}
+
 export function installUpgradeCardArt(scene) {
   if (!scene?.textures || !scene?.make?.graphics) throw new TypeError('Upgrade card art requires a Phaser scene');
   buildPiercingRivetsIcon(scene);
   buildRicochetIcon(scene);
   buildShrapnelImpactIcon(scene);
   buildCriticalRivetIcon(scene);
+  buildFieldRepairIcon(scene);
+  buildImpactShieldIcon(scene);
   scene.__upgradeCardArtReady = true;
   return scene;
 }
