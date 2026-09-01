@@ -27,6 +27,7 @@ test('Armor Plate applies canonical max HP and restore HP in the final upgrade s
       'overclock': 5,
       'long-barrel': 4,
       'twin-riveter': 2,
+      'triple-riveter': 1,
       'fleet-feet': 3,
       'scrap-magnet': 4,
       'piercing-rivets': 3,
