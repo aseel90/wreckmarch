@@ -2,7 +2,7 @@
 import { CharacterSystem } from './characters/character-system.js?v=8';
 import { loadRunnerLocomotionArt } from './characters/runner-locomotion-art.js?v=4';
 import { UPGRADE_RARITIES, UPGRADE_RARITY_RULES, getUpgradeRarityRule } from './upgrades/upgrade-rarity.js?v=1';
-import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrades/upgrade-card-art.js?v=5';
+import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrades/upgrade-card-art.js?v=6';
 const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const COLORS={HERO:0xd98446,UTILITY:0x4fc8d8,FORTRESS:0xd4ad62,EVOLUTION:0x9d6be8};
@@ -33,52 +33,48 @@ function installRunnerAndMechanicalArm(s){
   character.installProductionVisuals();
   [s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig,s.aimPose].forEach(o=>o?.setVisible?.(false));
   if(!s.__d1ArmJoint){s.__d1ArmJoint=s.add.circle(0,0,9,0x303a3f,1).setStrokeStyle(3,0x58d7e4,.8).setDepth(30)}s.__d1ArmJoint.setVisible(false)
-  const arm=s.weaponV3Gun;s.weaponModule=arm;arm.setVisible(true).clearTint?.();s.__d1Pose=-1;s.__d1Socket=new Phaser.Math.Vector2();s.__d1Muzzle=new Phaser.Math.Vector2();
-  if(!s.textures.exists('hunter-rivet')){const g=s.make.graphics({add:false});g.fillStyle(0xff8a35,.28).fillEllipse(8,4,15,6);g.fillStyle(0xc56b32).fillRoundedRect(4,2,11,4,2);g.fillStyle(0xffd58a).fillRoundedRect(9,2.5,6,3,1.5);g.fillStyle(0x5a3425).fillTriangle(15,2,18,4,15,6);g.generateTexture('hunter-rivet',18,8);g.destroy()}
-  s.updateWeaponPose=function(){
-    const q=aimIndex(this.weaponAim),pose=GUN_POSES[q],a=q*Math.PI/4,u=new Phaser.Math.Vector2(Math.cos(a),Math.sin(a));
-    if(q!==this.__d1Pose){
-      this.__d1Pose=q;
-      arm.setTexture('c3-atlas',pose.frame).setCrop();
-      fit(arm,pose.w,pose.h);
-      arm.setOrigin(pose.ox,pose.oy);
-    }
-    const socket=this.characterSystem.getWeaponSocket(q),socketX=socket.x+(pose.gripDx||0),socketY=socket.y+(pose.gripDy||0);
-    const recoil=this.weaponV3Recoil||0;this.__d1Socket.set(socketX,socketY);
-    arm.setPosition(socketX-u.x*recoil*2.4,socketY-u.y*recoil*2.4).setDepth(pose.depth);
-    this.__d1ArmJoint.setPosition(socketX,socketY).setDepth(pose.depth-1).setVisible(false);
-    const reach=pose.muzzleReach??this.characterSystem.getMuzzleReach(q);this.__d1Muzzle.set(socketX+u.x*reach,socketY+u.y*reach);
-    const weaponDef=this.characterSystem.definition.weapon;
-    const faceLeft=q>=weaponDef.leftFacingMinIndex&&q<=weaponDef.leftFacingMaxIndex;
-    if(faceLeft)this.hero?.setFlipX?.(true);
-    else if(q===0||q===1||q===7)this.hero?.setFlipX?.(false);
-    this.visualAimAngle=a;this.weaponV3Recoil*=.62;
-    this.__c4Grip?.copy?.(this.__d1Socket);this.__c4Muzzle?.copy?.(this.__d1Muzzle);
-  };
-  s.weaponSystem.setMuzzleResolver(spread=>{
-    const q=s.__d1Pose>=0?s.__d1Pose:aimIndex(s.weaponAim),pose=GUN_POSES[q],a=q*Math.PI/4+spread,reach=pose?.muzzleReach??s.characterSystem.getMuzzleReach(q);
-    return new Phaser.Math.Vector2(s.__d1Socket.x+Math.cos(a)*reach,s.__d1Socket.y+Math.sin(a)*reach);
-  });
+  if(!s.textures.exists('hunter-rivet')){
+    const g=s.make.graphics({add:false});g.fillStyle(0x111417,1).fillRoundedRect(1,2,16,4,2);g.fillStyle(0xbf6e35,1).fillRoundedRect(2,2,12,4,2);g.fillStyle(0xf1c27a,1).fillTriangle(14,1,18,4,14,7);g.fillStyle(0x62d6df,.9).fillRect(5,3,5,1);g.generateTexture('hunter-rivet',18,8);g.destroy();
+  }
+  s.weaponModule=s.weaponV3Gun;
   s.weaponSystem.configureHero({
+    projectileTexture:'hunter-rivet',
+    projectileTint:null,
     projectile:{lifeMs:1180,scale:.62,radius:4,offsetX:5,offsetY:0},
-    fireFeedback:({visualAngle,muzzle,shots})=>{
-      const a=Number.isFinite(visualAngle)?visualAngle:s.weaponAim;
-      s.weaponV3Recoil=Math.min(1.9,(s.weaponV3Recoil||0)+1.55);
-      shots.forEach(({bullet})=>{
-        const vx=bullet?.body?.velocity?.x??Math.cos(a),vy=bullet?.body?.velocity?.y??Math.sin(a);
-        bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx));
-      });
-      const flashAngle=a+Phaser.Math.FloatBetween(-.035,.035);
-      const flash=s.add.image(muzzle.x,muzzle.y,'flash').setDepth(32).setRotation(flashAngle).setScale(.31).setAlpha(.9).setBlendMode(Phaser.BlendModes.ADD);
-      const core=s.add.image(muzzle.x,muzzle.y,'flash').setDepth(33).setRotation(a).setScale(.14).setAlpha(1).setBlendMode(Phaser.BlendModes.ADD);
-      const glow=s.add.circle(muzzle.x,muzzle.y,7,0xffb45f,.18).setDepth(31).setBlendMode(Phaser.BlendModes.ADD);
-      s.tweens.add({targets:flash,alpha:0,scale:.07,duration:42,ease:'Quad.easeOut',onComplete:()=>flash.destroy()});
-      s.tweens.add({targets:core,alpha:0,scale:.04,duration:24,ease:'Quad.easeOut',onComplete:()=>core.destroy()});
-      s.tweens.add({targets:glow,alpha:0,scale:1.55,duration:48,ease:'Quad.easeOut',onComplete:()=>glow.destroy()});
-      s.cameras.main.shake(34,.0009);
-      s.playTone?.(148,.032,'square',.015,-48);
-      s.playTone?.(330,.016,'triangle',.005,-120);
+    muzzleResolver:spread=>{
+      const pose=s.heroFacingPose??aimIndex(s.weaponAim),cfg=GUN_POSES[pose],a=pose*Math.PI/4+spread,ux=Math.cos(a),uy=Math.sin(a),grip=s.__c5Grip||new Phaser.Math.Vector2(s.hero.x,s.hero.y),reach=cfg.muzzleReach??50;
+      return new Phaser.Math.Vector2(grip.x+ux*reach,grip.y+uy*reach);
     }
+  });
+  s.weaponSystem.setMuzzleResolver(spread=>{
+    const pose=s.heroFacingPose??aimIndex(s.weaponAim),cfg=GUN_POSES[pose],a=pose*Math.PI/4+spread,ux=Math.cos(a),uy=Math.sin(a),grip=s.__c5Grip||new Phaser.Math.Vector2(s.hero.x,s.hero.y),reach=cfg.muzzleReach??50;
+    return new Phaser.Math.Vector2(grip.x+ux*reach,grip.y+uy*reach);
+  });
+  const oldPose=s.updateWeaponPose.bind(s);
+  s.updateWeaponPose=function(){
+    oldPose();const q=this.heroFacingPose??aimIndex(this.weaponAim),cfg=GUN_POSES[q],heroScale=Math.abs(this.hero.scaleX||.7),joint=this.__c5Grip||new Phaser.Math.Vector2(this.hero.x,this.hero.y),a=q*Math.PI/4,ux=Math.cos(a),uy=Math.sin(a),recoil=this.weaponV3Recoil||0;
+    const gx=joint.x+(cfg.gripDx||0)*heroScale,gy=joint.y+(cfg.gripDy||0)*heroScale;
+    this.__d1ArmJoint.setPosition(gx,gy).setDepth(30).setVisible(false);
+    this.weaponV3Gun.setTexture('c3-atlas',cfg.frame).setCrop();fit(this.weaponV3Gun,cfg.w,cfg.h);this.weaponV3Gun.setOrigin(cfg.ox,cfg.oy).setPosition(gx-ux*recoil*3.8,gy-uy*recoil*3.8).setDepth(31).setVisible(true);
+    this.__c5Grip?.set?.(gx,gy);const reach=cfg.muzzleReach??50;this.__c5Muzzle?.set?.(gx+ux*reach,gy+uy*reach);this.__c4Grip?.set?.(gx,gy);this.__c4Muzzle?.set?.(gx+ux*reach,gy+uy*reach);this.weaponV3Recoil*=.62;
+  };
+  s.weaponSystem.onHeroVolleyFired(({bullets=[],angle=0})=>{
+    const pose=s.heroFacingPose??aimIndex(angle),cfg=GUN_POSES[pose],a=pose*Math.PI/4,muzzle=s.__c5Muzzle||new Phaser.Math.Vector2(s.hero.x+Math.cos(a)*50,s.hero.y+Math.sin(a)*50);
+    s.weaponV3Recoil=Math.min(1.9,(s.weaponV3Recoil||0)+1.1);
+    for(const bullet of bullets){
+      const vx=bullet.body?.velocity?.x??Math.cos(a),vy=bullet.body?.velocity?.y??Math.sin(a);
+      bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx));
+    }
+    const flashAngle=a+Phaser.Math.FloatBetween(-.035,.035);
+    const flash=s.add.image(muzzle.x,muzzle.y,'flash').setDepth(32).setRotation(flashAngle).setScale(.31).setAlpha(.9).setBlendMode(Phaser.BlendModes.ADD);
+    const core=s.add.image(muzzle.x,muzzle.y,'flash').setDepth(33).setRotation(a).setScale(.14).setAlpha(1).setBlendMode(Phaser.BlendModes.ADD);
+    const glow=s.add.circle(muzzle.x,muzzle.y,7,0xffb45f,.18).setDepth(31).setBlendMode(Phaser.BlendModes.ADD);
+    s.tweens.add({targets:flash,alpha:0,scale:.07,duration:42,ease:'Quad.easeOut',onComplete:()=>flash.destroy()});
+    s.tweens.add({targets:core,alpha:0,scale:.04,duration:24,ease:'Quad.easeOut',onComplete:()=>core.destroy()});
+    s.tweens.add({targets:glow,alpha:0,scale:1.55,duration:48,ease:'Quad.easeOut',onComplete:()=>glow.destroy()});
+    s.cameras.main.shake(34,.0009);
+    s.playTone?.(148,.032,'square',.015,-48);
+    s.playTone?.(330,.016,'triangle',.005,-120);
   });
   const oldMove=s.updateMovement?.bind(s);
   if(oldMove)s.updateMovement=function(time){oldMove(time);this.characterSystem.updateLocomotionVisuals();};
@@ -176,8 +172,7 @@ function installPremiumCards(s){
 function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='1')return;
   const runFrames=s.anims.get(s.characterDefinition?.animations?.run?.key)?.frames?.length||0,hdSheet=s.textures.get('c5-upgrade-sheet'),allHdCards=CARD_IDS.every(id=>s.textures.get('c3-atlas')?.has?.(CARD_FRAME(id))),rarities=new Set(s.__d1RarityStyles||[]),roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(o=>Phaser.Math.Distance.Between(o.x,o.y,WORLD_W/2,WORLD_H/2)<180),truck=s.__d1Wrecks?.find(o=>o.__vehicleKind==='truck'),sedan=s.__d1Wrecks?.find(o=>o.__vehicleKind==='sedan');
   const probe=s.add.image(-9999,-9999,'c3-atlas',CARD_FRAME('overclock'));fit(probe,112,96);
-  const checks={animatedLegs:runFrames===3&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),weaponGripCalibration:GUN_POSES[2].gripDx===-4&&GUN_POSES[2].gripDy===-2&&GUN_POSES[6].gripDx===-4&&GUN_POSES[6].gripDy===6&&GUN_POSES[1].gripDx===-7&&GUN_POSES[3].gripDx===7&&GUN_POSES[5].gripDx===7&&GUN_POSES[7].gripDx===-7,weaponFront:s.weaponV3Gun.depth>s.hero.depth,weaponScale:s.weaponV3Gun.displayWidth<=60&&s.weaponV3Gun.displayHeight<=60,noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allHdCards&&probe.texture?.key==='c3-atlas'&&probe.displayWidth>=80&&s.textures.exists('upgrade-icon-piercing-rivets')&&s.textures.exists('upgrade-icon-ricochet')&&s.textures.exists('upgrade-icon-shrapnel-impact')&&s.textures.exists('upgrade-icon-critical-rivet')&&s.__upgradeCardArtReady===true,rarityCards:['COMMON','RARE','EPIC','LEGENDARY'].every(r=>rarities.has(r)),roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth,characterSystem:s.characterId==='runner'&&s.characterDefinition?.id==='runner'&&s.__characterSystemReady===true};probe.destroy();
+  const checks={animatedLegs:runFrames===3&&s.__d1AnimatedRunner===true,mechanicalArm:!!s.__d1MechanicalArm&&s.weaponModule===s.weaponV3Gun&&GUN_FRAMES.includes(s.weaponV3Gun.frame?.name),weaponGripCalibration:GUN_POSES[2].gripDx===-4&&GUN_POSES[2].gripDy===-2&&GUN_POSES[6].gripDx===-4&&GUN_POSES[6].gripDy===6&&GUN_POSES[1].gripDx===-7&&GUN_POSES[3].gripDx===7&&GUN_POSES[5].gripDx===7&&GUN_POSES[7].gripDx===-7,weaponFront:s.weaponV3Gun.depth>s.hero.depth,weaponScale:s.weaponV3Gun.displayWidth<=60&&s.weaponV3Gun.displayHeight<=60,noHandSprites:[s.weaponV3ArmA,s.weaponV3ArmB,s.weaponV3HandA,s.weaponV3HandB,s.weaponArm,s.weaponRig].every(o=>!o||o.visible===false),premiumCards:allHdCards&&probe.texture?.key==='c3-atlas'&&probe.displayWidth>=80&&s.textures.exists('upgrade-icon-piercing-rivets')&&s.textures.exists('upgrade-icon-ricochet')&&s.textures.exists('upgrade-icon-shrapnel-impact')&&s.textures.exists('upgrade-icon-critical-rivet')&&s.textures.exists('upgrade-icon-explosive-rivet')&&s.__upgradeCardArtReady===true,rarityCards:['COMMON','RARE','EPIC','LEGENDARY'].every(r=>rarities.has(r)),roadsVisible:roads.length>200&&near&&roads.every(o=>o.visible&&o.alpha>.95&&o.displayHeight>=145&&o.__terrainSystemObject),vehicleScale:!!truck&&!!sedan&&truck.displayWidth>=330&&sedan.displayWidth>=225&&truck.displayWidth>sedan.displayWidth,characterSystem:s.characterId==='runner'&&s.characterDefinition?.id==='runner'&&s.__characterSystemReady===true};probe.destroy();
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_D1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchD1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`D1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase D.1 self-test failed: '+detail)
 }
-
 export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installVehicleScale(s);installUpgradeCardArt(s);installPremiumCards(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: Hunter Runner + integrated compact weapon + dynamic canonical rarity cards + visible asphalt + real vehicle scale');selfTest(s);return true}

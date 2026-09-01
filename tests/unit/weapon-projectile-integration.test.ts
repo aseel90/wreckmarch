@@ -74,16 +74,27 @@ describe('Weapon / Projectile ownership integration', () => {
     expect(d1).toContain("bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx))");
   });
 
-  it('keeps Explosive Rivet in the live HERO upgrade pool', () => {
+  it('keeps Explosive Rivet in every live HERO upgrade pool owner', () => {
     const phaseC = read('src/phase-c-runtime.js');
-    expect(phaseC).toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })");
+    const phaseC1 = read('src/phase-c1-runtime.js');
+    const registration = "createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })";
+    expect(phaseC).toContain(registration);
+    expect(phaseC1).toContain(registration);
+    expect(phaseC1).toContain('rollUpgradeChoices(c1UpgradePool(this), { count: 3 })');
+  });
+
+  it('provides canonical card art for Explosive Rivet', () => {
+    const art = read('src/upgrades/upgrade-card-art.js');
+    expect(art).toContain("'explosive-rivet': 'upgrade-icon-explosive-rivet'");
+    expect(art).toContain('function buildExplosiveRivetIcon(scene)');
+    expect(read('src/phase-d1-runtime.js')).toContain("s.textures.exists('upgrade-icon-explosive-rivet')");
   });
 
   it('cache-busts the U4 projectile-upgrade live owners from the boot graph', () => {
     const html = read('index.html');
     expect(html).toContain("./src/enemies/enemy-system.js?v=22");
     expect(html).toContain("./src/phase-c-runtime.js?v=19");
-    expect(html).toContain("./src/phase-c1-runtime.js?v=16");
-    expect(html).toContain("./src/phase-d1-runtime.js?v=23");
+    expect(html).toContain("./src/phase-c1-runtime.js?v=17");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=24");
   });
 });
