@@ -26,7 +26,9 @@ test('Call the Rig is offered at level 2 and delegates the summon to the canonic
       'piercing-rivets': 3,
       'ricochet': 2,
       'shrapnel-impact': 2,
-      'critical-rivet': 4
+      'critical-rivet': 4,
+      'field-repair': 3,
+      'impact-shield': 2
     });
     scene.level = 2;
     scene.rigSummoned = false;

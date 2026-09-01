@@ -26,7 +26,9 @@ test('Overclock uses the canonical registry path in the final upgrade scene', as
       'piercing-rivets': 3,
       'ricochet': 2,
       'shrapnel-impact': 2,
-      'critical-rivet': 4
+      'critical-rivet': 4,
+      'field-repair': 3,
+      'impact-shield': 2
     });
     scene.level = 1;
     scene.rigSummoned = false;
@@ -63,7 +65,7 @@ test('Overclock uses the canonical registry path in the final upgrade scene', as
 
   expect(result.choiceIds).toEqual(['overclock']);
   expect(result.level).toBe(1);
-  expect(result.fireDelay).toBeCloseTo(Math.max(145, result.beforeDelay * 0.88));
+  expect(result.fireDelay).toBeCloseTo(Math.max(145, result.beforeDelay / 1.12));
   expect(result.mirrorFireDelay).toBeCloseTo(result.fireDelay);
   expect(result.baseDelay).toBe(result.beforeDelay);
   expect(result.cap).toEqual({ min: 145 });

@@ -26,7 +26,9 @@ test('Long Barrel uses both canonical weapon modifiers in the final upgrade scen
       'piercing-rivets': 3,
       'ricochet': 2,
       'shrapnel-impact': 2,
-      'critical-rivet': 4
+      'critical-rivet': 4,
+      'field-repair': 3,
+      'impact-shield': 2
     });
     scene.level = 1;
     scene.rigSummoned = false;

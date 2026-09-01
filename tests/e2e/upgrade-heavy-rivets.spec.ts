@@ -26,7 +26,9 @@ test('Heavy Rivets uses the canonical registry path in the final upgrade scene',
       'piercing-rivets': 3,
       'ricochet': 2,
       'shrapnel-impact': 2,
-      'critical-rivet': 4
+      'critical-rivet': 4,
+      'field-repair': 3,
+      'impact-shield': 2
     });
     scene.level = 1;
     scene.rigSummoned = false;
@@ -62,7 +64,7 @@ test('Heavy Rivets uses the canonical registry path in the final upgrade scene',
 
   expect(result.choiceIds).toEqual(['heavy-rivets']);
   expect(result.level).toBe(1);
-  expect(result.damage).toBeCloseTo(result.beforeDamage * 1.2);
+  expect(result.damage).toBeCloseTo(result.beforeDamage * 1.12);
   expect(result.mirrorDamage).toBeCloseTo(result.damage);
   expect(result.baseDamage).toBe(result.beforeDamage);
   expect(result.modifierIds).toContain('heavy-rivets@1:0');
