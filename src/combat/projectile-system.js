@@ -28,6 +28,16 @@ const DEFAULT_SHRAPNEL_PROFILE = Object.freeze({
   maxFragments: 4
 });
 
+export const EXPLOSIVE_RIVET_VFX = Object.freeze({
+  minReadableRadius: 72,
+  flashDurationMs: 90,
+  fireballDurationMs: 180,
+  shockwaveDurationMs: 280,
+  dustDurationMs: 360,
+  sparkDurationMs: 260,
+  sparkCount: 8
+});
+
 const SECONDARY_DAMAGE_BUDGET = POWER_BUDGET.chainedMechanics;
 
 function boundedInteger(value, max) {
@@ -176,20 +186,76 @@ export class ProjectileSystem {
   spawnImpactExplosionFx(x, y, radius) {
     const scene = this.scene;
     if (!scene?.add?.circle || !scene?.tweens?.add) return null;
-    const ring = scene.add.circle(x, y, 10, 0xd86d31, .05)
-      .setStrokeStyle?.(2, 0xffbd69, .9)
-      ?.setDepth?.(35) || null;
-    if (!ring) return null;
-    const targetScale = Math.max(1, Math.max(10, Number(radius) || 0) / 10);
-    scene.tweens.add({
-      targets: ring,
-      scale: targetScale,
+
+    const profile = EXPLOSIVE_RIVET_VFX;
+    const resolvedRadius = Math.max(profile.minReadableRadius, Math.max(0, Number(radius) || 0));
+    const addCircle = (circleRadius, color, alpha, depth, stroke = null) => {
+      const circle = scene.add.circle(x, y, circleRadius, color, alpha);
+      circle?.setDepth?.(depth);
+      if (stroke && circle?.setStrokeStyle) circle.setStrokeStyle(stroke.width, stroke.color, stroke.alpha);
+      return circle;
+    };
+    const fadeAndDestroy = (target, tween) => scene.tweens.add({
+      targets: target,
+      ...tween,
       alpha: 0,
-      duration: 150,
       ease: 'Quad.Out',
-      onComplete: () => ring.destroy?.()
+      onComplete: () => target?.destroy?.()
     });
-    return ring;
+
+    // Bright center flash makes the proc readable even under dense enemy/projectile overlap.
+    const flash = addCircle(8, 0xfff4c7, 1, 47);
+    const fireball = addCircle(18, 0xff8a32, .78, 46, { width: 2, color: 0xffd27a, alpha: .95 });
+
+    // The shockwave expands to the real AoE radius so the player can read what the card affected.
+    const shockwave = addCircle(12, 0xff6f2f, .18, 45, { width: 5, color: 0xffd38a, alpha: 1 });
+    const dust = addCircle(22, 0x6f4532, .22, 44, { width: 6, color: 0x9a6848, alpha: .32 });
+    if (!flash || !fireball || !shockwave || !dust) {
+      flash?.destroy?.();
+      fireball?.destroy?.();
+      shockwave?.destroy?.();
+      dust?.destroy?.();
+      return null;
+    }
+
+    fadeAndDestroy(flash, { scale: 2.6, duration: profile.flashDurationMs });
+    fadeAndDestroy(fireball, {
+      scale: Math.max(1.7, resolvedRadius / 34),
+      duration: profile.fireballDurationMs
+    });
+    fadeAndDestroy(shockwave, {
+      scale: resolvedRadius / 12,
+      duration: profile.shockwaveDurationMs
+    });
+    fadeAndDestroy(dust, {
+      scale: resolvedRadius / 20,
+      duration: profile.dustDurationMs
+    });
+
+    // Deterministic radial sparks add directional motion without particle-emitter overhead.
+    const sparkDistance = resolvedRadius * .72;
+    for (let index = 0; index < profile.sparkCount; index += 1) {
+      const angle = (Math.PI * 2 * index) / profile.sparkCount + Math.PI / 8;
+      const startDistance = 14 + (index % 2) * 4;
+      const travelScale = index % 2 === 0 ? 1 : .82;
+      const spark = scene.add.circle(
+        x + Math.cos(angle) * startDistance,
+        y + Math.sin(angle) * startDistance,
+        index % 2 === 0 ? 3 : 2.4,
+        index % 2 === 0 ? 0xffd27a : 0xff8a32,
+        .95
+      );
+      spark?.setDepth?.(48);
+      if (!spark) continue;
+      fadeAndDestroy(spark, {
+        x: x + Math.cos(angle) * sparkDistance * travelScale,
+        y: y + Math.sin(angle) * sparkDistance * travelScale,
+        scale: .25,
+        duration: profile.sparkDurationMs + (index % 2) * 40
+      });
+    }
+
+    return shockwave;
   }
 
   spawnImpactShrapnel({
