@@ -17,7 +17,7 @@ Every checklist item carries a current implementation state:
 - **🧭 ACTIVE POLICY** — an architectural rule currently enforced during development; it remains visible rather than being treated as a one-time feature.
 - **🧹 POST-MIGRATION** — cleanup that becomes actionable only after the replacement path is verified.
 
-> **Last status review:** 2026-08-31. Statuses describe the actual repository state on `main`; they do not count intention as completion.
+> **Last status review:** 2026-09-02. Statuses describe the actual repository state on `main`; they do not count intention as completion.
 
 ---
 
@@ -438,8 +438,8 @@ Future-compatible but not mandatory in first implementation:
 - [x] Centralize upgrade-level ownership. — **Status:** ✅ DONE
 - [x] Enforce max level. — **Status:** ✅ DONE
 - [x] Remove maxed cards from standard offers. — **Status:** ✅ DONE
-- [ ] Implement prerequisite-aware offers. — **Status:** ⚪ NOT STARTED
-- [ ] Implement scope-aware offers. — **Status:** ⚪ NOT STARTED
+- [x] Implement prerequisite-aware offers. — **Status:** ✅ DONE — PR #188 / `501f5f3387f90667636bd096e3a884fee17385be`; shared requirements resolver enforces prerequisites in canonical availability and direct application
+- [x] Implement scope/compatibility-aware technical filtering. — **Status:** ✅ DONE — PR #190 / `25e28a9931f86ce2373b70793e617608483e2af0`; explicit character/weapon mismatches are filtered without curating valid off-build rolls
 - [ ] Add offer-quality safeguards. — **Status:** ⚪ NOT STARTED
 - [x] Add deterministic seeded offer testing. — **Status:** ✅ DONE
 
@@ -486,8 +486,8 @@ Scopes:
 
 - [x] Implement tags. — **Status:** ✅ DONE
 - [x] Implement scopes. — **Status:** ✅ DONE
-- [ ] Ensure Runner can use general + Runner-specific + compatible weapon cards. — **Status:** ⚪ NOT STARTED
-- [ ] Ensure incompatible future weapon cards cannot enter the offer pool. — **Status:** ⚪ NOT STARTED
+- [x] Ensure Runner can use general + Runner-specific + compatible weapon cards. — **Status:** ✅ DONE — canonical compatibility context + resolver landed in PR #190
+- [x] Ensure incompatible future weapon cards cannot enter the offer pool. — **Status:** ✅ DONE — Rivet-only Twin/Triple/Explosive are explicitly `rivet-gun` compatible; deterministic future-shotgun context proves they are excluded
 
 ---
 
@@ -562,8 +562,8 @@ Exact names, values, rarities and requirements require balance passes.
 - [x] Implement Ricochet. — **Status:** ✅ DONE — PR #109 / `6b499451bb5ff7fc29f184180d420db96fef88c6`; canonical ricochet behavior + dedicated card art; production exact-SHA verification passed
 - [x] Implement Shrapnel Impact. — **Status:** ✅ DONE — PR #111 / `440611c87fdfae9ad36374700e6a5831afd49b7e`; canonical bounded impact fragments + dedicated card art; production exact-SHA verification passed
 - [x] Implement Critical Rivet + crit combat support. — **Status:** ✅ DONE — PR #115 / `3af77d101ba1288ee5b349adecf271594fdea2bc`; canonical Hero projectile crit resolution + dedicated card art; production exact-SHA verification passed
-- [ ] Implement Explosive Rivet. — **Status:** ⚪ NOT STARTED
-- [ ] Implement advanced multishot progression. — **Status:** ⚪ NOT STARTED
+- [x] Implement Explosive Rivet. — **Status:** ✅ DONE — production D1 validated; later readability polish also deployed
+- [ ] Implement advanced multishot progression. — **Status:** 🟡 IMPLEMENTED / GAMEPLAY VALIDATION PENDING — Triple Riveter landed in PR #188 with Twin L2 prerequisite and 1.60x bounded 3-shot volley; manual Production run did not naturally roll it, so keep open only for a future natural gameplay/D1 validation
 - [ ] Test projectile-count/performance limits. — **Status:** ⚪ NOT STARTED
 - [ ] Test interactions between mechanical cards. — **Status:** ⚪ NOT STARTED
 
@@ -637,8 +637,8 @@ Upgrade A at required level
 → unlock Epic/Evolution card
 ```
 
-- [ ] Prerequisite schema supported. — **Status:** ⚪ NOT STARTED
-- [ ] Prerequisite offer filtering tested. — **Status:** ⚪ NOT STARTED
+- [x] Prerequisite schema supported. — **Status:** ✅ DONE — shared upgrade-level requirement schema/resolver landed in PR #188
+- [x] Prerequisite offer filtering tested. — **Status:** ✅ DONE — Twin L1 remains ineligible; Twin L2 makes Triple eligible through the shared resolver, with direct-application enforcement also covered
 - [ ] Define synergy rules after initial pool is stable. — **Status:** ⏸️ DEFERRED
 - [ ] Design first evolution only after normal upgrade system passes balance testing. — **Status:** ⏸️ DEFERRED
 - [ ] Implement evolutions in a later sub-phase. — **Status:** ⏸️ DEFERRED
@@ -787,6 +787,13 @@ Schema: `wreckmarch.upgrade-run-state` v1.
 Verified gameplay commit: `a53dc9e`.
 
 ---
+
+## 17.1. 2026-09-02 prerequisite / compatibility checkpoint
+
+- **Triple Riveter:** implemented and Production-deployed through PR #188; keep its roadmap item open only until a natural run acquires Twin L2 then Triple and sends D1 evidence. Do not force or bias the offer.
+- **Canonical prerequisites:** complete; shared resolver owns both offer eligibility and direct application rejection.
+- **Canonical technical compatibility:** complete through PR #190; explicit character/weapon impossibilities are filtered while valid weak, redundant or off-build cards remain eligible.
+- **Next architecture gate:** canonical Weapon Registry / signature-weapon resolution before implementing another playable weapon archetype.
 
 # 18. Future playable characters — compatibility contract
 
@@ -1006,12 +1013,12 @@ Latest verified gameplay commit for the core: `89926f8`.
 ## Phase U3 — Rarity + levels + offer rules
 - [x] Implement rarity. — **Status:** ✅ DONE
 - [x] Implement max-level/duplicate rules. — **Status:** ✅ DONE
-- [ ] Implement tags/scopes/prerequisites. — **Status:** 🔵 PARTIAL — tags/scopes schema exists; full prerequisite/scope-aware offer filtering remains
+- [x] Implement tags/scopes/prerequisites. — **Status:** ✅ DONE — canonical requirements landed in PR #188 and explicit character/weapon compatibility filtering in PR #190
 - [ ] Preserve elite reward guarantees. — **Status:** ⚪ NOT STARTED
 
 ## Phase U4 — New Hunter build cards — **NEXT ACTIVE PHASE**
 - [ ] Finalize 10–12-card initial pool. — **Status:** 🟢 NEXT
-- [ ] Add mechanical projectile upgrades incrementally. — **Status:** 🔵 IN PROGRESS — Piercing Rivets + Ricochet + Shrapnel Impact + Critical Rivet complete; Explosive Rivet and advanced multishot remain
+- [ ] Add mechanical projectile upgrades incrementally. — **Status:** 🟡 IN PROGRESS — Piercing + Ricochet + Shrapnel + Critical + Explosive are complete; Triple is implemented/deployed and remains open only for its natural gameplay/D1 validation gate
 - [x] Add crit only with combat integration/tests. — **Status:** ✅ DONE — Critical Rivet / PR #115 / `3af77d101ba1288ee5b349adecf271594fdea2bc`; exact-SHA production verification passed
 - [ ] Verify at least 3 viable build identities. — **Status:** ⚪ NOT STARTED
 
@@ -1050,8 +1057,8 @@ Upgrade System 2.0 is complete only when:
 - [x] Runner remains visually and mechanically the correct character. — **Status:** ✅ CORE VERIFIED
 - [x] There is one canonical ownership path for touched character/weapon/upgrade/stat responsibilities. — **Status:** ✅ CORE VERIFIED
 - [x] Existing cards have been safely migrated. — **Status:** ✅ CORE VERIFIED
-- [ ] New cards create multiple real builds rather than only larger numbers. — **Status:** 🔵 U4 IN PROGRESS — Piercing Rivets + Ricochet + Shrapnel Impact + Critical Rivet now cover projectile branching and a precision/crit axis; Explosive Rivet, advanced multishot and build validation remain
-- [ ] Rarity/levels/prerequisites work predictably for the **expanded** card pool. — **Status:** 🔵 CORE PARTIAL; U4 prerequisite/build validation remains
+- [ ] New cards create multiple real builds rather than only larger numbers. — **Status:** 🔵 U4 IN PROGRESS — Piercing/Ricochet/Shrapnel/Critical/Explosive are live; Triple is implemented but gameplay-validation-pending; broader build-identity validation remains
+- [ ] Rarity/levels/prerequisites work predictably for the **expanded** card pool. — **Status:** 🟡 CORE IMPLEMENTED — levels, rarity, prerequisites and technical compatibility filtering are canonical; Triple still needs natural gameplay/D1 evidence and broader expanded-pool validation remains
 - [ ] Stats shown to the player match actual combat in the planned build/run-stats UI. — **Status:** 🔵 debug/read-only data exists; player-facing panel remains
 - [ ] The expanded system remains performant and readable on mobile. — **Status:** ⚪ requires U4/U5 content/UI validation
 - [ ] A full 10-minute run can be completed without upgrade-system regression after the new-card pool lands. — **Status:** ⚪ U7
