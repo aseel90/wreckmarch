@@ -4,7 +4,8 @@ export const UPGRADE_CARD_ART_TEXTURES = Object.freeze({
   'shrapnel-impact': 'upgrade-icon-shrapnel-impact',
   'critical-rivet': 'upgrade-icon-critical-rivet',
   'field-repair': 'upgrade-icon-field-repair',
-  'impact-shield': 'upgrade-icon-impact-shield'
+  'impact-shield': 'upgrade-icon-impact-shield',
+  'explosive-rivet': 'upgrade-icon-explosive-rivet'
 });
 
 function buildPiercingRivetsIcon(scene) {
@@ -156,6 +157,33 @@ function buildImpactShieldIcon(scene) {
   return textureKey;
 }
 
+function buildExplosiveRivetIcon(scene) {
+  const textureKey = UPGRADE_CARD_ART_TEXTURES['explosive-rivet'];
+  if (scene.textures.exists(textureKey)) return textureKey;
+  const g = scene.make.graphics({ add: false });
+  g.fillStyle(0x10171c, 1).fillRoundedRect(18, 18, 92, 76, 12);
+  g.lineStyle(4, 0x4b565c, 1).strokeRoundedRect(18, 18, 92, 76, 12);
+  g.lineStyle(8, 0x241710, 1).lineBetween(7, 61, 67, 56);
+  g.lineStyle(5, 0xc66c32, 1).lineBetween(8, 59, 69, 54);
+  g.lineStyle(2, 0xffd07a, 1).lineBetween(12, 56, 68, 52);
+  g.fillStyle(0xffe2a0, 1).fillTriangle(63, 46, 78, 53, 66, 63);
+  g.fillStyle(0xf0b84a, .95).fillCircle(80, 55, 10);
+  g.fillStyle(0xffe09a, .95).fillCircle(80, 55, 5);
+  g.lineStyle(4, 0xe36d3c, .96);
+  g.lineBetween(80, 28, 80, 42);
+  g.lineBetween(80, 68, 80, 84);
+  g.lineBetween(53, 55, 67, 55);
+  g.lineBetween(93, 55, 109, 55);
+  g.lineBetween(61, 36, 71, 46);
+  g.lineBetween(89, 64, 100, 75);
+  g.lineBetween(60, 76, 71, 65);
+  g.lineBetween(90, 46, 101, 35);
+  g.lineStyle(2, 0x55d8e5, .9).strokeCircle(80, 55, 25);
+  g.generateTexture(textureKey, 128, 112);
+  g.destroy();
+  return textureKey;
+}
+
 export function installUpgradeCardArt(scene) {
   if (!scene?.textures || !scene?.make?.graphics) throw new TypeError('Upgrade card art requires a Phaser scene');
   buildPiercingRivetsIcon(scene);
@@ -164,6 +192,7 @@ export function installUpgradeCardArt(scene) {
   buildCriticalRivetIcon(scene);
   buildFieldRepairIcon(scene);
   buildImpactShieldIcon(scene);
+  buildExplosiveRivetIcon(scene);
   scene.__upgradeCardArtReady = true;
   return scene;
 }
