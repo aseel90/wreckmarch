@@ -5,7 +5,8 @@ export const UPGRADE_CARD_ART_TEXTURES = Object.freeze({
   'critical-rivet': 'upgrade-icon-critical-rivet',
   'field-repair': 'upgrade-icon-field-repair',
   'impact-shield': 'upgrade-icon-impact-shield',
-  'explosive-rivet': 'upgrade-icon-explosive-rivet'
+  'explosive-rivet': 'upgrade-icon-explosive-rivet',
+  'triple-riveter': 'upgrade-icon-triple-riveter'
 });
 
 function buildPiercingRivetsIcon(scene) {
@@ -184,6 +185,27 @@ function buildExplosiveRivetIcon(scene) {
   return textureKey;
 }
 
+function buildTripleRiveterIcon(scene) {
+  const textureKey = UPGRADE_CARD_ART_TEXTURES['triple-riveter'];
+  if (scene.textures.exists(textureKey)) return textureKey;
+  const g = scene.make.graphics({ add: false });
+  g.fillStyle(0x10171c, 1).fillRoundedRect(15, 16, 98, 80, 12);
+  g.lineStyle(4, 0x67508c, 1).strokeRoundedRect(15, 16, 98, 80, 12);
+  const ys = [38, 56, 74];
+  ys.forEach((y, index) => {
+    g.lineStyle(8, 0x241710, 1).lineBetween(13, y + (index - 1) * 2, 82, y);
+    g.lineStyle(5, 0xc66c32, 1).lineBetween(14, y - 2 + (index - 1) * 2, 84, y - 2);
+    g.lineStyle(2, 0xffd07a, 1).lineBetween(18, y - 4 + (index - 1) * 2, 82, y - 4);
+    g.fillStyle(0xffe2a0, 1).fillTriangle(79, y - 9, 95, y - 2, 81, y + 7);
+  });
+  g.lineStyle(3, 0xa985df, .95).strokeCircle(97, 56, 24);
+  g.lineStyle(2, 0xd9c8ff, .8).strokeCircle(97, 56, 16);
+  g.fillStyle(0xbda4ff, .96).fillCircle(97, 56, 5);
+  g.generateTexture(textureKey, 128, 112);
+  g.destroy();
+  return textureKey;
+}
+
 export function installUpgradeCardArt(scene) {
   if (!scene?.textures || !scene?.make?.graphics) throw new TypeError('Upgrade card art requires a Phaser scene');
   buildPiercingRivetsIcon(scene);
@@ -193,6 +215,7 @@ export function installUpgradeCardArt(scene) {
   buildFieldRepairIcon(scene);
   buildImpactShieldIcon(scene);
   buildExplosiveRivetIcon(scene);
+  buildTripleRiveterIcon(scene);
   scene.__upgradeCardArtReady = true;
   return scene;
 }

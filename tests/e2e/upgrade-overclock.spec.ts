@@ -20,6 +20,7 @@ test('Overclock uses the canonical registry path in the final upgrade scene', as
       'heavy-rivets': 5,
       'long-barrel': 4,
       'twin-riveter': 2,
+      'triple-riveter': 1,
       'fleet-feet': 4,
       'scrap-magnet': 4,
       'armor-plate': 4,

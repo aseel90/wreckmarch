@@ -1,4 +1,4 @@
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=13';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=14';
 import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
@@ -204,6 +204,7 @@ function c1UpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'shrapnel-impact', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'critical-rivet', { category: 'HERO' }),
     createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
+    createRegisteredUpgradeChoice(scene, 'triple-riveter', { category: 'EVOLUTION' }),
     createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
@@ -270,7 +271,8 @@ class UpgradeScene extends Phaser.Scene {
       .setStrokeStyle(2, accent, .72).setOrigin(.5);
     const strip = this.add.rectangle(0, -147, 270, 12, accent, .9).setOrigin(.5);
     const iconPlate = this.add.circle(0, -70, 55, 0x0d1218, 1).setStrokeStyle(2, accent, .45);
-    const iconIndex = Math.max(0, ICON_IDS.indexOf(upgrade.id));
+    const iconLookupId = upgrade.id === 'triple-riveter' ? 'twin-riveter' : upgrade.id;
+    const iconIndex = Math.max(0, ICON_IDS.indexOf(iconLookupId));
     const icon = this.add.image(0, -70, 'upgrade-icon-atlas')
       .setCrop(iconIndex * 128, 0, 128, 128)
       .setDisplaySize(92, 92);

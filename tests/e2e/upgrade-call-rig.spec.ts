@@ -20,6 +20,7 @@ test('Call the Rig is offered at level 2 and delegates the summon to the canonic
       'overclock': 5,
       'long-barrel': 4,
       'twin-riveter': 2,
+      'triple-riveter': 1,
       'fleet-feet': 3,
       'scrap-magnet': 4,
       'armor-plate': 4,

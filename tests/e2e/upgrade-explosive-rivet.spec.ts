@@ -21,6 +21,7 @@ test('Explosive Rivet is offered by the final live upgrade pool and applies its 
       overclock: 5,
       'long-barrel': 4,
       'twin-riveter': 2,
+      'triple-riveter': 1,
       'fleet-feet': 4,
       'scrap-magnet': 4,
       'armor-plate': 4,

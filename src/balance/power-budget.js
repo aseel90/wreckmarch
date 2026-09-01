@@ -100,6 +100,9 @@ export const POWER_BUDGET = freeze({
     twinLevel1SingleTargetMultiplier: 1.2,
     twinLevel2SingleTargetMultiplier: 1.4,
     twinMaxSingleTargetMultiplier: 1.4,
+    tripleProjectileCount: 3,
+    tripleSingleTargetMultiplier: 1.6,
+    triplePerProjectileDamageScale: 1.6 / 3,
     fullDamageDuplicateProjectilesAllowed: false
   }),
   chainedMechanics: freeze({

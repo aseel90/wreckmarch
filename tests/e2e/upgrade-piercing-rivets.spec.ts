@@ -24,6 +24,7 @@ test('Piercing Rivets upgrades the Rivet Gun and pierces two live enemies at lev
       overclock: 99,
       'long-barrel': 99,
       'twin-riveter': 99,
+      'triple-riveter': 1,
       'fleet-feet': 99,
       'scrap-magnet': 99,
       'armor-plate': 99,

@@ -19,6 +19,7 @@ test('Legendary rarity is shown by UpgradeSceneV4 and applies one scaled canonic
       'overclock': 5,
       'long-barrel': 4,
       'twin-riveter': 2,
+      'triple-riveter': 1,
       'fleet-feet': 4,
       'scrap-magnet': 4,
       'armor-plate': 4,
