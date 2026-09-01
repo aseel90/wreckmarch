@@ -1,5 +1,5 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=13';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=14';
 import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
@@ -209,6 +209,7 @@ function createUpgradePool(scene) {
     createRegisteredStatUpgradeChoice(scene, 'long-barrel', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'piercing-rivets', { category: 'HERO' }),
     createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
+    createRegisteredUpgradeChoice(scene, 'triple-riveter', { category: 'EVOLUTION' }),
     createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' }),
     createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
     createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
