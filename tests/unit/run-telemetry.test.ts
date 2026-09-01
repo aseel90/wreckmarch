@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { RunTelemetry } from '../../src/telemetry/run-telemetry.js';
+import { sendCurrentRunReport } from '../../src/telemetry/telemetry-runtime.js';
 import { isRemoteRunReportingEnabled, RunReportProvider, RUN_REPORT_QUEUE_KEY, RUN_REPORT_TRANSPORT_STATUS_KEY } from '../../src/telemetry/run-report-provider.js';
 const group = (items: any[]) => ({ getChildren: () => items });
 const baseScene = () => ({ runTime: 1, level: 1, scrap: 0, heroHp: 100, heroMaxHp: 100, hero: { x: 0, y: 0 }, lastShot: 0, enemies: group([]), bullets: group([]), __runDirectorState: { wave: 1, pressurePhase: 'lull', threatBudget: 15, activeCap: 26, spawnIntervalMs: 720, hpMultiplier: 1, damageMultiplier: 1, speedMultiplier: 1 }, upgradeLevels: {}, upgradeRarityHistory: {}, runStatState: { resolve: () => ({ weapon: { damage: 24 } }) } }) as any;
@@ -84,5 +85,44 @@ describe('remote run-report opt-in', () => {
     expect(isRemoteRunReportingEnabled({ search: '?wmTelemetry=0' })).toBe(false);
     expect(isRemoteRunReportingEnabled({ search: '?wmTelemetry=1' })).toBe(true);
     expect(isRemoteRunReportingEnabled({ search: '', override: true })).toBe(true);
+  });
+});
+
+describe('manual run-report transport', () => {
+  it('sends an explicit end-run report from a normal production URL without wmTelemetry=1', async () => {
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value)
+    } as unknown as Storage;
+    const fetchFn = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: async () => ({ queued: true })
+    });
+
+    vi.stubGlobal('fetch', fetchFn);
+    vi.stubGlobal('localStorage', storage);
+    vi.stubGlobal('location', { search: '', href: 'https://aseel90.github.io/wreckmarch/' });
+
+    const report = { schemaVersion: 1, reportId: 'wm-manual-production-link', run: {} } as any;
+    const telemetry = {
+      finalized: true,
+      getReport: () => report,
+      provider: undefined,
+      remoteReportingEnabled: false,
+      lastSubmission: undefined
+    } as any;
+    const scene = { runTelemetry: telemetry } as any;
+    const game = { scene: { getScene: (key: string) => key === 'Wreckmarch' ? scene : null } } as any;
+
+    try {
+      const result = await sendCurrentRunReport(game);
+      expect(result).toMatchObject({ ok: true, stage: 'sent', reportId: report.reportId, httpStatus: 202 });
+      expect(fetchFn).toHaveBeenCalled();
+      expect(fetchFn.mock.calls[0][0]).toBe('https://wreckmarch-run-reports.salahaseel82.workers.dev/report');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
