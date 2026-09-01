@@ -416,14 +416,17 @@ jobs:
           curl -fsSL --retry 5 "${BASE}?build=${SHA}" -o wm-live-index.html
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-loader-telemetry-v1.js" -o wm-live-mobile-hud-loader.js
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" -o wm-live-mobile-hud.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=17" -o wm-live-phase-c1.js
-          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=24" -o wm-live-phase-d1.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=18" -o wm-live-phase-c1.js
+          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=25" -o wm-live-phase-d1.js
+          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-card-art.js?v=7" -o wm-live-upgrade-card-art.js
           curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
-          grep -F "./src/phase-c1-runtime.js?v=17" wm-live-index.html
-          grep -F "./src/phase-d1-runtime.js?v=24" wm-live-index.html
+          grep -F "./src/phase-c1-runtime.js?v=18" wm-live-index.html
+          grep -F "./src/phase-d1-runtime.js?v=25" wm-live-index.html
           grep -F "createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })" wm-live-phase-c1.js
-          grep -F "./upgrades/upgrade-card-art.js?v=6" wm-live-phase-d1.js
-          grep -F "upgrade-icon-explosive-rivet" wm-live-phase-d1.js
+          grep -F "createRegisteredUpgradeChoice(scene, 'triple-riveter', { category: 'EVOLUTION' })" wm-live-phase-c1.js
+          grep -F "./upgrades/upgrade-card-art.js?v=7" wm-live-phase-d1.js
+          grep -F "upgrade-icon-explosive-rivet" wm-live-upgrade-card-art.js
+          grep -F "upgrade-icon-triple-riveter" wm-live-upgrade-card-art.js
           grep -F "./src/mobile-hud-loader-telemetry-v1.js" wm-live-index.html
           grep -F "./mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" wm-live-mobile-hud-loader.js
           grep -F "./src/final-polish-runtime.js?v=2" wm-live-index.html
