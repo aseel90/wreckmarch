@@ -3,6 +3,7 @@ import { HEAVY_RIVETS_UPGRADE } from './definitions/heavy-rivets.js';
 import { OVERCLOCK_UPGRADE } from './definitions/overclock.js';
 import { LONG_BARREL_UPGRADE } from './definitions/long-barrel.js';
 import { TWIN_RIVETER_UPGRADE } from './definitions/twin-riveter.js?v=2';
+import { TRIPLE_RIVETER_UPGRADE } from './definitions/triple-riveter.js';
 import { EXPLOSIVE_RIVET_UPGRADE } from './definitions/explosive-rivet.js?v=1';
 import { PIERCING_RIVETS_UPGRADE } from './definitions/piercing-rivets.js';
 import { RICOCHET_UPGRADE } from './definitions/ricochet.js';
@@ -20,6 +21,7 @@ const DEFAULT_UPGRADE_REGISTRY = createUpgradeRegistry([
   OVERCLOCK_UPGRADE,
   LONG_BARREL_UPGRADE,
   TWIN_RIVETER_UPGRADE,
+  TRIPLE_RIVETER_UPGRADE,
   EXPLOSIVE_RIVET_UPGRADE,
   PIERCING_RIVETS_UPGRADE,
   RICOCHET_UPGRADE,
