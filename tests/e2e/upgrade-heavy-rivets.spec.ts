@@ -20,6 +20,7 @@ test('Heavy Rivets uses the canonical registry path in the final upgrade scene',
       overclock: 5,
       'long-barrel': 4,
       'twin-riveter': 2,
+      // Max the evolution too so this case isolates Heavy Rivets.
       'triple-riveter': 1,
       'fleet-feet': 4,
       'scrap-magnet': 4,
@@ -67,7 +68,7 @@ test('Heavy Rivets uses the canonical registry path in the final upgrade scene',
   expect(result.choiceIds).toEqual(['heavy-rivets']);
   expect(result.level).toBe(1);
   expect(result.damage).toBeCloseTo(result.beforeDamage * 1.12);
-  expect(result.mirrorDamage).toBeCloseTo(result.damage);
+  expect(result.mirrorFireDelay).toBeCloseTo(result.fireDelay);
   expect(result.baseDamage).toBe(result.beforeDamage);
   expect(result.modifierIds).toContain('heavy-rivets@1:0');
 });
