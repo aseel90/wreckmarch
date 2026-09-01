@@ -226,7 +226,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 16 | Wave/difficulty scaling vs player power | ⚪ PENDING BASELINE | Rebalance pressure after player multipliers are corrected; do not hide power creep by blindly inflating HP |
 | 17 | Rarity identity + power scaling | ⚪ PENDING BASELINE / U7 | Resolve same-card rarity identity and prevent rarity from magnifying already-multiplicative stats excessively |
 | 18 | Rig/support damage ownership | ⚪ PENDING | Decouple support balance from ambiguous `primaryWeapon.damage` semantics and future shotgun pellet damage |
-| 19 | Armor/stat combat semantics | ⚪ PENDING | Define one canonical mitigation/armor contract before armor becomes a character identity axis |
+| 19 | Armor/stat combat semantics + survivability utility | 🟡 FOUNDATION IMPLEMENTED / REVALIDATION PENDING | Keep armor mitigation separate; bounded heal/shield utility is now part of build diversity and must be validated from telemetry |
 | 20 | Build identities + anti-mandatory-card validation | ⚪ PENDING BASELINE | Validate multiple viable builds; no Twin/Heavy/Overclock-style automatic pick should dominate unrelated builds |
 | 21 | Mobile projectile/effect performance budget | ⚪ PENDING BASELINE | Set hard ceilings from measured active projectiles, fragments, long frames and late-wave pressure |
 | 22 | Deterministic interaction matrix / regression scenarios | ⚪ PENDING | Lock reproducible no-upgrade, single-card, pair-synergy and max-power scenarios for before/after comparisons |
@@ -238,6 +238,33 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 - Every bounce uses a **reduced secondary-damage coefficient** from the shared chained-mechanic budget; full-damage bounce chains are not allowed.
 - The nearest-target mode remains only as an explicit internal mode for controlled tests/future experiments; it is not the current PB1 live default.
 - This rule lives in the canonical projectile/combat balance owners and has regression coverage. Production gameplay revalidation is still required before Workstream 7 is DONE.
+
+### Survivability cards roadmap — 🟡 FOUNDATION IMPLEMENTED / FUTURE EXPANSION PLANNED
+
+Survivability is now a formal build axis alongside single-target damage, crowd clear, mobility and support. The goal is to let a player recover from a limited number of mistakes **without** making stationary/infinite-sustain builds optimal.
+
+**Implemented foundation**
+
+- **Armor Plate:** increases max HP and provides its existing small recovery; it remains separate from the future canonical armor-mitigation stat.
+- **Field Repair:** instant bounded recovery — restores **25% max HP at Common**, scales with rarity, and is only offerable while meaningfully damaged.
+- **Impact Shield:** Common-only charge card — **1 absorbed hit per charge, maximum 2 stored charges**. Shield absorption is owned by `PlayerDamageSystem`, including Sawbug acid/contact damage.
+- **Critical feedback:** critical projectile hits display readable `CRIT! + damage` feedback above the damaged enemy.
+- Telemetry now records **healing received**, **shield hits absorbed**, and **shield damage prevented** so survival value can be balanced from real runs instead of guessed.
+
+**Future survivability card candidates — design only, not implemented yet**
+
+- **Emergency Patch:** small one-time heal with stronger value at low HP; must have an offer/trigger gate so it cannot become infinite sustain.
+- **Reactive Plating:** short, bounded protection after a shield breaks or after taking a hit; duration/cooldown must be explicit and must not duplicate the future Armor stat.
+- **Last Stand:** once-per-run emergency protection/death-prevention candidate; high rarity and strict activation limits required.
+- **Wave Resupply:** small heal or shield recharge at a controlled wave milestone; no per-kill healing loop.
+- **Mobility survival utility:** temporary escape/movement tools may be explored later as survival value that does not directly add DPS.
+
+**Guardrails for future survival cards**
+
+- No unconditional lifesteal, endless passive regeneration or uncapped permanent percentage mitigation in this phase.
+- Healing, shields and mitigation must have a measurable charge, cooldown, rarity, wave, or missing-HP budget.
+- Survival cards must not erase Sawbug movement pressure or let Rust Hound/SURGE hits be ignored indefinitely.
+- At least one post-change telemetry run must compare survival-card builds against damage-heavy builds before expanding this family further.
 
 ## Execution rule
 
