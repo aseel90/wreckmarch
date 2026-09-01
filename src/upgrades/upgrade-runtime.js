@@ -247,6 +247,8 @@ export function applyRegisteredUpgrade(scene, id, { rarity = null } = {}) {
 export function createRegisteredUpgradeChoice(scene, id, { category = 'HERO' } = {}) {
   const definition = requireRegisteredUpgrade(id);
   requireSupportedRegisteredUpgrade(definition);
+  /** @param {string | null} [rarity] */
+  const applyChoice = (rarity = null) => applyRegisteredUpgrade(scene, definition.id, { rarity });
   return {
     id: definition.id,
     category,
@@ -255,7 +257,7 @@ export function createRegisteredUpgradeChoice(scene, id, { category = 'HERO' } =
     weight: definition.weight,
     rarityConstraint: definition.rarity,
     available: () => canApplyRegisteredUpgrade(scene, definition.id),
-    apply: (rarity = null) => applyRegisteredUpgrade(scene, definition.id, { rarity })
+    apply: applyChoice
   };
 }
 
