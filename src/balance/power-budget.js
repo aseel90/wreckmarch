@@ -108,7 +108,8 @@ export const POWER_BUDGET = freeze({
     perMechanicAddedDamageSoftCaps: freeze({
       pierce: 0.90,
       ricochet: 0.75,
-      shrapnel: 0.70
+      shrapnel: 0.70,
+      explosion: 1.32
     }),
     combinedAddedDamageSoftCap: 1.50,
     profiles: freeze({
@@ -125,6 +126,12 @@ export const POWER_BUDGET = freeze({
         maxFragments: 4,
         maxTriggersPerPrimaryProjectile: 1,
         standaloneAddedDamageByFragmentCount: freeze({ 0: 0, 2: 0.50, 4: 0.70 })
+      }),
+      explosion: freeze({
+        maxTriggersPerPrimaryProjectile: 1,
+        damageCoefficient: 0.33,
+        targetCapByLevel: freeze([0, 3, 3, 4]),
+        radiusByLevel: freeze([0, 90, 105, 120])
       })
     })
   }),

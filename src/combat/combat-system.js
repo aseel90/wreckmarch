@@ -45,6 +45,57 @@ export class CombatSystem {
     scene.__combatOverlapsInstalled = true;
   }
 
+  applyExplosiveRivetImpact(sourceBullet, impactEnemy) {
+    if (!sourceBullet?.explosiveRivetArmed || sourceBullet?.explosionTriggered || sourceBullet?.isSecondaryProjectile) return [];
+    sourceBullet.explosionTriggered = true;
+    const projectileSystem = this.scene.projectileSystem;
+    const originX = Number(impactEnemy?.x) || Number(sourceBullet?.x) || 0;
+    const originY = Number(impactEnemy?.y) || Number(sourceBullet?.y) || 0;
+    const targets = projectileSystem?.findExplosionTargets?.(
+      originX,
+      originY,
+      sourceBullet.explosionRadius,
+      sourceBullet.explosionTargetCap
+    ) || [];
+    const primaryDamage = Math.max(0, Number(sourceBullet.primaryDamage ?? sourceBullet.baseDamage) || 0);
+    const damageScale = Math.max(0, Number(sourceBullet.explosionDamageScale) || 0);
+    const damage = primaryDamage * damageScale;
+    if (damage <= 0 || !targets.length) {
+      this.scene.runTelemetry?.recordExplosion?.({ hits: 0 });
+      projectileSystem?.spawnImpactExplosionFx?.(originX, originY, sourceBullet.explosionRadius);
+      return [];
+    }
+
+    const results = [];
+    for (const target of targets) {
+      const explosionProjectile = {
+        active: true,
+        damage,
+        primaryDamage: damage,
+        baseDamage: damage,
+        projectileKind: 'explosion',
+        projectilePath: 'explosion',
+        isSecondaryProjectile: true,
+        isCritical: false,
+        pierceRemaining: 0,
+        ricochetRemaining: 0,
+        shrapnelCount: 0,
+        explosiveRivetArmed: false,
+        explosionTriggered: true,
+        hitEnemies: new Set(),
+        x: originX,
+        y: originY,
+        body: { velocity: { x: 0, y: 0 } },
+        destroy() { this.active = false; }
+      };
+      const result = this.enemy.hitByProjectile(explosionProjectile, target);
+      if (result) results.push(result);
+    }
+    this.scene.runTelemetry?.recordExplosion?.({ hits: results.length });
+    projectileSystem?.spawnImpactExplosionFx?.(originX, originY, sourceBullet.explosionRadius);
+    return results;
+  }
+
   hitEnemyByProjectile(bullet, enemy) {
     const hadPierce = Math.max(0, Math.floor(Number(bullet?.pierceRemaining) || 0)) > 0;
     const shrapnelCount = bullet?.isSecondaryProjectile || bullet?.shrapnelTriggered
@@ -66,6 +117,9 @@ export class CombatSystem {
     } : null;
 
     const result = this.enemy.hitByProjectile(bullet, enemy);
+    if (result && bullet?.explosiveRivetArmed && !bullet?.explosionTriggered && !bullet?.isSecondaryProjectile) {
+      this.applyExplosiveRivetImpact(bullet, enemy);
+    }
     if (result && hadPierce && bullet?.active) {
       const primaryDamage = Math.max(0, Number(bullet.primaryDamage ?? bullet.damage) || 0);
       const pierceDamageScale = Number(bullet.pierceDamageScale);
