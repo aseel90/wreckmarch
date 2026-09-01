@@ -186,10 +186,10 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 7 | Ricochet interaction limits | ✅ COMPLETE / PROD VALIDATED | Random eligible targeting + reduced bounce damage passed RUN-0026 |
 | 8 | Shrapnel Impact interaction limits | ✅ COMPLETE / PROD VALIDATED — MONITOR | PB1 rules passed RUN-0026; monitor high fragment volume before any future coefficient change |
 | 9 | Explosive Rivet design + integration | ✅ COMPLETE / PROD D1 VALIDATED | Canonical implementation + live card-pool fix are production-validated; real D1 report `wm-d70dd11a-888a-495c-a1f6-fd9052317a24` acquired Explosive Rivet and recorded bounded non-zero Explosion telemetry with healthy PB1/mobile-pressure signals |
-| 10 | Triple Riveter / advanced multishot | ⚪ READY FOR DESIGN | PB1 gate is clear; keep it separate after Twin and enforce volley damage + projectile ceilings |
-| 11 | Canonical requirements / prerequisite resolver | ⚪ PENDING | Runtime must actually enforce prerequisites such as Twin → Triple rather than relying on metadata/hardcode |
-| 12 | Weapon/character card compatibility filtering | ⚪ PENDING | Filter only technically invalid/incompatible cards. Do **not** curate rolls around the player's current build or guarantee useful/synergistic choices |
-| 13 | Canonical Weapon Registry / signature-weapon resolution | ⚪ PENDING | Clean deterministic weapon ownership for Runner, Shotgun and future characters |
+| 10 | Triple Riveter / advanced multishot | 🟡 IMPLEMENTED / GAMEPLAY VALIDATION PENDING | Implemented in PR #188 / main `501f5f3387f90667636bd096e3a884fee17385be`: Twin L2 prerequisite, 3-projectile 1.60x total volley budget, center-only Explosive Rivet arming and full CI/Production deploy passed. Manual Production play did not naturally roll Triple yet, so this workstream stays open only for a future natural Twin L2 → Triple gameplay/D1 validation run. |
+| 11 | Canonical requirements / prerequisite resolver | ✅ COMPLETE / CI + PROD DEPLOYED | PR #188 added shared `upgrade-requirements.js`; availability and direct application both enforce canonical requirements, including Twin L2 → Triple, with deterministic regression coverage and Production deployment. |
+| 12 | Weapon/character card compatibility filtering | ✅ COMPLETE / CI + PROD DEPLOYED | PR #190 / main `25e28a9931f86ce2373b70793e617608483e2af0` added canonical character/weapon compatibility metadata + resolver. It filters only explicit technical mismatches; valid weak/off-build choices remain allowed. Quality/Smoke/all Chromium shards/E2E and exact-SHA Production verification passed. |
+| 13 | Canonical Weapon Registry / signature-weapon resolution | 🟢 NEXT | Clean deterministic weapon ownership for Runner, Shotgun and future characters; remove ad-hoc `startingWeaponId`/runtime weapon identity fallbacks before adding the Shotgun character. |
 | 14 | Shotgun Character combat identity | ⚪ PENDING | Define short-range burst/coverage, spread, risk and volley budget without making it Runner-with-more-projectiles |
 | 15 | Enemy role/range matchup safety | ⚪ PENDING BASELINE | Verify Rat/Hound/Sawbug remain meaningful against both long-range and future short-range characters |
 | 16 | Wave/difficulty scaling vs player power | ⚪ PENDING BASELINE | Rebalance pressure after player multipliers are corrected; do not hide power creep by blindly inflating HP |
@@ -262,6 +262,14 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 - [x] Validate cadence remains bounded with fire-rate/multishot interactions. — **Status:** ✅ PASS — Overclock L2 was already active before Explosive Rivet, Twin Riveter was acquired later, yet 12 explosions across the **62.745 s** post-acquisition window is approximately **one explosion every 5.23 s**, consistent with the L1 5 s arm cadence plus waiting for the next valid shot rather than fire-rate multiplication.
 - [x] Mark Workstream 9 **DONE** after deterministic interaction coverage + CI/Smoke/Live Chromium + real production D1 telemetry all pass. — **Status:** ✅ DONE
 
+
+### Workstream 10–12 status checkpoint — 2026-09-02
+
+- **WS10 Triple Riveter:** implementation is live; keep OPEN only for natural Production gameplay/D1 validation after Twin Riveter L2. Do not force, guarantee or bias the card into a roll just to close the gate.
+- **WS11 Prerequisites:** DONE. Shared requirement resolution owns offer eligibility and direct-application rejection; Twin L2 → Triple is the first production consumer.
+- **WS12 Compatibility:** DONE. Shared compatibility resolution filters explicit character/weapon impossibilities only. It is intentionally **not** a recommendation/synergy engine.
+- **Next:** WS13 Canonical Weapon Registry / signature-weapon resolution.
+
 ### Card-pool philosophy approved for Workstream 12
 
 The upgrade system must **not** behave like a recommendation engine for the player's current build.
@@ -309,9 +317,9 @@ Survivability is now a formal build axis alongside single-target damage, crowd c
 
 ## Execution rule
 
-- Workstreams **1–9 are now complete / production-validated** under PB1. Workstream **9 — Explosive Rivet design + integration** passed deterministic interaction coverage, full CI/Smoke/Live Chromium and real production D1 Explosion telemetry; Workstream **10 — Triple Riveter / advanced multishot** is now the next design workstream unless a newly observed regression requires reopening a completed gate.
+- Workstreams **1–9, 11 and 12 are complete** under their required gates. Workstream **10 — Triple Riveter / advanced multishot** is implemented and deployed but remains intentionally open for one natural Twin L2 → Triple Production/D1 gameplay validation run; failure to roll it naturally is not treated as a defect and does not block later work. **Workstream 13 — Canonical Weapon Registry / signature-weapon resolution is the next active workstream** unless a newly observed regression requires reopening a completed gate.
 - The original baseline is frozen as pre-change evidence. New reports are compared against it; they do not replace it.
 - Heavy/Overclock/Twin/Pierce/Ricochet/Shrapnel values are frozen after green regression coverage plus RUN-0026 production validation; do not rebalance them again from a single noisy run.
 - Critical Rivet remains an observation item for later rarity/build-diversity work. RUN-0026 reached Critical Rivet 3 without producing a clear standalone reason to change it immediately.
-- Explosive Rivet and Triple Riveter are **no longer blocked by PB1 revalidation**, but each remains a separate workstream with its own prerequisite, interaction and performance gates.
+- Explosive Rivet is complete. Triple Riveter is implemented/deployed and no longer blocked by PB1, but Workstream 10 remains open only for its missing natural gameplay/D1 validation evidence.
 - The 23 workstreams are resolved one by one; a workstream becomes `[x]`/DONE only after implementation, automated tests and the required gameplay/production verification pass.
