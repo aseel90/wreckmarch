@@ -1,4 +1,5 @@
 /* WRECKMARCH — authoritative Fortress Rig runtime owner */
+import { FORTRESS_RIG_COMBAT_PROFILE } from './fortress-rig-profile.js?v=1';
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -86,9 +87,9 @@ export class RigSystem {
     const scene = this.scene;
     if (scene.rigSummoned || !scene.cart || !scene.hero) return false;
     scene.rigSummoned = true;
-    scene.rigFireDelay = 920;
-    scene.rigDamageScale = .58;
-    scene.rigShots = 1;
+    scene.rigFireDelay = FORTRESS_RIG_COMBAT_PROFILE.fireDelayMs;
+    scene.rigDamage = FORTRESS_RIG_COMBAT_PROFILE.projectileDamage;
+    scene.rigShots = FORTRESS_RIG_COMBAT_PROFILE.projectileCount;
     scene.lastRigShot = 0;
     scene.cart.setVisible(true).setActive(true).setAlpha(0).setScale(.92);
     scene.cart.setPosition(scene.hero.x - 145, scene.hero.y + 105);
@@ -187,7 +188,7 @@ export class RigSystem {
       this.spawnDust?.(state, speed);
     }
 
-    const target = scene.weaponSystem?.acquireTarget?.(scene.cart.x, scene.cart.y, 560);
+    const target = scene.weaponSystem?.acquireTarget?.(scene.cart.x, scene.cart.y, FORTRESS_RIG_COMBAT_PROFILE.targetRange);
     if (!target || !scene.__c3Turret) return true;
 
     const originX = scene.cart.x + 20;
@@ -206,11 +207,11 @@ export class RigSystem {
       originY,
       angle: worldAngle,
       spreads: scene.rigShots > 1 ? [-.055, .055] : [0],
-      muzzleDistance: 61,
-      speed: 680,
-      damage: scene.primaryWeapon.damage * scene.rigDamageScale,
-      lifeMs: 1100,
-      scale: .66
+      muzzleDistance: FORTRESS_RIG_COMBAT_PROFILE.muzzleDistance,
+      speed: FORTRESS_RIG_COMBAT_PROFILE.projectileSpeed,
+      damage: scene.rigDamage,
+      lifeMs: FORTRESS_RIG_COMBAT_PROFILE.projectileLifeMs,
+      scale: FORTRESS_RIG_COMBAT_PROFILE.projectileScale
     });
     scene.playTone?.(118, .035, 'square', .012, -22);
     return true;
