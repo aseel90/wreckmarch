@@ -1,8 +1,8 @@
 # Workstream 14-B — Shotgun Numeric Decision Gate
 
-Status: DECISION REQUIRED — NO NUMERIC VALUES APPROVED
+Status: CANDIDATE A1 IMPLEMENTED ON BRANCH — EXPLICIT NUMERIC APPROVAL REQUIRED BEFORE MERGE
 
-This document prepares the next implementation step without choosing or implying unapproved balance numbers. WS14-A is already merged and provides the canonical intrinsic `fireProfile` architecture. WS14-B must not change gameplay until the Shotgun numeric identity is explicitly approved.
+WS14-A is already merged and provides the canonical intrinsic `fireProfile` architecture. The player selected **Option A — Deliberate close-range burst**. Candidate package **A1** is now implemented on a review branch with deterministic coverage, but the exact five numeric values remain a merge gate until explicitly approved. No Shotgun character is wired into live gameplay by this candidate branch.
 
 ## 1. Current verified foundation
 
@@ -11,17 +11,17 @@ This document prepares the next implementation step without choosing or implying
 - Runner remains the regression reference: one intrinsic projectile, zero intrinsic spread, `1.0x` intrinsic volley multiplier.
 - PR #199 / main `0a5f273f5d9a7d3fad035245d11e749c6833787a` records WS14-A complete and WS14-B blocked on an explicit numeric decision.
 
-## 2. Decisions that must be approved before implementation
+## 2. Candidate A1 values awaiting explicit merge approval
 
-All five fields below are intentionally blank. Do not infer values from examples, other games, Twin/Triple Riveter, or temporary test data.
+The five values below are one coherent Option-A package. They are implemented only on the review branch so deterministic checks can validate the package before it is accepted into `main`.
 
-| Decision | Approved value | Design question |
+| Decision | Candidate A1 value | Rationale |
 | --- | --- | --- |
-| Pellet count | **UNSET** | How many intrinsic projectiles belong to one Shotgun trigger? |
-| Spread angle | **UNSET** | What intrinsic cone makes positioning matter without making close-range hits unreadable? |
-| Cadence | **UNSET** | What trigger interval creates deliberate burst rather than Runner-like sustained fire? |
-| Effective range | **UNSET** | At what distance should the Shotgun lose practical effectiveness and force higher positioning risk? |
-| Total volley multiplier | **UNSET** | How much total single-target power may one full close-range volley deliver before its per-pellet redistribution? |
+| Pellet count | **A1 candidate: 5** | Five pellets gives frontal coverage while staying well below the mobile spawn ceiling. |
+| Spread angle | **A1 candidate: ±0.24 rad** (**~27.5° full cone**) | Compact enough for readable close-range concentration while making positioning matter. |
+| Cadence | **A1 candidate: 720 ms** | Clearly slower than Runner's 390 ms rhythm and reads as deliberate burst. |
+| Effective range | **A1 candidate: 330** | ~58% of Runner's 570 range, enforcing materially higher positioning risk. |
+| Total volley multiplier | **A1 candidate: 1.75x** | 42 damage per full base volley, redistributed to 8.4 damage per pellet at the 24 base reference. |
 
 ## 3. Approved identity constraints that narrow the decision
 
@@ -49,7 +49,7 @@ These are constraints already present in the Combat & Build Balance foundation; 
 
 The final numeric values should be chosen as one coherent package, not independently. The acceptable design directions are:
 
-### Option A — Deliberate close-range burst
+### Option A — Deliberate close-range burst — **SELECTED**
 
 Prioritize a clearly separated firing rhythm, meaningful close-range commitment and a compact readable cone. The cost of burst must be obvious in cadence and range.
 
@@ -61,11 +61,21 @@ Prioritize hitting multiple nearby enemies across a broader cone. If coverage ri
 
 Prioritize accurate close-range concentration with less crowd coverage. If concentrated single-target value rises, range/safety/cadence must preserve the positioning-risk identity.
 
-No option is selected by this document.
+Option A is selected. Candidate A1 intentionally keeps nominal sustained direct DPS slightly below Runner while moving power into close-range burst and coverage.
 
-## 6. Deterministic implementation gate after approval
+## 5.1 Candidate A1 numeric evidence
 
-Once all five numeric fields are explicitly approved, WS14-B implementation must add deterministic coverage before merge:
+- Full base volley: `24 × 1.75 = 42` damage when all five pellets connect.
+- Per-pellet base damage budget: `42 / 5 = 8.4` (`0.35x` of the base projectile).
+- Nominal direct DPS: `42 / 0.720 = 58.33`, versus frozen Runner `24 / 0.390 = 61.54`.
+- Base pellet spawn rate: `5 / 0.720 = 6.94 spawns/s`.
+- At the existing `1.60x` max Common Overclock reference: `720 / 1.60 = 450 ms`, or `11.11 pellet spawns/s`, below the sustained mobile ceiling of `20`.
+- A conservative one-second max-Overclock burst is `ceil(1000 / 450) × 5 = 15` pellets, below the one-second burst ceiling of `40`.
+- This candidate changes no Runner numeric value and does not make the Shotgun selectable/live yet.
+
+## 6. Deterministic candidate gate before merge
+
+Candidate A1 must carry deterministic coverage for all items below before it can be considered merge-ready:
 
 1. **Volley geometry test** — exact projectile count and symmetric spread are deterministic for the approved profile.
 2. **Volley budget test** — per-projectile damage redistribution resolves to the approved total volley multiplier.
@@ -89,4 +99,4 @@ A future numeric implementation is not DONE until all required gates pass on the
 
 ## 8. Stop rule
 
-Until pellet count, spread angle, cadence, effective range and total volley multiplier are explicitly approved, do not add a Shotgun weapon definition with guessed numbers, do not alter Runner/Twin/Triple values as a proxy, and do not mark WS14 complete.
+Until pellet count, spread angle, cadence, effective range and total volley multiplier are explicitly approved, Candidate A1 must remain off `main`/unwired from live gameplay. Do not alter Runner/Twin/Triple values as a proxy, and do not mark WS14 complete.

@@ -40,7 +40,12 @@ describe('canonical upgrade compatibility filtering', () => {
 
     expect(canApplyRegisteredUpgrade(scene, 'twin-riveter')).toBe(false);
     expect(canApplyRegisteredUpgrade(scene, 'explosive-rivet')).toBe(false);
+    expect(canApplyRegisteredUpgrade(scene, 'triple-riveter')).toBe(false);
     expect(canApplyRegisteredUpgrade(scene, 'heavy-rivets')).toBe(true);
+    expect(canApplyRegisteredUpgrade(scene, 'overclock')).toBe(true);
+    expect(canApplyRegisteredUpgrade(scene, 'piercing-rivets')).toBe(true);
+    expect(canApplyRegisteredUpgrade(scene, 'ricochet')).toBe(true);
+    expect(canApplyRegisteredUpgrade(scene, 'shrapnel-impact')).toBe(true);
     expect(() => applyRegisteredUpgrade(scene, 'twin-riveter')).toThrow(/twin-riveter incompatible: weapon shotgun/);
 
     const choices = [
