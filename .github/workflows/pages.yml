@@ -418,7 +418,7 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" -o wm-live-mobile-hud.js
           curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=24" -o wm-live-enemy-system.js
           curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=6" -o wm-live-phase-b.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=22" -o wm-live-phase-c.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=23" -o wm-live-phase-c.js
           curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=18" -o wm-live-phase-c1.js
           curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=27" -o wm-live-phase-d1.js
           curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=10" -o wm-live-character-system.js
@@ -428,7 +428,7 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-card-art.js?v=7" -o wm-live-upgrade-card-art.js
           curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
           grep -F "./src/phase-b-runtime.js?v=6" wm-live-index.html
-          grep -F "./src/phase-c-runtime.js?v=22" wm-live-index.html
+          grep -F "./src/phase-c-runtime.js?v=23" wm-live-index.html
           grep -F "./src/phase-c1-runtime.js?v=18" wm-live-index.html
           grep -F "./src/phase-d1-runtime.js?v=27" wm-live-index.html
           grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-b.js
