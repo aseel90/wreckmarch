@@ -420,6 +420,14 @@ export class EnemyCombatSystem {
       scrap.setBounce(.4);
     }
 
+    if (elite) {
+      try {
+        this.scene.onEliteKilled?.({ enemy, enemyId, x, y });
+      } catch (error) {
+        globalThis.__WM_LOG__?.(`Elite reward hook failed: ${error?.message || error}`);
+      }
+    }
+
     return { dropCount, elite, x, y };
   }
 }
