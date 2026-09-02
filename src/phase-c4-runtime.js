@@ -1,7 +1,7 @@
 /* WRECKMARCH Phase C.4 — permanent weapon sockets + spring Rig follow + PNG terrain */
 import { C4_GROUND, C4_ROAD } from './c4-assets.js?v=1';
 import { buildTerrainLayer } from './world/terrain-system.js?v=1';
-import { RigSystem } from './rig/rig-system.js';
+import { RigSystem } from './rig/rig-system.js?v=2';
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const WORLD_W = 2200, WORLD_H = 2200;
