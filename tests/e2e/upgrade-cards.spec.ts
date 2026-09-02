@@ -32,6 +32,8 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
       glowAlpha: card.glow?.alpha,
       outerStrokeWidth: card.style?.outerStrokeWidth,
       hierarchyVersion: card.hierarchyVersion,
+      levelLabel: card.footer?.text || '',
+      levelPresentation: card.levelPresentation || null,
       artBackgroundWidth: card.artBackground?.width || 0,
       artBackgroundHeight: card.artBackground?.height || 0
     }));
@@ -57,7 +59,7 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
   expect(result.artSource).toBe('c3-atlas-icons');
   expect(result.premiumCards).toBe(true);
   expect(result.customArtReady).toBe(true);
-  expect(result.presentationVersion).toBe('u5-frame-hierarchy-v1');
+  expect(result.presentationVersion).toBe('u5-level-max-v2');
   expect(result.visualHierarchy).toEqual(['ART', 'NAME', 'RARITY', 'LEVEL', 'DESCRIPTION']);
   expect(new Set(result.rarityStyles)).toEqual(new Set(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']));
   expect(result.cards.map((card: any) => card.rarity)).toEqual(result.choiceRarities);
@@ -85,7 +87,11 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
     expect(card.frameColor).toBeGreaterThan(0);
     expect(card.outerStrokeWidth).toBeGreaterThanOrEqual(2);
     expect(card.outerStrokeWidth).toBeLessThanOrEqual(4);
-    expect(card.hierarchyVersion).toBe('u5-frame-hierarchy-v1');
+    expect(card.hierarchyVersion).toBe('u5-level-max-v2');
+    expect(card.levelPresentation?.currentLevel).toBe(0);
+    expect(card.levelPresentation?.nextLevel).toBe(1);
+    expect(card.levelPresentation?.maxLevel).toBeGreaterThanOrEqual(1);
+    expect(card.levelLabel).toContain(`LV 1 / ${card.levelPresentation.maxLevel}`);
     expect(card.artBackgroundWidth).toBeGreaterThan(180);
     expect(card.artBackgroundHeight).toBeGreaterThan(100);
   }
