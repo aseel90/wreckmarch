@@ -1,6 +1,6 @@
 # Workstream 20 — Build Identities + Anti-Mandatory-Card Validation
 
-Status: 🟡 ACTIVE / ONE-CARD ATTRIBUTION IMPLEMENTATION
+Status: 🟡 ACTIVE / PRODUCTION EVIDENCE 1 OF 3 CONFIRMED
 
 ## Goal
 
@@ -24,10 +24,6 @@ These are validation candidates, not promised final meta builds:
 
 No candidate is allowed to become the definition of a recommended build in the offer system. Cards remain valid/off-build choices unless mechanically incompatible.
 
-## Deterministic delivery rule
-
-The three candidate snapshots live in the existing canonical deterministic balance scenario suite. This is measurement-only code: it must not add a new runtime owner, change offer weighting, force a card into the player pool, or modify live card/enemy/wave numbers.
-
 ## One-card attribution rule
 
 WS20 measures direct-power concentration with a canonical leave-one-card-out replay:
@@ -35,21 +31,56 @@ WS20 measures direct-power concentration with a canonical leave-one-card-out rep
 `share = max(0, fullDirectDps - directDpsWithoutCard) / fullDirectDps`
 
 - The PB1 ceiling is **0.35**.
-- This denominator is the final direct-power budget, matching `POWER_BUDGET.buildDiversity.maxSingleCardShareOfFinalDirectPowerBudget`; it is not the gain-above-baseline denominator.
-- Pure crowd/utility/survivability cards can correctly report `0` on this **direct-power** axis. Their value is not treated as zero overall: Production telemetry / secondary-damage / survivability evidence owns those axes.
-- Candidate-level changes made to satisfy this gate do not alter live card definitions or offer weights.
+- Heavy/Overclock L5 candidate plans were rejected because they can exceed this budget in multiplicative contexts.
+- Candidate plans use L4 where needed; live card definitions and offer weights were not changed.
+- Pure crowd/utility/survivability cards can correctly report `0` on this **direct-power** axis. Their value is measured on Production secondary/support/survival axes.
+
+## Production classifier
+
+`src/balance/ws20-production-classifier.js` classifies natural Production reports without requiring an exact candidate card list.
+
+A report is accepted only when:
+
+- it reaches **Wave 8+**;
+- direct-power concentration stays at or below **35%**;
+- it has exactly one qualifying archetype identity (hybrids are not double-counted);
+- offensive identities have projectile-path telemetry rather than being inferred from card names alone.
+
+Identity signals:
+
+- **Scalar / Precision:** at least 3 scalar cards, no more than one crowd card, and primary damage share >= 80%.
+- **Crowd / Chain:** at least 2 crowd cards and secondary path share >= 15%.
+- **Survival / Support:** at least 2 survival/support cards and at least 2 observed signals among max-HP gain, mobility gain, healing, shield prevention, and >=5% support damage.
+
+## Historical Production audit
+
+Wave-8+ reports inspected from the D1 -> GitHub bridge:
+
+- **RUN-0039 / issue #185 — ACCEPTED: Crowd / Chain.** Wave 8; secondary path share ~21%; Overclock direct-power share ~34.81%, narrowly under PB1 35%; identity is not Survival/Support.
+- **RUN-0013 / issue #151 — rejected.** Legacy report lacks path attribution and Overclock concentration is ~50.42%, above PB1.
+- **RUN-0021 / issue #156 — rejected.** Crowd/support hybrid and Overclock concentration is ~36.55%, above PB1; it also predates current independent Rig ownership.
+- **RUN-0026 / issue #165 — rejected.** Wave 10 but crowd/survival hybrid and Overclock concentration is ~44.20%, above PB1; one hybrid may not fill two archetype gates.
+
+Current Production evidence: **1 / 3 archetypes confirmed**.
+
+Remaining evidence needed:
+
+1. One natural **Scalar / Precision** run reaching Wave 8+ while passing the 35% concentration gate.
+2. One natural **Survival / Support** run reaching Wave 8+ while passing the 35% gate and showing real survivability/support telemetry.
+
+The runs do not need the exact deterministic candidate card list; the classifier accepts natural variations that preserve the identity.
 
 ## Closure rules
 
-- [ ] Deterministic snapshots exist for all three candidates.
-- [ ] Candidate signatures are mechanically distinct.
-- [ ] No upgrade ID is present in all three candidates.
-- [ ] Scalar candidate remains inside PB1 late direct-power ceiling.
-- [ ] Crowd candidate demonstrates bounded secondary mechanics without recursive full-strength chains.
-- [ ] Survival/support candidate demonstrates real non-DPS budget ownership rather than disguising hero damage as support damage.
-- [ ] One-card direct-power attribution is measured against the PB1 35% rule.
-- [ ] At least three distinct archetypes have real Production evidence reaching Wave 8 or equivalent accepted gate.
-- [ ] Quality / Smoke / Chromium shards / aggregate E2E green on the final WS20 implementation head.
+- [x] Deterministic snapshots exist for all three candidates.
+- [x] Candidate signatures are mechanically distinct.
+- [x] No upgrade ID is present in all three candidates.
+- [x] Scalar candidate remains inside PB1 late direct-power ceiling.
+- [x] Crowd candidate demonstrates bounded secondary mechanics without recursive full-strength chains.
+- [x] Survival/support candidate demonstrates real non-DPS budget ownership rather than disguising hero damage as support damage.
+- [x] One-card direct-power attribution is measured against the PB1 35% rule.
+- [ ] At least three distinct archetypes have real Production evidence reaching Wave 8 or equivalent accepted gate. **Current: 1/3.**
+- [ ] Quality / Smoke / Chromium shards / aggregate E2E green on the final WS20 Production-classifier head.
 - [ ] Exact-SHA Production verification green if live runtime paths change.
 
-Until the Production viability requirement is satisfied, WS20 remains open even if deterministic tests are green.
+Until the Production viability requirement is satisfied, WS20 remains open.
