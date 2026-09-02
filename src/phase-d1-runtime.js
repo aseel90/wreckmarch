@@ -2,6 +2,8 @@
 import { CharacterSystem } from './characters/character-system.js?v=10';
 import { loadRunnerLocomotionArt } from './characters/runner-locomotion-art.js?v=4';
 import { installUpgradeCardPresentation } from './upgrades/upgrade-card-presentation.js?v=1';
+// Live Pages keeps this direct dependency sentinel while U5 presentation ownership migrates out of D1.
+import './upgrades/upgrade-card-art.js?v=7';
 const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const CARD_IDS=['heavy-rivets','overclock','long-barrel','twin-riveter','fleet-feet','scrap-magnet','armor-plate','call-rig','rig-overdrive','twin-cannon'];
@@ -97,4 +99,4 @@ function selfTest(s){if(new URLSearchParams(location.search).get('autotest')!=='
   const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');window.__WM_D1_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchD1SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`D1 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase D.1 self-test failed: '+detail)
 }
 
-export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installVehicleScale(s);installUpgradeCardPresentation(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: Hunter Runner + integrated compact weapon + dynamic canonical rarity cards + visible asphalt + real vehicle scale');selfTest(s);return true}
+export async function applyPhaseD1(){const s=await getScene();await loadRunnerLocomotionArt(s);installRunnerAndMechanicalArm(s);installVehicleScale(s);installUpgradeCardPresentation(s);window.__WM_PHASE_D1__=true;document.documentElement.dataset.wreckmarchPhaseD1='active';window.__WM_LOG__?.('Phase D.1 active: Hunter runner + mechanical-arm rebuild + canonical U5 card presentation + visible asphalt + real vehicle scale');selfTest(s);return true}
