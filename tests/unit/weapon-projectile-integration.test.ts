@@ -74,21 +74,24 @@ describe('Weapon / Projectile ownership integration', () => {
     expect(d1).toContain("bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx))");
   });
 
-  it('keeps Explosive Rivet in every live HERO upgrade pool owner', () => {
+  it('keeps Explosive Rivet in the canonical active upgrade offer pool', () => {
     const phaseC = read('src/phase-c-runtime.js');
     const phaseC1 = read('src/phase-c1-runtime.js');
-    const registration = "createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })";
-    expect(phaseC).toContain(registration);
-    expect(phaseC1).toContain(registration);
+    const offerPool = read('src/upgrades/upgrade-offer-pool.js');
+    expect(offerPool).toContain("offer('explosive-rivet', 'HERO'");
+    expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(phaseC1).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(phaseC).not.toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet'");
+    expect(phaseC1).not.toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet'");
     expect(phaseC1).toContain('rollUpgradeChoices(c1UpgradePool(this), { count: 3 })');
   });
 
-  it('keeps Triple Riveter in every live upgrade pool owner behind canonical requirements', () => {
+  it('keeps Triple Riveter in the canonical advanced pool behind canonical requirements', () => {
     const phaseC = read('src/phase-c-runtime.js');
     const phaseC1 = read('src/phase-c1-runtime.js');
-    const registration = "createRegisteredUpgradeChoice(scene, 'triple-riveter', { category: 'EVOLUTION' })";
-    expect(phaseC).toContain(registration);
-    expect(phaseC1).toContain(registration);
+    const offerPool = read('src/upgrades/upgrade-offer-pool.js');
+    expect(offerPool).toContain("offer('triple-riveter', 'EVOLUTION'");
+    expect(offerPool).toContain('UPGRADE_OFFER_POOL_GROUPS.HUNTER_ADVANCED');
     expect(phaseC).not.toContain("upgradeLevels?.['twin-riveter'] >= 2");
     expect(phaseC1).not.toContain("upgradeLevels?.['twin-riveter'] >= 2");
   });
@@ -103,8 +106,8 @@ describe('Weapon / Projectile ownership integration', () => {
   it('cache-busts the U4 projectile-upgrade live owners from the boot graph', () => {
     const html = read('index.html');
     expect(html).toContain("./src/enemies/enemy-system.js?v=28");
-    expect(html).toContain("./src/phase-c-runtime.js?v=23");
-    expect(html).toContain("./src/phase-c1-runtime.js?v=18");
+    expect(html).toContain("./src/phase-c-runtime.js?v=24");
+    expect(html).toContain("./src/phase-c1-runtime.js?v=19");
     expect(html).toContain("./src/phase-d1-runtime.js?v=27");
   });
 });

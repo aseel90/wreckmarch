@@ -556,7 +556,7 @@ Exact names, values, rarities and requirements require balance passes.
 
 > **Protected approved card concepts:** Piercing Rivets, Ricochet, Shrapnel Impact, Critical Rivet, Explosive Rivet and Triple Riveter must remain in this roadmap until implemented, explicitly deferred, or explicitly removed with user approval under the Roadmap integrity guard.
 
-- [ ] Finalize initial 10–12 card pool. — **Status:** ⚪ NOT STARTED
+- [x] Finalize initial 10–12 card pool. — **Status:** ✅ DONE — U4 locks a 12-card Hunter core: Heavy Rivets, Overclock, Long Barrel, Twin Riveter, Piercing Rivets, Ricochet, Shrapnel Impact, Critical Rivet, Explosive Rivet, Fleet Feet, Scrap Magnet and Armor Plate. Triple Riveter remains a prerequisite-based advanced unlock; Field Repair + Impact Shield remain survivability auxiliary choices; Call the Rig remains a companion auxiliary choice. `src/upgrades/upgrade-offer-pool.js` is the single offer-pool owner and preserves the existing active choice ordering/weights so normal RNG is not steered.
 - [x] Implement first new mechanical card. — **Status:** ✅ DONE — Piercing Rivets, PR #105 / `0b33898e66d0f9932330cd0cb53c7651596076e8`
 - [x] Implement Piercing Rivets. — **Status:** ✅ DONE — canonical weapon `pierceCount` + live projectile chain + dedicated card art; production exact-SHA verification passed
 - [x] Implement Ricochet. — **Status:** ✅ DONE — PR #109 / `6b499451bb5ff7fc29f184180d420db96fef88c6`; canonical ricochet behavior + dedicated card art; production exact-SHA verification passed
@@ -973,7 +973,7 @@ When Upgrade System 2.0 replaces old ownership:
 
 ## 22.1. Current verified core status
 
-The **architecture/core migration** is complete, but the **full Upgrade System 2.0 roadmap is not complete** because U4 pool finalization, U5 card visual/readability work, U6 player-facing build panel work, and the remaining U7 live-run/rarity/DPS final gates remain open.
+The **architecture/core migration** and U4 Hunter pool/content foundation are complete, but the **full Upgrade System 2.0 roadmap is not complete** because U5 card visual/readability work, U6 player-facing build panel work, and the remaining U7 live-run/rarity/DPS final gates remain open.
 
 Core verified items include:
 
@@ -1016,13 +1016,13 @@ Latest verified gameplay commit for the core: `89926f8`.
 - [x] Implement tags/scopes/prerequisites. — **Status:** ✅ DONE — canonical requirements landed in PR #188 and explicit character/weapon compatibility filtering in PR #190
 - [x] Preserve elite reward guarantees. — **Status:** ✅ DONE — PR #249 introduced Threat-Budget-aware Elite milestones/WRECK CRATE rewards and PR #251 / `30c1ac5c39e9acd676c47ad386652f1f798671d0` finalized the canonical at-least-one-`RARE+` three-choice guarantee without biasing ordinary offers.
 
-## Phase U4 — New Hunter build cards — **NEXT OPEN CONTENT GATE**
-- [ ] Finalize 10–12-card initial pool. — **Status:** 🟢 NEXT
+## Phase U4 — New Hunter build cards — **✅ COMPLETE / PROTECTED**
+- [x] Finalize 10–12-card initial pool. — **Status:** ✅ DONE — canonical 12-card Hunter core is test-locked in `src/upgrades/upgrade-offer-pool.js`; Triple is classified separately as advanced, survivability/companion choices stay auxiliary, and the live random offer sequence remains unchanged.
 - [x] Add mechanical projectile upgrades incrementally. — **Status:** ✅ DONE — Piercing + Ricochet + Shrapnel + Critical + Explosive + Triple are implemented and Production-validated; WS21/WS22 cover projectile performance and cross-mechanic interaction regression.
 - [x] Add crit only with combat integration/tests. — **Status:** ✅ DONE — Critical Rivet / PR #115 / `3af77d101ba1288ee5b349adecf271594fdea2bc`; exact-SHA production verification passed
 - [x] Verify at least 3 viable build identities. — **Status:** ✅ DONE — WS20 completed 3-of-3 Production archetype validation with an RNG-tolerant classifier and one-card attribution guard.
 
-## Phase U5 — Card visual overhaul
+## Phase U5 — Card visual overhaul — **NEXT ACTIVE PHASE**
 - [ ] Improve frames/art hierarchy. — **Status:** ⚪ NOT STARTED
 - [ ] Add rarity and level presentation. — **Status:** ⚪ NOT STARTED
 - [ ] Add real before→after previews. — **Status:** ⚪ NOT STARTED
