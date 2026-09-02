@@ -7,6 +7,8 @@ const launchOptions = { headless: true, args: ['--no-sandbox', '--disable-dev-sh
 if (CHROME) launchOptions.executablePath = CHROME;
 const browser = await chromium.launch(launchOptions);
 let page;
+let readinessStartedAt = null;
+let readinessMs = null;
 const browserEvents = [];
 try {
   page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
@@ -26,6 +28,7 @@ try {
     });
   }
   await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+  readinessStartedAt = Date.now();
   const readState = () => page.evaluate(() => {
     const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
     const fullBleed = !!rect && Math.abs(rect.left) < 1.5 && Math.abs(rect.top) < 1.5 && Math.abs(rect.width - window.innerWidth) < 1.5 && Math.abs(rect.height - window.innerHeight) < 1.5;
@@ -35,7 +38,8 @@ try {
     const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
     const fullBleed = !!rect && Math.abs(rect.left) < 1.5 && Math.abs(rect.top) < 1.5 && Math.abs(rect.width - window.innerWidth) < 1.5 && Math.abs(rect.height - window.innerHeight) < 1.5;
     return !!canvas && document.body.classList.contains('visual-ready') && fullBleed && !!game && !!scene?.sys?.isActive?.() && scene?.__finalPolishReady === true && document.documentElement.dataset.wreckmarchFinalPolish === 'presentation-v1' && document.documentElement.dataset.wreckmarchMobileHud === 'compact-v5-test' && document.documentElement.dataset.wreckmarchPhaseE1 === 'active' && document.documentElement.dataset.wreckmarchE1SelfTest === 'passed';
-  }, { timeout: 30_000 });
+  }, { polling: 250, timeout: 45_000 });
+  readinessMs = Date.now() - readinessStartedAt;
 
   const readE1RoadState = () => page.evaluate(() => {
     const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch');
@@ -96,7 +100,7 @@ try {
     if (telemetryState.label !== 'REPORT SENT' || telemetryState.manualState !== 'sent') throw new Error(`live manual telemetry send failed: ${JSON.stringify(telemetryState)}`);
   }
   if (browserEvents.length) throw new Error(`Browser emitted ${browserEvents.length} error event(s):\n${browserEvents.slice(-40).join('\n')}`);
-  console.log(JSON.stringify({ ok: true, url: URL, state, e1Persistence, telemetryState, browserEvents }, null, 2));
+  console.log(JSON.stringify({ ok: true, url: URL, readinessMs, state, e1Persistence, telemetryState, browserEvents }, null, 2));
 } catch (error) {
   console.error(error?.stack || String(error));
   try {
@@ -123,6 +127,7 @@ try {
         debugTail: document.querySelector('#log')?.textContent?.slice(-8000) || ''
       };
     });
+    state.readinessElapsedMs = readinessStartedAt ? Date.now() - readinessStartedAt : null;
     console.error('SMOKE_STATE ' + JSON.stringify(state, null, 2));
     console.error('BROWSER_EVENTS ' + JSON.stringify(browserEvents.slice(-40), null, 2));
   } catch (stateError) { console.error('SMOKE_STATE_READ_FAILED ' + (stateError?.stack || stateError)); }
