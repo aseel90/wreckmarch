@@ -1,5 +1,5 @@
 /* WRECKMARCH — live player damage boundary */
-import { DEFAULT_PLAYER_COMBAT_PROFILE, resolvePlayerContactHit } from './player-damage-rules.js?v=2';
+import { DEFAULT_PLAYER_COMBAT_PROFILE, resolvePlayerContactHit } from './player-damage-rules.js?v=3';
 
 export class PlayerDamageSystem {
   /** @param {any} scene */
@@ -27,7 +27,8 @@ export class PlayerDamageSystem {
       enemyX: enemy.x,
       enemyY: enemy.y,
       profile,
-      shieldCharges: scene.heroShieldCharges
+      shieldCharges: scene.heroShieldCharges,
+      armor: scene.runCombatStats?.armor
     });
     if (result.ignored) return result;
 

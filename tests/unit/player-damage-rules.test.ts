@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PLAYER_COMBAT_PROFILE, resolvePlayerContactHit } from '../../src/combat/player-damage-rules.js';
+import { ARMOR_MITIGATION_PROFILE, DEFAULT_PLAYER_COMBAT_PROFILE, resolveArmorMitigation, resolvePlayerContactHit } from '../../src/combat/player-damage-rules.js';
 
 describe('player contact damage rules', () => {
   it('preserves the Runner baseline damage, invulnerability and knockback', () => {
@@ -76,6 +76,65 @@ describe('player contact damage rules', () => {
     expect(result.nextShieldCharges).toBe(0);
     expect(result.nextHp).toBe(55);
     expect(result.killed).toBe(false);
+  });
+
+  it('defines bounded diminishing-returns armor semantics without changing the zero-armor Runner baseline', () => {
+    expect(ARMOR_MITIGATION_PROFILE).toEqual({ ratingScale: 100, maxMitigationFraction: .5 });
+    expect(Object.isFrozen(ARMOR_MITIGATION_PROFILE)).toBe(true);
+    expect(resolveArmorMitigation(0)).toBe(0);
+    expect(resolveArmorMitigation(-50)).toBe(0);
+    expect(resolveArmorMitigation(25)).toBeCloseTo(.2, 8);
+    expect(resolveArmorMitigation(50)).toBeCloseTo(1 / 3, 8);
+    expect(resolveArmorMitigation(100)).toBe(.5);
+    expect(resolveArmorMitigation(9999)).toBe(.5);
+  });
+
+  it('applies armor after the character incoming-damage multiplier and before shield absorption', () => {
+    const armored = resolvePlayerContactHit({
+      currentHp: 100,
+      shieldCharges: 0,
+      armor: 25,
+      lastHitAt: 0,
+      now: 1000,
+      enemyDamage: 20,
+      heroX: 0,
+      heroY: 0,
+      enemyX: -10,
+      enemyY: 0,
+      profile: { ...DEFAULT_PLAYER_COMBAT_PROFILE, incomingDamageMultiplier: .5 }
+    });
+
+    expect(armored).toMatchObject({
+      preArmorDamage: 10,
+      armorMitigationFraction: .2,
+      armorPreventedDamage: 2,
+      appliedDamage: 8,
+      nextHp: 92
+    });
+
+    const shielded = resolvePlayerContactHit({
+      currentHp: 100,
+      shieldCharges: 1,
+      armor: 25,
+      lastHitAt: 0,
+      now: 1000,
+      enemyDamage: 20,
+      heroX: 0,
+      heroY: 0,
+      enemyX: -10,
+      enemyY: 0,
+      profile: DEFAULT_PLAYER_COMBAT_PROFILE
+    });
+
+    expect(shielded).toMatchObject({
+      preArmorDamage: 20,
+      armorMitigationFraction: .2,
+      armorPreventedDamage: 4,
+      preventedDamage: 16,
+      appliedDamage: 0,
+      nextShieldCharges: 0,
+      nextHp: 100
+    });
   });
 
   it('reports lethal contact without allowing negative HP', () => {

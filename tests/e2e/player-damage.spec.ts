@@ -100,3 +100,43 @@ test('routes live hero contact through PlayerDamageSystem and preserves Runner i
   expect(firstHit.repeatHp).toBe(90);
   expect(firstHit.immediateRepeat).toMatchObject({ ignored: true, appliedDamage: 0, nextHp: 90 });
 });
+
+test('applies canonical Armor from live runCombatStats before HP loss', async ({ page }) => {
+  await page.goto('/?debug=1&autotest=1');
+  await expect.poll(
+    () => page.evaluate(() => document.body.classList.contains('visual-ready')),
+    { timeout: 20_000 }
+  ).toBe(true);
+
+  const snapshot = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
+    scene.spawnEvent.paused = true;
+    scene.enemies.clear(true, true);
+    scene.heroHp = 100;
+    scene.heroShieldCharges = 0;
+    scene.lastHeroHit = -99999;
+    scene.runCombatStats = Object.freeze({ ...(scene.runCombatStats || {}), armor: 25 });
+
+    const result = scene.playerDamageSystem.hitByContact(scene.hero, {
+      active: true,
+      x: scene.hero.x - 20,
+      y: scene.hero.y,
+      damage: 20,
+      enemyId: 'ws19-armor-probe'
+    });
+
+    return { result, hp: scene.heroHp, armor: scene.runCombatStats.armor };
+  });
+
+  expect(snapshot.armor).toBe(25);
+  expect(snapshot.hp).toBe(84);
+  expect(snapshot.result).toMatchObject({
+    preArmorDamage: 20,
+    armorMitigationFraction: .2,
+    armorPreventedDamage: 4,
+    appliedDamage: 16,
+    nextHp: 84,
+    shieldAbsorbed: false
+  });
+});
