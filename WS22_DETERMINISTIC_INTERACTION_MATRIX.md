@@ -19,7 +19,7 @@ Lock the highest-risk combat mechanic combinations with deterministic regression
 ## Invariants
 
 1. Triple Riveter remains exactly three symmetric projectiles sharing the approved 1.60x volley budget.
-2. Chained secondary mechanics use the canonical shared secondary-damage budget and cannot exceed +1.0 added damage budget.
+2. Chained secondary mechanics use the canonical shared secondary-damage budget and cannot exceed +1.50 added damage budget.
 3. Pierce, Ricochet, Shrapnel and Explosion counts remain bounded by their canonical caps.
 4. Explosive Rivet has one projectile owner at most per multi-shot volley; Triple must not create three explosive procs from one cadence event.
 5. The maximum chained package is scaled by the shared budget instead of stacking every standalone mechanic at full value.
