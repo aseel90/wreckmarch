@@ -82,7 +82,8 @@ export function resolveCharacterSignatureWeapon(characterDefinition) {
 }
 
 export function createWeaponRuntimeState(weaponOrId = 'rivet-gun') {
-  const definition = typeof weaponOrId === 'string' ? getWeaponDefinition(weaponOrId) : validateWeaponDefinition(weaponOrId);
+  const weaponId = typeof weaponOrId === 'string' ? weaponOrId : weaponOrId?.id;
+  const definition = getWeaponDefinition(weaponId);
   return {
     id: definition.id,
     ...definition.stats,
