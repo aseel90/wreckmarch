@@ -1,12 +1,12 @@
 # WS15 — Enemy Role / Range Matchup Safety
 
-Status: **RUNNER BASELINE IN IMPLEMENTATION / SHORT-RANGE CHARACTER VALIDATION DEFERRED**
+Status: **WS15-A RUNNER BASELINE COMPLETE / WS15-B SHORT-RANGE CHARACTER VALIDATION DEFERRED**
 
 ## Scope decision
 
 WS15 is split so the deferred Shotgun character does not block the current balance program.
 
-- **WS15-A — Runner baseline (now):** verify Scrap Rat, Rust Hound and Sawbug preserve distinct pressure roles against the current Runner and freeze deterministic regression gates.
+- **WS15-A — Runner baseline — ✅ COMPLETE:** Scrap Rat, Rust Hound and Sawbug preserve distinct pressure roles against the current Runner with deterministic regression gates and canonical enemy-domain ownership.
 - **WS15-B — future short-range matchup:** repeat the range/pressure review after the Shotgun character is actually activated in WS14-E. This is intentionally deferred and does not block WS16.
 
 No new enemy, no HP inflation and no speculative rebalance is approved by opening WS15.
@@ -79,17 +79,28 @@ This evidence does not replace WS15 regression tests, but it is enough to reject
 
 ## Deterministic gates
 
-- [ ] Run Balance contains no copied Hound/Sawbug combat tuning literals; it references canonical definitions.
-- [ ] Hound chase-speed scaling is applied by `hound-pounce`, not Run Director.
-- [ ] Rat remains slower than Runner even under Wave 10 speed scaling and remains the roster backbone by weight.
-- [ ] Hound normal chase remains slower than Runner while committed slide remains faster than max Fleet Feet movement.
-- [ ] Hound telegraph/slide response budget remains readable.
-- [ ] Sawbug retreat/preferred/stationary ranges remain ordered correctly.
-- [ ] Sawbug projectile lifetime can cover its full firing envelope.
-- [ ] Sawbug stationary pressure remains stricter than moving-target pressure.
-- [ ] Existing Rust Hound/Sawbug behavior tests stay green.
-- [ ] Quality + Smoke + Chromium E2E pass on the exact WS15-A head SHA.
-- [ ] Production deploy / live smoke pass on the merged SHA.
+- [x] Run Balance contains no copied Hound/Sawbug combat tuning literals; it references canonical definitions.
+- [x] Hound chase-speed scaling is applied by `hound-pounce`, not Run Director.
+- [x] Rat remains slower than Runner even under Wave 10 speed scaling and remains the roster backbone by weight.
+- [x] Hound normal chase remains slower than Runner while committed slide remains faster than max Fleet Feet movement.
+- [x] Hound telegraph/slide response budget remains readable.
+- [x] Sawbug retreat/preferred/stationary ranges remain ordered correctly.
+- [x] Sawbug projectile lifetime can cover its full firing envelope.
+- [x] Sawbug stationary pressure remains stricter than moving-target pressure.
+- [x] Existing Rust Hound/Sawbug behavior tests stay green.
+- [x] Quality + Smoke + Chromium E2E pass on the exact WS15-A head SHA.
+- [x] Production deploy / live smoke pass on the merged SHA.
+
+## Completion record — 2026-09-02
+
+- PR: **#205 — WS15-A: canonical enemy role ownership and Runner baseline**.
+- Final PR head: `69ec80db3fe0234070344ed69454c748cb296b07`.
+- Merge SHA on `main`: `7de3941f0b56c85cc8c210fca837d932097fc7ad`.
+- Final PR gates: **Quality ✅ / Smoke ✅ / Chromium E2E shard 1 ✅ / shard 2 ✅ / shard 3 ✅ / aggregate E2E ✅**.
+- Production: exact merge SHA passed **GitHub Pages deployment/recovery ✅** and **live verification ✅**.
+- No intentional HP, damage, spawn-weight, wave-pressure or attack-coefficient rebalance was shipped in WS15-A.
+- WS15-B remains **DEFERRED / NOT NOW** until the Shotgun character is activated in WS14-E.
+- **WS16 is unblocked and is the next active balance workstream.**
 
 ## Stop rule
 
