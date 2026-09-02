@@ -1,6 +1,6 @@
 # Workstream 14-B — Shotgun Numeric Decision Gate
 
-Status: A1 NUMERIC PACKAGE APPROVED — WEAPON FOUNDATION MERGE READY
+Status: ✅ COMPLETE — A1 WEAPON FOUNDATION MERGED + PRODUCTION DEPLOYED
 
 WS14-A is already merged and provides the canonical intrinsic `fireProfile` architecture. The player selected **Option A — Deliberate close-range burst** and approved continuing with candidate package **A1**. WS14-B therefore owns the canonical **weapon-only foundation**. No Shotgun character, temporary Runner reskin, character-selection screen or live gameplay activation belongs in this stage.
 
@@ -87,7 +87,7 @@ A1 must carry deterministic coverage for all items below before it can be consid
 
 ## 7. Merge and Production gate
 
-WS14-B is a **weapon foundation**, not the character activation stage. It is DONE when all required gates pass on the final HEAD / merged SHA:
+WS14-B is a **weapon foundation**, not the character activation stage. It is DONE. PR #201 merged to `main` as `b2663805f4f4050278f531fc14b2ec92e283e3d7`; all PR gates passed and exact-SHA GitHub Pages live verification passed. The completed gate required:
 
 - Quality
 - Smoke
@@ -101,4 +101,4 @@ A real Production gameplay/D1 run that uses the Shotgun character is intentional
 
 ## 8. Stage boundary / stop rule
 
-WS14-B may merge the canonical `shotgun` weapon definition and deterministic tests, but it must remain unreachable from the current live character flow. Do not create a temporary Runner-reskin Shotgun, do not patch a character picker into the current runtime, and do not perform runtime cache-bust cascades solely for an unused weapon definition. WS14-C owns dedicated character art/animation; WS14-D owns the extensible start/selection flow; WS14-E owns live activation, cache-busting, character-specific card integration and Production/D1 gameplay validation.
+WS14-B has merged the canonical `shotgun` weapon definition and deterministic tests, and it remains unreachable from the current live character flow. Do not create a temporary Runner-reskin Shotgun, do not patch a character picker into the current runtime, and do not perform runtime cache-bust cascades solely for an unused weapon definition. WS14-C owns dedicated character art/animation; WS14-D owns the extensible start/selection flow; WS14-E owns live activation, cache-busting, character-specific card integration and Production/D1 gameplay validation.
