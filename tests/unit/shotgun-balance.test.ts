@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RIVET_GUN_WEAPON } from '../../src/combat/definitions/rivet-gun.js';
 import { SHOTGUN_WEAPON } from '../../src/combat/definitions/shotgun.js';
+import { createWeaponRuntimeState } from '../../src/combat/weapon-registry.js';
 import { WeaponSystem, buildSymmetricSpreadOffsets } from '../../src/combat/weapon-system.js';
 
 function group(children: any[]) {
@@ -39,6 +40,21 @@ describe('WS14-B Shotgun candidate A1', () => {
     expect(spreads[3]).toBeCloseTo(0.12, 8);
     expect(spreads[4]).toBeCloseTo(0.24, 8);
     expect((SHOTGUN_WEAPON.fireProfile.halfSpreadRadians * 2 * 180) / Math.PI).toBeCloseTo(27.5, 1);
+  });
+
+  it('flows the canonical Shotgun definition through WeaponSystem without a parallel volley owner', () => {
+    const scene = {
+      enemies: group([]),
+      primaryWeapon: createWeaponRuntimeState('shotgun')
+    } as any;
+    const system = new WeaponSystem(scene, { projectileSystem: {} as any });
+    const profile = system.heroVolleyProfile();
+    expect(profile.source).toBe('weapon');
+    expect(profile.projectileCount).toBe(5);
+    expect(profile.volleyDamageMultiplier).toBeCloseTo(1.75, 8);
+    expect(profile.projectileDamageScale).toBeCloseTo(0.35, 8);
+    expect(profile.spreads[0]).toBeCloseTo(-0.24, 8);
+    expect(profile.spreads[4]).toBeCloseTo(0.24, 8);
   });
 
   it('redistributes one bounded 1.75x volley instead of giving every pellet full damage', () => {
