@@ -33,6 +33,7 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
   it('tracks the U2 ownership boundary while cards migrate incrementally', () => {
     const phaseC = read('src/phase-c-runtime.js');
     const phaseC1 = read('src/phase-c1-runtime.js');
+    const offerPool = read('src/upgrades/upgrade-offer-pool.js');
     const upgradeRuntime = read('src/upgrades/upgrade-runtime.js');
     const rollService = read('src/upgrades/upgrade-roll-service.js');
     const rarityService = read('src/upgrades/upgrade-rarity.js');
@@ -42,20 +43,17 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     const phaseD1 = read('src/phase-d1-runtime.js');
     const companionRuntime = read('src/companion-runtime-v3.js');
 
-    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
-    expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
-    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'overclock'");
-    expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'overclock'");
-    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'long-barrel'");
-    expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'long-barrel'");
-    expect(phaseC).toContain("createRegisteredUpgradeChoice(scene, 'twin-riveter'");
-    expect(phaseC1).toContain("createRegisteredUpgradeChoice(scene, 'twin-riveter'");
-    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'fleet-feet'");
-    expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'fleet-feet'");
-    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'scrap-magnet'");
-    expect(phaseC1).toContain("createRegisteredStatUpgradeChoice(scene, 'scrap-magnet'");
-    expect(phaseC).toContain("createRegisteredUpgradeChoice(scene, 'armor-plate'");
-    expect(phaseC1).toContain("createRegisteredUpgradeChoice(scene, 'armor-plate'");
+    expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(phaseC1).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(offerPool).toContain("offer('heavy-rivets', 'HERO'");
+    expect(offerPool).toContain("offer('overclock', 'HERO'");
+    expect(offerPool).toContain("offer('long-barrel', 'HERO'");
+    expect(offerPool).toContain("offer('twin-riveter', 'HERO'");
+    expect(offerPool).toContain("offer('fleet-feet', 'UTILITY'");
+    expect(offerPool).toContain("offer('scrap-magnet', 'UTILITY'");
+    expect(offerPool).toContain("offer('armor-plate', 'UTILITY'");
+    expect(phaseC).not.toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
+    expect(phaseC1).not.toContain("createRegisteredStatUpgradeChoice(scene, 'heavy-rivets'");
     expect(phaseC).not.toContain('primaryWeapon.damage *= 1.2');
     expect(phaseC1).not.toContain('primaryWeapon.damage*=1.2');
     expect(phaseC).not.toContain('primaryWeapon.fireDelay = Math.max(145');
@@ -83,8 +81,9 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseC).toContain("const pickupRadiusMultiplier = Number(this.runCombatStats?.pickupRadiusMultiplier) || 1;");
     expect(phaseC).toContain('const magnetRadius = this.magnetRadius * pickupRadiusMultiplier;');
 
-    expect(phaseC).toContain("createRegisteredUpgradeChoice(scene, 'call-rig'");
-    expect(phaseC1).toContain("createRegisteredUpgradeChoice(scene, 'call-rig'");
+    expect(offerPool).toContain("offer('call-rig', 'FORTRESS'");
+    expect(phaseC).not.toContain("createRegisteredUpgradeChoice(scene, 'call-rig'");
+    expect(phaseC1).not.toContain("createRegisteredUpgradeChoice(scene, 'call-rig'");
     expect(phaseC).not.toContain("id: 'call-rig'");
     expect(phaseC1).not.toContain("id:'call-rig'");
     expect(phaseC).not.toContain('scene.rigFireDelay = 920');
