@@ -120,6 +120,12 @@ function createScenarioScene() {
     twinShots: 1,
     runStatState
   };
+  scene.rigSystem = Object.freeze({
+    summon() {
+      scene.rigSummoned = true;
+      return true;
+    }
+  });
   mirrorResolvedRunStats(scene, runStatState.resolve());
   return scene;
 }
