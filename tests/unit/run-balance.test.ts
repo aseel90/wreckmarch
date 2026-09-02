@@ -111,7 +111,10 @@ describe('Wreckmarch run balance', () => {
 
   it('routes the live Fleet Feet card through canonical Upgrade System stat ownership', async () => {
     const phaseC = await readFile(new URL('../../src/phase-c-runtime.js', import.meta.url), 'utf8');
-    expect(phaseC).toContain("createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' })");
+    const offerPool = await readFile(new URL('../../src/upgrades/upgrade-offer-pool.js', import.meta.url), 'utf8');
+    expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(offerPool).toContain("offer('fleet-feet', 'UTILITY'");
+    expect(offerPool).toContain('UPGRADE_OFFER_POOL_GROUPS.HUNTER_INITIAL');
     expect(phaseC).toContain('RUN_BALANCE.player.moveSpeedHardCap');
     expect(phaseC).not.toContain('getPlayerMoveSpeed');
     expect(phaseC).not.toContain('__baseHeroMoveSpeed');
