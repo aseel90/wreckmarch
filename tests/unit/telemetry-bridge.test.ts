@@ -53,9 +53,10 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain("manualReportFailure('finalize'");
     expect(runtime).toContain("manualReportFailure('transport'");
     expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=15');
-    expect(html).toContain('./src/phase-d1-runtime.js?v=27');
+    expect(html).toContain('./src/phase-d1-runtime.js?v=28');
     expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=19');
-    expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=27');
+    expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=28');
+    expect(pagesWorkflow).toContain('src/upgrades/upgrade-card-presentation.js?v=1');
     expect(pagesWorkflow).toContain('src/phase-b-runtime.js?v=6');
     expect(pagesWorkflow).toContain('src/phase-c-runtime.js?v=24');
     expect(pagesWorkflow).toContain('src/characters/character-system.js?v=10');
