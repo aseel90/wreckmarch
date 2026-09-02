@@ -1,6 +1,6 @@
 /* WRECKMARCH — stable enemy content registry */
 import { SCRAP_RAT_DEFINITION } from './definitions/scrap-rat.js';
-import { RUST_HOUND_DEFINITION } from './definitions/rust-hound.js?v=2';
+import { RUST_HOUND_DEFINITION } from './definitions/rust-hound.js?v=3';
 import { SAWBUG_DEFINITION } from './definitions/sawbug.js?v=2';
 
 const ENEMY_DEFINITIONS = new Map([
