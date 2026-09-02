@@ -1,6 +1,6 @@
 # WS23 — U4 Balance Gate / Reintegration
 
-Status: IMPLEMENTED / CI VALIDATION PENDING
+Status: COMPLETE / VALIDATED
 
 ## Purpose
 
@@ -20,6 +20,12 @@ All five gates must pass. Missing evidence blocks reintegration; it does not tri
 
 The evaluator always returns `protectedGameplayChange: true` so a failed gate means gather/fix evidence first rather than changing combat values without attribution.
 
+## Validation result — 2026-09-02
+
+All five required gates passed on PR #246. Repository validation completed green for Quality, Smoke, E2E shard 1/3, E2E shard 2/3, E2E shard 3/3, and aggregate E2E. No gameplay, RNG, rarity, or balance-value change was required for closeout.
+
+Decision: `u4_balance_gate_passed`.
+
 ## Exit gate
 
-WS23 is complete when its deterministic unit coverage plus repository Quality, Smoke, all E2E shards, and aggregate E2E pass on the final PR. At that point the current Combat & Build Balance roadmap phase may be marked complete and future balance work must start from this protected baseline.
+WS23 is complete. The current Combat & Build Balance roadmap phase is closed on this protected baseline; future balance changes must begin from measured evidence and deterministic regression coverage rather than speculative tuning.
