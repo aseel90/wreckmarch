@@ -24,6 +24,7 @@ describe('canonical weapon registry', () => {
     });
     expect(resolveCharacterSignatureWeapon(RUNNER_CHARACTER)).toBe(RIVET_GUN_WEAPON);
     expect(() => getWeaponDefinition('scrap-rivet-gun')).toThrow('Unknown weapon: scrap-rivet-gun');
+    expect(() => createWeaponRuntimeState({ id: 'unregistered-weapon' } as any)).toThrow('Unknown weapon: unregistered-weapon');
   });
 
   it('creates mutable runtime state without mutating the frozen definition', () => {
