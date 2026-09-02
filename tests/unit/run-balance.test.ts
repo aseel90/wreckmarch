@@ -80,7 +80,7 @@ describe('Wreckmarch run balance', () => {
     expect(RUN_BALANCE.waves[9]).toMatchObject({ threatBudget: 46, activeCap: 44, spawnIntervalMs: 425 });
   });
 
-  it('turns a run Rust Hound into a readable hunter instead of a constant-speed chaser', () => {
+  it('tags a run Rust Hound without retuning canonical chase speed in RunDirector', () => {
     const hound: any = {
       active: true,
       speed: 210,
@@ -91,11 +91,12 @@ describe('Wreckmarch run balance', () => {
     applyRunEnemyRoleProfile(hound, 'rust-hound');
     expect(hound.__runRole).toBe('hunter');
     expect(hound.threatValue).toBe(3);
-    expect(hound.speed).toBeCloseTo(151.2, 6);
-    expect(hound.baseSpeed).toBeCloseTo(151.2, 6);
+    expect(hound.speed).toBe(210);
+    expect(hound.baseSpeed).toBe(210);
     expect(hound.behaviorConfig.slideSpeed).toBe(360);
     expect(hound.behaviorConfig.telegraphMs).toBe(300);
     expect(hound.behaviorConfig.cooldownMinMs).toBe(1450);
+    expect(RUN_BALANCE.enemyRoles['rust-hound']).not.toHaveProperty('chaseSpeedMultiplier');
   });
 
   it('keeps Fleet Feet meaningful but capped to roughly nine percent above base speed', () => {

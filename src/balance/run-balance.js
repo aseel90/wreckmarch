@@ -1,3 +1,8 @@
+import { getEnemyDefinition } from '../enemies/enemy-registry.js?v=6';
+
+const RUST_HOUND_DEFINITION = getEnemyDefinition('rust-hound');
+const SAWBUG_DEFINITION = getEnemyDefinition('sawbug');
+
 /* WRECKMARCH — canonical run balance foundation */
 
 const pool = (wave, ratWeight, houndWeight = 0, sawbugWeight = 0) => Object.freeze({
@@ -25,37 +30,12 @@ export const RUN_BALANCE = Object.freeze({
     'rust-hound': Object.freeze({
       role: 'hunter',
       threat: 3,
-      chaseSpeedMultiplier: .72,
-      behaviorConfig: Object.freeze({
-        slideRangeMin: 100,
-        slideRangeMax: 270,
-        holdRange: 130,
-        initialCooldownMinMs: 350,
-        initialCooldownMaxMs: 550,
-        cooldownMinMs: 1450,
-        cooldownMaxMs: 1850,
-        telegraphMs: 300,
-        recoverMs: 360,
-        chaseSharpness: 7.2
-      })
+      behaviorConfig: RUST_HOUND_DEFINITION.behaviorConfig
     }),
     'sawbug': Object.freeze({
       role: 'ranged-spitter',
       threat: 2,
-      chaseSpeedMultiplier: 1,
-      behaviorConfig: Object.freeze({
-        preferredRangeMin: 250,
-        preferredRangeMax: 380,
-        retreatRange: 205,
-        cooldownMinMs: 1550,
-        cooldownMaxMs: 1950,
-        telegraphMs: 320,
-        projectileSpeed: 275,
-        projectileDamage: 11,
-        stationaryTargetSpeedThreshold: 24,
-        stationaryFireRangeMax: 430,
-        stationaryCooldownMultiplier: .78
-      })
+      behaviorConfig: SAWBUG_DEFINITION.behaviorConfig
     })
   }),
   player: Object.freeze({ baseMoveSpeed: 255, fleetFeetPercent: .03, fleetFeetMaxLevel: 3, moveSpeedHardCap: 280 }),
