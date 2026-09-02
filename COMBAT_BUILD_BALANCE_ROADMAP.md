@@ -192,7 +192,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 13 | Canonical Weapon Registry / signature-weapon resolution | ✅ COMPLETE / CI + PROD DEPLOYED | PR #194 / main `b14c8181f14867c5e6cf0733c1d04fa9effb64fc` centralized canonical weapon ownership and signature-weapon resolution, removed ad-hoc runtime identity fallbacks, and passed Quality/Smoke/Chromium plus Production deployment. |
 | 14 | Shotgun Character combat identity | ✅ WS14-B WEAPON FOUNDATION COMPLETE / WS14-C–F CHARACTER WORK DEFERRED | WS14-A established canonical intrinsic `fireProfile`. WS14-B A1 merged in PR #201 / main `b2663805f4f4050278f531fc14b2ec92e283e3d7`: 5 pellets, ±0.24 rad half-spread, 720 ms cadence, 330 range and 1.75x total volley budget. Exact-SHA Pages/live verification passed. The Shotgun is deliberately **not selectable/live yet**. By project decision on 2026-09-02, all remaining character work is parked for later: identity/art (WS14-C), character definition + selection (WS14-D), full activation/validation (WS14-E), and post-activation character-specific expansion (WS14-F). |
 | 15 | Enemy role/range matchup safety | ✅ WS15-A RUNNER BASELINE COMPLETE / WS15-B SHORT-RANGE CHECK DEFERRED | PR #205 / main `7de3941f0b56c85cc8c210fca837d932097fc7ad` canonicalized enemy-role ownership without changing validated live behavior. Final head `69ec80db3fe0234070344ed69454c748cb296b07` passed Quality, Smoke, all 3 Chromium shards and aggregate E2E; exact merge SHA passed Pages/live verification. Future short-range-character matchup remains deferred until WS14-E and does not block WS16. |
-| 16 | Wave/difficulty scaling vs player power | ⚪ PENDING BASELINE | Rebalance pressure after player multipliers are corrected; do not hide power creep by blindly inflating HP |
+| 16 | Wave/difficulty scaling vs player power | ✅ COMPLETE / CURRENT CURVE VALIDATED / NO REBALANCE REQUIRED | PR #207 / main `7d35a3239a26be30267d1979057182e39a6e4828` froze the current curve behind deterministic gates without changing gameplay numbers. Final head `3a134e37a34a2e38437264682054feca2b0ce8df` passed Quality, Smoke, all 3 Chromium shards and aggregate E2E; exact merge SHA passed Live verification. Recovery workflow was not applicable because WS16 changed no `index.html`/manifest/runtime shell paths. |
 | 17 | Rarity identity + power scaling | ⚪ PENDING BASELINE / U7 | Resolve same-card rarity identity and prevent rarity from magnifying already-multiplicative stats excessively |
 | 18 | Rig/support damage ownership | ⚪ PENDING | Decouple support balance from ambiguous `primaryWeapon.damage` semantics and future shotgun pellet damage |
 | 19 | Armor/stat combat semantics + survivability utility | 🟡 FOUNDATION PROD-VALIDATED / BROADER SEMANTICS PENDING | RUN-0026 verified Field Repair + Impact Shield telemetry; canonical armor-mitigation semantics remain future work |
@@ -201,6 +201,15 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 22 | Deterministic interaction matrix / regression scenarios | ⚪ PENDING | Lock reproducible no-upgrade, single-card, pair-synergy and max-power scenarios for before/after comparisons |
 | 23 | U4 balance gate + master-roadmap reintegration | ⚪ PENDING | After workstreams 1–22: validate three viable builds, final interaction/performance gate, then merge approved decisions back into `UPGRADE_SYSTEM_2_ROADMAP.md` without deleting protected scope |
 
+### Workstream 16 validation — Wave / difficulty scaling vs player power
+
+- **✅ COMPLETE / NO NUMERIC REBALANCE REQUIRED:** PR #207 merged as `7d35a3239a26be30267d1979057182e39a6e4828`; final PR head `3a134e37a34a2e38437264682054feca2b0ce8df` passed Quality, Smoke, Chromium E2E shards 1–3 and aggregate E2E.
+- RUN-0026 remains the Production reference: Wave 10 Runner Down, 906/929 kills/spawns (~97.5%, below the 98.5% screen-delete red flag), peak active 31/46 (~67.4%, inside preferred 45–70%), final nominal direct power ~3.45x Runner base inside the 2.8–4.25x late envelope.
+- The canonical curve remains deliberately non-HP-spongy: Wave 1→10 HP 1.0x→1.9x, damage 1.0x→1.36x, speed 1.0x→1.09x, while threat budget grows 15→46 and spawn interval falls 720→425 ms. Density/cadence/mixed roles/SURGE remain the primary late-game pressure axes.
+- Exact merge SHA passed GitHub Pages Live verification. `ios-standalone-recovery.yml` did not run by design because it is path-filtered to `index.html`, `manifest.webmanifest`, and its own workflow file; WS16 changed validation docs/tests only.
+- Cross-workstream observations remain parked with their correct owners: peak/average DPS ~3.39 → WS17/WS20; survivability timing → WS19; ~19.13 projectile spawns/s near the 20/s soft cap → WS21.
+- **Next active balance workstream: WS17 — Rarity identity + power scaling.**
+
 ### Workstream 15 staged delivery — Enemy role / range safety
 
 - **WS15-A — Runner baseline — ✅ COMPLETE / MERGED + PROD DEPLOYED:** PR #205 merged as `7de3941f0b56c85cc8c210fca837d932097fc7ad`. Enemy definitions/behaviors now own enemy movement/combat behavior numbers; Run Balance owns wave timing, spawn weights and threat budgeting; Run Director assigns run role/threat without carrying a second Hound movement identity.
@@ -208,7 +217,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 - Final PR head `69ec80db3fe0234070344ed69454c748cb296b07` passed Quality, Smoke, E2E shards 1/3–3/3 and aggregate E2E. The merged SHA passed GitHub Pages deployment/recovery and live verification.
 - **WS15-B — future short-range matchup — ⚪ DEFERRED / NOT NOW:** repeat the matchup review only after the Shotgun character is activated in WS14-E. This deferred gate does **not** block WS16.
 - Stop rule remains: do not alter enemy HP, damage, spawn weights, wave pressure or attack coefficients under WS15 without repeatable deterministic or production evidence. WS16 owns wave/difficulty scaling.
-- **Next active balance workstream: WS16 — Wave/difficulty scaling vs player power.**
+- **WS15 handoff:** WS16 is now complete; the current active balance workstream is **WS17 — Rarity identity + power scaling**.
 
 ### Workstream 14 staged delivery — Shotgun character
 
@@ -323,7 +332,7 @@ To avoid temporary Runner reskins, patch-over-patch runtime ownership, or a prem
 - **WS10 Triple Riveter:** implementation is live; keep OPEN only for natural Production gameplay/D1 validation after Twin Riveter L2. Do not force, guarantee or bias the card into a roll just to close the gate.
 - **WS11 Prerequisites:** DONE. Shared requirement resolution owns offer eligibility and direct-application rejection; Twin L2 → Triple is the first production consumer.
 - **WS12 Compatibility:** DONE. Shared compatibility resolution filters explicit character/weapon impossibilities only. It is intentionally **not** a recommendation/synergy engine.
-- **Historical checkpoint:** WS13 Canonical Weapon Registry / signature-weapon resolution is complete; the current next active balance workstream is **WS16 — Wave/difficulty scaling vs player power**.
+- **Historical checkpoint:** WS13 Canonical Weapon Registry / signature-weapon resolution is complete; WS15-A and WS16 are also complete. The current active balance workstream is **WS17 — Rarity identity + power scaling**.
 
 ### Card-pool philosophy approved for Workstream 12
 
@@ -372,7 +381,7 @@ Survivability is now a formal build axis alongside single-target damage, crowd c
 
 ## Execution rule
 
-- Workstreams **1–9, 11–13 and WS15-A are complete** under their required gates. Workstream **10 — Triple Riveter / advanced multishot** is implemented and deployed but remains intentionally open for one natural Twin L2 → Triple Production/D1 gameplay validation run; failure to roll it naturally is not treated as a defect and does not block later work. **Workstream 14 foundation is parked after WS14-B:** WS14-A architecture and WS14-B A1 weapon foundation are complete on `main` (`b2663805f4f4050278f531fc14b2ec92e283e3d7`), with exact-SHA Pages/live verification passed. WS14-C/D/E/F and WS15-B are explicitly **deferred future character scope**; do not start art generation, make the Shotgun character selectable, reuse Runner art as a shipping placeholder, patch a start screen, or run the short-range matchup gate until we intentionally return to that track. **Current active balance work continues with WS16 — Wave/difficulty scaling vs player power.**
+- Workstreams **1–9, 11–13, WS15-A and WS16 are complete** under their required gates. Workstream **10 — Triple Riveter / advanced multishot** is implemented and deployed but remains intentionally open for one natural Twin L2 → Triple Production/D1 gameplay validation run; failure to roll it naturally is not treated as a defect and does not block later work. **Workstream 14 foundation is parked after WS14-B:** WS14-A architecture and WS14-B A1 weapon foundation are complete on `main` (`b2663805f4f4050278f531fc14b2ec92e283e3d7`), with exact-SHA Pages/live verification passed. WS14-C/D/E/F and WS15-B are explicitly **deferred future character scope**; do not start art generation, make the Shotgun character selectable, reuse Runner art as a shipping placeholder, patch a start screen, or run the short-range matchup gate until we intentionally return to that track. **Current active balance work continues with WS17 — Rarity identity + power scaling.**
 - The original baseline is frozen as pre-change evidence. New reports are compared against it; they do not replace it.
 - Heavy/Overclock/Twin/Pierce/Ricochet/Shrapnel values are frozen after green regression coverage plus RUN-0026 production validation; do not rebalance them again from a single noisy run.
 - Critical Rivet remains an observation item for later rarity/build-diversity work. RUN-0026 reached Critical Rivet 3 without producing a clear standalone reason to change it immediately.
