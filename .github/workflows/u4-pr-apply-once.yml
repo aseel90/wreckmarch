@@ -1,20 +1,19 @@
-name: Apply U4 pool patch from draft PR
+name: Apply U4 pool patch on branch push
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: [u4-finalize-hunter-initial-pool]
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: u4-finalize-hunter-initial-pool
       - name: Run staged U4 patch
         shell: bash
         run: |
@@ -32,11 +31,10 @@ jobs:
           start = source.index(start_marker)
           run = source.index('        run: |\n', start) + len('        run: |\n')
           end = source.index(end_marker, run)
-          script = textwrap.dedent(source[run:end])
-          Path('/tmp/apply-u4.sh').write_text(script)
+          Path('/tmp/apply-u4.sh').write_text(textwrap.dedent(source[run:end]))
           PY
           bash /tmp/apply-u4.sh
-      - name: Commit U4 implementation to PR branch
+      - name: Commit U4 implementation to branch
         shell: bash
         run: |
           set -euo pipefail
@@ -48,4 +46,4 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add src/upgrades/upgrade-offer-pool.js tests/unit/upgrade-offer-pool.test.ts src/phase-c-runtime.js src/phase-c1-runtime.js index.html .github/workflows/pages.yml tests/unit/weapon-projectile-integration.test.ts tests/unit/telemetry-bridge.test.ts tests/unit/upgrade-roadmap-integrity.test.ts UPGRADE_SYSTEM_2_ROADMAP.md
           git commit -m "U4: finalize canonical 12-card Hunter pool"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git push origin HEAD:u4-finalize-hunter-initial-pool
