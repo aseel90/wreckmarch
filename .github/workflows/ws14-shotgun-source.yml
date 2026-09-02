@@ -1,0 +1,34 @@
+name: WS14 Shotgun Production Source Verify
+
+on:
+  workflow_run:
+    workflows: ["Test and Deploy Wreckmarch"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-shotgun-source:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify deployed Shotgun A1 foundation
+        env:
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.workflow_run.repository.name }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          BASE="https://${OWNER}.github.io/${REPO}/"
+          curl -fsSL --retry 8 --retry-delay 3 "${BASE}src/combat/weapon-registry.js?build=${SHA}" -o wm-live-weapon-registry.js
+          curl -fsSL --retry 8 --retry-delay 3 "${BASE}src/combat/definitions/shotgun.js?build=${SHA}" -o wm-live-shotgun.js
+          grep -F "./definitions/shotgun.js?v=1" wm-live-weapon-registry.js
+          grep -F "id: 'shotgun'" wm-live-shotgun.js
+          grep -F "fireDelay: 720" wm-live-shotgun.js
+          grep -F "range: 330" wm-live-shotgun.js
+          grep -F "projectileCount: 5" wm-live-shotgun.js
+          grep -F "halfSpreadRadians: 0.24" wm-live-shotgun.js
+          grep -F "volleyDamageMultiplier: 1.75" wm-live-shotgun.js

@@ -21,4 +21,17 @@ describe('weapon registry live ownership', () => {
     expect(d1).toContain("s.activeWeaponId==='rivet-gun'");
     expect(d1).toContain("s.primaryWeapon?.id==='rivet-gun'");
   });
+
+  it('verifies the approved Shotgun foundation after the main Pages workflow without activating it', () => {
+    const workflow = read('.github/workflows/ws14-shotgun-source.yml');
+    expect(workflow).toContain('workflow_run:');
+    expect(workflow).toContain('workflows: ["Test and Deploy Wreckmarch"]');
+    expect(workflow).toContain("github.event.workflow_run.head_branch == 'main'");
+    expect(workflow).toContain('src/combat/definitions/shotgun.js?build=${SHA}');
+    expect(workflow).toContain('projectileCount: 5');
+    expect(workflow).toContain('halfSpreadRadians: 0.24');
+    expect(workflow).toContain('fireDelay: 720');
+    expect(workflow).toContain('range: 330');
+    expect(workflow).toContain('volleyDamageMultiplier: 1.75');
+  });
 });
