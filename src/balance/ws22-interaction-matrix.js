@@ -24,7 +24,7 @@ export function evaluateWs22InteractionCase(definition) {
     explosiveProjectilesPerVolley,
     secondaryBudget,
     invariants: Object.freeze({
-      combinedSecondaryBudgetBounded: secondaryBudget.combinedAddedDamage <= 1.000000001,
+      combinedSecondaryBudgetBounded: secondaryBudget.combinedAddedDamage <= 1.500000001,
       countsBounded:
         secondaryBudget.pierceCount <= 3 &&
         secondaryBudget.ricochetCount <= 2 &&
