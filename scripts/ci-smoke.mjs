@@ -34,8 +34,46 @@ try {
   await page.waitForFunction(() => {
     const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
     const fullBleed = !!rect && Math.abs(rect.left) < 1.5 && Math.abs(rect.top) < 1.5 && Math.abs(rect.width - window.innerWidth) < 1.5 && Math.abs(rect.height - window.innerHeight) < 1.5;
-    return !!canvas && document.body.classList.contains('visual-ready') && fullBleed && !!game && !!scene?.sys?.isActive?.() && scene?.__finalPolishReady === true && document.documentElement.dataset.wreckmarchFinalPolish === 'presentation-v1' && document.documentElement.dataset.wreckmarchMobileHud === 'compact-v5-test' && document.documentElement.dataset.wreckmarchPhaseE1 === 'active' && document.documentElement.dataset.wreckmarchE1SelfTest === 'passed' && document.documentElement.dataset.wreckmarchE1Persistence === 'passed';
+    return !!canvas && document.body.classList.contains('visual-ready') && fullBleed && !!game && !!scene?.sys?.isActive?.() && scene?.__finalPolishReady === true && document.documentElement.dataset.wreckmarchFinalPolish === 'presentation-v1' && document.documentElement.dataset.wreckmarchMobileHud === 'compact-v5-test' && document.documentElement.dataset.wreckmarchPhaseE1 === 'active' && document.documentElement.dataset.wreckmarchE1SelfTest === 'passed';
   }, { timeout: 30_000 });
+
+  const readE1RoadState = () => page.evaluate(() => {
+    const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch');
+    const roads = (scene?.__e1RoadSegments || []).filter(item => item?.active !== false);
+    const visible = roads.filter(item => item.visible && item.alpha > .9);
+    const hero = scene?.hero;
+    const nearest = hero && roads.length
+      ? roads.reduce((best, item) => {
+          const bestDistance = Phaser.Math.Distance.Between(hero.x, hero.y, best.x, best.y);
+          const itemDistance = Phaser.Math.Distance.Between(hero.x, hero.y, item.x, item.y);
+          return itemDistance < bestDistance ? item : best;
+        }, roads[0])
+      : null;
+    const legacyVisible = scene?.children?.list?.filter(item => item?.visible && item.__e1SuppressedLegacy).length || 0;
+    const groundDepth = scene?.__e1Terrain?.find(item => item?.name === 'e1-ground-base')?.depth ?? null;
+    const roadDepth = nearest?.depth ?? null;
+    return {
+      roads: roads.length,
+      visible: visible.length,
+      legacyVisible,
+      nearest: nearest && hero ? Math.round(Phaser.Math.Distance.Between(hero.x, hero.y, nearest.x, nearest.y)) : null,
+      roadDepth,
+      groundDepth
+    };
+  });
+  const validateE1RoadState = state => state.roads > 180
+    && state.visible === state.roads
+    && state.legacyVisible === 0
+    && state.nearest !== null
+    && state.nearest < 260
+    && state.roadDepth > state.groundDepth;
+  const e1PersistenceBefore = await readE1RoadState();
+  await page.waitForTimeout(2_000);
+  const e1PersistenceAfter = await readE1RoadState();
+  if (!validateE1RoadState(e1PersistenceBefore) || !validateE1RoadState(e1PersistenceAfter) || e1PersistenceAfter.roads !== e1PersistenceBefore.roads) {
+    throw new Error(`E1 road persistence failed: ${JSON.stringify({ before: e1PersistenceBefore, after: e1PersistenceAfter })}`);
+  }
+  const e1Persistence = { passed: true, before: e1PersistenceBefore, after: e1PersistenceAfter };
   const state = await readState();
   let telemetryState = null;
   if (TELEMETRY_SMOKE) {
@@ -58,7 +96,7 @@ try {
     if (telemetryState.label !== 'REPORT SENT' || telemetryState.manualState !== 'sent') throw new Error(`live manual telemetry send failed: ${JSON.stringify(telemetryState)}`);
   }
   if (browserEvents.length) throw new Error(`Browser emitted ${browserEvents.length} error event(s):\n${browserEvents.slice(-40).join('\n')}`);
-  console.log(JSON.stringify({ ok: true, url: URL, state, telemetryState, browserEvents }, null, 2));
+  console.log(JSON.stringify({ ok: true, url: URL, state, e1Persistence, telemetryState, browserEvents }, null, 2));
 } catch (error) {
   console.error(error?.stack || String(error));
   try {
