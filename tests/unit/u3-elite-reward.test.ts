@@ -49,24 +49,36 @@ describe('U3 Elite reward guarantee', () => {
     expect(directPower).toBeLessThanOrEqual(4.25);
   });
 
-  it('keeps the canonical three-choice Rare-or-better contract', () => {
+  it('keeps the canonical three-choice at-least-one-Rare-or-better contract', () => {
     expect(createEliteRewardContext()).toEqual({
       source: 'elite-crate', label: 'WRECK CRATE', subtitle: 'ELITE REWARD', choices: 3, minimumRarity: 'RARE'
     });
   });
 
-  it('enforces the rarity floor only when the whole offer can support it', () => {
-    const supported = rollUpgradeChoices([
+  it('repairs only one eligible choice to Rare+ when a normal three-choice roll misses the guarantee', () => {
+    const offer = rollUpgradeChoices([
       choice('fixed-common', 'COMMON'), choice('a'), choice('b'), choice('c')
-    ], { count: 3, minimumRarity: 'RARE', rng: () => 0 });
-    expect(supported.map(item => item.id)).toEqual(['a', 'b', 'c']);
-    expect(supported.every(item => item.rarity === 'RARE')).toBe(true);
+    ], { count: 3, guaranteedMinimumRarity: 'RARE', rng: () => 0 });
+    expect(offer.map(item => item.id)).toEqual(['fixed-common', 'a', 'b']);
+    expect(offer.filter(item => item.rarity === 'RARE')).toHaveLength(1);
+    expect(offer.some(item => item.rarity === 'COMMON')).toBe(true);
+  });
 
-    const fallback = rollUpgradeChoices([
+  it('replaces a fixed-Common choice only when the selected offer cannot satisfy a guarantee that the wider pool can support', () => {
+    const offer = rollUpgradeChoices([
+      choice('x', 'COMMON'), choice('y', 'COMMON'), choice('z', 'COMMON'), choice('rare-capable')
+    ], { count: 3, guaranteedMinimumRarity: 'RARE', rng: () => 0 });
+    expect(offer).toHaveLength(3);
+    expect(offer.some(item => item.id === 'rare-capable' && item.rarity === 'RARE')).toBe(true);
+    expect(offer.filter(item => item.rarity === 'RARE')).toHaveLength(1);
+  });
+
+  it('falls back to the normal rarity contract when the eligible pool cannot support Rare+', () => {
+    const offer = rollUpgradeChoices([
       choice('x', 'COMMON'), choice('y', 'COMMON'), choice('z', 'COMMON')
-    ], { count: 3, minimumRarity: 'RARE', rng: () => 0 });
-    expect(fallback).toHaveLength(3);
-    expect(fallback.every(item => item.rarity === 'COMMON')).toBe(true);
+    ], { count: 3, guaranteedMinimumRarity: 'RARE', rng: () => 0 });
+    expect(offer).toHaveLength(3);
+    expect(offer.every(item => item.rarity === 'COMMON')).toBe(true);
   });
 
   it('retries a guaranteed Elite until spawn actually adds an Elite, then consumes the milestone once', () => {
