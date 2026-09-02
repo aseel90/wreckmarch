@@ -1,6 +1,6 @@
 # Workstream 20 — Build Identities + Anti-Mandatory-Card Validation
 
-Status: 🟡 ACTIVE / DETERMINISTIC BASELINE
+Status: 🟡 ACTIVE / DETERMINISTIC IMPLEMENTATION
 
 ## Goal
 
