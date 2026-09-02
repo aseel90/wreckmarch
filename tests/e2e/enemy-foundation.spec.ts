@@ -48,7 +48,7 @@ test('spawns the live Scrap Rat through Enemy Foundation with Wave balance owner
     spawnSystemReady: true,
     runBalanceReady: true,
     runDirectorReady: true,
-    runDirectorDataset: 'balance-v5',
+    runDirectorDataset: 'balance-v6',
     wave: 1,
     dataset: 'active',
     enemyId: 'scrap-rat',
