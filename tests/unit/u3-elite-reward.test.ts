@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { rollUpgradeChoices } from '../../src/upgrades/upgrade-roll-service.js';
+import { getUpgradeRarityRule, rollUpgradeRarity } from '../../src/upgrades/upgrade-rarity.js';
 import { createEliteRewardContext, EliteRewardSystem } from '../../src/rewards/elite-reward-system.js';
 import { EliteMilestoneController } from '../../src/rewards/u3-elite-reward-runtime.js';
 
@@ -18,6 +19,36 @@ function mockCrate() {
 }
 
 describe('U3 Elite reward guarantee', () => {
+
+  it('clamps Common to the Rare floor without renormalizing Epic/Legendary odds', () => {
+    expect(rollUpgradeRarity(() => 0.00, null, 'RARE')).toBe('RARE');
+    expect(rollUpgradeRarity(() => 0.64, null, 'RARE')).toBe('RARE');
+    expect(rollUpgradeRarity(() => 0.65, null, 'RARE')).toBe('RARE');
+    expect(rollUpgradeRarity(() => 0.88, null, 'RARE')).toBe('RARE');
+    expect(rollUpgradeRarity(() => 0.89, null, 'RARE')).toBe('EPIC');
+    expect(rollUpgradeRarity(() => 0.97, null, 'RARE')).toBe('EPIC');
+    expect(rollUpgradeRarity(() => 0.98, null, 'RARE')).toBe('LEGENDARY');
+
+    const eliteExpectedPower =
+      0.89 * getUpgradeRarityRule('RARE').powerMultiplier +
+      0.09 * getUpgradeRarityRule('EPIC').powerMultiplier +
+      0.02 * getUpgradeRarityRule('LEGENDARY').powerMultiplier;
+    expect(eliteExpectedPower).toBeCloseTo(1.1705, 6);
+  });
+
+  it('keeps two guaranteed Rare+ scalar rewards inside the WS17/PB1 4.25x late envelope', () => {
+    const normalExpectedPower = 1.073;
+    const eliteExpectedPower = 1.1705;
+    const heavyFactor = 1 + 0.12 * (4 * normalExpectedPower + eliteExpectedPower);
+    const overclockFactor = 1 + 0.12 * (4 * normalExpectedPower + eliteExpectedPower);
+    const critFactor = 1 + (4 * 0.05 * normalExpectedPower) * 0.5;
+    const twinL2 = 1.40;
+    const directPower = heavyFactor * overclockFactor * critFactor * twinL2;
+
+    expect(directPower).toBeCloseTo(4.248657337, 6);
+    expect(directPower).toBeLessThanOrEqual(4.25);
+  });
+
   it('keeps the canonical three-choice Rare-or-better contract', () => {
     expect(createEliteRewardContext()).toEqual({
       source: 'elite-crate', label: 'WRECK CRATE', subtitle: 'ELITE REWARD', choices: 3, minimumRarity: 'RARE'

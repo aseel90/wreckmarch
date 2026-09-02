@@ -97,16 +97,19 @@ export function rollUpgradeRarity(rng = Math.random, fixedRarity = null, minimum
     throw new RangeError(`Upgrade rarity rng must return a value in [0, 1): ${String(value)}`);
   }
 
-  const tiers = minimum
-    ? RARITY_TIERS.filter(tier => isUpgradeRarityAtLeast(tier.id, minimum))
-    : RARITY_TIERS;
-  const totalWeight = tiers.reduce((sum, tier) => sum + tier.weight, 0);
+  const totalWeight = RARITY_TIERS.reduce((sum, tier) => sum + tier.weight, 0);
   let roll = value * totalWeight;
-  for (const tier of tiers) {
+  let rolledRarity = RARITY_TIERS[RARITY_TIERS.length - 1].id;
+  for (const tier of RARITY_TIERS) {
     roll -= tier.weight;
-    if (roll <= 0) return tier.id;
+    if (roll <= 0) {
+      rolledRarity = tier.id;
+      break;
+    }
   }
-  return tiers[tiers.length - 1].id;
+
+  if (minimum && !isUpgradeRarityAtLeast(rolledRarity, minimum)) return minimum;
+  return rolledRarity;
 }
 
 export function scaleUpgradeModifierValue(modifier, rarity) {
