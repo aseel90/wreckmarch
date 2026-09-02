@@ -24,6 +24,10 @@ These are validation candidates, not promised final meta builds:
 
 No candidate is allowed to become the definition of a recommended build in the offer system. Cards remain valid/off-build choices unless mechanically incompatible.
 
+## Deterministic delivery rule
+
+The three candidate snapshots live in the existing canonical deterministic balance scenario suite. This is measurement-only code: it must not add a new runtime owner, change offer weighting, force a card into the player pool, or modify live card/enemy/wave numbers.
+
 ## Closure rules
 
 - [ ] Deterministic snapshots exist for all three candidates.
