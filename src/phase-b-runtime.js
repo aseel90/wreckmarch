@@ -1,4 +1,4 @@
-import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=1';
+import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=2';
 /* WRECKMARCH — Phase B runtime: large world + camera + visible swappable starter weapon */
 const WORLD_W = 2200;
 const WORLD_H = 2200;
