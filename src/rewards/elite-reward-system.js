@@ -78,14 +78,13 @@ export class EliteRewardSystem {
 
   openCrate(crate) {
     if (!crate || crate.__wreckCrateOpened || crate.active === false) return false;
-    if (this.scene.gameOver || this.scene.upgradeOpen || typeof this.scene.openUpgradeCards !== 'function') return false;
+    if (this.scene.gameOver || this.scene.upgradeOpen || typeof this.scene.openEliteRewardCards !== 'function') return false;
+    if (!this.scene.openEliteRewardCards(this.rewardContext)) return false;
 
     crate.__wreckCrateOpened = true;
-    this.scene.pendingUpgradeRewardContext = this.rewardContext;
     crate.__wreckCrateLabel?.destroy?.();
     crate.disableBody?.(true, true);
     crate.destroy?.();
-    this.scene.openUpgradeCards();
     return true;
   }
 }
