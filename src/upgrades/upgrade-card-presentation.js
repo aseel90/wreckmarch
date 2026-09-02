@@ -1,7 +1,8 @@
 import { UPGRADE_RARITIES, UPGRADE_RARITY_RULES, getUpgradeRarityRule } from './upgrade-rarity.js?v=1';
 import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrade-card-art.js?v=7';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=14';
 
-export const UPGRADE_CARD_PRESENTATION_VERSION = 'u5-frame-hierarchy-v1';
+export const UPGRADE_CARD_PRESENTATION_VERSION = 'u5-level-max-v2';
 export const UPGRADE_CARD_VISUAL_HIERARCHY = Object.freeze([
   'ART',
   'NAME',
@@ -25,6 +26,21 @@ function fitImage(image, width, height) {
   const scale = Math.min(width / frameWidth, height / frameHeight);
   image.setDisplaySize(frameWidth * scale, frameHeight * scale);
   return image;
+}
+
+export function getUpgradeCardLevelPresentation(currentLevel = 0, maxLevel = 1) {
+  const normalizedMax = Math.max(1, Math.floor(Number(maxLevel) || 1));
+  const normalizedCurrent = Math.min(normalizedMax, Math.max(0, Math.floor(Number(currentLevel) || 0)));
+  const nextLevel = Math.min(normalizedMax, normalizedCurrent + 1);
+  const isNew = normalizedCurrent === 0;
+  const isMaxed = normalizedCurrent >= normalizedMax;
+  const reachesMax = !isMaxed && nextLevel >= normalizedMax;
+  const label = isMaxed
+    ? `LV ${normalizedMax} / ${normalizedMax} • MAX`
+    : isNew
+      ? `NEW • NEXT LV ${nextLevel} / ${normalizedMax}${reachesMax ? ' • MAX' : ''}`
+      : `LV ${normalizedCurrent} / ${normalizedMax}  →  ${reachesMax ? 'MAX ' : ''}LV ${nextLevel} / ${normalizedMax}`;
+  return Object.freeze({ currentLevel: normalizedCurrent, nextLevel, maxLevel: normalizedMax, isNew, isMaxed, reachesMax, label });
 }
 
 export function getUpgradeCardFrameProfile(rarity = UPGRADE_RARITIES.COMMON) {
@@ -128,9 +144,10 @@ export function installUpgradeCardPresentation(gameScene) {
       align: 'center', wordWrap: { width: width - 34 }, lineSpacing: 3
     }).setOrigin(.5, 0);
 
-    const level = this.gameScene?.upgradeLevels?.[upgrade.id] || 0;
-    const footerLabel = level ? `LV ${level}  →  ${level + 1}` : 'NEW UPGRADE';
-    const footer = this.add.text(0, height / 2 - 23, footerLabel, {
+    const currentLevel = this.gameScene?.upgradeLevels?.[upgrade.id] || 0;
+    const definition = getUpgradeDefinition(upgrade.id);
+    const levelPresentation = getUpgradeCardLevelPresentation(currentLevel, definition?.maxLevel);
+    const footer = this.add.text(0, height / 2 - 23, levelPresentation.label, {
       fontFamily: 'Arial Black,Arial', fontSize: '9px',
       color: Phaser.Display.Color.IntegerToColor(profile.frame).rgba
     }).setOrigin(.5);
@@ -154,6 +171,8 @@ export function installUpgradeCardPresentation(gameScene) {
       artBackground,
       glow,
       rarityText,
+      footer,
+      levelPresentation,
       rarity: profile.rarity,
       style: profile,
       a: profile.frame,

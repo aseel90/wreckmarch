@@ -702,9 +702,9 @@ Visual goals:
 - readable on mobile
 - no giant text blocks
 
-- [ ] Audit current card UI. — **Status:** ⚪ NOT STARTED
-- [ ] Finalize rarity frame language. — **Status:** ⚪ NOT STARTED
-- [ ] Show card level/max level. — **Status:** ⚪ NOT STARTED
+- [x] Audit current card UI. — **Status:** ✅ DONE — final card rendering is owned by `src/upgrades/upgrade-card-presentation.js`; Phase D1 delegates presentation instead of owning a duplicate renderer, with unit + Chromium coverage.
+- [x] Finalize rarity frame language. — **Status:** ✅ DONE — deterministic Common/Rare/Epic/Legendary frame profiles and the `ART → NAME → RARITY → LEVEL → DESCRIPTION` hierarchy are canonical and Live-validated after issue #264 recovery.
+- [x] Show card level/max level. — **Status:** ✅ DONE — the presentation owner reads current level from canonical `upgradeLevels` and `maxLevel` directly from the registry definition via `getUpgradeDefinition(upgrade.id)`, without changing offer DTOs or duplicating progression rules; unit + Chromium coverage is in PR #269.
 - [ ] Add before → after stat preview where applicable. — **Status:** ⚪ NOT STARTED
 - [ ] Improve art consistency. — **Status:** ⚪ NOT STARTED
 - [ ] Test three-card selection on target mobile viewport. — **Status:** ⚪ NOT STARTED
@@ -1023,8 +1023,8 @@ Latest verified gameplay commit for the core: `89926f8`.
 - [x] Verify at least 3 viable build identities. — **Status:** ✅ DONE — WS20 completed 3-of-3 Production archetype validation with an RNG-tolerant classifier and one-card attribution guard.
 
 ## Phase U5 — Card visual overhaul — **NEXT ACTIVE PHASE**
-- [ ] Improve frames/art hierarchy. — **Status:** ⚪ NOT STARTED
-- [ ] Add rarity and level presentation. — **Status:** ⚪ NOT STARTED
+- [x] Improve frames/art hierarchy. — **Status:** ✅ DONE — canonical card-presentation ownership, rarity frame language and the `ART → NAME → RARITY → LEVEL → DESCRIPTION` hierarchy are unit/Chromium covered and Live-validated.
+- [x] Add rarity and level presentation. — **Status:** ✅ DONE — rarity frame profiles are canonical and cards now show current/next/max level using registry-owned `maxLevel`; no rarity weights, RNG, requirements, offer ordering or upgrade power rules are changed.
 - [ ] Add real before→after previews. — **Status:** ⚪ NOT STARTED
 - [ ] Mobile visual test. — **Status:** ⚪ NOT STARTED
 
