@@ -1,6 +1,6 @@
 # WS17 — Rarity Identity + Power Scaling
 
-Status: **VALIDATION BASELINE IMPLEMENTED / CI GATES PENDING**
+Status: **COMPLETE — RARITY MODEL VALIDATED / NO REBALANCE REQUIRED**
 
 ## Decision
 
@@ -103,8 +103,18 @@ Forcing every scalable level in that same max build to Legendary exceeds the PB1
 - [x] RUN-0026 strong-rarity build remains within the PB1 late envelope and below the red flag.
 - [x] Multiplicative utility accumulation is explicitly measured rather than assumed safe.
 - [x] Survival rarity effects remain bounded by HP/cap/gating semantics.
-- [ ] Quality + Smoke + all Chromium E2E shards pass on the exact WS17 head SHA.
-- [ ] Merge to `main` and verify exact-SHA live validation.
+- [x] Quality + Smoke + all Chromium E2E shards + aggregate E2E passed on exact WS17 head `53a4020c424f3afb87c57cdfe48324370c9e75a7`.
+- [x] PR #209 merged to `main` as `f868f789a40d9c674a0e0e772c5cdbde00b22ab9`; exact-SHA live verification passed.
+
+## Closure evidence
+
+- PR **#209 — WS17: validate rarity identity and power scaling**.
+- Final PR head: `53a4020c424f3afb87c57cdfe48324370c9e75a7`.
+- Exact-head CI: **Quality PASS**, **Smoke PASS**, **Chromium E2E shards 1/2/3 PASS**, **aggregate E2E PASS**.
+- Merge commit on `main`: `f868f789a40d9c674a0e0e772c5cdbde00b22ab9`.
+- Exact-SHA Production/Live verification: **PASS** on `f868f789a40d9c674a0e0e772c5cdbde00b22ab9`.
+- `ios-standalone-recovery.yml` is **not applicable** to this close: WS17 changed balance documentation/tests only, while that recovery workflow is path-filtered to `index.html`, `manifest.webmanifest`, and the recovery workflow itself.
+- Final decision: **retain the current rarity weights and multipliers; no WS17 gameplay numeric rebalance is required**.
 
 ## Stop / reopen rule
 
