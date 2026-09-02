@@ -1,6 +1,6 @@
 # Workstream 19 — Armor / Stat Combat Semantics + Survivability Utility
 
-Status: 🟡 IMPLEMENTATION GATE
+Status: ✅ COMPLETE / PRODUCTION VALIDATED
 
 ## Scope
 
@@ -11,7 +11,7 @@ WS19 closes the missing meaning of the already-canonical `character.armor` stat 
 - **Impact Shield** = bounded hit absorption with a 2-charge cap.
 - **Armor** = persistent damage mitigation owned by the canonical player-damage rules.
 
-Runner currently resolves to **0 Armor**, so landing WS19 must not alter current production damage taken.
+Runner currently resolves to **0 Armor**, so WS19 does not alter current production damage taken.
 
 ## Canonical Armor semantics
 
@@ -78,12 +78,26 @@ That evidence supports keeping Field Repair / Impact Shield bounded. It does not
 - [x] Armor Plate remains max-HP + recovery only.
 - [x] No current card grants Armor.
 - [x] Live cache chain has deterministic coverage.
-- [ ] Quality / unit checks green on final head.
-- [ ] Smoke green on final head.
-- [ ] Chromium shards 1–3 green on final head.
-- [ ] Aggregate E2E green on final head.
-- [ ] Exact merge SHA Live verification green.
-- [ ] If `index.html` changed, Pages recovery green on the same merge SHA.
+- [x] Quality / unit checks green on final head.
+- [x] Smoke green on final head.
+- [x] Chromium shards 1–3 green on final head.
+- [x] Aggregate E2E green on final head.
+- [x] Exact merge SHA Live verification green.
+- [x] Pages recovery green on the same merge SHA after the `index.html` change.
+
+## Validation evidence
+
+- Final PR: **#218** — `WS19: define canonical Armor and survivability semantics`
+- Final PR head: `5745ad0f11ccbb268efd5a4f3566d7df6252145e`
+- Merge SHA: `b47b62fc7fa6e094c78709235a09971d5ebe1f01`
+- Quality: **PASSED**
+- Smoke: **PASSED**
+- Chromium E2E shards 1/3, 2/3, 3/3: **PASSED**
+- Aggregate E2E: **PASSED**
+- Exact-SHA iOS live verification: **PASSED** on `b47b62fc7fa6e094c78709235a09971d5ebe1f01`
+- Exact-SHA Pages recovery: **PASSED** on `b47b62fc7fa6e094c78709235a09971d5ebe1f01`
+- Live Chromium coverage includes the canonical Armor path: 25 Armor converts a 20-damage hit to 16 final HP damage.
+- Current Runner remains at 0 Armor and no live card grants Armor, so WS19 changes semantics without changing the existing Runner balance baseline.
 
 ## Reopen rules
 
