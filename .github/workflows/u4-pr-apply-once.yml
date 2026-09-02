@@ -34,16 +34,16 @@ jobs:
           Path('/tmp/apply-u4.sh').write_text(textwrap.dedent(source[run:end]))
           PY
           bash /tmp/apply-u4.sh
-      - name: Commit U4 implementation to branch
+      - name: Commit non-workflow U4 implementation to branch
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet && [ -f src/upgrades/upgrade-offer-pool.js ]; then
-            echo "No changes to commit."
-            exit 0
-          fi
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add src/upgrades/upgrade-offer-pool.js tests/unit/upgrade-offer-pool.test.ts src/phase-c-runtime.js src/phase-c1-runtime.js index.html .github/workflows/pages.yml tests/unit/weapon-projectile-integration.test.ts tests/unit/telemetry-bridge.test.ts tests/unit/upgrade-roadmap-integrity.test.ts UPGRADE_SYSTEM_2_ROADMAP.md
+          git add src/upgrades/upgrade-offer-pool.js tests/unit/upgrade-offer-pool.test.ts src/phase-c-runtime.js src/phase-c1-runtime.js index.html tests/unit/weapon-projectile-integration.test.ts tests/unit/telemetry-bridge.test.ts tests/unit/upgrade-roadmap-integrity.test.ts UPGRADE_SYSTEM_2_ROADMAP.md
+          if git diff --cached --quiet; then
+            echo "No non-workflow U4 changes to commit."
+            exit 0
+          fi
           git commit -m "U4: finalize canonical 12-card Hunter pool"
           git push origin HEAD:u4-finalize-hunter-initial-pool
