@@ -1,6 +1,6 @@
 import { RUN_BALANCE } from '../balance/run-balance.js?v=7';
 import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from '../upgrades/upgrade-runtime.js?v=14';
-import { rollUpgradeChoices } from '../upgrades/upgrade-roll-service.js?v=3';
+import { rollUpgradeChoices } from '../upgrades/upgrade-roll-service.js?v=4';
 import { EliteRewardSystem, createEliteRewardContext } from './elite-reward-system.js?v=2';
 
 function eliteUpgradePool(scene) {
@@ -55,13 +55,12 @@ export class EliteMilestoneController {
 
 function installEliteChoiceFlow(scene) {
   if (scene.__eliteChoiceFlowReady) return;
-  const previousClose = scene.closeUpgradeCards?.bind(scene);
 
   scene.openEliteRewardCards = function(rewardContext = createEliteRewardContext()) {
     if (this.upgradeOpen || this.gameOver) return false;
     const choices = rollUpgradeChoices(eliteUpgradePool(this), {
       count: rewardContext.choices,
-      minimumRarity: rewardContext.minimumRarity
+      guaranteedMinimumRarity: rewardContext.minimumRarity
     });
     if (!choices.length) return false;
 
@@ -74,38 +73,34 @@ function installEliteChoiceFlow(scene) {
     this.joy.id = null;
     this.hero.setVelocity(0, 0);
     this.input.enabled = false;
-    this.showBanner?.(`WRECK CRATE • ${rewardContext.minimumRarity}+`);
+    this.showBanner?.(`WRECK CRATE • ${rewardContext.minimumRarity}+ GUARANTEED`);
     const targetScene = this.game.scene.getScene('UpgradeSceneV4') ? 'UpgradeSceneV4' : 'UpgradeScene';
+    const rewardScene = this.game.scene.getScene(targetScene);
+    rewardScene?.events?.once?.('shutdown', () => {
+      if (this.activeUpgradeRewardContext === rewardContext) this.activeUpgradeRewardContext = null;
+    });
     this.scene.launch(targetScene, { gameScene: this, choices, level: this.level, rewardContext });
     this.scene.bringToTop(targetScene);
     return true;
   };
 
-  if (previousClose) {
-    scene.closeUpgradeCards = function() {
-      const result = previousClose();
-      this.activeUpgradeRewardContext = null;
-      return result;
-    };
-  }
   scene.__eliteChoiceFlowReady = true;
 }
 
 function installEliteDeathReward(scene, rewards) {
-  const combat = scene.enemyCombatSystem;
-  if (!combat || combat.__eliteRewardWrapped) return;
-  const previousKill = combat.killEnemy.bind(combat);
-  combat.killEnemy = function(enemy) {
-    const eligible = Boolean(enemy?.active && enemy.elite && !enemy.__eliteRewardDropped);
-    const drop = eligible ? { x: Number(enemy.x) || 0, y: Number(enemy.y) || 0 } : null;
-    const result = previousKill(enemy);
-    if (result && drop) {
-      enemy.__eliteRewardDropped = true;
-      rewards.dropCrate(drop);
-    }
-    return result;
+  if (scene.__eliteDeathRewardListener) return;
+  const onEnemyKilled = death => {
+    const enemy = death?.enemy;
+    if (!death?.elite || !enemy || enemy.__eliteRewardDropped) return;
+    enemy.__eliteRewardDropped = true;
+    rewards.dropCrate({ x: Number(death.x) || 0, y: Number(death.y) || 0 });
   };
-  combat.__eliteRewardWrapped = true;
+  scene.events?.on?.('wreckmarch:enemy-killed', onEnemyKilled);
+  scene.__eliteDeathRewardListener = onEnemyKilled;
+  scene.events?.once?.('shutdown', () => {
+    scene.events?.off?.('wreckmarch:enemy-killed', onEnemyKilled);
+    scene.__eliteDeathRewardListener = null;
+  });
 }
 
 export function installU3EliteRewards(scene) {
@@ -135,6 +130,6 @@ export function installU3EliteRewards(scene) {
   scene.__u3EliteRewardTick = scene.time.addEvent({ delay: 1000, loop: true, callback: sync });
   scene.__u3EliteRewardsReady = true;
   document.documentElement.dataset.wreckmarchEliteRewards = 'u3-v1';
-  window.__WM_LOG__?.('U3 Elite rewards active: Threat Budget milestones -> WRECK CRATE -> 3-choice Rare+ reward floor');
+  window.__WM_LOG__?.('U3 Elite rewards active: Threat Budget milestones -> WRECK CRATE -> 3 choices with at least one Rare+ guarantee');
   return true;
 }
