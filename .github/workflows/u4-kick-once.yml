@@ -1,0 +1,26 @@
+name: Kick U4 pool patch once
+
+on:
+  push:
+    branches: [u4-finalize-hunter-initial-pool]
+    paths:
+      - '.github/workflows/u4-kick-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  kick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Touch U4 patch workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '\n# kicked once\n' >> .github/workflows/u4-initial-pool-once.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/u4-initial-pool-once.yml
+          git commit -m "CI: trigger U4 pool patch"
+          git push
