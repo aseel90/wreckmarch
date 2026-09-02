@@ -82,6 +82,14 @@ export function resolveUpgradeRarityForDefinition(definition, requestedRarity = 
   return resolved;
 }
 
+/**
+ * Roll canonical rarity, optionally enforcing a reward floor without
+ * renormalizing the Epic/Legendary tail probabilities.
+ * @param {() => number} [rng]
+ * @param {string | null} [fixedRarity]
+ * @param {string | null} [minimumRarity]
+ * @returns {string}
+ */
 export function rollUpgradeRarity(rng = Math.random, fixedRarity = null, minimumRarity = null) {
   const minimum = minimumRarity == null ? null : normalizeUpgradeRarity(minimumRarity);
   if (fixedRarity != null) {
