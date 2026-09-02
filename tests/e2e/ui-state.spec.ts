@@ -55,24 +55,67 @@ test('end-run overlay uses the live landscape viewport instead of legacy portrai
   expect(result.canvas.height).toBeCloseTo(540, 1);
 });
 
-test('end-run exposes the authoritative SEND REPORT control and sends successfully', async ({ page }) => {
+test('normal live URL SEND REPORT uses isolated manual transport without enabling automatic telemetry', async ({ page }) => {
+  let reportRequests = 0;
+  await page.route('https://wreckmarch-run-reports.salahaseel82.workers.dev/report', async route => {
+    reportRequests += 1;
+    await route.fulfill({
+      status: 202,
+      headers: {
+        'access-control-allow-origin': '*',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ queued: true })
+    });
+  });
+
   await waitForGame(page);
-  const result = await page.evaluate(async () => {
-    const w = window as typeof window & { __WM_GAME__?: any; __WM_END_RUN_LAYOUT__?: any; __WM_TELEMETRY_RUNTIME__?: any };
-    const scene = w.__WM_GAME__.scene.getScene('Wreckmarch');
+  const before = await page.evaluate(() => {
+    const w = window as typeof window & { __WM_GAME__?: any; __WM_END_RUN_LAYOUT__?: any; __WM_TELEMETRY_REMOTE_ENABLED__?: boolean };
+    const game = w.__WM_GAME__;
+    const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
     scene.enemies.clear(true, true);
-    w.__WM_TELEMETRY_RUNTIME__.sendReport = async () => ({ ok: true, reportId: 'wm-e2e-manual', httpStatus: 202, bytes: 2048 });
     scene.endRun('SYSTEM FAILURE');
     const layout = w.__WM_END_RUN_LAYOUT__;
-    const before = { buttonActive: layout.reportBtn?.active === true, buttonVisible: layout.reportBtn?.visible === true, label: layout.reportLabel?.text, status: layout.reportStatus?.text, endRunVersion: document.documentElement.dataset.wreckmarchEndRunLayout, ownerVersion: scene.__mobileHudEndRunOwnerVersion };
+    const snapshot = {
+      buttonActive: layout.reportBtn?.active === true,
+      buttonVisible: layout.reportBtn?.visible === true,
+      label: layout.reportLabel?.text,
+      status: layout.reportStatus?.text,
+      automaticRemoteEnabled: w.__WM_TELEMETRY_REMOTE_ENABLED__ === true,
+      hasPersistentProvider: Boolean(game.__wreckmarchRunReportProvider)
+    };
     layout.reportBtn.emit('pointerdown');
-    await new Promise(resolve => setTimeout(resolve, 20));
-    return { before, label: layout.reportLabel?.text, status: layout.reportStatus?.text, manualState: document.documentElement.dataset.wreckmarchManualReport };
+    return snapshot;
   });
-  expect(result.before).toMatchObject({ buttonActive: true, buttonVisible: true, label: 'SEND REPORT', status: 'Telemetry: ready • TEST UI v5', endRunVersion: 'runtime-v5-test', ownerVersion: 'runtime-v5-test' });
-  expect(result.label).toBe('REPORT SENT');
-  expect(result.status).toContain('SENT • wm-e2e-manual');
-  expect(result.status).toContain('HTTP 202');
-  expect(result.manualState).toBe('sent');
+
+  expect(before).toMatchObject({
+    buttonActive: true,
+    buttonVisible: true,
+    label: 'SEND REPORT',
+    automaticRemoteEnabled: false,
+    hasPersistentProvider: false
+  });
+
+  await expect.poll(
+    () => page.evaluate(() => document.documentElement.dataset.wreckmarchManualReport),
+    { timeout: 5_000 }
+  ).toBe('sent');
+
+  const after = await page.evaluate(() => {
+    const w = window as typeof window & { __WM_GAME__?: any; __WM_END_RUN_LAYOUT__?: any; __WM_TELEMETRY_REMOTE_ENABLED__?: boolean };
+    return {
+      label: w.__WM_END_RUN_LAYOUT__?.reportLabel?.text,
+      status: w.__WM_END_RUN_LAYOUT__?.reportStatus?.text,
+      automaticRemoteEnabled: w.__WM_TELEMETRY_REMOTE_ENABLED__ === true,
+      hasPersistentProvider: Boolean(w.__WM_GAME__?.__wreckmarchRunReportProvider)
+    };
+  });
+
+  expect(reportRequests).toBe(1);
+  expect(after.label).toBe('REPORT SENT');
+  expect(after.status).toContain('HTTP 202');
+  expect(after.automaticRemoteEnabled).toBe(false);
+  expect(after.hasPersistentProvider).toBe(false);
 });
