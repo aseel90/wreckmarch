@@ -19,6 +19,7 @@ function offer(id, category, kind, group) {
 // Keep this sequence stable. Weighted seeded rolls depend on candidate ordering.
 // U4 finalizes a 12-card Hunter core while preserving the already-live advanced,
 // survivability and companion choices as separately-classified auxiliary offers.
+// Classification is descriptive only: active offers, weights and canonical requirements stay unchanged.
 const ACTIVE_UPGRADE_OFFER_DESCRIPTORS = Object.freeze([
   offer('heavy-rivets', 'HERO', UPGRADE_OFFER_CHOICE_KINDS.STAT, UPGRADE_OFFER_POOL_GROUPS.HUNTER_INITIAL),
   offer('overclock', 'HERO', UPGRADE_OFFER_CHOICE_KINDS.STAT, UPGRADE_OFFER_POOL_GROUPS.HUNTER_INITIAL),
