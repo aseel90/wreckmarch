@@ -44,11 +44,9 @@ test('Elite milestone drops a bonus WRECK CRATE with at least one Rare+ choice',
       Math.random = originalRandom;
     }
 
-    const upgradeScene = game.scene.getScene('UpgradeSceneV4');
     return {
       opened,
       milestone,
-      choices: (upgradeScene.choices || []).map((item: any) => ({ id: item.id, rarity: item.rarity })),
       level: scene.level,
       scrapXp: scene.scrapXp,
       pendingLevelUps: scene.pendingLevelUps || 0,
@@ -60,9 +58,23 @@ test('Elite milestone drops a bonus WRECK CRATE with at least one Rare+ choice',
   expect(reward.opened).toBe(true);
   expect(reward.milestone).toBe(270);
   expect(reward.rewardSource).toBe('elite-crate');
-  expect(reward.choices).toHaveLength(3);
-  expect(reward.choices.some((item: any) => ['RARE', 'EPIC', 'LEGENDARY'].includes(item.rarity))).toBe(true);
   expect(reward.level).toBe(before.level);
   expect(reward.scrapXp).toBe(before.scrapXp);
   expect(reward.pendingLevelUps).toBe(before.pendingLevelUps);
+
+  await expect.poll(
+    () => page.evaluate(() => {
+      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+      return game.scene.getScene('UpgradeSceneV4')?.choices?.length || 0;
+    }),
+    { timeout: 5_000 }
+  ).toBe(3);
+
+  const choices = await page.evaluate(() => {
+    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const upgradeScene = game.scene.getScene('UpgradeSceneV4');
+    return (upgradeScene.choices || []).map((item: any) => ({ id: item.id, rarity: item.rarity }));
+  });
+  expect(choices).toHaveLength(3);
+  expect(choices.some((item: any) => ['RARE', 'EPIC', 'LEGENDARY'].includes(item.rarity))).toBe(true);
 });
