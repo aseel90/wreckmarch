@@ -111,6 +111,12 @@ export function classifyWs20ProductionReport(report = {}) {
   const scalarCardCount = countOwned(levels, SCALAR_IDS);
   const crowdCardCount = countOwned(levels, CROWD_IDS);
   const survivalCardCount = countOwned(levels, SURVIVAL_IDS);
+  const survivalTotalLevels = SURVIVAL_IDS.reduce((sum, id) => sum + positiveLevel(levels, id), 0);
+  const survivalInvestment = freeze({
+    distinctCards: survivalCardCount,
+    totalLevels: survivalTotalLevels,
+    qualifies: survivalCardCount >= 3 || survivalTotalLevels >= 4
+  });
 
   const survivalSignals = freeze({
     maxHp: finite(character.maxHp, 100) > 100,
@@ -138,7 +144,7 @@ export function classifyWs20ProductionReport(report = {}) {
   ) matches.push(WS20_ARCHETYPES.CROWD_CHAIN);
 
   if (
-    survivalCardCount >= 2 &&
+    survivalInvestment.qualifies &&
     survivalSignalCount >= 2
   ) matches.push(WS20_ARCHETYPES.SURVIVAL_SUPPORT);
 
@@ -152,6 +158,7 @@ export function classifyWs20ProductionReport(report = {}) {
     waveEligible,
     pathTelemetryAvailable,
     cardCounts: freeze({ scalar: scalarCardCount, crowd: crowdCardCount, survival: survivalCardCount }),
+    survivalInvestment,
     pathShares,
     survivalSignals,
     survivalSignalCount,
