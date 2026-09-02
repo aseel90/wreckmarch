@@ -52,20 +52,18 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
   expect(new Set(result.rarityStyles)).toEqual(new Set(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']));
   expect(result.cards.map((card: any) => card.rarity)).toEqual(result.choiceRarities);
   expect(result.cards).toHaveLength(3);
+  const customTextures: Record<string, string> = {
+    'piercing-rivets': 'upgrade-icon-piercing-rivets',
+    ricochet: 'upgrade-icon-ricochet',
+    'shrapnel-impact': 'upgrade-icon-shrapnel-impact',
+    'critical-rivet': 'upgrade-icon-critical-rivet',
+    'field-repair': 'upgrade-icon-field-repair',
+    'impact-shield': 'upgrade-icon-impact-shield',
+    'explosive-rivet': 'upgrade-icon-explosive-rivet',
+    'triple-riveter': 'upgrade-icon-triple-riveter'
+  };
   for (const card of result.cards) {
-    const expectedTexture = card.id === 'piercing-rivets'
-      ? 'upgrade-icon-piercing-rivets'
-      : card.id === 'ricochet'
-        ? 'upgrade-icon-ricochet'
-        : card.id === 'shrapnel-impact'
-          ? 'upgrade-icon-shrapnel-impact'
-          : card.id === 'critical-rivet'
-            ? 'upgrade-icon-critical-rivet'
-            : card.id === 'field-repair'
-              ? 'upgrade-icon-field-repair'
-              : card.id === 'impact-shield'
-                ? 'upgrade-icon-impact-shield'
-                : 'c3-atlas';
+    const expectedTexture = customTextures[card.id] || 'c3-atlas';
     expect(card.texture).toBe(expectedTexture);
     expect(card.frameWidth).toBeGreaterThanOrEqual(70);
     expect(card.frameHeight).toBeGreaterThanOrEqual(60);

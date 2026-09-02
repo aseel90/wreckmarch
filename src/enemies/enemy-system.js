@@ -4,7 +4,7 @@ import { SpawnSystem } from './spawn-system.js?v=1';
 import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=6';
 import { CombatSystem } from '../combat/combat-system.js?v=12';
 import { ProjectileSystem } from '../combat/projectile-system.js?v=5';
-import { WeaponSystem } from '../combat/weapon-system.js?v=7';
+import { WeaponSystem } from '../combat/weapon-system.js?v=8';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 

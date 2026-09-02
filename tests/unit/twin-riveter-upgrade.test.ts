@@ -73,7 +73,7 @@ describe('Upgrade System 2.0 Twin Riveter power-budget migration', () => {
     expect(scene.upgradeMechanicalState['twin-riveter'].projectileCount).toBe(2);
   });
 
-  it('lets WeaponSystem consume canonical Twin spread and per-projectile damage scale', () => {
+  it('lets WeaponSystem consume canonical Twin state instead of the legacy twinShots mirror', () => {
     const scene: any = {
       twinShots: 1,
       upgradeMechanicalState: {
@@ -87,7 +87,7 @@ describe('Upgrade System 2.0 Twin Riveter power-budget migration', () => {
 
     delete scene.upgradeMechanicalState['twin-riveter'];
     scene.twinShots = 2;
-    expect(weaponSystem.heroSpreads()).toEqual([-0.055, 0.055]);
-    expect((weaponSystem.heroProjectileDamageScale as any)(2)).toBeCloseTo(0.9);
+    expect(weaponSystem.heroSpreads()).toEqual([0]);
+    expect(weaponSystem.heroProjectileDamageScale()).toBe(1);
   });
 });

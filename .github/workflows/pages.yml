@@ -416,28 +416,37 @@ jobs:
           curl -fsSL --retry 5 "${BASE}?build=${SHA}" -o wm-live-index.html
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-loader-telemetry-v1.js" -o wm-live-mobile-hud-loader.js
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" -o wm-live-mobile-hud.js
-          curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=5" -o wm-live-phase-b.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=21" -o wm-live-phase-c.js
+          curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=24" -o wm-live-enemy-system.js
+          curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=6" -o wm-live-phase-b.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=22" -o wm-live-phase-c.js
           curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=18" -o wm-live-phase-c1.js
-          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=26" -o wm-live-phase-d1.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=9" -o wm-live-character-system.js
-          curl -fsSL --retry 5 "${BASE}src/combat/weapon-registry.js?v=1" -o wm-live-weapon-registry.js
-          curl -fsSL --retry 5 "${BASE}src/combat/definitions/rivet-gun.js?v=1" -o wm-live-rivet-gun.js
+          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=27" -o wm-live-phase-d1.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=10" -o wm-live-character-system.js
+          curl -fsSL --retry 5 "${BASE}src/combat/weapon-registry.js?v=2" -o wm-live-weapon-registry.js
+          curl -fsSL --retry 5 "${BASE}src/combat/weapon-system.js?v=8" -o wm-live-weapon-system.js
+          curl -fsSL --retry 5 "${BASE}src/combat/definitions/rivet-gun.js?v=2" -o wm-live-rivet-gun.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-card-art.js?v=7" -o wm-live-upgrade-card-art.js
           curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
-          grep -F "./src/phase-b-runtime.js?v=5" wm-live-index.html
-          grep -F "./src/phase-c-runtime.js?v=21" wm-live-index.html
+          grep -F "./src/phase-b-runtime.js?v=6" wm-live-index.html
+          grep -F "./src/phase-c-runtime.js?v=22" wm-live-index.html
           grep -F "./src/phase-c1-runtime.js?v=18" wm-live-index.html
-          grep -F "./src/phase-d1-runtime.js?v=26" wm-live-index.html
-          grep -F "./combat/weapon-registry.js?v=1" wm-live-phase-b.js
-          grep -F "./combat/weapon-registry.js?v=1" wm-live-phase-c.js
-          grep -F "../combat/weapon-registry.js?v=1" wm-live-character-system.js
-          grep -F "./definitions/rivet-gun.js?v=1" wm-live-weapon-registry.js
+          grep -F "./src/phase-d1-runtime.js?v=27" wm-live-index.html
+          grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-b.js
+          grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-c.js
+          grep -F "../combat/weapon-registry.js?v=2" wm-live-character-system.js
+          grep -F "../combat/weapon-system.js?v=8" wm-live-enemy-system.js
+          grep -F "./definitions/rivet-gun.js?v=2" wm-live-weapon-registry.js
           grep -F "id: 'rivet-gun'" wm-live-rivet-gun.js
           grep -F "damage: 24" wm-live-rivet-gun.js
           grep -F "fireDelay: 390" wm-live-rivet-gun.js
           grep -F "projectileSpeed: 760" wm-live-rivet-gun.js
           grep -F "range: 570" wm-live-rivet-gun.js
+          grep -F "projectileCount: 1" wm-live-rivet-gun.js
+          grep -F "halfSpreadRadians: 0" wm-live-rivet-gun.js
+          grep -F "volleyDamageMultiplier: 1" wm-live-rivet-gun.js
+          grep -F "heroVolleyProfile()" wm-live-weapon-system.js
+          grep -F "source: 'weapon'" wm-live-weapon-system.js
+          grep -F "weaponVolley:s.primaryWeapon?.fireProfile?.projectileCount===1" wm-live-phase-d1.js
           grep -F "weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'" wm-live-phase-d1.js
           grep -F "createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })" wm-live-phase-c1.js
           grep -F "createRegisteredUpgradeChoice(scene, 'triple-riveter', { category: 'EVOLUTION' })" wm-live-phase-c1.js
@@ -478,12 +487,14 @@ jobs:
             wm-live-index.html
             wm-live-mobile-hud.js
             wm-live-mobile-hud-loader.js
+            wm-live-enemy-system.js
             wm-live-phase-b.js
             wm-live-phase-c.js
             wm-live-phase-c1.js
             wm-live-phase-d1.js
             wm-live-character-system.js
             wm-live-weapon-registry.js
+            wm-live-weapon-system.js
             wm-live-rivet-gun.js
             wm-live-final-polish.js
       - name: Open, update, or close live failure issue
