@@ -16,14 +16,19 @@ describe('canonical Upgrade System card art', () => {
     expect(UPGRADE_CARD_ART_TEXTURES['triple-riveter']).toBe('upgrade-icon-triple-riveter');
   });
 
-  it('routes custom card art through the final D1 card owner without a runtime wrapper', () => {
+  it('routes custom card art through the canonical U5 presentation owner without a runtime wrapper', () => {
     const d1 = read('src/phase-d1-runtime.js');
+    const presentation = read('src/upgrades/upgrade-card-presentation.js');
     const art = read('src/upgrades/upgrade-card-art.js');
     const html = read('index.html');
 
-    expect(d1).toContain("import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrades/upgrade-card-art.js?v=7'");
-    expect(d1).toContain('installUpgradeCardArt(s);installPremiumCards(s)');
-    expect(d1).toContain('const customArtTexture=getUpgradeCardArtTexture(this,u.id)');
+    expect(d1).toContain("import { installUpgradeCardPresentation } from './upgrades/upgrade-card-presentation.js?v=1'");
+    expect(d1).toContain("import './upgrades/upgrade-card-art.js?v=7'");
+    expect(d1).toContain('installUpgradeCardPresentation(s)');
+    expect(d1).not.toContain('installPremiumCards');
+    expect(presentation).toContain("import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrade-card-art.js?v=7'");
+    expect(presentation).toContain('installUpgradeCardArt(gameScene)');
+    expect(presentation).toContain('getUpgradeCardArtTexture(this, upgrade.id)');
     expect(art).toContain("'piercing-rivets': 'upgrade-icon-piercing-rivets'");
     expect(art).toContain("'ricochet': 'upgrade-icon-ricochet'");
     expect(art).toContain("'shrapnel-impact': 'upgrade-icon-shrapnel-impact'");
@@ -34,7 +39,7 @@ describe('canonical Upgrade System card art', () => {
     expect(art).toContain("'triple-riveter': 'upgrade-icon-triple-riveter'");
     expect(art).toContain('function buildTripleRiveterIcon(scene)');
     expect(art).not.toContain('UpgradeSceneV4.card');
-    expect(html).toContain("./src/phase-d1-runtime.js?v=27");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=27&u5=1");
     expect(html).not.toContain('piercing-rivets-live.js');
   });
 });
