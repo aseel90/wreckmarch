@@ -34,7 +34,7 @@ describe('canonical Upgrade System card art', () => {
     expect(art).toContain("'triple-riveter': 'upgrade-icon-triple-riveter'");
     expect(art).toContain('function buildTripleRiveterIcon(scene)');
     expect(art).not.toContain('UpgradeSceneV4.card');
-    expect(html).toContain("./src/phase-d1-runtime.js?v=25");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=26");
     expect(html).not.toContain('piercing-rivets-live.js');
   });
 });

@@ -1,3 +1,4 @@
+import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=1';
 /* WRECKMARCH — Phase B runtime: large world + camera + visible swappable starter weapon */
 const WORLD_W = 2200;
 const WORLD_H = 2200;
@@ -215,14 +216,10 @@ function installVisibleStarterWeapon(scene) {
   makeRivetGunTexture(scene);
 
   scene.primaryWeapon = {
-    id: 'scrap-rivet-gun',
-    texture: 'weapon-rivet',
-    damage: scene.damage,
-    fireDelay: scene.fireDelay,
-    range: 570,
-    projectileSpeed: 760,
-    muzzleDistance: 38
+    ...createWeaponRuntimeState(scene.startingWeaponId || 'rivet-gun'),
+    texture: 'weapon-rivet'
   };
+  scene.activeWeaponId = scene.primaryWeapon.id;
   scene.weaponAim = 0;
   scene.weaponSprite?.destroy?.();
   scene.weaponSprite = scene.add.image(scene.hero.x + 18, scene.hero.y + 8, scene.primaryWeapon.texture)
@@ -235,11 +232,17 @@ function installVisibleStarterWeapon(scene) {
     this.weaponSprite.setFlipY(Math.cos(ang) < 0);
   };
 
-  scene.equipPrimaryWeapon = function(definition) {
-    this.primaryWeapon = { ...this.primaryWeapon, ...definition };
-    if (definition.texture) this.weaponSprite.setTexture(definition.texture);
-    this.damage = this.primaryWeapon.damage;
-    this.fireDelay = this.primaryWeapon.fireDelay;
+  scene.equipPrimaryWeapon = function(weaponOrId) {
+    const weaponId = typeof weaponOrId === 'string' ? weaponOrId : weaponOrId?.id;
+    const next = createWeaponRuntimeState(weaponId);
+    const texture = typeof weaponOrId === 'object' && weaponOrId?.texture
+      ? weaponOrId.texture
+      : this.primaryWeapon?.texture || 'weapon-rivet';
+    this.primaryWeapon = { ...next, texture };
+    this.weaponSprite?.setTexture?.(texture);
+    this.activeWeaponId = next.id;
+    this.damage = next.damage;
+    this.fireDelay = next.fireDelay;
   };
 
   scene.projectileSystem.configureBounds({ minX: -60, maxX: WORLD_W + 60, minY: -60, maxY: WORLD_H + 60 });

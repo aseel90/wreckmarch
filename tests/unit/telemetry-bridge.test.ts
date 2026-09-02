@@ -53,9 +53,15 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain("manualReportFailure('finalize'");
     expect(runtime).toContain("manualReportFailure('transport'");
     expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=14');
-    expect(html).toContain('./src/phase-d1-runtime.js?v=25');
+    expect(html).toContain('./src/phase-d1-runtime.js?v=26');
     expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=18');
-    expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=25');
+    expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=26');
+    expect(pagesWorkflow).toContain('src/phase-b-runtime.js?v=5');
+    expect(pagesWorkflow).toContain('src/phase-c-runtime.js?v=21');
+    expect(pagesWorkflow).toContain('src/characters/character-system.js?v=9');
+    expect(pagesWorkflow).toContain('src/combat/weapon-registry.js?v=1');
+    expect(pagesWorkflow).toContain('src/combat/definitions/rivet-gun.js?v=1');
+    expect(pagesWorkflow).toContain("weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'");
     expect(pagesWorkflow).not.toContain('src/phase-d1-runtime.js?v=23');
     expect(pagesWorkflow).toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' })");
     expect(pagesWorkflow).toContain('upgrade-icon-explosive-rivet');

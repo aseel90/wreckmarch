@@ -1,6 +1,7 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
 import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=14';
 import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
+import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=1';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
@@ -85,14 +86,14 @@ function installWeaponRig(scene) {
   scene.weaponArm = arm;
   scene.weaponAim = scene.weaponAim || 0;
   scene.weaponMuzzleLocal = 67;
+  const canonicalWeapon = createWeaponRuntimeState(scene.primaryWeapon?.id || scene.startingWeaponId || 'rivet-gun');
   scene.primaryWeapon = {
+    ...canonicalWeapon,
     ...scene.primaryWeapon,
-    damage: scene.primaryWeapon.damage || scene.damage || 24,
-    fireDelay: scene.primaryWeapon.fireDelay || scene.fireDelay || 390,
-    projectileSpeed: scene.primaryWeapon.projectileSpeed || 720,
-    range: scene.primaryWeapon.range || 570,
-    pierceCount: Math.max(0, Math.floor(Number(scene.primaryWeapon.pierceCount) || 0))
+    id: canonicalWeapon.id,
+    pierceCount: Math.max(0, Math.floor(Number(scene.primaryWeapon?.pierceCount ?? canonicalWeapon.pierceCount) || 0))
   };
+  scene.activeWeaponId = scene.primaryWeapon.id;
   scene.twinShots = scene.twinShots || 1;
 
   scene.updateWeaponPose = function() {
