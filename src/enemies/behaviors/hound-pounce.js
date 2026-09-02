@@ -246,7 +246,8 @@ function updateChase(scene, enemy, target, state, cfg, random, dt) {
     return;
   }
 
-  const speed = Number(enemy.speed) || 0;
+  const chaseMultiplier = Number(cfg.chaseSpeedMultiplier) || 1;
+  const speed = (Number(enemy.speed) || 0) * chaseMultiplier;
   let desiredX = nx * speed;
   let desiredY = ny * speed;
   let sharpness = Number(cfg.chaseSharpness) || 8.5;
