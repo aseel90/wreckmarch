@@ -31,6 +31,15 @@ function getOrCreateRunReportProvider(game) {
   return { remoteReportingEnabled, provider: game.__wreckmarchRunReportProvider };
 }
 
+function getManualRunReportProvider(game) {
+  if (typeof globalThis.fetch !== 'function') return undefined;
+  const automaticTransport = getOrCreateRunReportProvider(game);
+  if (automaticTransport.provider) return automaticTransport.provider;
+  // Manual reporting must not opt the live runtime into automatic telemetry.
+  // A one-shot provider can submit/recover the report without touching boot/tick ownership.
+  return new RunReportProvider();
+}
+
 function manualReportFailure(stage, error, extra = {}) {
   return {
     ok: false,
@@ -44,16 +53,13 @@ export async function sendCurrentRunReport(game = globalThis.__WM_GAME__, reason
   const scene = getScene(game);
   if (!scene) return manualReportFailure('scene', 'wreckmarch_scene_unavailable');
 
-  const { remoteReportingEnabled, provider } = getOrCreateRunReportProvider(game);
-  if (!remoteReportingEnabled || !provider) {
-    return manualReportFailure('transport', 'remote_reporting_disabled');
+  const provider = getManualRunReportProvider(game);
+  if (!provider) {
+    return manualReportFailure('transport', 'remote_reporting_unavailable');
   }
 
   const telemetry = scene.runTelemetry;
   if (!telemetry) return manualReportFailure('session', 'run_telemetry_missing');
-
-  telemetry.provider = provider;
-  telemetry.remoteReportingEnabled = true;
 
   let report;
   try {
