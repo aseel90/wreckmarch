@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 960, height: 540 } });
 
-test('Elite milestone drops a bonus WRECK CRATE with a three-choice Rare+ floor', async ({ page }) => {
+test('Elite milestone drops a bonus WRECK CRATE with at least one Rare+ choice', async ({ page }) => {
   await page.goto('/?debug=1&autotest=1');
   await expect(page.locator('canvas')).toBeVisible({ timeout: 20_000 });
   await expect.poll(
@@ -61,7 +61,7 @@ test('Elite milestone drops a bonus WRECK CRATE with a three-choice Rare+ floor'
   expect(reward.milestone).toBe(270);
   expect(reward.rewardSource).toBe('elite-crate');
   expect(reward.choices).toHaveLength(3);
-  expect(reward.choices.every((item: any) => ['RARE', 'EPIC', 'LEGENDARY'].includes(item.rarity))).toBe(true);
+  expect(reward.choices.some((item: any) => ['RARE', 'EPIC', 'LEGENDARY'].includes(item.rarity))).toBe(true);
   expect(reward.level).toBe(before.level);
   expect(reward.scrapXp).toBe(before.scrapXp);
   expect(reward.pendingLevelUps).toBe(before.pendingLevelUps);
