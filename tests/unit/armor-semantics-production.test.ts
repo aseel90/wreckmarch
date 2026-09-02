@@ -12,8 +12,8 @@ describe('WS19 armor semantics production ownership', () => {
   });
 
   it('keeps Armor Plate and the current card pool from silently granting Armor', () => {
-    const armorModifiers = listUpgradeDefinitions().flatMap(definition =>
-      (definition.modifiers || []).filter(modifier => modifier.domain === 'character' && modifier.stat === 'armor')
+    const armorModifiers = listUpgradeDefinitions().flatMap((definition: any) =>
+      (definition.modifiers || []).filter((modifier: any) => modifier.domain === 'character' && modifier.stat === 'armor')
     );
     expect(armorModifiers).toEqual([]);
   });
