@@ -82,7 +82,7 @@ export const BALANCE_SCENARIOS = Object.freeze({
     seed: 0x11a0c00b,
     upgrades: plan(
       ['heavy-rivets', 4],
-      ['overclock', 3],
+      ['fleet-feet', 3],
       ['armor-plate', 4],
       ['field-repair', 3],
       ['impact-shield', 2],
