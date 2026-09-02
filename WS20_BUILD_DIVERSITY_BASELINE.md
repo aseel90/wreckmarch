@@ -1,6 +1,6 @@
 # Workstream 20 — Build Identities + Anti-Mandatory-Card Validation
 
-Status: 🟡 ACTIVE / PRODUCTION EVIDENCE 2 OF 3 CONFIRMED
+Status: ✅ COMPLETE / PRODUCTION VALIDATED — 3 OF 3 ARCHETYPES CONFIRMED
 
 ## Goal
 
@@ -48,7 +48,7 @@ A report is accepted only when:
 
 Identity signals:
 
-- **Scalar / Precision:** at least 3 scalar cards, no more than one crowd card, and primary damage share >= 80%.
+- **Scalar / Precision:** meaningful scalar investment, no more than one crowd card, and primary damage share >= 80%. Meaningful scalar investment requires **3 distinct scalar cards and 4 total scalar levels**, so three incidental L1 side picks do not manufacture a Scalar identity.
 - **Crowd / Chain:** at least 2 crowd cards and secondary path share >= 15%.
 - **Survival / Support:** meaningful survival investment plus at least 2 observed signals among max-HP gain, mobility gain, healing, shield prevention, and >=5% support damage. Meaningful investment means either **3 distinct survival/support cards** or **4 total survival/support levels**.
 
@@ -56,7 +56,7 @@ Identity signals:
 
 Production card offers remain intentionally random. WS20 must **not** bias the offer pool toward the player's current build, guarantee synergistic choices, or remove valid off-build cards merely to make validation easier.
 
-A natural run may therefore contain one or two low-investment side picks that were taken because the offered alternatives were poor. Those incidental picks do not change the run's archetype by themselves. The classifier requires sustained investment plus observed gameplay effect before Survival/Support can compete with an offensive identity.
+A natural run may therefore contain low-investment side picks that were taken because the offered alternatives were poor. Those incidental picks do not change the run's archetype by themselves. The classifier now applies investment gates symmetrically: Survival/Support needs sustained survival investment plus observed gameplay effect, while Scalar/Precision needs at least 3 distinct scalar cards and 4 total scalar levels.
 
 This preserves the intended tension that a player will sometimes take a card that is neutral or weak for the current build instead of being handed a perfect answer every level.
 
@@ -65,18 +65,15 @@ This preserves the intended tension that a player will sometimes take a card tha
 Wave-8+ reports inspected from the D1 -> GitHub bridge:
 
 - **RUN-0039 / issue #185 — ACCEPTED: Crowd / Chain.** Wave 8; secondary path share ~21%; Overclock direct-power share ~34.81%, narrowly under PB1 35%; identity is not Survival/Support.
-- **D1 row 46 / report `wm-213d9261-23c1-40c6-ae6a-265c85c04fb6` — ACCEPTED: Scalar / Precision.** Wave 8; duration 440.191s; primary path share ~83.73%; one crowd card only; four scalar-card identities present; maximum direct concentration remains below PB1 35%. Fleet Feet L1 + Field Repair L1 are recorded as low-investment RNG side picks and do not create a second Survival/Support identity. At audit time the row was still `pending_github` with no `last_error`.
+- **RUN-0046 / issue #233 / report `wm-213d9261-23c1-40c6-ae6a-265c85c04fb6` — ACCEPTED: Scalar / Precision.** Wave 8; duration 440.191s; primary path share ~83.73%; one crowd card only; four scalar-card identities / seven scalar levels; maximum direct concentration remains below PB1 35%. Fleet Feet L1 + Field Repair L1 are recorded as low-investment RNG side picks and do not create a second Survival/Support identity.
+- **D1 row 47 / report `wm-491a3d8e-d7a4-4258-be9e-184298728589` — ACCEPTED: Survival / Support.** Wave 10; duration 691.274s; five survival/support cards / eleven total survival levels; max HP 147.25; move speed 278.645; 109.063 healing; 24 shield damage prevented; support damage 8,216.336 / 55,558.31 = ~14.79%. Twin L1 + Overclock L1 + Heavy L1 are only three incidental scalar levels and therefore do not create a second Scalar identity. The final classifier regression for this exact report passed on PR #234 head `0b59a1f41ec5bd308ac61f843bfb06052d2ccd3b` and merged as `b2132b180e56a95ebaebe325235f4da9b7c8e183`.
 - **RUN-0013 / issue #151 — rejected.** Legacy report lacks path attribution and Overclock concentration is ~50.42%, above PB1.
 - **RUN-0021 / issue #156 — rejected.** Overclock concentration is ~36.55%, above PB1. It contains some support picks, but under the revised RNG-tolerant classifier they are below the Survival/Support investment threshold; the run also predates current independent Rig ownership.
 - **RUN-0026 / issue #165 — rejected.** Wave 10 but crowd/survival hybrid and Overclock concentration is ~44.20%, above PB1; one hybrid may not fill two archetype gates.
 
-Current Production evidence: **2 / 3 archetypes confirmed**.
+Current Production evidence: **3 / 3 archetypes confirmed — Scalar / Precision, Crowd / Chain, and Survival / Support.**
 
-Remaining evidence needed:
-
-1. One natural **Survival / Support** run reaching Wave 8+ while passing the 35% gate and showing real survivability/support telemetry.
-
-The runs do not need the exact deterministic candidate card list; the classifier accepts natural variations that preserve the identity.
+The runs did not need the exact deterministic candidate card list; the classifier accepted natural variations while preserving intentional random/off-build offers.
 
 ## Closure rules
 
@@ -87,8 +84,8 @@ The runs do not need the exact deterministic candidate card list; the classifier
 - [x] Crowd candidate demonstrates bounded secondary mechanics without recursive full-strength chains.
 - [x] Survival/support candidate demonstrates real non-DPS budget ownership rather than disguising hero damage as support damage.
 - [x] One-card direct-power attribution is measured against the PB1 35% rule.
-- [ ] At least three distinct archetypes have real Production evidence reaching Wave 8 or equivalent accepted gate. **Current: 2/3.**
-- [ ] Quality / Smoke / Chromium shards / aggregate E2E green on the final WS20 Production-classifier head.
-- [ ] Exact-SHA Production verification green if live runtime paths change.
+- [x] At least three distinct archetypes have real Production evidence reaching Wave 8 or equivalent accepted gate. **Final: 3/3.**
+- [x] Quality / Smoke / Chromium shards / aggregate E2E green on final classifier head `0b59a1f41ec5bd308ac61f843bfb06052d2ccd3b` (PR #234).
+- [x] Exact-SHA Production verification gate is **N/A for final closure** because PR #234 changes classifier/test logic only and does not alter the live runtime import chain or gameplay.
 
-Until the Production viability requirement is satisfied, WS20 remains open.
+WS20 is closed. The three Production archetypes are proven without changing live card RNG, offer weighting, card values, or gameplay runtime behavior.
