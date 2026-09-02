@@ -2,6 +2,7 @@ import { RUN_BALANCE } from './balance/run-balance.js?v=6';
 import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=14';
 import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=2';
+import { getScrapXpNeeded } from './balance/progression-balance.js?v=1';
 
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
@@ -167,15 +168,10 @@ function installHitboxDebug(scene) {
   };
 }
 
-function xpNeeded(level) {
-  const l = Math.max(1, level);
-  return 6 + (l - 1) * 4 + Math.floor(Math.pow(l - 1, 1.18));
-}
-
 function installProgressHud(scene) {
   scene.level = 1;
   scene.scrapXp = 0;
-  scene.scrapNeeded = xpNeeded(scene.level);
+  scene.scrapNeeded = getScrapXpNeeded(scene.level);
   scene.pendingLevelUps = 0;
   scene.upgradeOpen = false;
   scene.upgradeLevels = {};
@@ -301,7 +297,7 @@ function installScrapProgression(scene) {
     while (this.scrapXp >= this.scrapNeeded) {
       this.scrapXp -= this.scrapNeeded;
       this.level += 1;
-      this.scrapNeeded = xpNeeded(this.level);
+      this.scrapNeeded = getScrapXpNeeded(this.level);
       levelsGained += 1;
     }
     this.refreshProgressHud();
