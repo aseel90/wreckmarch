@@ -1,0 +1,62 @@
+name: WS14 roadmap sync helper
+
+on:
+  push:
+    branches:
+      - docs/ws14-a-status-sync
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore canonical docs and apply status sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout origin/main -- COMBAT_BUILD_BALANCE_ROADMAP.md WS14_SHOTGUN_IDENTITY.md
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('COMBAT_BUILD_BALANCE_ROADMAP.md')
+          s = p.read_text()
+          s = s.replace(
+              '| 13 | Canonical Weapon Registry / signature-weapon resolution | 🟢 NEXT | Clean deterministic weapon ownership for Runner, Shotgun and future characters; remove ad-hoc `startingWeaponId`/runtime weapon identity fallbacks before adding the Shotgun character. |',
+              '| 13 | Canonical Weapon Registry / signature-weapon resolution | ✅ COMPLETE / CI + PROD DEPLOYED | PR #194 / main `b14c8181f14867c5e6cf0733c1d04fa9effb64fc` centralized canonical weapon ownership and signature-weapon resolution, removed ad-hoc runtime identity fallbacks, and passed Quality/Smoke/Chromium plus Production deployment. |'
+          )
+          s = s.replace(
+              '| 14 | Shotgun Character combat identity | ⚪ PENDING | Define short-range burst/coverage, spread, risk and volley budget without making it Runner-with-more-projectiles |',
+              '| 14 | Shotgun Character combat identity | 🟡 WS14-A COMPLETE / WS14-B NUMERIC DECISION PENDING | PR #198 / main `a5aab030f0b86ed17aed22fa62fbfa5252a3a519` added canonical intrinsic `fireProfile` volley architecture with Runner preserved at 1 projectile / 0 spread / 1.0x. Final Shotgun pellet count, spread, cadence, range and volley multiplier remain intentionally unfrozen. |'
+          )
+          s = s.replace(
+              'Workstreams **1–9, 11 and 12 are complete** under their required gates. Workstream **10 — Triple Riveter / advanced multishot** is implemented and deployed but remains intentionally open for one natural Twin L2 → Triple Production/D1 gameplay validation run; failure to roll it naturally is not treated as a defect and does not block later work. **Workstream 13 — Canonical Weapon Registry / signature-weapon resolution is the next active workstream** unless a newly observed regression requires reopening a completed gate.',
+              'Workstreams **1–9 and 11–13 are complete** under their required gates. Workstream **10 — Triple Riveter / advanced multishot** is implemented and deployed but remains intentionally open for one natural Twin L2 → Triple Production/D1 gameplay validation run; failure to roll it naturally is not treated as a defect and does not block later work. **Workstream 14 is active:** WS14-A architecture is complete in PR #198 / main `a5aab030f0b86ed17aed22fa62fbfa5252a3a519`, while WS14-B is intentionally blocked on approving final Shotgun numeric identity (pellet count, spread, cadence, range and total volley multiplier). Do not invent those values.'
+          )
+          p.write_text(s)
+
+          p = Path('WS14_SHOTGUN_IDENTITY.md')
+          s = p.read_text()
+          s = s.replace('Status: 🟡 DESIGN / ARCHITECTURE IN PROGRESS', 'Status: 🟡 WS14-A COMPLETE / WS14-B NUMERIC DECISION PENDING')
+          s = s.replace(
+              '## Architecture slice — WS14-A\n\nBefore assigning Shotgun numbers:',
+              '## Architecture slice — WS14-A\n\n**Implementation status:** ✅ COMPLETE in PR #198 / main `a5aab030f0b86ed17aed22fa62fbfa5252a3a519`. The canonical intrinsic volley architecture is merged with Runner preserved at one projectile, zero spread and `1.0x` intrinsic volley. Final Shotgun numeric values are still intentionally unfrozen.\n\nCompleted architecture contract:'
+          )
+          s = s.replace(
+              'WS14-B may choose final Shotgun numbers only after WS14-A passes Quality, Smoke and Chromium with no Runner regression. Numeric implementation then requires deterministic volley/DPS/projectile-volume scenarios and a real Production gameplay/D1 validation run before WS14 can be marked DONE.',
+              'WS14-A passed the required Quality, Smoke and Chromium gates on PR #198 with no Runner regression. WS14-B may now begin **only after the final Shotgun numeric identity is explicitly approved**: pellet count, spread angle, cadence, effective range and total volley multiplier. Until those values are approved, implementation must stop at architecture/documentation and must not guess balance numbers.\n\nAfter numeric approval, WS14-B requires deterministic volley/DPS/projectile-volume scenarios plus a real Production gameplay/D1 validation run before WS14 can be marked DONE.'
+          )
+          p.write_text(s)
+          PY
+          rm .github/workflows/ws14-doc-sync.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add COMBAT_BUILD_BALANCE_ROADMAP.md WS14_SHOTGUN_IDENTITY.md .github/workflows/ws14-doc-sync.yml
+          git commit -m 'Sync WS14-A roadmap status after architecture merge'
+          git push origin HEAD:docs/ws14-a-status-sync
