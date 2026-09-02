@@ -49,6 +49,7 @@ describe('WS20 Production run classifier', () => {
 
     expect(result.accepted).toBe(true);
     expect(result.acceptedArchetype).toBe(WS20_ARCHETYPES.SCALAR_PRECISION);
+    expect(result.scalarInvestment.qualifies).toBe(true);
     expect(result.concentration.maxEntry?.share).toBeLessThanOrEqual(0.35);
   });
 
@@ -201,12 +202,74 @@ describe('WS20 Production run classifier', () => {
     expect(result.acceptedArchetype).toBe(WS20_ARCHETYPES.SCALAR_PRECISION);
     expect(result.pathShares.primary).toBeGreaterThan(0.83);
     expect(result.cardCounts.survival).toBe(2);
+    expect(result.scalarInvestment).toEqual({ distinctCards: 4, totalLevels: 7, qualifies: true });
     expect(result.survivalInvestment).toEqual({
       distinctCards: 2,
       totalLevels: 2,
       qualifies: false
     });
     expect(result.matches).not.toContain(WS20_ARCHETYPES.SURVIVAL_SUPPORT);
+    expect(result.concentration.maxEntry?.share).toBeLessThanOrEqual(0.35);
+  });
+
+  it('accepts D1 row 47 as Survival/Support when three L1 scalar side picks are only incidental RNG investment', () => {
+    const result = classifyWs20ProductionReport(report({
+      reportId: 'wm-491a3d8e-d7a4-4258-be9e-184298728589',
+      run: { finalWave: 10 },
+      combat: {
+        damageDealt: 55558.31,
+        damageTaken: 209.063,
+        healingReceived: 109.063,
+        shieldDamagePrevented: 24,
+        damageByProjectilePath: {
+          primary: 47341.974,
+          pierce: 0,
+          ricochet: 0,
+          shrapnel: 0,
+          explosion: 0,
+          support: 8216.336
+        }
+      },
+      upgrades: {
+        finalLevels: {
+          'twin-riveter': 1,
+          'fleet-feet': 3,
+          'call-rig': 1,
+          overclock: 1,
+          'field-repair': 2,
+          'armor-plate': 3,
+          'impact-shield': 2,
+          'scrap-magnet': 1,
+          'heavy-rivets': 1
+        },
+        resolvedStats: {
+          character: {
+            maxHp: 147.25,
+            moveSpeed: 278.645385,
+            critChance: 0,
+            critDamageMultiplier: 1.5
+          },
+          weapon: {
+            damage: 26.880000000000003,
+            fireDelay: 348.21428571428567,
+            projectileSpeed: 760,
+            range: 570,
+            pierceCount: 0,
+            ricochetCount: 0,
+            shrapnelCount: 0
+          }
+        }
+      }
+    }));
+
+    expect(result.accepted).toBe(true);
+    expect(result.acceptedArchetype).toBe(WS20_ARCHETYPES.SURVIVAL_SUPPORT);
+    expect(result.finalWave).toBe(10);
+    expect(result.scalarInvestment).toEqual({ distinctCards: 3, totalLevels: 3, qualifies: false });
+    expect(result.survivalInvestment).toEqual({ distinctCards: 5, totalLevels: 11, qualifies: true });
+    expect(result.survivalSignalCount).toBe(5);
+    expect(result.pathShares.support).toBeCloseTo(0.147886, 5);
+    expect(result.matches).toEqual([WS20_ARCHETYPES.SURVIVAL_SUPPORT]);
     expect(result.concentration.maxEntry?.share).toBeLessThanOrEqual(0.35);
   });
 
