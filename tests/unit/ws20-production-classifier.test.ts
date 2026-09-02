@@ -106,7 +106,7 @@ describe('WS20 Production run classifier', () => {
     expect(result.rejectionReasons).toContain('PATH_TELEMETRY_UNAVAILABLE_FOR_OFFENSIVE_IDENTITY');
   });
 
-  it('rejects RUN-0021-like hybrid support/crowd evidence when rarity-driven Overclock concentration exceeds 35%', () => {
+  it('rejects RUN-0021-like crowd evidence when rarity-driven Overclock concentration exceeds 35% without promoting two incidental support picks into a survival identity', () => {
     const result = classifyWs20ProductionReport(report({
       combat: {
         damageDealt: 57456.307,
@@ -120,7 +120,8 @@ describe('WS20 Production run classifier', () => {
 
     expect(result.accepted).toBe(false);
     expect(result.matches).toContain(WS20_ARCHETYPES.CROWD_CHAIN);
-    expect(result.matches).toContain(WS20_ARCHETYPES.SURVIVAL_SUPPORT);
+    expect(result.matches).not.toContain(WS20_ARCHETYPES.SURVIVAL_SUPPORT);
+    expect(result.survivalInvestment.qualifies).toBe(false);
     expect(result.concentration.passes).toBe(false);
   });
 
@@ -148,6 +149,67 @@ describe('WS20 Production run classifier', () => {
     expect(result.rejectionReasons).toContain('DIRECT_POWER_CONCENTRATION_ABOVE_35_PERCENT');
   });
 
+  it('accepts RUN-0046-like scalar evidence when RNG forces two low-investment survival side picks', () => {
+    const result = classifyWs20ProductionReport(report({
+      reportId: 'wm-213d9261-23c1-40c6-ae6a-265c85c04fb6',
+      combat: {
+        damageDealt: 32735.938,
+        damageTaken: 125,
+        healingReceived: 25,
+        shieldDamagePrevented: 0,
+        damageByProjectilePath: {
+          primary: 27410.978,
+          pierce: 5341.606,
+          ricochet: 0,
+          shrapnel: 0,
+          explosion: 0,
+          support: 0
+        }
+      },
+      upgrades: {
+        finalLevels: {
+          'fleet-feet': 1,
+          'piercing-rivets': 1,
+          'scrap-magnet': 2,
+          'heavy-rivets': 1,
+          'critical-rivet': 2,
+          'long-barrel': 2,
+          overclock: 2,
+          'field-repair': 1
+        },
+        resolvedStats: {
+          character: {
+            maxHp: 100,
+            moveSpeed: 262.65000000000003,
+            critChance: 0.115,
+            critDamageMultiplier: 1.5
+          },
+          weapon: {
+            damage: 27.744,
+            fireDelay: 310.01589825119237,
+            projectileSpeed: 1106.6511999999998,
+            range: 708.5099999999999,
+            pierceCount: 1,
+            ricochetCount: 0,
+            shrapnelCount: 0
+          }
+        }
+      }
+    }));
+
+    expect(result.accepted).toBe(true);
+    expect(result.acceptedArchetype).toBe(WS20_ARCHETYPES.SCALAR_PRECISION);
+    expect(result.pathShares.primary).toBeGreaterThan(0.83);
+    expect(result.cardCounts.survival).toBe(2);
+    expect(result.survivalInvestment).toEqual({
+      distinctCards: 2,
+      totalLevels: 2,
+      qualifies: false
+    });
+    expect(result.matches).not.toContain(WS20_ARCHETYPES.SURVIVAL_SUPPORT);
+    expect(result.concentration.maxEntry?.share).toBeLessThanOrEqual(0.35);
+  });
+
   it('accepts a survival/support run only with multiple survival cards and multiple observed survival/support signals', () => {
     const result = classifyWs20ProductionReport(report({
       combat: {
@@ -164,6 +226,8 @@ describe('WS20 Production run classifier', () => {
 
     expect(result.accepted).toBe(true);
     expect(result.acceptedArchetype).toBe(WS20_ARCHETYPES.SURVIVAL_SUPPORT);
+    expect(result.survivalInvestment.qualifies).toBe(true);
+    expect(result.survivalInvestment.totalLevels).toBeGreaterThanOrEqual(4);
     expect(result.survivalSignalCount).toBeGreaterThanOrEqual(4);
   });
 });
