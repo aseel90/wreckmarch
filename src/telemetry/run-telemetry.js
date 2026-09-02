@@ -48,6 +48,7 @@ export class RunTelemetry {
     this.projectileSeen = new WeakSet();
     this.heroProjectileHits = new WeakSet();
     this.damageBuckets = new Map();
+    this.projectileSpawnBuckets = new Map();
     this.previousHeroHp = n(scene?.heroHp);
     this.previousLastShot = n(scene?.lastShot, -1);
     this.previousUpgradeLevels = { ...(scene?.upgradeLevels || {}) };
@@ -61,7 +62,7 @@ export class RunTelemetry {
       combat: { damageDealt: 0, damageTaken: 0, hits: 0, playerHits: 0, kills: 0, killsByEnemy: {}, spawnedByEnemy: {}, ttkSecondsByEnemy: {}, criticalHits: 0, criticalDamageDealt: 0, healingReceived: 0, shieldHitsAbsorbed: 0, shieldDamagePrevented: 0, damageByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, explosion: 0, support: 0 }, hitsByProjectilePath: { primary: 0, pierce: 0, ricochet: 0, shrapnel: 0, explosion: 0, support: 0 }, explosionDamageDealt: 0, lastDamageSource: null, averageDps: 0, peakDps1s: 0 },
       projectiles: { triggers: 0, spawned: 0, heroSpawned: 0, supportSpawned: 0, shrapnelSpawned: 0, heroProjectilesWithHit: 0, heroMisses: 0, pierceHits: 0, ricochets: 0, explosions: 0, explosionHits: 0 },
       upgrades: { history: [], finalLevels: {}, rarityHistory: {}, resolvedStats: null },
-      performance: { frames: 0, averageFrameMs: 0, maxFrameMs: 0, longFrames: 0, peakActiveEnemies: 0, peakActiveProjectiles: 0, frameSpikes: [] }
+      performance: { frames: 0, averageFrameMs: 0, maxFrameMs: 0, longFrames: 0, peakActiveEnemies: 0, peakActiveProjectiles: 0, peakActiveHeroProjectiles: 0, peakActiveShrapnel: 0, peakActiveSupportProjectiles: 0, averageProjectileSpawnsPerSecond: 0, peakProjectileSpawns1s: 0, frameSpikes: [] }
     };
   }
 
@@ -155,6 +156,8 @@ export class RunTelemetry {
       this.projectileSeen.add(projectile);
       const p = this.report.projectiles;
       p.spawned += 1;
+      const spawnSecond = Math.max(0, Math.floor(this.runTime));
+      this.projectileSpawnBuckets.set(spawnSecond, n(this.projectileSpawnBuckets.get(spawnSecond)) + 1);
       if (state.kind === 'hero') p.heroSpawned += 1;
       else if (state.kind === 'shrapnel') p.shrapnelSpawned += 1;
       else if (state.kind !== 'explosion') p.supportSpawned += 1;
@@ -242,6 +245,12 @@ export class RunTelemetry {
     perf.maxFrameMs = Math.max(n(perf.maxFrameMs), frameMs);
     perf.peakActiveEnemies = Math.max(n(perf.peakActiveEnemies), enemies.length);
     perf.peakActiveProjectiles = Math.max(n(perf.peakActiveProjectiles), bullets.length);
+    const activeHeroProjectiles = bullets.filter(projectile => projectileKind(projectile) === 'hero').length;
+    const activeShrapnel = bullets.filter(projectile => projectileKind(projectile) === 'shrapnel').length;
+    const activeSupportProjectiles = bullets.filter(projectile => projectileKind(projectile) === 'support').length;
+    perf.peakActiveHeroProjectiles = Math.max(n(perf.peakActiveHeroProjectiles), activeHeroProjectiles);
+    perf.peakActiveShrapnel = Math.max(n(perf.peakActiveShrapnel), activeShrapnel);
+    perf.peakActiveSupportProjectiles = Math.max(n(perf.peakActiveSupportProjectiles), activeSupportProjectiles);
     if (frameMs >= LONG_FRAME_MS) {
       perf.longFrames += 1;
       if (perf.frameSpikes.length < MAX_FRAME_SPIKE_SAMPLES) perf.frameSpikes.push({ atSeconds: round(this.runTime), frameMs: round(frameMs, 2), activeEnemies: enemies.length, activeProjectiles: bullets.length });
@@ -281,6 +290,8 @@ export class RunTelemetry {
     p.heroMisses = Math.max(0, p.heroSpawned - p.heroProjectilesWithHit);
     const perf = this.report.performance;
     perf.averageFrameMs = round(perf.frames ? n(perf._totalFrameMs) / perf.frames : 0, 2);
+    perf.averageProjectileSpawnsPerSecond = round(p.spawned / duration, 2);
+    perf.peakProjectileSpawns1s = Math.max(0, ...this.projectileSpawnBuckets.values());
     delete perf._totalFrameMs;
     this.report.upgrades.finalLevels = safeClone(this.scene?.upgradeLevels || {}) || {};
     this.report.upgrades.rarityHistory = safeClone(this.scene?.upgradeRarityHistory || {}) || {};
