@@ -1,0 +1,116 @@
+name: Close WS17 roadmaps once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ws17-close-roadmaps-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  close-ws17:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply localized roadmap updates
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('COMBAT_BUILD_BALANCE_ROADMAP.md')
+          text = p.read_text()
+          replacements = [
+            (
+              '| 17 | Rarity identity + power scaling | ⚪ PENDING BASELINE / U7 | Resolve same-card rarity identity and prevent rarity from magnifying already-multiplicative stats excessively |',
+              '| 17 | Rarity identity + power scaling | ✅ COMPLETE / VALIDATED / NO REBALANCE REQUIRED | PR #209 / main `f868f789a40d9c674a0e0e772c5cdbde00b22ab9` validated the current rarity model without gameplay numeric changes. Weighted expected modifier power is 1.073x; strong RUN-0026 rarity luck added ~15.65% over the same-level Common-equivalent build while final direct power remained ~3.453x inside the PB1 late envelope. Final head `53a4020c424f3afb87c57cdfe48324370c9e75a7` passed Quality, Smoke, all Chromium shards and aggregate E2E; exact merge SHA passed Live verification. |'
+            ),
+            (
+              '| 18 | Rig/support damage ownership | ⚪ PENDING | Decouple support balance from ambiguous `primaryWeapon.damage` semantics and future shotgun pellet damage |',
+              '| 18 | Rig/support damage ownership | 🟡 ACTIVE / AUDIT NEXT | Decouple support balance from ambiguous `primaryWeapon.damage` semantics and future shotgun pellet damage; establish one canonical support-damage budget before changing any Rig numbers. |'
+            ),
+            ('peak/average DPS ~3.39 → WS17/WS20', 'peak/average DPS ~3.39 → WS20 (WS17 cleared rarity contribution as the cause)'),
+            ('**Next active balance workstream: WS17 — Rarity identity + power scaling.**', '**WS17 is complete. Next active balance workstream: WS18 — Rig/support damage ownership.**'),
+            ('**WS15 handoff:** WS16 is now complete; the current active balance workstream is **WS17 — Rarity identity + power scaling**.', '**WS15 handoff:** WS16 and WS17 are now complete; the current active balance workstream is **WS18 — Rig/support damage ownership**.'),
+            ('**Historical checkpoint:** WS13 Canonical Weapon Registry / signature-weapon resolution is complete; WS15-A and WS16 are also complete. The current active balance workstream is **WS17 — Rarity identity + power scaling**.', '**Historical checkpoint:** WS13 Canonical Weapon Registry / signature-weapon resolution, WS15-A, WS16 and WS17 are complete. The current active balance workstream is **WS18 — Rig/support damage ownership**.'),
+            ('Workstreams **1–9, 11–13, WS15-A and WS16 are complete**', 'Workstreams **1–9, 11–13, WS15-A, WS16 and WS17 are complete**'),
+            ('**Current active balance work continues with WS17 — Rarity identity + power scaling.**', '**Current active balance work continues with WS18 — Rig/support damage ownership.**'),
+            ('Critical Rivet remains an observation item for later rarity/build-diversity work. RUN-0026 reached Critical Rivet 3 without producing a clear standalone reason to change it immediately.', "Critical Rivet's rarity scaling was validated in WS17 and requires no standalone rarity change. Keep it as an observation item for WS20 build-diversity / anti-mandatory-card validation; RUN-0026 reached Critical Rivet 3 without producing a clear standalone reason to rebalance it.")
+          ]
+          for old, new in replacements:
+            count = text.count(old)
+            if count != 1:
+              raise SystemExit(f'expected exactly one roadmap match, got {count}: {old[:90]}')
+            text = text.replace(old, new, 1)
+
+          anchor = '''- **WS17 is complete. Next active balance workstream: WS18 — Rig/support damage ownership.**
+
+### Workstream 15 staged delivery — Enemy role / range safety
+'''
+          section = '''- **WS17 is complete. Next active balance workstream: WS18 — Rig/support damage ownership.**
+
+### Workstream 17 validation — Rarity identity + power scaling
+
+- **✅ COMPLETE / NO NUMERIC REBALANCE REQUIRED:** PR #209 merged as `f868f789a40d9c674a0e0e772c5cdbde00b22ab9`; final PR head `53a4020c424f3afb87c57cdfe48324370c9e75a7` passed Quality, Smoke, Chromium E2E shards 1–3 and aggregate E2E.
+- The current natural rarity distribution remains **Common 65 / Rare 24 / Epic 9 / Legendary 2**, with modifier multipliers **1.00 / 1.15 / 1.30 / 1.50**. Its weighted expected modifier power is **1.073x**.
+- Rarity scales each acquired numeric level, not the already-resolved final stat. Heavy and Overclock forced all-Legendary max stacks each produce only **+18.75%** resolved same-card uplift versus all Common; max Critical Rivet rarity uplift is only ~**+4.55% expected direct DPS**.
+- Discrete mechanics are protected from generic rarity multiplication. Triple Riveter remains intentionally **Rare** for evolution identity, but its explicit mechanic remains **3 projectiles / 1.60x total volley** rather than `1.60 × 1.15`.
+- Weighted expected max Heavy L5 + Overclock L5 + Critical L4 + Twin L2 resolves to ~**4.189x Runner base direct power**, inside the PB1 **2.8–4.25x** late envelope.
+- RUN-0026 already contained unusually strong rarity luck (including two Legendary Overclock levels). Its exact rarity mix resolved to ~**3.453x** direct power versus ~**2.986x** for the same levels all Common: rarity contributed only ~**15.65%**, and the Runner still died in Wave 10.
+- Scrap Magnet's forced all-Legendary multiplicative stress case is recorded as a future progression warning, not a current nerf trigger; normal weighted-rarity max-stack uplift versus all Common is only ~**5.97%**. Reopen WS17 if future Elite/Wreck Crate Rare+ guarantees materially change real rarity frequency.
+- Exact merge SHA `f868f789a40d9c674a0e0e772c5cdbde00b22ab9` passed GitHub Pages Live verification. `ios-standalone-recovery.yml` was not applicable because WS17 changed validation docs/tests only and that workflow is path-filtered to the standalone shell files.
+- **Next active balance workstream: WS18 — Rig/support damage ownership.**
+
+### Workstream 15 staged delivery — Enemy role / range safety
+'''
+          if text.count(anchor) != 1:
+            raise SystemExit(f'expected one WS17 insertion anchor, got {text.count(anchor)}')
+          text = text.replace(anchor, section, 1)
+          p.write_text(text)
+
+          u = Path('UPGRADE_SYSTEM_2_ROADMAP.md')
+          upgrade = u.read_text()
+          upgrade_replacements = [
+            (
+              '- [ ] Balance rarity frequencies against a 10-minute run. — **Status:** ⚪ NOT STARTED',
+              '- [ ] Balance rarity frequencies against a 10-minute run. — **Status:** 🟡 PARTIAL — WS17 validated the current natural rarity power distribution against RUN-0026 and PB1; a dedicated 10-minute rarity-frequency/progression gate remains part of U7.'
+            ),
+            (
+              '- [ ] Rarity/DPS/progression tuning. — **Status:** ⚪ NOT STARTED',
+              '- [ ] Rarity/DPS/progression tuning. — **Status:** 🟡 PARTIAL — WS17 rarity identity/power scaling is ✅ VALIDATED with no numeric rebalance required (`f868f789`); broader DPS/progression/full-run tuning remains open in U7.'
+            )
+          ]
+          for old, new in upgrade_replacements:
+            count = upgrade.count(old)
+            if count != 1:
+              raise SystemExit(f'expected exactly one Upgrade roadmap match, got {count}: {old}')
+            upgrade = upgrade.replace(old, new, 1)
+
+          marker = 'Verified gameplay commit: `7f30957`.\n'
+          evidence = '''Verified gameplay commit: `7f30957`.
+
+### 7.2 WS17 rarity power validation — ✅ COMPLETE
+
+- PR #209 / main `f868f789a40d9c674a0e0e772c5cdbde00b22ab9` validated the existing 65/24/9/2 rarity distribution and 1.00/1.15/1.30/1.50 modifier multipliers against PB1 and Production RUN-0026 without changing gameplay values.
+- Weighted expected rarity modifier power is **1.073x**; RUN-0026's unusually strong rarity mix contributed ~**15.65%** over the same-level all-Common build while total direct power remained ~**3.453x**, inside the PB1 late envelope.
+- Fixed-rarity discrete mechanics remain mechanically budgeted by their explicit owner. In particular, Triple Riveter is fixed Rare for identity but remains exactly **3 projectiles / 1.60x total volley**, not `1.60 × 1.15`.
+- Final PR head `53a4020c424f3afb87c57cdfe48324370c9e75a7` passed Quality, Smoke, all Chromium shards and aggregate E2E; exact merge SHA passed Live verification.
+- This closes the **rarity identity/power-scaling slice** only. Elite minimum-rarity rewards, dedicated 10-minute rarity-frequency/progression validation and broader U7 tuning remain open.
+'''
+          if upgrade.count(marker) != 1:
+            raise SystemExit(f'expected one rarity evidence marker, got {upgrade.count(marker)}')
+          upgrade = upgrade.replace(marker, evidence, 1)
+          u.write_text(upgrade)
+          PY
+      - name: Commit localized updates and self-delete
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/ws17-close-roadmaps-once.yml
+          git add COMBAT_BUILD_BALANCE_ROADMAP.md UPGRADE_SYSTEM_2_ROADMAP.md
+          git commit -m 'Close WS17 in balance roadmaps'
+          git push origin HEAD:main
