@@ -12,7 +12,7 @@ describe('authoritative CombatSystem integration', () => {
     expect(game).not.toContain('this.physics.add.overlap(this.bullets, this.enemies');
     expect(game).not.toContain('onBulletHit(bullet, enemy)');
     expect(game).not.toContain('killEnemy(enemy)');
-    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=13'");
+    expect(system).toContain("import { CombatSystem } from '../combat/combat-system.js?v=14'");
     expect(system).toContain('scene.combatSystem = new CombatSystem(scene)');
     expect(system).toContain('scene.combatSystem.installOverlaps()');
     expect(system).not.toContain('scene.onBulletHit');

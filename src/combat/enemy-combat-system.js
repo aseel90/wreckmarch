@@ -420,6 +420,8 @@ export class EnemyCombatSystem {
       scrap.setBounce(.4);
     }
 
-    return { dropCount, elite, x, y };
+    const death = { dropCount, elite, x, y, enemyId, enemy };
+    this.scene.events?.emit?.('wreckmarch:enemy-killed', death);
+    return death;
   }
 }

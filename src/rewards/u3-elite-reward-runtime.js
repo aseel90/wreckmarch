@@ -92,20 +92,19 @@ function installEliteChoiceFlow(scene) {
 }
 
 function installEliteDeathReward(scene, rewards) {
-  const combat = scene.enemyCombatSystem;
-  if (!combat || combat.__eliteRewardWrapped) return;
-  const previousKill = combat.killEnemy.bind(combat);
-  combat.killEnemy = function(enemy) {
-    const eligible = Boolean(enemy?.active && enemy.elite && !enemy.__eliteRewardDropped);
-    const drop = eligible ? { x: Number(enemy.x) || 0, y: Number(enemy.y) || 0 } : null;
-    const result = previousKill(enemy);
-    if (result && drop) {
-      enemy.__eliteRewardDropped = true;
-      rewards.dropCrate(drop);
-    }
-    return result;
+  if (scene.__eliteDeathRewardListener) return;
+  const onEnemyKilled = death => {
+    const enemy = death?.enemy;
+    if (!death?.elite || !enemy || enemy.__eliteRewardDropped) return;
+    enemy.__eliteRewardDropped = true;
+    rewards.dropCrate({ x: Number(death.x) || 0, y: Number(death.y) || 0 });
   };
-  combat.__eliteRewardWrapped = true;
+  scene.events?.on?.('wreckmarch:enemy-killed', onEnemyKilled);
+  scene.__eliteDeathRewardListener = onEnemyKilled;
+  scene.events?.once?.('shutdown', () => {
+    scene.events?.off?.('wreckmarch:enemy-killed', onEnemyKilled);
+    scene.__eliteDeathRewardListener = null;
+  });
 }
 
 export function installU3EliteRewards(scene) {
