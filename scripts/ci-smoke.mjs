@@ -100,7 +100,29 @@ try {
 } catch (error) {
   console.error(error?.stack || String(error));
   try {
-    const state = await page?.evaluate?.(() => { const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.(); return { visualReady: document.body.classList.contains('visual-ready'), bootError: document.body.classList.contains('boot-error'), bootStatus: document.querySelector('#boot-status')?.textContent || null, gameReady: !!game, sceneActive: !!scene?.sys?.isActive?.(), sawbugVisual: document.documentElement.dataset.wreckmarchSawbugVisual || null, phaseE1: document.documentElement.dataset.wreckmarchPhaseE1 || null, e1SelfTest: document.documentElement.dataset.wreckmarchE1SelfTest || null, e1Persistence: document.documentElement.dataset.wreckmarchE1Persistence || null, finalPolish: document.documentElement.dataset.wreckmarchFinalPolish || null, mobileHud: document.documentElement.dataset.wreckmarchMobileHud || null, canvasRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null, debugTail: document.querySelector('#log')?.textContent?.slice(-8000) || '' }; });
+    const state = await page?.evaluate?.(() => {
+      const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
+      const fullBleed = !!rect && Math.abs(rect.left) < 1.5 && Math.abs(rect.top) < 1.5 && Math.abs(rect.width - window.innerWidth) < 1.5 && Math.abs(rect.height - window.innerHeight) < 1.5;
+      return {
+        visualReady: document.body.classList.contains('visual-ready'),
+        fullBleed,
+        bootError: document.body.classList.contains('boot-error'),
+        bootStatus: document.querySelector('#boot-status')?.textContent || null,
+        gameReady: !!game,
+        sceneActive: !!scene?.sys?.isActive?.(),
+        finalPolishReady: scene?.__finalPolishReady === true,
+        sawbugVisual: document.documentElement.dataset.wreckmarchSawbugVisual || null,
+        phaseE1: document.documentElement.dataset.wreckmarchPhaseE1 || null,
+        e1SelfTest: document.documentElement.dataset.wreckmarchE1SelfTest || null,
+        e1Persistence: document.documentElement.dataset.wreckmarchE1Persistence || null,
+        finalPolish: document.documentElement.dataset.wreckmarchFinalPolish || null,
+        mobileHud: document.documentElement.dataset.wreckmarchMobileHud || null,
+        gameplayHud: document.documentElement.dataset.wreckmarchGameplayHud || null,
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        canvasRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null,
+        debugTail: document.querySelector('#log')?.textContent?.slice(-8000) || ''
+      };
+    });
     console.error('SMOKE_STATE ' + JSON.stringify(state, null, 2));
     console.error('BROWSER_EVENTS ' + JSON.stringify(browserEvents.slice(-40), null, 2));
   } catch (stateError) { console.error('SMOKE_STATE_READ_FAILED ' + (stateError?.stack || stateError)); }
