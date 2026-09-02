@@ -12,7 +12,7 @@ function wheel() {
   };
 }
 
-function createScene() {
+function createScene(): any {
   const cart = {
     x: 640,
     y: 640,
