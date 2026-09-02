@@ -10,14 +10,20 @@ const wave10SpeedMultiplier = RUN_BALANCE.waves[9].speedMultiplier;
 
 describe('WS15 Runner enemy-role baseline', () => {
   it('keeps run pacing separate from canonical enemy combat tuning', async () => {
-    const source = await readFile(new URL('../../src/balance/run-balance.js', import.meta.url), 'utf8');
+    const balanceSource = await readFile(new URL('../../src/balance/run-balance.js', import.meta.url), 'utf8');
+    const directorSource = await readFile(new URL('../../src/balance/run-director.js', import.meta.url), 'utf8');
+    const houndSource = await readFile(new URL('../../src/enemies/behaviors/hound-pounce.js', import.meta.url), 'utf8');
 
-    expect(source).toContain("getEnemyDefinition('rust-hound')");
-    expect(source).toContain("getEnemyDefinition('sawbug')");
-    expect(source).toContain('behaviorConfig: RUST_HOUND_DEFINITION.behaviorConfig');
-    expect(source).toContain('behaviorConfig: SAWBUG_DEFINITION.behaviorConfig');
-    expect(source).not.toContain('slideRangeMin: 100');
-    expect(source).not.toContain('preferredRangeMin: 250');
+    expect(balanceSource).toContain("getEnemyDefinition('rust-hound')");
+    expect(balanceSource).toContain("getEnemyDefinition('sawbug')");
+    expect(balanceSource).toContain('behaviorConfig: RUST_HOUND_DEFINITION.behaviorConfig');
+    expect(balanceSource).toContain('behaviorConfig: SAWBUG_DEFINITION.behaviorConfig');
+    expect(balanceSource).not.toContain('slideRangeMin: 100');
+    expect(balanceSource).not.toContain('preferredRangeMin: 250');
+    expect(balanceSource).not.toContain('chaseSpeedMultiplier: .72');
+    expect(directorSource).not.toContain('currentSpeed * speedMultiplier');
+    expect(directorSource).not.toContain('currentBaseSpeed * speedMultiplier');
+    expect(houndSource).toContain('const chaseMultiplier = Number(cfg.chaseSpeedMultiplier) || 1');
 
     expect(RUN_BALANCE.enemyRoles['rust-hound'].behaviorConfig).toMatchObject(RUST_HOUND_DEFINITION.behaviorConfig);
     expect(RUN_BALANCE.enemyRoles.sawbug.behaviorConfig).toMatchObject(SAWBUG_DEFINITION.behaviorConfig);

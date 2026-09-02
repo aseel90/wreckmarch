@@ -16,18 +16,19 @@ No new enemy, no HP inflation and no speculative rebalance is approved by openin
 The audit found duplicated Rust Hound tuning:
 
 - `src/enemies/definitions/rust-hound.js` contained one behavior profile.
-- `RUN_BALANCE.enemyRoles['rust-hound']` contained a second live Run profile and overwrote speed/behavior values through `applyRunEnemyRoleProfile`.
+- `RUN_BALANCE.enemyRoles['rust-hound']` contained a second live Run profile and `RunDirector` also owned the chase-speed multiplier.
 
 That violates the one-source-of-truth rule and is risky for future Android packaging because gameplay meaning depended on a runtime overlay.
 
 ### Migration rule
 
-Preserve the already production-validated live Run behavior, but move its numeric ownership into the canonical enemy definition.
+Preserve the already production-validated live Run behavior, but move its numeric ownership and application into the canonical enemy domain.
 
 - Rust Hound canonical definition owns chase multiplier, slide range, hold range, cooldown, telegraph, recovery and steering values.
+- `hound-pounce.js` applies the canonical chase multiplier; Run Director no longer multiplies enemy movement speed.
 - Sawbug canonical definition remains the sole owner of ranged/acid behavior numbers.
-- Run Balance references those canonical behavior objects; it owns wave timing, spawn weights and run threat budgeting only.
-- Run Director may apply the referenced profile but must not carry a second numeric copy.
+- Run Balance references the canonical Hound/Sawbug behavior objects; it owns wave timing, spawn weights and run threat budgeting only.
+- Run Director may assign run role/threat and point at the canonical behavior profile, but it carries no second movement/combat numeric copy.
 
 This is an ownership migration, **not an intended buff or nerf**.
 
@@ -45,7 +46,7 @@ This is an ownership migration, **not an intended buff or nerf**.
 
 Canonical live Run profile:
 
-- Run chase multiplier: 0.72x.
+- Chase multiplier: 0.72x, now applied by the Hound behavior itself.
 - Slide lane: 100–270.
 - Hold range: 130.
 - Telegraph: 300 ms.
@@ -79,6 +80,7 @@ This evidence does not replace WS15 regression tests, but it is enough to reject
 ## Deterministic gates
 
 - [ ] Run Balance contains no copied Hound/Sawbug combat tuning literals; it references canonical definitions.
+- [ ] Hound chase-speed scaling is applied by `hound-pounce`, not Run Director.
 - [ ] Rat remains slower than Runner even under Wave 10 speed scaling and remains the roster backbone by weight.
 - [ ] Hound normal chase remains slower than Runner while committed slide remains faster than max Fleet Feet movement.
 - [ ] Hound telegraph/slide response budget remains readable.
