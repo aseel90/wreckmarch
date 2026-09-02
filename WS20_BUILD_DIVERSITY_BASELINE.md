@@ -1,6 +1,6 @@
 # Workstream 20 — Build Identities + Anti-Mandatory-Card Validation
 
-Status: 🟡 ACTIVE / DETERMINISTIC IMPLEMENTATION
+Status: 🟡 ACTIVE / ONE-CARD ATTRIBUTION IMPLEMENTATION
 
 ## Goal
 
@@ -18,17 +18,26 @@ Prove that Wreckmarch can support at least three genuinely distinct build archet
 
 These are validation candidates, not promised final meta builds:
 
-1. **Scalar / Precision** — Heavy Rivets + Overclock + Critical Rivet + Twin Riveter. Identity: concentrated primary-volley damage and cadence with bounded crit.
-2. **Crowd / Chain** — Overclock + Twin Riveter + Piercing + Ricochet + Shrapnel + Explosive Rivet. Identity: coverage and bounded one-depth secondary mechanics rather than pure scalar damage.
-3. **Survival / Support** — Heavy Rivets + Fleet Feet + Armor Plate + Field Repair + Impact Shield + Call the Rig. Identity: deliberately lower primary fire-rate ceiling exchanged for mobility, max-HP/recovery, shield and independent Rig support pressure.
-
-The first deterministic attempt used Overclock in all three candidates. The anti-mandatory-card gate correctly rejected that shape, so the Survival / Support candidate was changed to Fleet Feet L3 rather than weakening the gate.
+1. **Scalar / Precision** — Heavy Rivets L4 + Overclock L4 + Critical Rivet L4 + Twin Riveter L2. Identity: concentrated primary-volley damage and cadence with bounded crit; Heavy/Overclock stop at L4 so neither single card exceeds the PB1 35% direct-power share.
+2. **Crowd / Chain** — Overclock L4 + Twin Riveter L2 + Piercing L3 + Ricochet L2 + Shrapnel L2 + Explosive Rivet L3. Identity: coverage and bounded one-depth secondary mechanics rather than pure scalar damage; Overclock stops at L4 for the same attribution reason.
+3. **Survival / Support** — Heavy Rivets L4 + Fleet Feet L3 + Armor Plate L4 + Field Repair L3 + Impact Shield L2 + Call the Rig L1. Identity: lower primary ceiling exchanged for mobility/max-HP/recovery/shield/support pressure. Overclock is intentionally absent so the candidate does not inherit the same cadence meta as the two offensive archetypes.
 
 No candidate is allowed to become the definition of a recommended build in the offer system. Cards remain valid/off-build choices unless mechanically incompatible.
 
 ## Deterministic delivery rule
 
 The three candidate snapshots live in the existing canonical deterministic balance scenario suite. This is measurement-only code: it must not add a new runtime owner, change offer weighting, force a card into the player pool, or modify live card/enemy/wave numbers.
+
+## One-card attribution rule
+
+WS20 measures direct-power concentration with a canonical leave-one-card-out replay:
+
+`share = max(0, fullDirectDps - directDpsWithoutCard) / fullDirectDps`
+
+- The PB1 ceiling is **0.35**.
+- This denominator is the final direct-power budget, matching `POWER_BUDGET.buildDiversity.maxSingleCardShareOfFinalDirectPowerBudget`; it is not the gain-above-baseline denominator.
+- Pure crowd/utility/survivability cards can correctly report `0` on this **direct-power** axis. Their value is not treated as zero overall: Production telemetry / secondary-damage / survivability evidence owns those axes.
+- Candidate-level changes made to satisfy this gate do not alter live card definitions or offer weights.
 
 ## Closure rules
 

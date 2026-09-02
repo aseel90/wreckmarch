@@ -61,8 +61,8 @@ export const BALANCE_SCENARIOS = Object.freeze({
   WS20_SCALAR_PRECISION: Object.freeze({
     seed: 0x11a0c009,
     upgrades: plan(
-      ['heavy-rivets', 5],
-      ['overclock', 5],
+      ['heavy-rivets', 4],
+      ['overclock', 4],
       ['critical-rivet', 4],
       ['twin-riveter', 2]
     )
@@ -70,7 +70,7 @@ export const BALANCE_SCENARIOS = Object.freeze({
   WS20_CROWD_CHAIN: Object.freeze({
     seed: 0x11a0c00a,
     upgrades: plan(
-      ['overclock', 5],
+      ['overclock', 4],
       ['twin-riveter', 2],
       ['piercing-rivets', 3],
       ['ricochet', 2],
@@ -154,10 +154,7 @@ function round(value, digits = 6) {
   return Number(Number(value || 0).toFixed(digits));
 }
 
-export function runDeterministicBalanceScenario(id) {
-  const definition = BALANCE_SCENARIOS[id];
-  if (!definition) throw new Error(`Unknown deterministic balance scenario: ${id}`);
-
+function runScenarioDefinition(id, definition) {
   const scene = createScenarioScene();
   applyScenarioPlan(scene, definition.upgrades);
   const resolved = scene.runStatState.resolve();
@@ -198,6 +195,48 @@ export function runDeterministicBalanceScenario(id) {
       nominalTriggerDps: round(nominalTriggerDps),
       criticalRollSample: sampleCriticalRolls(definition.seed, Number(character.critChance || 0))
     })
+  });
+}
+
+export function runDeterministicBalanceScenario(id) {
+  const definition = BALANCE_SCENARIOS[id];
+  if (!definition) throw new Error(`Unknown deterministic balance scenario: ${id}`);
+  return runScenarioDefinition(id, definition);
+}
+
+export function evaluateWs20DirectPowerAttribution(id) {
+  const definition = BALANCE_SCENARIOS[id];
+  if (!definition || !String(id).startsWith('WS20_')) {
+    throw new Error(`WS20 direct-power attribution requires a WS20 scenario id: ${id}`);
+  }
+
+  const full = runScenarioDefinition(id, definition);
+  const fullDirectDps = Number(full.derived.nominalTriggerDps || 0);
+  const contributions = definition.upgrades.map(entry => {
+    const without = runScenarioDefinition(`${id}__WITHOUT__${entry.id}`, {
+      seed: definition.seed,
+      upgrades: definition.upgrades.filter(candidate => candidate.id !== entry.id)
+    });
+    const withoutDirectDps = Number(without.derived.nominalTriggerDps || 0);
+    const lostDirectDps = Math.max(0, fullDirectDps - withoutDirectDps);
+    return Object.freeze({
+      id: entry.id,
+      levels: entry.levels,
+      fullDirectDps: round(fullDirectDps),
+      withoutDirectDps: round(withoutDirectDps),
+      lostDirectDps: round(lostDirectDps),
+      shareOfFinalDirectPower: fullDirectDps > 0 ? round(lostDirectDps / fullDirectDps) : 0
+    });
+  });
+  const maxContribution = contributions.reduce((max, entry) => (
+    !max || entry.shareOfFinalDirectPower > max.shareOfFinalDirectPower ? entry : max
+  ), null);
+
+  return Object.freeze({
+    id,
+    fullDirectDps: round(fullDirectDps),
+    contributions: Object.freeze(contributions),
+    maxContribution
   });
 }
 

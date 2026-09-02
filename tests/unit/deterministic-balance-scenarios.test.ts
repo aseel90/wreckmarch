@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BALANCE_SCENARIO_IDS,
+  evaluateWs20DirectPowerAttribution,
   runAllDeterministicBalanceScenarios,
   runDeterministicBalanceScenario
 } from '../../src/balance/deterministic-balance-scenarios.js';
@@ -73,11 +74,14 @@ describe('deterministic balance scenario suite', () => {
       shrapnelCount: 0
     });
     expect(scalar.resolvedStats.character.critChance).toBeGreaterThan(0);
+    expect((scalar.upgradeLevels as Record<string, number>)['heavy-rivets']).toBe(4);
+    expect((scalar.upgradeLevels as Record<string, number>)['overclock']).toBe(4);
 
     const crowdLevels = crowd.upgradeLevels as Record<string, number>;
     const survivalLevels = survival.upgradeLevels as Record<string, number>;
 
     expect(crowd.mechanics.projectileCount).toBe(2);
+    expect(crowdLevels['overclock']).toBe(4);
     expect(crowd.mechanics.pierceCount).toBe(3);
     expect(crowd.mechanics.ricochetCount).toBe(2);
     expect(crowd.mechanics.shrapnelCount).toBeGreaterThan(0);
@@ -92,6 +96,32 @@ describe('deterministic balance scenario suite', () => {
     expect(survivalLevels['field-repair']).toBe(3);
     expect(survivalLevels['impact-shield']).toBe(2);
     expect(survivalLevels['call-rig']).toBe(1);
+  });
+
+  it('keeps every WS20 candidate below the PB1 one-card final direct-power share ceiling', async () => {
+    const { POWER_BUDGET } = await import('../../src/balance/power-budget.js');
+    const maxShare = POWER_BUDGET.buildDiversity.maxSingleCardShareOfFinalDirectPowerBudget;
+    const ids = ['WS20_SCALAR_PRECISION', 'WS20_CROWD_CHAIN', 'WS20_SURVIVAL_SUPPORT'];
+
+    for (const id of ids) {
+      const attribution = evaluateWs20DirectPowerAttribution(id);
+      expect(attribution.contributions.length).toBeGreaterThan(0);
+      expect(attribution.maxContribution?.shareOfFinalDirectPower || 0).toBeLessThanOrEqual(maxShare);
+    }
+
+    const scalar = evaluateWs20DirectPowerAttribution('WS20_SCALAR_PRECISION');
+    expect(scalar.contributions.find((entry: any) => entry.id === 'heavy-rivets')?.shareOfFinalDirectPower).toBeGreaterThan(0.30);
+    expect(scalar.contributions.find((entry: any) => entry.id === 'overclock')?.shareOfFinalDirectPower).toBeGreaterThan(0.30);
+
+    const crowd = evaluateWs20DirectPowerAttribution('WS20_CROWD_CHAIN');
+    for (const id of ['piercing-rivets', 'ricochet', 'shrapnel-impact', 'explosive-rivet']) {
+      expect(crowd.contributions.find((entry: any) => entry.id === id)?.shareOfFinalDirectPower).toBe(0);
+    }
+
+    const survival = evaluateWs20DirectPowerAttribution('WS20_SURVIVAL_SUPPORT');
+    for (const id of ['fleet-feet', 'armor-plate', 'field-repair', 'impact-shield', 'call-rig']) {
+      expect(survival.contributions.find((entry: any) => entry.id === id)?.shareOfFinalDirectPower).toBe(0);
+    }
   });
 
   it('keeps the WS20 scalar candidate inside the PB1 late direct-power ceiling before Production viability testing', async () => {
