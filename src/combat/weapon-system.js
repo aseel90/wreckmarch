@@ -140,6 +140,21 @@ export class WeaponSystem {
       });
     }
 
+    const mirroredTwinCount = Math.max(1, Math.floor(Number(scene.twinShots) || 1));
+    if (mirroredTwinCount > 1) {
+      const projectileCount = mirroredTwinCount === 2 ? 2 : 3;
+      const halfSpreadRadians = projectileCount === 2 ? this.heroProfile.twinSpread2 : this.heroProfile.twinSpread3;
+      const projectileDamageScale = this.heroProfile.multiShotDamageScale;
+      return Object.freeze({
+        source: 'upgrade-mirror',
+        projectileCount,
+        halfSpreadRadians,
+        volleyDamageMultiplier: projectileDamageScale * projectileCount,
+        projectileDamageScale,
+        spreads: Object.freeze(buildSymmetricSpreadOffsets(projectileCount, halfSpreadRadians))
+      });
+    }
+
     const fireProfile = scene.primaryWeapon?.fireProfile || scene.weaponDefinition?.fireProfile || {};
     const projectileCount = Math.max(1, Math.floor(Number(fireProfile.projectileCount) || 1));
     const halfSpreadRadians = Math.max(0, Number(fireProfile.halfSpreadRadians) || 0);
