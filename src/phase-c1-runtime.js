@@ -1,4 +1,4 @@
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=14';
+import { createActiveUpgradeOfferChoices } from './upgrades/upgrade-offer-pool.js?v=1';
 import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
@@ -195,24 +195,7 @@ function installLandscapeHud(scene) {
 }
 
 function c1UpgradePool(scene) {
-  return [
-    createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'overclock', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'long-barrel', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'piercing-rivets', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'ricochet', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'shrapnel-impact', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'critical-rivet', { category: 'HERO' }),
-    createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
-    createRegisteredUpgradeChoice(scene, 'triple-riveter', { category: 'EVOLUTION' }),
-    createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
-    createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
-    createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),
-    createRegisteredUpgradeChoice(scene, 'field-repair', { category: 'UTILITY' }),
-    createRegisteredUpgradeChoice(scene, 'impact-shield', { category: 'UTILITY' }),
-    createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' })
-  ];
+  return createActiveUpgradeOfferChoices(scene);
 }
 
 function categoryHex(category) {

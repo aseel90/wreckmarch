@@ -107,7 +107,7 @@ describe('Upgrade System 2.0 roadmap integrity', () => {
 
   it('does not regress to a core-only roadmap', () => {
     expect(roadmap).toContain('U4–U7');
-    expect(roadmap).toContain('NEXT OPEN CONTENT GATE');
+    expect(roadmap).toContain('## Phase U5 — Card visual overhaul — **NEXT ACTIVE PHASE**');
     expect(coreReference).toContain('Superseded core-only conclusion');
     expect(coreReference).toContain('U4 — New Hunter build cards');
   });

@@ -1,5 +1,5 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=14';
+import { createActiveUpgradeOfferChoices } from './upgrades/upgrade-offer-pool.js?v=1';
 import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
 import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=2';
 import { getScrapXpNeeded } from './balance/progression-balance.js?v=1';
@@ -200,21 +200,7 @@ function installProgressHud(scene) {
 }
 
 function createUpgradePool(scene) {
-  return [
-    createRegisteredStatUpgradeChoice(scene, 'heavy-rivets', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'overclock', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'long-barrel', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'piercing-rivets', { category: 'HERO' }),
-    createRegisteredUpgradeChoice(scene, 'twin-riveter', { category: 'HERO' }),
-    createRegisteredUpgradeChoice(scene, 'triple-riveter', { category: 'EVOLUTION' }),
-    createRegisteredUpgradeChoice(scene, 'explosive-rivet', { category: 'HERO' }),
-    createRegisteredStatUpgradeChoice(scene, 'fleet-feet', { category: 'UTILITY' }),
-    createRegisteredStatUpgradeChoice(scene, 'scrap-magnet', { category: 'UTILITY' }),
-    createRegisteredUpgradeChoice(scene, 'armor-plate', { category: 'UTILITY' }),
-    createRegisteredUpgradeChoice(scene, 'field-repair', { category: 'UTILITY' }),
-    createRegisteredUpgradeChoice(scene, 'impact-shield', { category: 'UTILITY' }),
-    createRegisteredUpgradeChoice(scene, 'call-rig', { category: 'FORTRESS' })
-  ];
+  return createActiveUpgradeOfferChoices(scene);
 }
 
 function makeCard(scene, y, upgrade, index) {
