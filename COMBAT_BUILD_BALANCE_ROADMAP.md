@@ -190,7 +190,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 11 | Canonical requirements / prerequisite resolver | ✅ COMPLETE / CI + PROD DEPLOYED | PR #188 added shared `upgrade-requirements.js`; availability and direct application both enforce canonical requirements, including Twin L2 → Triple, with deterministic regression coverage and Production deployment. |
 | 12 | Weapon/character card compatibility filtering | ✅ COMPLETE / CI + PROD DEPLOYED | PR #190 / main `25e28a9931f86ce2373b70793e617608483e2af0` added canonical character/weapon compatibility metadata + resolver. It filters only explicit technical mismatches; valid weak/off-build choices remain allowed. Quality/Smoke/all Chromium shards/E2E and exact-SHA Production verification passed. |
 | 13 | Canonical Weapon Registry / signature-weapon resolution | ✅ COMPLETE / CI + PROD DEPLOYED | PR #194 / main `b14c8181f14867c5e6cf0733c1d04fa9effb64fc` centralized canonical weapon ownership and signature-weapon resolution, removed ad-hoc runtime identity fallbacks, and passed Quality/Smoke/Chromium plus Production deployment. |
-| 14 | Shotgun Character combat identity | 🟡 WS14-A COMPLETE / WS14-B NUMERIC DECISION PENDING | PR #198 / main `a5aab030f0b86ed17aed22fa62fbfa5252a3a519` added canonical intrinsic `fireProfile` volley architecture with Runner preserved at 1 projectile / 0 spread / 1.0x. Final Shotgun pellet count, spread, cadence, range and volley multiplier remain intentionally unfrozen. |
+| 14 | Shotgun Character combat identity | ✅ WS14-B WEAPON FOUNDATION COMPLETE / CHARACTER ACTIVATION LATER | WS14-A established canonical intrinsic `fireProfile`. WS14-B A1 merged in PR #201 / main `b2663805f4f4050278f531fc14b2ec92e283e3d7`: 5 pellets, ±0.24 rad half-spread, 720 ms cadence, 330 range and 1.75x total volley budget. Exact-SHA Pages/live verification passed. The Shotgun is deliberately **not selectable/live yet**; character art, animations, start-screen selection and live activation belong to WS14-C/D/E. |
 | 15 | Enemy role/range matchup safety | ⚪ PENDING BASELINE | Verify Rat/Hound/Sawbug remain meaningful against both long-range and future short-range characters |
 | 16 | Wave/difficulty scaling vs player power | ⚪ PENDING BASELINE | Rebalance pressure after player multipliers are corrected; do not hide power creep by blindly inflating HP |
 | 17 | Rarity identity + power scaling | ⚪ PENDING BASELINE / U7 | Resolve same-card rarity identity and prevent rarity from magnifying already-multiplicative stats excessively |
@@ -200,6 +200,19 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 21 | Mobile projectile/effect performance budget | ⚪ PENDING BASELINE | Set hard ceilings from measured active projectiles, fragments, long frames and late-wave pressure |
 | 22 | Deterministic interaction matrix / regression scenarios | ⚪ PENDING | Lock reproducible no-upgrade, single-card, pair-synergy and max-power scenarios for before/after comparisons |
 | 23 | U4 balance gate + master-roadmap reintegration | ⚪ PENDING | After workstreams 1–22: validate three viable builds, final interaction/performance gate, then merge approved decisions back into `UPGRADE_SYSTEM_2_ROADMAP.md` without deleting protected scope |
+
+### Workstream 14 staged delivery — Shotgun character
+
+To avoid temporary Runner reskins, patch-over-patch runtime ownership, or a premature selection flow, Workstream 14 is split into explicit delivery gates:
+
+- **WS14-A — Intrinsic volley architecture — ✅ COMPLETE:** canonical `fireProfile` support, Runner regression preserved.
+- **WS14-B — Shotgun Weapon Foundation — ✅ COMPLETE / MERGED + PROD DEPLOYED:** the approved A1 numeric weapon identity is registered on `main` as `b2663805f4f4050278f531fc14b2ec92e283e3d7`. No selectable character, no temporary Runner sprite, and no start-screen changes were added.
+- **WS14-C — Character visual identity — ⚪ FUTURE:** define the character's visual concept and produce dedicated idle/breathing/run/aim frames at production dimensions. Do not reuse Runner frames as a shipping shortcut.
+- **WS14-D — Character selection / start flow — ⚪ FUTURE:** build an extensible pre-run character-selection screen that can support more than two characters without another UI rewrite.
+- **WS14-E — Full gameplay integration — ⚪ FUTURE:** connect the approved character definition, dedicated art, Shotgun signature weapon, HUD/selection flow, card compatibility and character-specific cards; perform the required runtime cache-bust here, then Production/D1 gameplay validation.
+- **Future Shotgun-specific cards:** belong after the base character is playable and measurable. They may alter spread, pellet behavior, close-range reward or bounded special-shot mechanics, but must use canonical compatibility and power-budget rules rather than ad-hoc runtime patches.
+
+**Activation rule:** WS14-B publishes the canonical Shotgun definition while leaving it unreachable in live gameplay. Runtime import/cache-bust changes are deferred until WS14-E, when a real selectable character depends on the new weapon definition.
 
 ### Workstream 9 approved design — Explosive Rivet
 
@@ -317,7 +330,7 @@ Survivability is now a formal build axis alongside single-target damage, crowd c
 
 ## Execution rule
 
-- Workstreams **1–9 and 11–13 are complete** under their required gates. Workstream **10 — Triple Riveter / advanced multishot** is implemented and deployed but remains intentionally open for one natural Twin L2 → Triple Production/D1 gameplay validation run; failure to roll it naturally is not treated as a defect and does not block later work. **Workstream 14 is active:** WS14-A architecture is complete in PR #198 / main `a5aab030f0b86ed17aed22fa62fbfa5252a3a519`, while WS14-B is intentionally blocked on approving final Shotgun numeric identity (pellet count, spread, cadence, range and total volley multiplier). Do not invent those values.
+- Workstreams **1–9 and 11–13 are complete** under their required gates. Workstream **10 — Triple Riveter / advanced multishot** is implemented and deployed but remains intentionally open for one natural Twin L2 → Triple Production/D1 gameplay validation run; failure to roll it naturally is not treated as a defect and does not block later work. **Workstream 14 is active:** WS14-A architecture and WS14-B A1 weapon foundation are complete on `main` (`b2663805f4f4050278f531fc14b2ec92e283e3d7`), with exact-SHA Pages/live verification passed. **Next is WS14-C visual identity.** Do **not** make the Shotgun character selectable, reuse Runner art as a shipping placeholder, or patch a start screen into this stage; selection belongs to WS14-D and live activation to WS14-E.
 - The original baseline is frozen as pre-change evidence. New reports are compared against it; they do not replace it.
 - Heavy/Overclock/Twin/Pierce/Ricochet/Shrapnel values are frozen after green regression coverage plus RUN-0026 production validation; do not rebalance them again from a single noisy run.
 - Critical Rivet remains an observation item for later rarity/build-diversity work. RUN-0026 reached Critical Rivet 3 without producing a clear standalone reason to change it immediately.
