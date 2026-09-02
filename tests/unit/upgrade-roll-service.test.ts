@@ -66,6 +66,44 @@ describe('upgrade roll service', () => {
     expect((rolled[0] as any).desc).toBe('LV1: 2 rivets at 60% damage each. LV2: 2 rivets at 70% damage each.');
   });
 
+  it('enforces an elite minimum rarity without changing normal rolls', () => {
+    const pool = [
+      choice('a', 1),
+      choice('b', 1),
+      choice('c', 1),
+      { ...choice('fixed-common', 100), rarityConstraint: 'COMMON' }
+    ];
+    const elite = rollUpgradeChoices(pool, {
+      count: 3,
+      minimumRarity: 'RARE',
+      rng: createSeededUpgradeRng('elite-reward')
+    });
+    expect(elite).toHaveLength(3);
+    expect(elite.some(item => item.id === 'fixed-common')).toBe(false);
+    expect(elite.every(item => ['RARE', 'EPIC', 'LEGENDARY'].includes(item.rarity))).toBe(true);
+
+    const normal = rollUpgradeChoices([{ ...choice('fixed-common', 1), rarityConstraint: 'COMMON' }], {
+      count: 1,
+      rng: () => 0
+    });
+    expect(normal[0].rarity).toBe('COMMON');
+  });
+
+  it('falls back gracefully when the valid pool cannot fully satisfy the rarity floor', () => {
+    const pool = [
+      choice('rollable', 1),
+      { ...choice('fixed-common', 1), rarityConstraint: 'COMMON' }
+    ];
+    const rolled = rollUpgradeChoices(pool, {
+      count: 2,
+      minimumRarity: 'RARE',
+      rng: createSeededUpgradeRng('elite-small-pool')
+    });
+    expect(rolled).toHaveLength(2);
+    expect(rolled.find(item => item.id === 'rollable')?.rarity).not.toBe('COMMON');
+    expect(rolled.find(item => item.id === 'fixed-common')?.rarity).toBe('COMMON');
+  });
+
   it('returns an empty list when no valid choices remain', () => {
     expect(rollUpgradeChoices([
       choice('maxed', 1, false),
