@@ -1,13 +1,15 @@
 import { UPGRADE_RARITIES, UPGRADE_RARITY_RULES, getUpgradeRarityRule } from './upgrade-rarity.js?v=1';
 import { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrade-card-art.js?v=7';
 import { getUpgradeDefinition } from './upgrade-catalog.js?v=14';
+import { getUpgradeBeforeAfterPreview, UPGRADE_PREVIEW_VERSION } from './upgrade-preview.js?v=1';
 
-export const UPGRADE_CARD_PRESENTATION_VERSION = 'u5-level-max-v2';
+export const UPGRADE_CARD_PRESENTATION_VERSION = 'u5-before-after-v3';
 export const UPGRADE_CARD_VISUAL_HIERARCHY = Object.freeze([
   'ART',
   'NAME',
   'RARITY',
   'LEVEL',
+  'PREVIEW',
   'DESCRIPTION'
 ]);
 
@@ -119,7 +121,6 @@ export function installUpgradeCardPresentation(gameScene) {
       color: Phaser.Display.Color.IntegerToColor(profile.frame).rgba, letterSpacing: 1
     }).setOrigin(1, .5);
 
-    // U5 hierarchy: the art is the dominant visual block, with only compact metadata above it.
     const artHeight = Math.min(166, height * .42);
     const artY = -height * .18;
     const artBackground = this.add.rectangle(0, artY, width - 26, artHeight, 0x091016, .985)
@@ -140,14 +141,24 @@ export function installUpgradeCardPresentation(gameScene) {
     }).setOrigin(.5);
     const titleUnderline = this.add.rectangle(0, height * .145, width * .38, 2, profile.frame, .52);
     const description = this.add.text(0, height * .225, upgrade.desc, {
-      fontFamily: 'Arial', fontSize: '12px', color: '#c1c9d0',
-      align: 'center', wordWrap: { width: width - 34 }, lineSpacing: 3
+      fontFamily: 'Arial', fontSize: height < 320 ? '10px' : '11px', color: '#c1c9d0',
+      align: 'center', wordWrap: { width: width - 34 }, lineSpacing: 1
     }).setOrigin(.5, 0);
 
     const currentLevel = this.gameScene?.upgradeLevels?.[upgrade.id] || 0;
     const definition = getUpgradeDefinition(upgrade.id);
     const levelPresentation = getUpgradeCardLevelPresentation(currentLevel, definition?.maxLevel);
-    const footer = this.add.text(0, height / 2 - 23, levelPresentation.label, {
+    const preview = getUpgradeBeforeAfterPreview(this.gameScene, upgrade);
+    const previewRows = preview.rows.slice(0, height < 320 ? 1 : 2);
+    const previewHeight = height < 320 ? 24 : 38;
+    const previewY = height / 2 - (height < 320 ? 43 : 52);
+    const previewBackground = this.add.rectangle(0, previewY, width - 34, previewHeight, 0x091016, .94)
+      .setStrokeStyle(1, profile.frame, .3);
+    const previewText = this.add.text(0, previewY, previewRows.map(row => `${row.label}  ${row.beforeText}  →  ${row.afterText}`).join('\n'), {
+      fontFamily: 'Arial Black,Arial', fontSize: height < 320 ? '8px' : '9px',
+      color: '#d9e2e8', align: 'center', lineSpacing: 2, wordWrap: { width: width - 46 }
+    }).setOrigin(.5);
+    const footer = this.add.text(0, height / 2 - 19, levelPresentation.label, {
       fontFamily: 'Arial Black,Arial', fontSize: '9px',
       color: Phaser.Display.Color.IntegerToColor(profile.frame).rgba
     }).setOrigin(.5);
@@ -159,7 +170,7 @@ export function installUpgradeCardPresentation(gameScene) {
 
     group.add([
       shadow, glow, background, inner, rarityRail, metaBackground, categoryText, rarityText,
-      artBackground, artInset, categoryRail, art, title, titleUnderline, description, footer,
+      artBackground, artInset, categoryRail, art, title, titleUnderline, description, previewBackground, previewText, footer,
       ...accents, hit
     ]);
     this.cards.push({
@@ -173,6 +184,9 @@ export function installUpgradeCardPresentation(gameScene) {
       rarityText,
       footer,
       levelPresentation,
+      preview,
+      previewText,
+      previewBackground,
       rarity: profile.rarity,
       style: profile,
       a: profile.frame,
@@ -204,5 +218,6 @@ export function installUpgradeCardPresentation(gameScene) {
   gameScene.__d1CardArtSource = 'c3-atlas-icons';
   gameScene.__upgradeCardPresentationVersion = UPGRADE_CARD_PRESENTATION_VERSION;
   gameScene.__upgradeCardVisualHierarchy = [...UPGRADE_CARD_VISUAL_HIERARCHY];
+  gameScene.__upgradeCardPreviewVersion = UPGRADE_PREVIEW_VERSION;
   return upgradeScene;
 }

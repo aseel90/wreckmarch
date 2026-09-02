@@ -22,7 +22,7 @@ describe('canonical Upgrade System card art', () => {
     const art = read('src/upgrades/upgrade-card-art.js');
     const html = read('index.html');
 
-    expect(d1).toContain("import { installUpgradeCardPresentation } from './upgrades/upgrade-card-presentation.js?v=2'");
+    expect(d1).toContain("import { installUpgradeCardPresentation } from './upgrades/upgrade-card-presentation.js?v=3'");
     expect(d1).toContain("import './upgrades/upgrade-card-art.js?v=7'");
     expect(d1).toContain('installUpgradeCardPresentation(s)');
     expect(d1).not.toContain('installPremiumCards');
@@ -39,7 +39,7 @@ describe('canonical Upgrade System card art', () => {
     expect(art).toContain("'triple-riveter': 'upgrade-icon-triple-riveter'");
     expect(art).toContain('function buildTripleRiveterIcon(scene)');
     expect(art).not.toContain('UpgradeSceneV4.card');
-    expect(html).toContain("./src/phase-d1-runtime.js?v=27&u5=2");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=27&u5=3");
     expect(html).not.toContain('piercing-rivets-live.js');
   });
 });
