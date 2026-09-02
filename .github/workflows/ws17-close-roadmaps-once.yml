@@ -1,3 +1,4 @@
+# one-shot retrigger: workflow now exists on main before this push
 name: Close WS17 roadmaps once
 
 on:
