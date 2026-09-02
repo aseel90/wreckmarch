@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { classifyWs20ProductionReport, WS20_ARCHETYPES } from '../../src/balance/ws20-production-classifier.js';
 
 function report(overrides: any = {}) {
-  return {
+  const base = {
     reportId: 'fixture',
     run: { finalWave: 8 },
     combat: {
@@ -17,19 +17,19 @@ function report(overrides: any = {}) {
         character: { maxHp: 100, moveSpeed: 255, critChance: 0, critDamageMultiplier: 1.5 },
         weapon: { damage: 24, fireDelay: 390 }
       }
-    },
+    }
+  };
+
+  return {
+    ...base,
     ...overrides,
-    combat: { ...{
-      damageDealt: 1000,
-      healingReceived: 0,
-      shieldDamagePrevented: 0,
-      damageByProjectilePath: { primary: 1000, pierce: 0, ricochet: 0, shrapnel: 0, explosion: 0, support: 0 }
-    }, ...(overrides.combat || {}) },
+    run: { ...base.run, ...(overrides.run || {}) },
+    combat: { ...base.combat, ...(overrides.combat || {}) },
     upgrades: {
-      finalLevels: { ...(overrides.upgrades?.finalLevels || {}) },
+      finalLevels: { ...base.upgrades.finalLevels, ...(overrides.upgrades?.finalLevels || {}) },
       resolvedStats: {
-        character: { maxHp: 100, moveSpeed: 255, critChance: 0, critDamageMultiplier: 1.5, ...(overrides.upgrades?.resolvedStats?.character || {}) },
-        weapon: { damage: 24, fireDelay: 390, ...(overrides.upgrades?.resolvedStats?.weapon || {}) }
+        character: { ...base.upgrades.resolvedStats.character, ...(overrides.upgrades?.resolvedStats?.character || {}) },
+        weapon: { ...base.upgrades.resolvedStats.weapon, ...(overrides.upgrades?.resolvedStats?.weapon || {}) }
       }
     }
   };
