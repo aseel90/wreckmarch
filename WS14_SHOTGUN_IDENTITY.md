@@ -1,6 +1,6 @@
 # Workstream 14 — Shotgun Character Combat Identity
 
-Status: 🟡 DESIGN / ARCHITECTURE IN PROGRESS
+Status: 🟡 WS14-A COMPLETE / WS14-B NUMERIC DECISION PENDING
 
 This workstream defines the next playable combat archetype without turning it into Runner-with-more-projectiles. Final numeric character/weapon values remain intentionally unfrozen until the identity and interaction contract below has deterministic coverage.
 
@@ -29,7 +29,9 @@ This workstream defines the next playable combat archetype without turning it in
 
 ## Architecture slice — WS14-A
 
-Before assigning Shotgun numbers:
+**Implementation status:** ✅ COMPLETE in PR #198 / main `a5aab030f0b86ed17aed22fa62fbfa5252a3a519`. The canonical intrinsic volley architecture is merged with Runner preserved at one projectile, zero spread and `1.0x` intrinsic volley. Final Shotgun numeric values are still intentionally unfrozen.
+
+Completed architecture contract:
 
 1. Add a canonical weapon `fireProfile` containing intrinsic projectile count, half-spread radians and total volley damage multiplier.
 2. Make WeaponSystem resolve the intrinsic weapon volley when no Rivet multishot mechanical upgrade owns the trigger.
@@ -39,4 +41,6 @@ Before assigning Shotgun numbers:
 
 ## Gate to numeric Shotgun implementation
 
-WS14-B may choose final Shotgun numbers only after WS14-A passes Quality, Smoke and Chromium with no Runner regression. Numeric implementation then requires deterministic volley/DPS/projectile-volume scenarios and a real Production gameplay/D1 validation run before WS14 can be marked DONE.
+WS14-A passed the required Quality, Smoke and Chromium gates on PR #198 with no Runner regression. WS14-B may now begin **only after the final Shotgun numeric identity is explicitly approved**: pellet count, spread angle, cadence, effective range and total volley multiplier. Until those values are approved, implementation must stop at architecture/documentation and must not guess balance numbers.
+
+After numeric approval, WS14-B requires deterministic volley/DPS/projectile-volume scenarios plus a real Production gameplay/D1 validation run before WS14 can be marked DONE.
