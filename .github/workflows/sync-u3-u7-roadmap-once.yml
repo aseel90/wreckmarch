@@ -1,3 +1,4 @@
+# trigger-after-install
 name: Sync Upgrade System U3-U7 roadmap once
 
 on:
