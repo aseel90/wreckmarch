@@ -1,7 +1,7 @@
 /* WRECKMARCH F0 — stable playable-character boundary */
 import { getCharacterDefinition } from './character-registry.js?v=4';
 import { createRunStatState, mirrorResolvedRunStats } from '../stats/run-stat-state.js?v=4';
-import { createWeaponRuntimeState, resolveCharacterSignatureWeapon } from '../combat/weapon-registry.js?v=1';
+import { createWeaponRuntimeState, resolveCharacterSignatureWeapon } from '../combat/weapon-registry.js?v=2';
 
 export class CharacterSystem {
   constructor(scene, characterId = 'runner') { this.scene = scene; this.select(characterId); }
