@@ -20,7 +20,14 @@ export function applyRunEnemyRoleProfile(enemy, enemyId) {
 }
 
 export class RunDirector {
-  constructor(scene, { random = Math.random } = {}) { this.scene = scene; this.random = random; }
+  constructor(scene, { random = Math.random } = {}) {
+    this.scene = scene;
+    this.random = random;
+    this.guaranteedEliteSeconds = [...(RUN_BALANCE.eliteRewards?.guaranteedAtSeconds || [])]
+      .map(value => Math.max(0, Number(value) || 0))
+      .sort((a, b) => a - b);
+    this.nextGuaranteedEliteIndex = 0;
+  }
 
   getState(runTime = this.scene.runTime || 0) {
     const wave = getWaveNumber(runTime);
@@ -43,15 +50,34 @@ export class RunDirector {
 
   chooseEnemy(runTime = this.scene.runTime || 0) { return pickEnemyForRun(runTime, this.random); }
 
+  getNextGuaranteedEliteSecond() {
+    return this.guaranteedEliteSeconds[this.nextGuaranteedEliteIndex] ?? null;
+  }
+
+  trySpawnGuaranteedElite(runTime = this.scene.runTime || 0) {
+    const dueSecond = this.getNextGuaranteedEliteSecond();
+    if (dueSecond == null || Math.max(0, Number(runTime) || 0) < dueSecond) return null;
+    const eliteThreat = 4;
+    if (!this.canSpawn(eliteThreat, runTime)) return null;
+    const enemy = this.scene.spawnEnemy?.(true) || null;
+    if (!enemy?.active || !enemy.elite) return null;
+    enemy.__u3GuaranteedElite = true;
+    enemy.__u3GuaranteedEliteDueSecond = dueSecond;
+    this.nextGuaranteedEliteIndex += 1;
+    this.scene.showBanner?.('ELITE INBOUND');
+    globalThis.__WM_LOG__?.(`U3 guaranteed Elite spawned for ${dueSecond}s reward gate`);
+    return enemy;
+  }
+
   getActiveThreat() {
     let total = 0;
     this.scene.enemies?.children?.iterate?.(enemy => { total += enemyThreat(enemy); });
     return total;
   }
 
-  canSpawn(threat = 1) {
+  canSpawn(threat = 1, runTime = this.scene.runTime || 0) {
     if (this.scene.gameOver) return false;
-    const state = this.getState();
+    const state = this.getState(runTime);
     const activeCount = this.scene.enemies?.countActive?.(true) || 0;
     if (activeCount >= state.activeCap) return false;
     return this.getActiveThreat() + Math.max(0, Number(threat) || 0) <= state.threatBudget;
@@ -59,11 +85,14 @@ export class RunDirector {
 }
 
 function tagNewEnemies(scene, before, enemyId, threat) {
+  const spawned = [];
   scene.enemies?.children?.iterate?.(enemy => {
     if (!enemy?.active || before.has(enemy)) return;
     applyRunEnemyRoleProfile(enemy, enemyId);
     enemy.threatValue = threat;
+    spawned.push(enemy);
   });
+  return spawned;
 }
 
 export function applyRunDirector(scene) {
@@ -79,8 +108,8 @@ export function applyRunDirector(scene) {
     if (!this.runDirector.canSpawn(threat)) return null;
     const before = new Set(this.enemies?.getChildren?.() || []);
     const result = choice.id === 'scrap-rat' ? previousSpawnEnemy(elite) : this.spawnSystem?.spawn?.(choice.id, { elite: false });
-    tagNewEnemies(this, before, choice.id, threat);
-    return result;
+    const spawned = tagNewEnemies(this, before, choice.id, threat);
+    return spawned[0] || result || null;
   };
 
   scene.waveEvent?.remove?.(false);
@@ -95,6 +124,7 @@ export function applyRunDirector(scene) {
   const syncDirector = () => {
     if (!scene?.sys?.isActive?.() || scene.gameOver) return;
     const state = director.getState();
+    director.trySpawnGuaranteedElite(scene.runTime || 0);
     if (scene.spawnEvent) scene.spawnEvent.delay = state.spawnIntervalMs;
     scene.waveText?.setText?.(`WAVE ${state.wave}`);
 
@@ -107,13 +137,13 @@ export function applyRunDirector(scene) {
     scene.__runDirectorState = state;
     document.documentElement.dataset.wreckmarchWave = String(state.wave);
     document.documentElement.dataset.wreckmarchPressure = state.pressurePhase;
-    window.__WM_RUN_DIRECTOR__ = { active: true, version: 'balance-v6', ...state, activeThreat: director.getActiveThreat() };
+    window.__WM_RUN_DIRECTOR__ = { active: true, version: 'balance-v6', ...state, activeThreat: director.getActiveThreat(), nextGuaranteedEliteSecond: director.getNextGuaranteedEliteSecond(), guaranteedElitesSpawned: director.nextGuaranteedEliteIndex };
   };
   syncDirector();
   scene.__runDirectorTick = scene.time.addEvent({ delay: 1000, loop: true, callback: syncDirector });
   const state = director.getState();
   document.documentElement.dataset.wreckmarchRunDirector = 'balance-v6';
-  window.__WM_LOG__?.(`Run Director active: LULL > BUILD > SURGE > BREATHER + Threat Budget + Rust Hound hunter + Sawbug ranged pressure (wave=${state.wave}, budget=${state.threatBudget}, cap=${state.activeCap})`);
+  window.__WM_LOG__?.(`Run Director active: LULL > BUILD > SURGE > BREATHER + Threat Budget + guaranteed Elite reward gates (wave=${state.wave}, budget=${state.threatBudget}, cap=${state.activeCap})`);
   scene.__runDirectorReady = true;
   return true;
 }
