@@ -40,6 +40,7 @@ export const UPGRADE_RARITY_RULES = Object.freeze({
 
 const RARITY_IDS = new Set(Object.values(UPGRADE_RARITIES));
 const RARITY_TIERS = Object.freeze(Object.values(UPGRADE_RARITY_RULES));
+const RARITY_RANK = new Map(RARITY_TIERS.map((tier, index) => [tier.id, index]));
 
 function cleanScaledNumber(value) {
   return Math.round(value * 1e9) / 1e9;
@@ -58,6 +59,14 @@ export function getUpgradeRarityRule(rarity) {
   return UPGRADE_RARITY_RULES[normalizeUpgradeRarity(rarity)];
 }
 
+export function compareUpgradeRarity(left, right) {
+  return RARITY_RANK.get(normalizeUpgradeRarity(left)) - RARITY_RANK.get(normalizeUpgradeRarity(right));
+}
+
+export function isUpgradeRarityAtLeast(rarity, minimumRarity) {
+  return compareUpgradeRarity(rarity, minimumRarity) >= 0;
+}
+
 export function resolveUpgradeRarityForDefinition(definition, requestedRarity = null) {
   const fixedRarity = definition?.rarity == null ? null : normalizeUpgradeRarity(definition.rarity);
   const resolved = requestedRarity == null
@@ -69,21 +78,25 @@ export function resolveUpgradeRarityForDefinition(definition, requestedRarity = 
   return resolved;
 }
 
-export function rollUpgradeRarity(rng = Math.random, fixedRarity = null) {
+export function rollUpgradeRarity(rng = Math.random, fixedRarity = null, minimumRarity = null) {
   if (fixedRarity != null) return normalizeUpgradeRarity(fixedRarity);
   if (typeof rng !== 'function') throw new TypeError('Upgrade rarity rng must be a function');
+  const minimum = minimumRarity == null ? null : normalizeUpgradeRarity(minimumRarity);
+  const tiers = minimum == null
+    ? RARITY_TIERS
+    : RARITY_TIERS.filter(tier => isUpgradeRarityAtLeast(tier.id, minimum));
   const value = rng();
   if (!Number.isFinite(value) || value < 0 || value >= 1) {
     throw new RangeError(`Upgrade rarity rng must return a value in [0, 1): ${String(value)}`);
   }
 
-  const totalWeight = RARITY_TIERS.reduce((sum, tier) => sum + tier.weight, 0);
+  const totalWeight = tiers.reduce((sum, tier) => sum + tier.weight, 0);
   let roll = value * totalWeight;
-  for (const tier of RARITY_TIERS) {
+  for (const tier of tiers) {
     roll -= tier.weight;
     if (roll <= 0) return tier.id;
   }
-  return RARITY_TIERS[RARITY_TIERS.length - 1].id;
+  return tiers[tiers.length - 1].id;
 }
 
 export function scaleUpgradeModifierValue(modifier, rarity) {
