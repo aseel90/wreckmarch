@@ -155,6 +155,10 @@ function installMovementTuning(scene) {
     }
     this.hero.setVelocity(vx, vy);
 
+    // Phase B owns movement physics, but only owns fallback character visuals
+    // until CharacterSystem installs the production Runner. Keeping these legacy
+    // hero-run/hero-idle calls active would restart the production animation
+    // every frame and pin it to its first frame.
     if (!this.__characterSystemReady) {
       this.hero.rotation = Phaser.Math.Linear(this.hero.rotation, moving ? this.move.x * .075 : 0, .15);
       this.hero.setFlipX(this.move.x < -.12);
@@ -235,6 +239,7 @@ function installVisibleStarterWeapon(scene) {
       ? weaponOrId.texture
       : this.primaryWeapon?.texture || 'weapon-rivet';
     this.primaryWeapon = { ...next, texture };
+    this.weaponSprite?.setTexture?.(texture);
     this.activeWeaponId = next.id;
     this.damage = next.damage;
     this.fireDelay = next.fireDelay;
