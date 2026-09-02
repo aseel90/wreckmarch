@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RUN_BALANCE } from '../../src/balance/run-balance.js';
 import { getUpgradeDefinition } from '../../src/upgrades/upgrade-catalog.js';
+import { createUpgradeMechanicalTransaction } from '../../src/upgrades/upgrade-mechanical-effects.js';
 import {
   UPGRADE_RARITY_RULES,
   getUpgradeRarityRule,
@@ -66,6 +67,25 @@ describe('WS17 rarity identity and power budget', () => {
     const triple = definition('triple-riveter');
     expect(triple.mechanicalEffect.config.projectileCount).toBe(3);
     expect(triple.mechanicalEffect.config.volleyDamageMultiplier).toBe(1.6);
+  });
+
+  it('keeps Triple Riveter at its explicit 1.60x volley budget despite fixed Rare identity', () => {
+    const triple = definition('triple-riveter');
+    const rarePower = rarityPower('RARE');
+    expect(rarePower).toBe(1.15);
+
+    const scene: any = {};
+    const transaction = createUpgradeMechanicalTransaction(scene, triple, 1, {
+      rarity: 'RARE',
+      powerMultiplier: rarePower
+    });
+    const state = transaction.apply() as any;
+
+    expect(state.rarity).toBe('RARE');
+    expect(state.projectileCount).toBe(3);
+    expect(state.volleyDamageMultiplier).toBe(1.6);
+    expect(state.projectileDamageScale).toBeCloseTo(1.6 / 3, 9);
+    expect(state.volleyDamageMultiplier).not.toBeCloseTo(1.6 * rarePower, 9);
   });
 
   it('keeps max Heavy and Overclock Legendary same-card uplift below 20 percent', () => {
