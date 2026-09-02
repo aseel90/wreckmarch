@@ -1,64 +1,77 @@
 # WS21 — Mobile Projectile / Effect Performance Baseline
 
-Status: **FOUNDATION IN PROGRESS / MEASUREMENT ONLY**
+Status: **✅ COMPLETE / PRODUCTION D1 VALIDATED**
 
-## Goal
+WS21 establishes a measured mobile projectile/effect performance budget without weakening build variety or steering card RNG.
 
-Set a measured mobile performance budget for late-run projectile/effect pressure without weakening build variety or steering the random upgrade pool. WS21 must identify whether pressure comes from primary hero projectiles, Shrapnel fragments, support projectiles, or frame-costly effect work before any gameplay tuning is considered.
+## Automated foundation
 
-## Existing telemetry retained
+Merged foundations:
+- PR #237 / main `7d1ce0c4ae8887823c54f0f71d4ad1ab98e477a8` — projectile spawn-rate and active projectile-class telemetry.
+- PR #240 / main `c7f9ac768f07319684fa33553bc563779c51d178` — deterministic WS21 performance evidence evaluator.
 
-- frame count, average frame time and maximum frame time
-- long frames at `>= 33.34 ms`
-- frame-spike samples with active enemy/projectile context
-- peak active enemies
+Tracked metrics:
+- average projectile spawns per second
+- peak projectile spawns in one second
 - peak active projectiles
-- total hero/support/Shrapnel projectile spawn counts
+- peak active hero projectiles
+- peak active Shrapnel
+- peak active support projectiles
+- average / max frame time
+- long frames (`>=33.34 ms`)
+- frame spikes and enemy pressure context
 
-## WS21 measurement additions
+## Provisional PB1 evidence ceilings
 
-- `performance.averageProjectileSpawnsPerSecond`
-- `performance.peakProjectileSpawns1s`
-- `performance.peakActiveHeroProjectiles`
-- `performance.peakActiveShrapnel`
-- `performance.peakActiveSupportProjectiles`
+- sustained projectile spawns: `≤20/s`
+- one-second burst: `≤40`
+- peak active projectiles: `≤48`
+- target long frames: `0`
 
-These fields are observational only. They do not cap, delete, delay, redirect or rebalance projectiles.
+These are warning/evidence budgets, not automatic gameplay clamps.
 
-## Provisional budget targets
+## Production closeout — 2026-09-02
 
-These remain soft evidence gates until Production validates them:
+Authoritative Production evidence:
+- D1 row: `48`
+- report: `wm-1e3b7683-8eae-4517-9de6-cb8f27ebb979`
+- duration: `708.269 s`
+- final Wave: `10`
+- Level: `21`
+- finish: `RUNNER DOWN`
+- kills: `1,015`
+- damage: `99,610.949`
 
-| Metric | Provisional target | Meaning |
-| --- | ---: | --- |
-| Average projectile spawns | `<= 20/s` | sustained projectile creation pressure |
-| Peak 1-second projectile spawns | `<= 40` | short burst pressure |
-| Peak active projectiles | `<= 48` | simultaneous live projectile pressure |
-| Long frames | target `0` | frames at or above 33.34 ms |
+This run naturally combined a high-pressure projectile build: Triple Riveter, Piercing Rivets L3, Shrapnel Impact, Ricochet, Explosive Rivet, Overclock and Call the Rig.
 
-The frozen WS16 Production reference already observed approximately `19.13 projectile spawns/s`, so WS21 treats the 20/s target as something to validate rather than a reason to nerf the current build.
+Measured pressure:
+- average projectile spawns: **19.28/s** — PASS vs `≤20/s`
+- peak projectile spawns in 1 second: **38** — PASS vs `≤40`
+- peak active projectiles: **26** — PASS vs `≤48`
+- peak active hero projectiles: **15**
+- peak active Shrapnel: **14**
+- peak active support projectiles: **2**
+- total projectile spawns: **13,657**
+- Shrapnel spawns: **8,166**
 
-## Required validation sequence
+Frame health:
+- average frame: **16.68 ms**
+- max frame: **18.5 ms**
+- long frames: **0**
+- recorded frame spikes: **0**
 
-1. Deterministic telemetry regression proves each new field is counted once and does not own combat behavior.
-2. Quality/Smoke/Chromium gates pass.
-3. Run a projectile-heavy Production build, preferably late enough to combine high primary fire pressure with secondary projectile/effect mechanics.
-4. Record average/peak projectile spawn rate, peak active hero/Shrapnel/support counts, long frames and frame-spike context.
-5. If a ceiling is exceeded without long-frame pressure, reconsider the provisional ceiling before touching gameplay.
-6. If long frames correlate with one pressure class, optimize that owner first; do not apply unrelated global nerfs.
+Late-run pressure remained alive:
+- peak active enemies: **36**
+- average DPS: **140.64**
+- peak 1-second DPS: **397.811**
+- run ended with the Runner down
 
-## Protected behavior
+## Decision
 
-WS21 must not change these without separate measured evidence:
+WS21 is **closed**. The representative Production stress run stayed inside all four provisional limits while exercising one of the heaviest naturally obtainable projectile combinations currently available.
 
-- upgrade RNG or card-offer steering
-- primary fire rate or projectile count
-- Twin/Triple projectile identity
-- Shrapnel count/damage semantics
-- Explosive Rivet cadence/damage semantics
-- Pierce/Ricochet behavior
-- enemy wave pressure or spawn pacing
+No gameplay nerf is justified. Do not reduce fire rate, Triple projectile count, Shrapnel count, Explosive Rivet cadence, enemy pressure, RNG/card offer behavior, or VFX from this evidence.
 
-## Exit gate
+If a future build exceeds a provisional projectile ceiling while long frames remain zero, reconsider the provisional ceiling before changing gameplay. If long frames appear, first attribute pressure to the actual hero/Shrapnel/support/effect owner and optimize that owner rather than applying a global nerf.
 
-WS21 can be marked complete only after at least one representative high-pressure Production run produces the new telemetry and the team can state a measured ceiling or optimization decision with no speculative gameplay changes.
+Cross-workstream note: the same Production report also naturally completed the missing Twin L2 → Triple Riveter validation required to close WS10. See `WS10_WS21_PRODUCTION_CLOSEOUT.md`.
