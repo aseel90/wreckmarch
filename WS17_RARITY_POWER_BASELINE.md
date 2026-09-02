@@ -21,12 +21,13 @@ The weighted expected modifier multiplier is **1.073x**. In other words, normal 
 
 ## Canonical identity rules
 
-1. **Common is the balance baseline.** Existing PB1 Common card values remain the reference used for card ceilings.
-2. **Rarity scales one acquired level only.** A later Legendary level does not retroactively upgrade earlier Common/Rare levels.
-3. **Discrete mechanics stay fixed Common unless they have a dedicated rarity owner.** Twin, Triple, Pierce count, Ricochet count, Shrapnel count, Explosive Rivet, Impact Shield and Call Rig must not gain generic numeric rarity scaling.
-4. **`OVERRIDE` modifiers may not use generic rarity scaling.** The runtime already rejects this path.
-5. **Bounded healing may scale with rarity.** `RESTORE_HP` is an explicit rarity-aware mechanical owner; healing remains capped by current max HP / missing HP rules.
-6. **Rarity must not become a recommendation engine.** A higher-rarity weak/off-build card may still be a weak/off-build choice.
+1. **Common is the normal scalar balance baseline.** Existing PB1 Common card values remain the reference used for card ceilings.
+2. **Rarity scales one acquired numeric level only.** A later Legendary level does not retroactively upgrade earlier Common/Rare levels.
+3. **Discrete mechanics use a fixed rarity unless they have a dedicated rarity-scaling owner.** Twin, Triple, Pierce count, Ricochet count, Shrapnel count, Explosive Rivet, Impact Shield and Call Rig are all fixed-rarity cards. Triple Riveter is intentionally fixed **Rare** as an evolution identity; its handler still uses the explicit `1.60x` volley budget and does not multiply that budget by the generic Rare `1.15x` power multiplier.
+4. **A fixed rarity label is not permission to generically multiply a discrete mechanic.** Projectile counts, volley budgets, shield charges, proc counts and similar mechanics remain owned by their explicit config/handler.
+5. **`OVERRIDE` modifiers may not use generic rarity scaling.** The runtime already rejects this path.
+6. **Bounded healing may scale with rarity.** `RESTORE_HP` is an explicit rarity-aware mechanical owner; healing remains capped by current max HP / missing HP rules.
+7. **Rarity must not become a recommendation engine.** A higher-rarity weak/off-build card may still be a weak/off-build choice.
 
 ## Direct-power audit
 
@@ -61,7 +62,7 @@ The Scrap Magnet all-Legendary number is intentionally recorded rather than hidd
 - Armor Plate max level: 160 max HP at all Common versus 190 at all Legendary from the 100 HP Runner base → **+18.75%** resolved max HP.
 - Armor Plate heal scales together with its max-HP grant and remains capped by max HP.
 - Field Repair: Common restores **25% max HP**; Legendary restores **37.5% max HP**. It remains missing-HP gated and cannot create permanent damage scaling.
-- Impact Shield is fixed Common and therefore cannot turn rarity into extra shield charges.
+- Impact Shield is fixed Common and therefore cannot turn generic rarity scaling into extra shield charges.
 
 ## Production stress reference — RUN-0026
 
@@ -93,7 +94,8 @@ Forcing every scalable level in that same max build to Legendary exceeds the PB1
 
 - [x] Rarity weights sum to 100 and weighted expected modifier power is 1.073x.
 - [x] Rarity is applied per acquired level and stored per level; it does not retroactively rescale prior levels.
-- [x] Discrete projectile/proc/count mechanics remain fixed Common unless explicitly rarity-owned.
+- [x] Discrete projectile/proc/count mechanics use fixed rarity and explicit mechanical configs rather than generic rarity multiplication.
+- [x] Triple Riveter remains fixed Rare for evolution identity while preserving its explicit 1.60x volley budget.
 - [x] Generic `OVERRIDE` rarity scaling remains rejected.
 - [x] Heavy and Overclock all-Legendary same-card max stacks remain below +20% resolved direct-stat uplift versus all Common.
 - [x] Critical all-Legendary same-card max stack remains well below +20% expected direct-power uplift versus all Common.
@@ -114,7 +116,7 @@ Reopen the smallest relevant rarity axis if any of the following becomes reprodu
 - normal-distribution max scalar power moves above the `4.25x` late envelope,
 - real runs repeatedly show rarity luck alone pushing builds above the `4.75x` red flag,
 - Scrap Magnet / another multiplicative utility card becomes mandatory through progression acceleration,
-- a future mechanical/discrete upgrade is made variable-rarity without a dedicated bounded scaling owner,
+- a future discrete upgrade is made variable-rarity or consumes generic rarity power without a dedicated bounded scaling owner,
 - or Elite/Wreck Crate Rare+ guarantees materially change the rarity distribution seen by full runs.
 
 The next planned balance workstream after WS17 is **WS18 — Rig/support damage ownership**.

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { RUN_BALANCE } from '../../src/balance/run-balance.js';
 import { getUpgradeDefinition } from '../../src/upgrades/upgrade-catalog.js';
 import {
-  UPGRADE_RARITIES,
   UPGRADE_RARITY_RULES,
   getUpgradeRarityRule,
   scaleUpgradeModifierValue
@@ -48,21 +47,25 @@ describe('WS17 rarity identity and power budget', () => {
     expect(weightedExpectedRarityPower()).toBeCloseTo(1.073, 6);
   });
 
-  it('keeps discrete projectile/proc mechanics fixed to Common rarity', () => {
-    const fixedCommonIds = [
-      'twin-riveter',
-      'triple-riveter',
-      'piercing-rivets',
-      'ricochet',
-      'shrapnel-impact',
-      'explosive-rivet',
-      'impact-shield',
-      'call-rig'
-    ];
+  it('keeps discrete projectile/proc mechanics on explicit fixed rarities', () => {
+    const fixedRarities: Record<string, string> = {
+      'twin-riveter': 'COMMON',
+      'triple-riveter': 'RARE',
+      'piercing-rivets': 'COMMON',
+      ricochet: 'COMMON',
+      'shrapnel-impact': 'COMMON',
+      'explosive-rivet': 'COMMON',
+      'impact-shield': 'COMMON',
+      'call-rig': 'COMMON'
+    };
 
-    for (const id of fixedCommonIds) {
-      expect(definition(id).rarity, id).toBe(UPGRADE_RARITIES.COMMON);
+    for (const [id, rarity] of Object.entries(fixedRarities)) {
+      expect(definition(id).rarity, id).toBe(rarity);
     }
+
+    const triple = definition('triple-riveter');
+    expect(triple.mechanicalEffect.config.projectileCount).toBe(3);
+    expect(triple.mechanicalEffect.config.volleyDamageMultiplier).toBe(1.6);
   });
 
   it('keeps max Heavy and Overclock Legendary same-card uplift below 20 percent', () => {
