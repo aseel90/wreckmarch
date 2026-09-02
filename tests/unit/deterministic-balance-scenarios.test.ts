@@ -74,18 +74,21 @@ describe('deterministic balance scenario suite', () => {
     });
     expect(scalar.resolvedStats.character.critChance).toBeGreaterThan(0);
 
+    const crowdLevels = crowd.upgradeLevels as Record<string, number>;
+    const survivalLevels = survival.upgradeLevels as Record<string, number>;
+
     expect(crowd.mechanics.projectileCount).toBe(2);
     expect(crowd.mechanics.pierceCount).toBe(3);
     expect(crowd.mechanics.ricochetCount).toBe(2);
     expect(crowd.mechanics.shrapnelCount).toBeGreaterThan(0);
-    expect(crowd.upgradeLevels['explosive-rivet']).toBe(3);
+    expect(crowdLevels['explosive-rivet']).toBe(3);
 
     expect(survival.mechanics.projectileCount).toBe(1);
     expect(survival.resolvedStats.character.maxHp).toBeGreaterThan(100);
-    expect(survival.upgradeLevels['armor-plate']).toBe(4);
-    expect(survival.upgradeLevels['field-repair']).toBe(3);
-    expect(survival.upgradeLevels['impact-shield']).toBe(2);
-    expect(survival.upgradeLevels['call-rig']).toBe(1);
+    expect(survivalLevels['armor-plate']).toBe(4);
+    expect(survivalLevels['field-repair']).toBe(3);
+    expect(survivalLevels['impact-shield']).toBe(2);
+    expect(survivalLevels['call-rig']).toBe(1);
   });
 
   it('keeps the WS20 scalar candidate inside the PB1 late direct-power ceiling before Production viability testing', async () => {
