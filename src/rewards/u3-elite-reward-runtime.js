@@ -55,7 +55,6 @@ export class EliteMilestoneController {
 
 function installEliteChoiceFlow(scene) {
   if (scene.__eliteChoiceFlowReady) return;
-  const previousClose = scene.closeUpgradeCards?.bind(scene);
 
   scene.openEliteRewardCards = function(rewardContext = createEliteRewardContext()) {
     if (this.upgradeOpen || this.gameOver) return false;
@@ -76,18 +75,15 @@ function installEliteChoiceFlow(scene) {
     this.input.enabled = false;
     this.showBanner?.(`WRECK CRATE • ${rewardContext.minimumRarity}+ GUARANTEED`);
     const targetScene = this.game.scene.getScene('UpgradeSceneV4') ? 'UpgradeSceneV4' : 'UpgradeScene';
+    const rewardScene = this.game.scene.getScene(targetScene);
+    rewardScene?.events?.once?.('shutdown', () => {
+      if (this.activeUpgradeRewardContext === rewardContext) this.activeUpgradeRewardContext = null;
+    });
     this.scene.launch(targetScene, { gameScene: this, choices, level: this.level, rewardContext });
     this.scene.bringToTop(targetScene);
     return true;
   };
 
-  if (previousClose) {
-    scene.closeUpgradeCards = function() {
-      const result = previousClose();
-      this.activeUpgradeRewardContext = null;
-      return result;
-    };
-  }
   scene.__eliteChoiceFlowReady = true;
 }
 
