@@ -1,6 +1,6 @@
 # WS18 — Rig / Support Damage Ownership
 
-Status: 🟡 IMPLEMENTATION + LIVE DELIVERY GATE
+Status: ✅ COMPLETE — MERGED + EXACT-SHA LIVE VALIDATED
 
 ## Problem
 
@@ -57,10 +57,18 @@ RUN-0026 is not a Rig balance sample: it recorded `supportSpawned = 0`, `damageB
 - [x] Live C4 → Rig cache edge bumped to `rig-system.js?v=2`.
 - [x] Index → C4 cache edge bumped to `phase-c4-runtime.js?v=5`.
 - [x] Cache-bust contract has unit coverage.
-- [ ] Quality / unit checks green on final live-delivery head.
-- [ ] Smoke green on final live-delivery head.
-- [ ] Chromium shards 1–3 green on final live-delivery head.
-- [ ] Aggregate E2E green on final live-delivery head.
-- [ ] Exact merge SHA Live verification green.
+- [x] Quality / unit checks green on final live-delivery head `042bee672b3520f2fac48f9eeb582e2f32dbad50`.
+- [x] Smoke green on final live-delivery head.
+- [x] Chromium shards 1–3 green on final live-delivery head.
+- [x] Aggregate E2E green on final live-delivery head.
+- [x] Exact merge SHA `89596fba6a6d6a1deba45deae1ee5af0a93d4dee` passed Live verification and iOS Pages recovery.
 
 Production/D1 balancing should only reopen the numeric value if support telemetry shows a real over/under-performance signal.
+
+## Closure
+
+- PR #214 merged to `main` as `89596fba6a6d6a1deba45deae1ee5af0a93d4dee`.
+- Final PR head `042bee672b3520f2fac48f9eeb582e2f32dbad50` passed Quality, Smoke, Chromium shards 1–3 and aggregate E2E.
+- Exact merge SHA passed GitHub Pages Live verification and iOS Pages recovery.
+- WS18 changes support **ownership**, not support balance strength. Reopen numeric tuning only with real support-path Production telemetry.
+- Handoff: **WS19 — Armor/stat combat semantics + survivability utility**.
