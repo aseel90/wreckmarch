@@ -16,12 +16,11 @@ jobs:
         with:
           ref: workstream-14-volley-profile-foundation
           fetch-depth: 0
-      - name: Apply exact WS14 CI fixes
+      - name: Apply exact non-workflow fixes
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
-          # Preserve the existing twinShots mirror fallback while intrinsic fireProfile becomes canonical for weapons.
           p = Path('src/combat/weapon-system.js')
           s = p.read_text()
           needle = "    const fireProfile = scene.primaryWeapon?.fireProfile || scene.weaponDefinition?.fireProfile || {};\n"
@@ -47,12 +46,10 @@ jobs:
               s = s.replace(needle, insert, 1)
           p.write_text(s)
 
-          # Update the D1 cache contract.
           p = Path('tests/unit/upgrade-card-art.test.ts')
           s = p.read_text().replace('./src/phase-d1-runtime.js?v=26', './src/phase-d1-runtime.js?v=27')
           p.write_text(s)
 
-          # Remove latent random card-art flake now that Explosive/Triple have canonical custom textures.
           p = Path('tests/e2e/upgrade-cards.spec.ts')
           s = p.read_text()
           old = """  for (const card of result.cards) {
@@ -87,57 +84,13 @@ jobs:
               if old not in s: raise SystemExit('Upgrade card E2E mapping block missing')
               s = s.replace(old, new, 1)
           p.write_text(s)
-
-          # Synchronize the live Pages asset graph with the new registry/weapon/cache versions.
-          p = Path('.github/workflows/pages.yml')
-          s = p.read_text()
-          replacements = {
-              '${BASE}src/phase-b-runtime.js?v=5': '${BASE}src/phase-b-runtime.js?v=6',
-              '${BASE}src/phase-c-runtime.js?v=21': '${BASE}src/phase-c-runtime.js?v=22',
-              '${BASE}src/phase-d1-runtime.js?v=26': '${BASE}src/phase-d1-runtime.js?v=27',
-              '${BASE}src/characters/character-system.js?v=9': '${BASE}src/characters/character-system.js?v=10',
-              '${BASE}src/combat/weapon-registry.js?v=1': '${BASE}src/combat/weapon-registry.js?v=2',
-              '${BASE}src/combat/definitions/rivet-gun.js?v=1': '${BASE}src/combat/definitions/rivet-gun.js?v=2',
-              './src/phase-b-runtime.js?v=5': './src/phase-b-runtime.js?v=6',
-              './src/phase-c-runtime.js?v=21': './src/phase-c-runtime.js?v=22',
-              './src/phase-d1-runtime.js?v=26': './src/phase-d1-runtime.js?v=27',
-              '../combat/weapon-registry.js?v=1': '../combat/weapon-registry.js?v=2',
-              './combat/weapon-registry.js?v=1': './combat/weapon-registry.js?v=2',
-              './definitions/rivet-gun.js?v=1': './definitions/rivet-gun.js?v=2',
-          }
-          for old_text, new_text in replacements.items(): s = s.replace(old_text, new_text)
-          hud_line = '          curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" -o wm-live-mobile-hud.js\n'
-          if 'wm-live-enemy-system.js' not in s:
-              s = s.replace(hud_line, hud_line + '          curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=24" -o wm-live-enemy-system.js\n')
-          registry_line = '          curl -fsSL --retry 5 "${BASE}src/combat/weapon-registry.js?v=2" -o wm-live-weapon-registry.js\n'
-          if 'wm-live-weapon-system.js' not in s:
-              s = s.replace(registry_line, registry_line + '          curl -fsSL --retry 5 "${BASE}src/combat/weapon-system.js?v=8" -o wm-live-weapon-system.js\n')
-          registry_check = '          grep -F "./definitions/rivet-gun.js?v=2" wm-live-weapon-registry.js\n'
-          extra_checks = """          grep -F "../combat/weapon-system.js?v=8" wm-live-enemy-system.js
-                    grep -F "projectileCount: 1" wm-live-rivet-gun.js
-                    grep -F "halfSpreadRadians: 0" wm-live-rivet-gun.js
-                    grep -F "volleyDamageMultiplier: 1" wm-live-rivet-gun.js
-                    grep -F "heroVolleyProfile()" wm-live-weapon-system.js
-                    grep -F "source: 'weapon'" wm-live-weapon-system.js
-                    grep -F "weaponVolley:s.primaryWeapon?.fireProfile?.projectileCount===1" wm-live-phase-d1.js
-          """
-          if "weaponVolley:s.primaryWeapon?.fireProfile?.projectileCount===1" not in s:
-              if registry_check not in s: raise SystemExit('Pages registry check insertion point missing')
-              s = s.replace(registry_check, registry_check + extra_checks)
-          artifact_line = '            wm-live-mobile-hud.js\n'
-          if '            wm-live-enemy-system.js\n' not in s:
-              s = s.replace(artifact_line, artifact_line + '            wm-live-enemy-system.js\n')
-          artifact_line = '            wm-live-weapon-registry.js\n'
-          if '            wm-live-weapon-system.js\n' not in s:
-              s = s.replace(artifact_line, artifact_line + '            wm-live-weapon-system.js\n')
-          p.write_text(s)
           PY
       - name: Commit branch patch
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/combat/weapon-system.js .github/workflows/pages.yml tests/unit/upgrade-card-art.test.ts tests/e2e/upgrade-cards.spec.ts
+          git add src/combat/weapon-system.js tests/unit/upgrade-card-art.test.ts tests/e2e/upgrade-cards.spec.ts
           git diff --cached --check
           git diff --cached --quiet && exit 0
-          git commit -m '[ws14-autopatch] Fix cache contracts and Twin fallback'
+          git commit -m '[ws14-autopatch] Preserve Twin fallback and fix tests'
           git push origin HEAD:workstream-14-volley-profile-foundation
