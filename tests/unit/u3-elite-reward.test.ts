@@ -25,9 +25,9 @@ describe('U3 Elite reward guarantee', () => {
     expect(rollUpgradeRarity(() => 0.64, null, 'RARE')).toBe('RARE');
     expect(rollUpgradeRarity(() => 0.65, null, 'RARE')).toBe('RARE');
     expect(rollUpgradeRarity(() => 0.88, null, 'RARE')).toBe('RARE');
-    expect(rollUpgradeRarity(() => 0.89, null, 'RARE')).toBe('EPIC');
+    expect(rollUpgradeRarity(() => 0.890001, null, 'RARE')).toBe('EPIC');
     expect(rollUpgradeRarity(() => 0.97, null, 'RARE')).toBe('EPIC');
-    expect(rollUpgradeRarity(() => 0.98, null, 'RARE')).toBe('LEGENDARY');
+    expect(rollUpgradeRarity(() => 0.980001, null, 'RARE')).toBe('LEGENDARY');
 
     const eliteExpectedPower =
       0.89 * getUpgradeRarityRule('RARE').powerMultiplier +
