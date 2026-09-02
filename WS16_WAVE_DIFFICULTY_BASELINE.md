@@ -1,12 +1,12 @@
 # WS16 — Wave / Difficulty Scaling vs Player Power
 
-Status: **VALIDATION BASELINE IMPLEMENTED / CI + PRODUCTION GATES PENDING**
+Status: **✅ COMPLETE / CURRENT WAVE CURVE VALIDATED / NO REBALANCE REQUIRED**
 
 ## Decision
 
-Do **not** rebalance wave numbers merely because WS16 opened. The first gate is to prove whether the current 10-wave curve still creates pressure after the corrected player-power workstreams.
+Do **not** rebalance wave numbers merely because WS16 opened. The gate was to prove whether the current 10-wave curve still creates pressure after the corrected player-power workstreams.
 
-Current evidence says the curve is healthy enough to freeze and validate before any numeric change:
+The current curve passed that gate without a gameplay-number change:
 
 - Wave 1 → Wave 10 HP grows only **1.00× → 1.90×**.
 - Damage grows **1.00× → 1.36×**.
@@ -16,7 +16,7 @@ Current evidence says the curve is healthy enough to freeze and validate before 
 - Base spawn interval falls **720 ms → 425 ms**, about **1.69× more spawn opportunities per second**.
 - Threat-budget × spawn-rate pressure therefore grows by roughly **5.20×** before enemy-mix changes are considered.
 
-The intended design is preserved: late difficulty should come mainly from **density, cadence, mixed enemy roles and SURGE rhythm**, not by turning enemies into HP sponges.
+The intended design is preserved: late difficulty comes mainly from **density, cadence, mixed enemy roles and SURGE rhythm**, not by turning enemies into HP sponges.
 
 ## Production reference — RUN-0026
 
@@ -53,14 +53,24 @@ This is strong evidence against a blind Wave-10 HP increase: a strong build stil
 - [x] RUN-0026 SURGE cap utilization sits inside the preferred crowd-pressure range.
 - [x] RUN-0026 kill/spawn ratio remains below the screen-delete red flag.
 - [x] WS16 does not modify enemy HP/damage/speed, wave budgets, spawn intervals, active caps or enemy weights without contrary repeatable evidence.
-- [ ] Quality + Smoke + all Chromium E2E shards pass on the exact WS16 head SHA.
-- [ ] Merge to `main` and verify exact-SHA Production/Pages live validation.
+- [x] Quality + Smoke + all Chromium E2E shards passed on exact PR head `3a134e37a34a2e38437264682054feca2b0ce8df`.
+- [x] PR #207 merged to `main` as `7d35a3239a26be30267d1979057182e39a6e4828` and exact-SHA Live verification passed.
+
+## Completion record — 2026-09-02
+
+- PR: **#207 — WS16: validate current wave difficulty curve without HP inflation**.
+- Final PR head: `3a134e37a34a2e38437264682054feca2b0ce8df`.
+- Merge SHA: `7d35a3239a26be30267d1979057182e39a6e4828`.
+- Exact-head gates: **Quality ✅ / Smoke ✅ / Chromium E2E shards 1–3 ✅ / aggregate E2E ✅**.
+- Exact merge SHA: **Live verification PASSED ✅** on GitHub Pages.
+- `ios-standalone-recovery.yml` did not run for this merge by design: that workflow is path-filtered to `index.html`, `manifest.webmanifest`, and its own workflow file; WS16 changed only validation documentation/tests and no runtime shell or manifest.
+- **No enemy HP, damage, speed, wave budget, spawn interval, active cap or enemy-weight numbers were changed.**
+- Conclusion: the current wave curve remains the canonical baseline; no WS16 rebalance is required.
+- **Next active balance workstream: WS17 — Rarity identity + power scaling.**
 
 ## Stop rule
 
-If deterministic gates and Production evidence remain green, **no wave-number rebalance is required in WS16**. Do not manufacture a numeric change just to make the workstream look active.
-
-If later Production runs repeatedly show one of these failures, reopen the smallest relevant axis only:
+Keep the current curve unless later Production runs repeatedly show one of these failures:
 
 - late SURGE utilization consistently below 0.40,
 - kill/spawn ratio at or above 0.985 under unrelated strong builds,
