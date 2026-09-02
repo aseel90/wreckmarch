@@ -34,6 +34,8 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
       hierarchyVersion: card.hierarchyVersion,
       levelLabel: card.footer?.text || '',
       levelPresentation: card.levelPresentation || null,
+      preview: card.preview || null,
+      previewText: card.previewText?.text || '',
       artBackgroundWidth: card.artBackground?.width || 0,
       artBackgroundHeight: card.artBackground?.height || 0
     }));
@@ -42,6 +44,7 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
     const customArtReady = scene.__upgradeCardArtReady === true;
     const presentationVersion = scene.__upgradeCardPresentationVersion || null;
     const visualHierarchy = scene.__upgradeCardVisualHierarchy || [];
+    const previewVersion = scene.__upgradeCardPreviewVersion || null;
     scene.closeUpgradeCards();
 
     return {
@@ -50,6 +53,7 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
       customArtReady,
       presentationVersion,
       visualHierarchy,
+      previewVersion,
       rarityStyles,
       choiceRarities,
       cards
@@ -59,8 +63,9 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
   expect(result.artSource).toBe('c3-atlas-icons');
   expect(result.premiumCards).toBe(true);
   expect(result.customArtReady).toBe(true);
-  expect(result.presentationVersion).toBe('u5-level-max-v2');
-  expect(result.visualHierarchy).toEqual(['ART', 'NAME', 'RARITY', 'LEVEL', 'DESCRIPTION']);
+  expect(result.presentationVersion).toBe('u5-before-after-v3');
+  expect(result.previewVersion).toBe('u5-before-after-v1');
+  expect(result.visualHierarchy).toEqual(['ART', 'NAME', 'RARITY', 'LEVEL', 'PREVIEW', 'DESCRIPTION']);
   expect(new Set(result.rarityStyles)).toEqual(new Set(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']));
   expect(result.cards.map((card: any) => card.rarity)).toEqual(result.choiceRarities);
   expect(result.cards).toHaveLength(3);
@@ -87,7 +92,10 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
     expect(card.frameColor).toBeGreaterThan(0);
     expect(card.outerStrokeWidth).toBeGreaterThanOrEqual(2);
     expect(card.outerStrokeWidth).toBeLessThanOrEqual(4);
-    expect(card.hierarchyVersion).toBe('u5-level-max-v2');
+    expect(card.hierarchyVersion).toBe('u5-before-after-v3');
+    expect(card.preview?.version).toBe('u5-before-after-v1');
+    expect(card.preview?.rows?.length).toBeGreaterThan(0);
+    expect(card.previewText).toContain('→');
     expect(card.levelPresentation?.currentLevel).toBe(0);
     expect(card.levelPresentation?.nextLevel).toBe(1);
     expect(card.levelPresentation?.maxLevel).toBeGreaterThanOrEqual(1);

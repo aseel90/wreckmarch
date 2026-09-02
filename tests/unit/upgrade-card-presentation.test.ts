@@ -9,8 +9,8 @@ import {
 
 describe('U5 card frame hierarchy', () => {
   it('locks the first visual hierarchy pass and version', () => {
-    expect(UPGRADE_CARD_PRESENTATION_VERSION).toBe('u5-level-max-v2');
-    expect(UPGRADE_CARD_VISUAL_HIERARCHY).toEqual(['ART', 'NAME', 'RARITY', 'LEVEL', 'DESCRIPTION']);
+    expect(UPGRADE_CARD_PRESENTATION_VERSION).toBe('u5-before-after-v3');
+    expect(UPGRADE_CARD_VISUAL_HIERARCHY).toEqual(['ART', 'NAME', 'RARITY', 'LEVEL', 'PREVIEW', 'DESCRIPTION']);
   });
 
   it('uses progressively richer rarity frames without changing rarity mechanics', () => {
@@ -40,12 +40,14 @@ describe('U5 card frame hierarchy', () => {
     const presentation = fs.readFileSync(new URL('../../src/upgrades/upgrade-card-presentation.js', import.meta.url), 'utf8');
 
     expect(phaseD1).toContain("installUpgradeCardPresentation(s)");
-    expect(phaseD1).toContain("./upgrades/upgrade-card-presentation.js?v=2");
+    expect(phaseD1).toContain("./upgrades/upgrade-card-presentation.js?v=3");
     expect(phaseD1).not.toContain('function installPremiumCards');
     expect(phaseD1).not.toContain('up.card=function');
     expect(presentation).toContain('upgradeScene.card = function');
     expect(presentation).toContain('upgradeScene.refresh = function');
     expect(presentation).toContain("installUpgradeCardArt(gameScene)");
     expect(presentation).toContain("getUpgradeDefinition(upgrade.id)");
+    expect(presentation).toContain("getUpgradeBeforeAfterPreview(this.gameScene, upgrade)");
+    expect(presentation).toContain("__upgradeCardPreviewVersion");
   });
 });
