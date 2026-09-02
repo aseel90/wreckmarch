@@ -1,5 +1,5 @@
 /* WRECKMARCH — canonical weapon definition registry + signature resolution */
-import { RIVET_GUN_WEAPON } from './definitions/rivet-gun.js?v=1';
+import { RIVET_GUN_WEAPON } from './definitions/rivet-gun.js?v=2';
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -7,6 +7,22 @@ function nonEmptyString(value) {
 
 function finiteNumber(value) {
   return Number.isFinite(Number(value));
+}
+
+function validateFireProfile(fireProfile, weaponId) {
+  if (!fireProfile || typeof fireProfile !== 'object' || Array.isArray(fireProfile)) {
+    throw new TypeError(`Weapon fireProfile must be an object: ${weaponId}`);
+  }
+  if (!Number.isInteger(fireProfile.projectileCount) || fireProfile.projectileCount < 1) {
+    throw new TypeError(`Weapon fireProfile projectileCount must be a positive integer: ${weaponId}`);
+  }
+  if (!finiteNumber(fireProfile.halfSpreadRadians) || Number(fireProfile.halfSpreadRadians) < 0) {
+    throw new TypeError(`Weapon fireProfile halfSpreadRadians must be a non-negative number: ${weaponId}`);
+  }
+  if (!finiteNumber(fireProfile.volleyDamageMultiplier) || Number(fireProfile.volleyDamageMultiplier) <= 0) {
+    throw new TypeError(`Weapon fireProfile volleyDamageMultiplier must be a positive number: ${weaponId}`);
+  }
+  return fireProfile;
 }
 
 function validateWeaponDefinition(definition) {
@@ -29,6 +45,7 @@ function validateWeaponDefinition(definition) {
       throw new TypeError(`Weapon ${key} must be a non-negative number: ${definition.id}`);
     }
   }
+  validateFireProfile(definition.fireProfile, definition.id);
   const runtime = definition.runtime ?? {};
   if (runtime.muzzleDistance != null && (!finiteNumber(runtime.muzzleDistance) || Number(runtime.muzzleDistance) < 0)) {
     throw new TypeError(`Weapon muzzleDistance must be a non-negative number: ${definition.id}`);
@@ -87,6 +104,7 @@ export function createWeaponRuntimeState(weaponOrId = 'rivet-gun') {
   return {
     id: definition.id,
     ...definition.stats,
+    fireProfile: { ...definition.fireProfile },
     ...(definition.runtime || {})
   };
 }

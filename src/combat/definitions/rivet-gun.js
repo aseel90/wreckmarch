@@ -11,6 +11,11 @@ export const RIVET_GUN_WEAPON = Object.freeze({
     ricochetCount: 0,
     shrapnelCount: 0
   }),
+  fireProfile: Object.freeze({
+    projectileCount: 1,
+    halfSpreadRadians: 0,
+    volleyDamageMultiplier: 1
+  }),
   runtime: Object.freeze({
     muzzleDistance: 38
   })
