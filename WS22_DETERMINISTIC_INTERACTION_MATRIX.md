@@ -1,6 +1,6 @@
 # WS22 — Deterministic Interaction Matrix
 
-Status: IMPLEMENTED / CI VALIDATION PENDING
+Status: IMPLEMENTED / CI REVALIDATION PENDING
 
 ## Purpose
 
