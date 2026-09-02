@@ -29,17 +29,25 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
       badge: card.rarityText?.text || '',
       rank: card.style?.rank,
       frameColor: card.style?.frame,
-      glowAlpha: card.glow?.alpha
+      glowAlpha: card.glow?.alpha,
+      outerStrokeWidth: card.style?.outerStrokeWidth,
+      hierarchyVersion: card.hierarchyVersion,
+      artBackgroundWidth: card.artBackground?.width || 0,
+      artBackgroundHeight: card.artBackground?.height || 0
     }));
     const choiceRarities = choices.map((choice: any) => choice.rarity);
     const rarityStyles = scene.__d1RarityStyles || [];
     const customArtReady = scene.__upgradeCardArtReady === true;
+    const presentationVersion = scene.__upgradeCardPresentationVersion || null;
+    const visualHierarchy = scene.__upgradeCardVisualHierarchy || [];
     scene.closeUpgradeCards();
 
     return {
       artSource: scene.__d1CardArtSource,
       premiumCards: scene.__d1PremiumCards,
       customArtReady,
+      presentationVersion,
+      visualHierarchy,
       rarityStyles,
       choiceRarities,
       cards
@@ -49,6 +57,8 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
   expect(result.artSource).toBe('c3-atlas-icons');
   expect(result.premiumCards).toBe(true);
   expect(result.customArtReady).toBe(true);
+  expect(result.presentationVersion).toBe('u5-frame-hierarchy-v1');
+  expect(result.visualHierarchy).toEqual(['ART', 'NAME', 'RARITY', 'LEVEL', 'DESCRIPTION']);
   expect(new Set(result.rarityStyles)).toEqual(new Set(['COMMON', 'RARE', 'EPIC', 'LEGENDARY']));
   expect(result.cards.map((card: any) => card.rarity)).toEqual(result.choiceRarities);
   expect(result.cards).toHaveLength(3);
@@ -73,5 +83,10 @@ test('upgrade cards use compact gameplay icon art and expose all rarity treatmen
     expect(card.rank).toBeGreaterThanOrEqual(0);
     expect(card.rank).toBeLessThanOrEqual(3);
     expect(card.frameColor).toBeGreaterThan(0);
+    expect(card.outerStrokeWidth).toBeGreaterThanOrEqual(2);
+    expect(card.outerStrokeWidth).toBeLessThanOrEqual(4);
+    expect(card.hierarchyVersion).toBe('u5-frame-hierarchy-v1');
+    expect(card.artBackgroundWidth).toBeGreaterThan(180);
+    expect(card.artBackgroundHeight).toBeGreaterThan(100);
   }
 });
