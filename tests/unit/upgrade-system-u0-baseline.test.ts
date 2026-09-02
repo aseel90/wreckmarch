@@ -41,6 +41,7 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     const rigDefinition = read('src/upgrades/definitions/call-rig.js');
     const phaseC5 = read('src/phase-c5-runtime.js');
     const phaseD1 = read('src/phase-d1-runtime.js');
+    const cardPresentation = read('src/upgrades/upgrade-card-presentation.js');
     const companionRuntime = read('src/companion-runtime-v3.js');
 
     expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
@@ -113,7 +114,10 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(twinDefinition).toContain("rarity: 'COMMON'");
     expect(rigDefinition).toContain("rarity: 'COMMON'");
     expect(phaseC5).toContain('rarityText:rarity');
-    expect(phaseD1).toContain('getUpgradeRarityRule');
+    expect(phaseD1).toContain('installUpgradeCardPresentation');
+    expect(phaseD1).not.toContain('getUpgradeRarityRule');
+    expect(cardPresentation).toContain('getUpgradeRarityRule');
+    expect(cardPresentation).toContain('UPGRADE_CARD_PRESENTATION_VERSION');
     expect(phaseD1).not.toContain('CARD_RARITY');
     expect(phaseD1).not.toContain('RARITY_STYLE');
   });
