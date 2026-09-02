@@ -1,0 +1,123 @@
+name: U5 card frame apply once
+
+on:
+  push:
+    branches:
+      - u5-card-frame-hierarchy
+    paths:
+      - .github/workflows/u5-card-frame-apply-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: u5-card-frame-hierarchy
+          fetch-depth: 0
+      - name: Apply guarded U5 frame hierarchy patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one match, found {count}: {old[:90]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          # Phase D1 consumes one presentation owner; it no longer defines card rendering itself.
+          p = Path('src/phase-d1-runtime.js')
+          text = p.read_text()
+          old_imports = "import { UPGRADE_RARITIES, UPGRADE_RARITY_RULES, getUpgradeRarityRule } from './upgrades/upgrade-rarity.js?v=1';\nimport { getUpgradeCardArtTexture, installUpgradeCardArt } from './upgrades/upgrade-card-art.js?v=7';"
+          new_import = "import { installUpgradeCardPresentation } from './upgrades/upgrade-card-presentation.js?v=1';"
+          if text.count(old_imports) != 1:
+              raise SystemExit('phase-d1: rarity/art import ownership block drifted')
+          text = text.replace(old_imports, new_import, 1)
+          text = text.replace("const COLORS={HERO:0xd98446,UTILITY:0x4fc8d8,FORTRESS:0xd4ad62,EVOLUTION:0x9d6be8};\nconst RARITY_ORDER=Object.values(UPGRADE_RARITIES);\n", '', 1)
+          start = text.find('function installPremiumCards(s){')
+          end = text.find('function selfTest(s)')
+          if start < 0 or end < 0 or end <= start:
+              raise SystemExit('phase-d1: legacy card renderer boundary drifted')
+          text = text[:start] + text[end:]
+          old_probe = "&&s.__upgradeCardArtReady===true,rarityCards:['COMMON','RARE','EPIC','LEGENDARY']"
+          new_probe = "&&s.__upgradeCardArtReady===true,cardPresentation:s.__upgradeCardPresentationVersion==='u5-frame-hierarchy-v1'&&Array.isArray(s.__upgradeCardVisualHierarchy)&&s.__upgradeCardVisualHierarchy.join('>')==='ART>NAME>RARITY>LEVEL>DESCRIPTION',rarityCards:['COMMON','RARE','EPIC','LEGENDARY']"
+          if text.count(old_probe) != 1:
+              raise SystemExit('phase-d1: self-test card probe drifted')
+          text = text.replace(old_probe, new_probe, 1)
+          if text.count('installPremiumCards(s)') != 1:
+              raise SystemExit('phase-d1: installPremiumCards call drifted')
+          text = text.replace('installPremiumCards(s)', 'installUpgradeCardPresentation(s)', 1)
+          p.write_text(text)
+
+          replace_once('index.html', './src/phase-d1-runtime.js?v=27', './src/phase-d1-runtime.js?v=28')
+
+          # Live Pages ownership/cache checks.
+          replace_once('.github/workflows/pages.yml',
+              'curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=27" -o wm-live-phase-d1.js',
+              'curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=28" -o wm-live-phase-d1.js')
+          replace_once('.github/workflows/pages.yml',
+              '          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-card-art.js?v=7" -o wm-live-upgrade-card-art.js\n',
+              '          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-card-art.js?v=7" -o wm-live-upgrade-card-art.js\n          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-card-presentation.js?v=1" -o wm-live-upgrade-card-presentation.js\n')
+          replace_once('.github/workflows/pages.yml',
+              'grep -F "./src/phase-d1-runtime.js?v=27" wm-live-index.html',
+              'grep -F "./src/phase-d1-runtime.js?v=28" wm-live-index.html')
+          replace_once('.github/workflows/pages.yml',
+              '          grep -F "./upgrades/upgrade-card-art.js?v=7" wm-live-phase-d1.js\n',
+              '          grep -F "./upgrades/upgrade-card-presentation.js?v=1" wm-live-phase-d1.js\n          grep -F "./upgrade-card-art.js?v=7" wm-live-upgrade-card-presentation.js\n          grep -F "UPGRADE_CARD_PRESENTATION_VERSION = \'u5-frame-hierarchy-v1\'" wm-live-upgrade-card-presentation.js\n')
+          replace_once('.github/workflows/pages.yml',
+              '            wm-live-phase-d1.js\n            wm-live-character-system.js',
+              '            wm-live-phase-d1.js\n            wm-live-upgrade-card-art.js\n            wm-live-upgrade-card-presentation.js\n            wm-live-character-system.js')
+
+          # Existing cache/static guards.
+          replace_once('tests/unit/weapon-projectile-integration.test.ts',
+              'expect(html).toContain("./src/phase-d1-runtime.js?v=27");',
+              'expect(html).toContain("./src/phase-d1-runtime.js?v=28");')
+          replace_once('tests/unit/telemetry-bridge.test.ts',
+              "expect(html).toContain('./src/phase-d1-runtime.js?v=27');",
+              "expect(html).toContain('./src/phase-d1-runtime.js?v=28');")
+          replace_once('tests/unit/telemetry-bridge.test.ts',
+              "    expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=27');\n",
+              "    expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=28');\n    expect(pagesWorkflow).toContain('src/upgrades/upgrade-card-presentation.js?v=1');\n")
+
+          # Chromium card regression extends the existing test without steering offers or rarity.
+          replace_once('tests/e2e/upgrade-cards.spec.ts',
+              "      frameColor: card.style?.frame,\n      glowAlpha: card.glow?.alpha\n",
+              "      frameColor: card.style?.frame,\n      glowAlpha: card.glow?.alpha,\n      outerStrokeWidth: card.style?.outerStrokeWidth,\n      hierarchyVersion: card.hierarchyVersion,\n      artBackgroundWidth: card.artBackground?.width || 0,\n      artBackgroundHeight: card.artBackground?.height || 0\n")
+          replace_once('tests/e2e/upgrade-cards.spec.ts',
+              "    const customArtReady = scene.__upgradeCardArtReady === true;\n    scene.closeUpgradeCards();",
+              "    const customArtReady = scene.__upgradeCardArtReady === true;\n    const presentationVersion = scene.__upgradeCardPresentationVersion || null;\n    const visualHierarchy = scene.__upgradeCardVisualHierarchy || [];\n    scene.closeUpgradeCards();")
+          replace_once('tests/e2e/upgrade-cards.spec.ts',
+              "      premiumCards: scene.__d1PremiumCards,\n      customArtReady,\n      rarityStyles,",
+              "      premiumCards: scene.__d1PremiumCards,\n      customArtReady,\n      presentationVersion,\n      visualHierarchy,\n      rarityStyles,")
+          replace_once('tests/e2e/upgrade-cards.spec.ts',
+              "  expect(result.customArtReady).toBe(true);\n  expect(new Set(result.rarityStyles))",
+              "  expect(result.customArtReady).toBe(true);\n  expect(result.presentationVersion).toBe('u5-frame-hierarchy-v1');\n  expect(result.visualHierarchy).toEqual(['ART', 'NAME', 'RARITY', 'LEVEL', 'DESCRIPTION']);\n  expect(new Set(result.rarityStyles))")
+          replace_once('tests/e2e/upgrade-cards.spec.ts',
+              "    expect(card.frameColor).toBeGreaterThan(0);\n",
+              "    expect(card.frameColor).toBeGreaterThan(0);\n    expect(card.outerStrokeWidth).toBeGreaterThanOrEqual(2);\n    expect(card.outerStrokeWidth).toBeLessThanOrEqual(4);\n    expect(card.hierarchyVersion).toBe('u5-frame-hierarchy-v1');\n    expect(card.artBackgroundWidth).toBeGreaterThan(180);\n    expect(card.artBackgroundHeight).toBeGreaterThan(100);\n")
+
+          # Roadmap: close only the U5 frame/art hierarchy slice; keep level/preview/mobile open.
+          replace_once('UPGRADE_SYSTEM_2_ROADMAP.md',
+              '- [ ] Audit current card UI. — **Status:** ⚪ NOT STARTED\n- [ ] Finalize rarity frame language. — **Status:** ⚪ NOT STARTED',
+              '- [x] Audit current card UI. — **Status:** ✅ DONE — U5 frame-hierarchy pass audited the legacy `UpgradeSceneV4` renderer inside Phase D1 and moved presentation ownership to `src/upgrades/upgrade-card-presentation.js`; gameplay/roll ownership remains untouched.\n- [x] Finalize rarity frame language. — **Status:** ✅ DONE — Common/Rare/Epic/Legendary now use deterministic frame profiles with increasing stroke/glow/accent language while preserving the existing rarity mechanics and weights.')
+          replace_once('UPGRADE_SYSTEM_2_ROADMAP.md',
+              '## Phase U5 — Card visual overhaul — **NEXT ACTIVE PHASE**\n- [ ] Improve frames/art hierarchy. — **Status:** ⚪ NOT STARTED',
+              '## Phase U5 — Card visual overhaul — **IN PROGRESS / NEXT: RARITY + LEVEL PRESENTATION**\n- [x] Improve frames/art hierarchy. — **Status:** ✅ DONE — canonical card-presentation owner, larger dominant art region, compact metadata, clearer rarity frame accents, and removal of legacy Phase D1 card-renderer ownership; dedicated level presentation/preview/mobile gates remain open.')
+          PY
+          rm .github/workflows/u5-card-frame-apply-once.yml
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/phase-d1-runtime.js index.html .github/workflows/pages.yml \
+            tests/unit/weapon-projectile-integration.test.ts tests/unit/telemetry-bridge.test.ts \
+            tests/e2e/upgrade-cards.spec.ts UPGRADE_SYSTEM_2_ROADMAP.md \
+            .github/workflows/u5-card-frame-apply-once.yml
+          git commit -m "U5: integrate canonical card frame hierarchy"
+          git push origin HEAD:u5-card-frame-hierarchy
