@@ -12,7 +12,7 @@ function wheel() {
   };
 }
 
-function createScene(): any {
+function createScene() {
   const cart = {
     x: 640,
     y: 640,
@@ -70,7 +70,7 @@ describe('RigSystem', () => {
   });
 
   it('does not inherit Heavy/Shotgun/Twin damage semantics from primaryWeapon', () => {
-    const scene = createScene();
+    const scene: any = createScene();
     scene.move.x = 0;
     scene.cart.setPosition(scene.hero.x - 176, scene.hero.y + 64);
     scene.__c3Turret.rotation = .79;
