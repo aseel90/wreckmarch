@@ -12,13 +12,8 @@ export function applyRunEnemyRoleProfile(enemy, enemyId) {
   if (!enemy?.active || !profile) return enemy;
   if (enemy.__runRoleProfile === 'balance-v6') return enemy;
 
-  const speedMultiplier = Number(profile.chaseSpeedMultiplier) || 1;
-  const currentSpeed = Number(enemy.speed) || 0;
-  const currentBaseSpeed = Number(enemy.baseSpeed) || currentSpeed;
-  enemy.speed = currentSpeed * speedMultiplier;
-  enemy.baseSpeed = currentBaseSpeed * speedMultiplier;
   enemy.threatValue = Number(profile.threat) || enemy.threatValue;
-  enemy.behaviorConfig = { ...(enemy.behaviorConfig || {}), ...(profile.behaviorConfig || {}) };
+  enemy.behaviorConfig = profile.behaviorConfig || enemy.behaviorConfig;
   enemy.__runRole = profile.role;
   enemy.__runRoleProfile = 'balance-v6';
   return enemy;

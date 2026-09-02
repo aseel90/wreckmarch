@@ -30,13 +30,11 @@ export const RUN_BALANCE = Object.freeze({
     'rust-hound': Object.freeze({
       role: 'hunter',
       threat: 3,
-      chaseSpeedMultiplier: RUST_HOUND_DEFINITION.behaviorConfig.chaseSpeedMultiplier,
       behaviorConfig: RUST_HOUND_DEFINITION.behaviorConfig
     }),
     'sawbug': Object.freeze({
       role: 'ranged-spitter',
       threat: 2,
-      chaseSpeedMultiplier: 1,
       behaviorConfig: SAWBUG_DEFINITION.behaviorConfig
     })
   }),
