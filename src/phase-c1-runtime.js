@@ -1,5 +1,5 @@
 import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrades/upgrade-runtime.js?v=14';
-import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
+import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=3';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
 const W = 960;
@@ -331,11 +331,18 @@ function installLandscapeUpgradeScene(scene) {
     scene.game.scene.add('UpgradeScene', UpgradeScene, false);
   }
 
+  scene.pendingEliteRewards = Math.max(0, Math.floor(Number(scene.pendingEliteRewards) || 0));
   scene.openUpgradeCards = function() {
-    if (this.upgradeOpen || this.gameOver) return;
-    const choices = rollUpgradeChoices(c1UpgradePool(this), { count: 3 });
-    if (!choices.length) return;
+    if (this.upgradeOpen || this.gameOver) return false;
+    const options = this.__nextUpgradeOfferOptions || {};
+    this.__nextUpgradeOfferOptions = null;
+    const source = options?.source === 'elite' ? 'elite' : 'level';
+    const count = Math.max(1, Math.floor(Number(options?.count) || 3));
+    const minimumRarity = options?.minimumRarity || null;
+    const choices = rollUpgradeChoices(c1UpgradePool(this), { count, minimumRarity });
+    if (!choices.length) return false;
     this.upgradeOpen = true;
+    this.__activeUpgradeOfferSource = source;
     this.physics.pause();
     if (this.spawnEvent) this.spawnEvent.paused = true;
     if (this.waveEvent) this.waveEvent.paused = true;
@@ -343,14 +350,25 @@ function installLandscapeUpgradeScene(scene) {
     this.joy.id = null;
     this.hero.setVelocity(0, 0);
     this.input.enabled = false;
-    this.scene.launch('UpgradeScene', { gameScene: this, choices, level: this.level });
+    this.scene.launch('UpgradeScene', {
+      gameScene: this,
+      choices,
+      level: this.level,
+      offerSource: source,
+      minimumRarity,
+      eyebrow: options?.eyebrow || `LEVEL ${this.level}`,
+      heading: options?.heading || 'CHOOSE YOUR UPGRADE',
+      subheading: options?.subheading || 'Build the run. Change the machine.'
+    });
     this.scene.bringToTop('UpgradeScene');
+    return true;
   };
 
   scene.closeUpgradeCards = function() {
     if (!this.upgradeOpen) return;
     this.scene.stop('UpgradeScene');
     this.upgradeOpen = false;
+    this.__activeUpgradeOfferSource = null;
     this.input.enabled = true;
     if (!this.gameOver) {
       this.physics.resume();
@@ -359,7 +377,11 @@ function installLandscapeUpgradeScene(scene) {
     }
     this.joyBase.setAlpha(.38);
     this.joyKnob.setAlpha(.4);
-    if (this.pendingLevelUps > 0) {
+    if (this.pendingEliteRewards > 0) {
+      this.pendingEliteRewards -= 1;
+      this.__nextUpgradeOfferOptions = this.__eliteRewardOfferOptions || { source: 'elite', minimumRarity: 'RARE', count: 3 };
+      this.time.delayedCall(100, () => this.openUpgradeCards());
+    } else if (this.pendingLevelUps > 0) {
       this.pendingLevelUps -= 1;
       this.time.delayedCall(100, () => this.openUpgradeCards());
     }
