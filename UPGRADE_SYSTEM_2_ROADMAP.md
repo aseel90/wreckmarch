@@ -396,9 +396,9 @@ Guideline:
 
 - [x] Define rarity constants and weights. — **Status:** ✅ DONE
 - [x] Connect rarity to upgrade offer system. — **Status:** ✅ DONE
-- [ ] Preserve/support elite minimum-rarity reward rules. — **Status:** ⚪ NOT STARTED
+- [x] Preserve/support elite minimum-rarity reward rules. — **Status:** ✅ DONE — U3 shipped in PR #249 and was finalized in PR #251 / `30c1ac5c39e9acd676c47ad386652f1f798671d0`: WRECK CRATE keeps three random choices while guaranteeing at least one `RARE+` option when the eligible pool can support it; normal level-up rarity weights remain unchanged.
 - [x] Prevent rarity from becoming purely cosmetic. — **Status:** ✅ DONE
-- [ ] Balance rarity frequencies against a 10-minute run. — **Status:** ⚪ NOT STARTED
+- [ ] Balance rarity frequencies against a 10-minute run. — **Status:** 🟡 PARTIAL — WS17/U3 preserve the canonical 65/24/9/2 tail and clamp only the guaranteed Elite reward from Common→Rare; a full post-U3 10-minute rarity-frequency validation is still required.
 
 ---
 
@@ -563,9 +563,9 @@ Exact names, values, rarities and requirements require balance passes.
 - [x] Implement Shrapnel Impact. — **Status:** ✅ DONE — PR #111 / `440611c87fdfae9ad36374700e6a5831afd49b7e`; canonical bounded impact fragments + dedicated card art; production exact-SHA verification passed
 - [x] Implement Critical Rivet + crit combat support. — **Status:** ✅ DONE — PR #115 / `3af77d101ba1288ee5b349adecf271594fdea2bc`; canonical Hero projectile crit resolution + dedicated card art; production exact-SHA verification passed
 - [x] Implement Explosive Rivet. — **Status:** ✅ DONE — production D1 validated; later readability polish also deployed
-- [ ] Implement advanced multishot progression. — **Status:** 🟡 IMPLEMENTED / GAMEPLAY VALIDATION PENDING — Triple Riveter landed in PR #188 with Twin L2 prerequisite and 1.60x bounded 3-shot volley; manual Production run did not naturally roll it, so keep open only for a future natural gameplay/D1 validation
-- [ ] Test projectile-count/performance limits. — **Status:** ⚪ NOT STARTED
-- [ ] Test interactions between mechanical cards. — **Status:** ⚪ NOT STARTED
+- [x] Implement advanced multishot progression. — **Status:** ✅ DONE — Triple Riveter landed in PR #188 with the Twin L2 prerequisite and 1.60x bounded 3-shot volley, then received natural Production/D1 validation on the normal random offer path when WS10 closed in `86355faf447ca8397c480a35d27767dc1056a1cd`; no roll forcing or recommendation bias was introduced.
+- [x] Test projectile-count/performance limits. — **Status:** ✅ DONE — WS21 closed its Production/D1 projectile/effect performance gate from report `wm-1e3b7683-8eae-4517-9de6-cb8f27ebb979`; measured load passed and no gameplay nerf was required.
+- [x] Test interactions between mechanical cards. — **Status:** ✅ DONE — WS22 deterministic combat interaction matrix landed in `f889d041df4b322165093077a0cee7dcc53c5d24`; high-risk mechanic combinations passed the shared secondary-damage budget and full CI without balance-value changes.
 
 ---
 
@@ -602,8 +602,8 @@ Critical Rivet
 
 The system should encourage these patterns without making every run follow one fixed recipe.
 
-- [ ] Verify at least 3 meaningfully different viable builds. — **Status:** ⚪ NOT STARTED
-- [ ] Ensure no single card is mandatory for every build. — **Status:** ⚪ NOT STARTED
+- [x] Verify at least 3 meaningfully different viable builds. — **Status:** ✅ DONE — WS20 closed after 3-of-3 Production validation in `c876ee8a355d2c973fe0f1611006b7709f6624a2`, with three distinct viable archetypes under the RNG-tolerant classifier.
+- [x] Ensure no single card is mandatory for every build. — **Status:** ✅ DONE — WS20's one-card attribution gate kept any single card at or below 35% direct-power share while preserving random/off-build valid offers.
 - [ ] Ensure defensive/utility choices remain useful without overwhelming offensive progression. — **Status:** ⚪ NOT STARTED
 
 ---
@@ -664,7 +664,7 @@ Do not invent final cap values without gameplay testing.
 - [x] Centralize relevant caps for migrated stats. — **Status:** ✅ DONE
 - [x] Preserve current movement cap behavior. — **Status:** ✅ DONE
 - [x] Add fire-rate safety limit. — **Status:** ✅ DONE
-- [ ] Add projectile-count/performance safety limit. — **Status:** ⚪ NOT STARTED
+- [ ] Add projectile-count/performance safety limit. — **Status:** 🟡 MEASURED / NO NEW HARD CAP REQUIRED — WS21 verified the current Production projectile/effect load inside the measured performance envelope; keep this open only if future mechanics require an explicit hard count cap.
 - [ ] Add crit cap when crit ships. — **Status:** ⚪ NOT STARTED
 - [ ] Add armor/damage-reduction cap when armor model is finalized. — **Status:** ⚪ NOT STARTED
 
@@ -861,12 +861,12 @@ Upgrade balance must account for:
 
 Do not balance cards in isolation.
 
-- [ ] Record baseline no-upgrade / current-upgrade run metrics. — **Status:** ⚪ NOT STARTED
-- [ ] Define expected upgrade count by run end. — **Status:** ⚪ NOT STARTED
+- [ ] Record baseline no-upgrade / current-upgrade run metrics. — **Status:** 🟡 PARTIAL — current-upgrade Production windows from RUN-0047 and RUN-0048 are recorded and now drive the deterministic 10-minute progression gate; a dedicated no-upgrade baseline remains open.
+- [x] Define expected upgrade count by run end. — **Status:** ✅ DONE — canonical first-slice target is 10–14 total upgrades by 600s including approximately two Elite bonuses; `PROGRESSION_BALANCE` and PR #253 / `bf0bdc97d26bc21f5a8eeaaedfa9e93334859894` encode and test that target.
 - [ ] Define target timing for first meaningful build decision. — **Status:** ⚪ NOT STARTED
 - [ ] Tune rarity distribution. — **Status:** ⚪ NOT STARTED
 - [ ] Tune offensive scaling against enemy HP/wave scaling. — **Status:** ⚪ NOT STARTED
-- [ ] Validate at least one full 10-minute run after major balance changes. — **Status:** ⚪ NOT STARTED
+- [ ] Validate at least one full 10-minute run after major balance changes. — **Status:** 🟡 POST-TUNING LIVE RUN PENDING — PR #253 deterministically replays the observed Production Scrap bounds into the 10–14 target, but a new full 10-minute Production run on the new curve is still required.
 
 ---
 
@@ -973,7 +973,7 @@ When Upgrade System 2.0 replaces old ownership:
 
 ## 22.1. Current verified core status
 
-The **architecture/core migration** is complete, but the **full Upgrade System 2.0 roadmap is not complete** because U4–U7 and the new-card/build-content requirements below remain open.
+The **architecture/core migration** is complete, but the **full Upgrade System 2.0 roadmap is not complete** because U4 pool finalization, U5 card visual/readability work, U6 player-facing build panel work, and the remaining U7 live-run/rarity/DPS final gates remain open.
 
 Core verified items include:
 
@@ -1014,13 +1014,13 @@ Latest verified gameplay commit for the core: `89926f8`.
 - [x] Implement rarity. — **Status:** ✅ DONE
 - [x] Implement max-level/duplicate rules. — **Status:** ✅ DONE
 - [x] Implement tags/scopes/prerequisites. — **Status:** ✅ DONE — canonical requirements landed in PR #188 and explicit character/weapon compatibility filtering in PR #190
-- [ ] Preserve elite reward guarantees. — **Status:** ⚪ NOT STARTED
+- [x] Preserve elite reward guarantees. — **Status:** ✅ DONE — PR #249 introduced Threat-Budget-aware Elite milestones/WRECK CRATE rewards and PR #251 / `30c1ac5c39e9acd676c47ad386652f1f798671d0` finalized the canonical at-least-one-`RARE+` three-choice guarantee without biasing ordinary offers.
 
-## Phase U4 — New Hunter build cards — **NEXT ACTIVE PHASE**
+## Phase U4 — New Hunter build cards — **NEXT OPEN CONTENT GATE**
 - [ ] Finalize 10–12-card initial pool. — **Status:** 🟢 NEXT
-- [ ] Add mechanical projectile upgrades incrementally. — **Status:** 🟡 IN PROGRESS — Piercing + Ricochet + Shrapnel + Critical + Explosive are complete; Triple is implemented/deployed and remains open only for its natural gameplay/D1 validation gate
+- [x] Add mechanical projectile upgrades incrementally. — **Status:** ✅ DONE — Piercing + Ricochet + Shrapnel + Critical + Explosive + Triple are implemented and Production-validated; WS21/WS22 cover projectile performance and cross-mechanic interaction regression.
 - [x] Add crit only with combat integration/tests. — **Status:** ✅ DONE — Critical Rivet / PR #115 / `3af77d101ba1288ee5b349adecf271594fdea2bc`; exact-SHA production verification passed
-- [ ] Verify at least 3 viable build identities. — **Status:** ⚪ NOT STARTED
+- [x] Verify at least 3 viable build identities. — **Status:** ✅ DONE — WS20 completed 3-of-3 Production archetype validation with an RNG-tolerant classifier and one-card attribution guard.
 
 ## Phase U5 — Card visual overhaul
 - [ ] Improve frames/art hierarchy. — **Status:** ⚪ NOT STARTED
@@ -1034,8 +1034,8 @@ Latest verified gameplay commit for the core: `89926f8`.
 - [ ] Verify displayed values against combat. — **Status:** ⚪ NOT STARTED
 
 ## Phase U7 — Balance and cleanup
-- [ ] Full 10-minute run tests. — **Status:** ⚪ NOT STARTED
-- [ ] Rarity/DPS/progression tuning. — **Status:** ⚪ NOT STARTED
+- [ ] Full 10-minute run tests. — **Status:** 🟡 POST-TUNING LIVE RUN PENDING — PR #253 passes deterministic RUN-0047/RUN-0048 600s-bound replay plus full Quality/Smoke/E2E, but one new full Production run on the tuned curve is still required.
+- [ ] Rarity/DPS/progression tuning. — **Status:** 🟡 IN PROGRESS — progression pacing is tuned and regression-locked in PR #253 / `bf0bdc97d26bc21f5a8eeaaedfa9e93334859894`; full 10-minute rarity-frequency validation and any remaining DPS evidence remain open.
 - [ ] Remove obsolete migration shims/duplicate upgrade patches. — **Status:** 🧹 POST-MIGRATION
 - [ ] Full regression suite. — **Status:** ⚪ NOT STARTED
 - [ ] Update this roadmap with final completed checkboxes. — **Status:** 🧹 POST-MIGRATION
@@ -1057,11 +1057,11 @@ Upgrade System 2.0 is complete only when:
 - [x] Runner remains visually and mechanically the correct character. — **Status:** ✅ CORE VERIFIED
 - [x] There is one canonical ownership path for touched character/weapon/upgrade/stat responsibilities. — **Status:** ✅ CORE VERIFIED
 - [x] Existing cards have been safely migrated. — **Status:** ✅ CORE VERIFIED
-- [ ] New cards create multiple real builds rather than only larger numbers. — **Status:** 🔵 U4 IN PROGRESS — Piercing/Ricochet/Shrapnel/Critical/Explosive are live; Triple is implemented but gameplay-validation-pending; broader build-identity validation remains
-- [ ] Rarity/levels/prerequisites work predictably for the **expanded** card pool. — **Status:** 🟡 CORE IMPLEMENTED — levels, rarity, prerequisites and technical compatibility filtering are canonical; Triple still needs natural gameplay/D1 evidence and broader expanded-pool validation remains
+- [x] New cards create multiple real builds rather than only larger numbers. — **Status:** ✅ U4 BUILD IDENTITY VERIFIED — WS20 validated three distinct Production archetypes; Triple later received natural D1 validation and valid off-build/random offers remain intentionally possible.
+- [x] Rarity/levels/prerequisites work predictably for the **expanded** card pool. — **Status:** ✅ VERIFIED — WS17 locked rarity/power semantics, shared prerequisites/compatibility remain canonical, Triple has natural Production/D1 evidence, and U3 now preserves the Elite minimum-rarity guarantee without changing normal offer odds.
 - [ ] Stats shown to the player match actual combat in the planned build/run-stats UI. — **Status:** 🔵 debug/read-only data exists; player-facing panel remains
-- [ ] The expanded system remains performant and readable on mobile. — **Status:** ⚪ requires U4/U5 content/UI validation
-- [ ] A full 10-minute run can be completed without upgrade-system regression after the new-card pool lands. — **Status:** ⚪ U7
+- [ ] The expanded system remains performant and readable on mobile. — **Status:** 🟡 PARTIAL — WS21 Production telemetry validates projectile/effect performance; U5 card visual/readability work and its mobile visual test remain open.
+- [ ] A full 10-minute run can be completed without upgrade-system regression after the new-card pool lands. — **Status:** 🟡 U7 POST-TUNING RUN PENDING — deterministic 600s progression replay passes after PR #253; a fresh full Production run on the tuned curve remains the live gameplay gate.
 - [x] Obsolete upgrade-related duplicate ownership from the migrated current cards has been retired where safely possible. — **Status:** ✅ CORE VERIFIED
 - [ ] Full regression suite passes after U4–U7 are complete. — **Status:** ⚪ FINAL GATE
 - [x] This checklist reflects the real implementation state. — **Status:** ✅ restored after the accidental roadmap truncation
