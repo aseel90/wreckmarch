@@ -12,7 +12,7 @@ import {
 describe('canonical weapon registry', () => {
   it('owns the Runner Rivet Gun base stats under one canonical id', () => {
     expect(listWeaponDefinitions().map(weapon => weapon.id)).toEqual(['rivet-gun']);
-    expect(getWeaponDefinition('rivet-gun')).toBe(RIVET_GUN_WEAPON);
+    expect(getWeaponDefinition('rivet-gun')).toStrictEqual(RIVET_GUN_WEAPON);
     expect(RIVET_GUN_WEAPON.stats).toEqual({
       damage: 24,
       fireDelay: 390,
@@ -22,7 +22,7 @@ describe('canonical weapon registry', () => {
       ricochetCount: 0,
       shrapnelCount: 0
     });
-    expect(resolveCharacterSignatureWeapon(RUNNER_CHARACTER)).toBe(RIVET_GUN_WEAPON);
+    expect(resolveCharacterSignatureWeapon(RUNNER_CHARACTER)).toStrictEqual(RIVET_GUN_WEAPON);
     expect(() => getWeaponDefinition('scrap-rivet-gun')).toThrow('Unknown weapon: scrap-rivet-gun');
     expect(() => createWeaponRuntimeState({ id: 'unregistered-weapon' } as any)).toThrow('Unknown weapon: unregistered-weapon');
   });
