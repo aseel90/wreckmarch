@@ -40,8 +40,10 @@ describe('U4 canonical upgrade offer pool', () => {
     expect(ids(listCompanionAuxiliaryOfferDescriptors())).toEqual(['call-rig']);
   });
 
-  it('preserves the production offer ordering so seeded weighted RNG does not shift', () => {
-    expect(ids(listActiveUpgradeOfferDescriptors())).toEqual([
+  it('preserves the production offer ordering and cardinality so seeded weighted RNG does not shift', () => {
+    const active = listActiveUpgradeOfferDescriptors();
+    expect(active).toHaveLength(16);
+    expect(ids(active)).toEqual([
       'heavy-rivets',
       'overclock',
       'long-barrel',
