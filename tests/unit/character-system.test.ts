@@ -30,6 +30,10 @@ describe('CharacterSystem', () => {
     expect(scene.heroHp).toBe(100);
     expect(scene.heroSpeed).toBe(255);
     expect(scene.startingWeaponId).toBe('rivet-gun');
+    expect(scene.activeWeaponId).toBe('rivet-gun');
+    expect(scene.weaponDefinition.id).toBe('rivet-gun');
+    expect(scene.primaryWeapon).toMatchObject({ id: 'rivet-gun', damage: 24, fireDelay: 390, projectileSpeed: 760, range: 570, muzzleDistance: 38 });
+    expect(scene.resolvedRunStats.weapon).toMatchObject({ damage: 24, fireDelay: 390, projectileSpeed: 760, range: 570 });
     expect(scene.playerPassive).toEqual({ id: 'runner-baseline', enabled: false });
     expect(scene.runCombatStats).toMatchObject({ armor: 0, critChance: 0, critDamageMultiplier: 1.5 });
     expect(scene.resolvedRunStats.character.maxHp).toBe(100);
