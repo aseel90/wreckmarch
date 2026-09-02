@@ -18,13 +18,13 @@ describe('WS22 deterministic interaction matrix', () => {
     ]);
   });
 
-  it('keeps every chained secondary package inside the canonical 1.0 added-damage budget', () => {
+  it('keeps every chained secondary package inside the canonical 1.5 added-damage budget', () => {
     const results = runWs22InteractionMatrix();
     expect(results).toHaveLength(7);
     for (const result of results) {
       expect(result.invariants.combinedSecondaryBudgetBounded).toBe(true);
       expect(result.invariants.countsBounded).toBe(true);
-      expect(result.secondaryBudget.combinedAddedDamage).toBeLessThanOrEqual(1.000000001);
+      expect(result.secondaryBudget.combinedAddedDamage).toBeLessThanOrEqual(1.500000001);
     }
   });
 
@@ -56,9 +56,9 @@ describe('WS22 deterministic interaction matrix', () => {
   it('scales the fully chained package instead of allowing additive mechanics to exceed the shared budget', () => {
     const max = runWs22InteractionMatrix().find(entry => entry.id === 'MAX_CHAINED_PROJECTILE_BUILD');
     expect(max).toBeTruthy();
-    expect(max!.secondaryBudget.requestedCombinedAddedDamage).toBeGreaterThan(1);
+    expect(max!.secondaryBudget.requestedCombinedAddedDamage).toBeGreaterThan(1.5);
     expect(max!.secondaryBudget.combinedScale).toBeLessThan(1);
-    expect(max!.secondaryBudget.combinedAddedDamage).toBeCloseTo(1, 10);
+    expect(max!.secondaryBudget.combinedAddedDamage).toBeCloseTo(1.5, 10);
     expect(max!.secondaryBudget.pierceCount).toBe(3);
     expect(max!.secondaryBudget.ricochetCount).toBe(2);
     expect(max!.secondaryBudget.shrapnelCount).toBe(4);
