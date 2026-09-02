@@ -191,7 +191,7 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 12 | Weapon/character card compatibility filtering | ✅ COMPLETE / CI + PROD DEPLOYED | PR #190 / main `25e28a9931f86ce2373b70793e617608483e2af0` added canonical character/weapon compatibility metadata + resolver. It filters only explicit technical mismatches; valid weak/off-build choices remain allowed. Quality/Smoke/all Chromium shards/E2E and exact-SHA Production verification passed. |
 | 13 | Canonical Weapon Registry / signature-weapon resolution | ✅ COMPLETE / CI + PROD DEPLOYED | PR #194 / main `b14c8181f14867c5e6cf0733c1d04fa9effb64fc` centralized canonical weapon ownership and signature-weapon resolution, removed ad-hoc runtime identity fallbacks, and passed Quality/Smoke/Chromium plus Production deployment. |
 | 14 | Shotgun Character combat identity | ✅ WS14-B WEAPON FOUNDATION COMPLETE / WS14-C–F CHARACTER WORK DEFERRED | WS14-A established canonical intrinsic `fireProfile`. WS14-B A1 merged in PR #201 / main `b2663805f4f4050278f531fc14b2ec92e283e3d7`: 5 pellets, ±0.24 rad half-spread, 720 ms cadence, 330 range and 1.75x total volley budget. Exact-SHA Pages/live verification passed. The Shotgun is deliberately **not selectable/live yet**. By project decision on 2026-09-02, all remaining character work is parked for later: identity/art (WS14-C), character definition + selection (WS14-D), full activation/validation (WS14-E), and post-activation character-specific expansion (WS14-F). |
-| 15 | Enemy role/range matchup safety | ⚪ PENDING BASELINE | Verify Rat/Hound/Sawbug remain meaningful against both long-range and future short-range characters |
+| 15 | Enemy role/range matchup safety | ✅ WS15-A RUNNER BASELINE COMPLETE / WS15-B SHORT-RANGE CHECK DEFERRED | PR #205 / main `7de3941f0b56c85cc8c210fca837d932097fc7ad` canonicalized enemy-role ownership without changing validated live behavior. Final head `69ec80db3fe0234070344ed69454c748cb296b07` passed Quality, Smoke, all 3 Chromium shards and aggregate E2E; exact merge SHA passed Pages/live verification. Future short-range-character matchup remains deferred until WS14-E and does not block WS16. |
 | 16 | Wave/difficulty scaling vs player power | ⚪ PENDING BASELINE | Rebalance pressure after player multipliers are corrected; do not hide power creep by blindly inflating HP |
 | 17 | Rarity identity + power scaling | ⚪ PENDING BASELINE / U7 | Resolve same-card rarity identity and prevent rarity from magnifying already-multiplicative stats excessively |
 | 18 | Rig/support damage ownership | ⚪ PENDING | Decouple support balance from ambiguous `primaryWeapon.damage` semantics and future shotgun pellet damage |
@@ -200,6 +200,15 @@ This register is the canonical execution order for the Combat & Build Balance Fo
 | 21 | Mobile projectile/effect performance budget | ⚪ PENDING BASELINE | Set hard ceilings from measured active projectiles, fragments, long frames and late-wave pressure |
 | 22 | Deterministic interaction matrix / regression scenarios | ⚪ PENDING | Lock reproducible no-upgrade, single-card, pair-synergy and max-power scenarios for before/after comparisons |
 | 23 | U4 balance gate + master-roadmap reintegration | ⚪ PENDING | After workstreams 1–22: validate three viable builds, final interaction/performance gate, then merge approved decisions back into `UPGRADE_SYSTEM_2_ROADMAP.md` without deleting protected scope |
+
+### Workstream 15 staged delivery — Enemy role / range safety
+
+- **WS15-A — Runner baseline — ✅ COMPLETE / MERGED + PROD DEPLOYED:** PR #205 merged as `7de3941f0b56c85cc8c210fca837d932097fc7ad`. Enemy definitions/behaviors now own enemy movement/combat behavior numbers; Run Balance owns wave timing, spawn weights and threat budgeting; Run Director assigns run role/threat without carrying a second Hound movement identity.
+- Deterministic Runner gates preserve the intended roster roles without an unsupported rebalance: Scrap Rat = swarm pressure, Rust Hound = readable hunter with slower chase + faster committed slide, Sawbug = ranged anti-camp pressure.
+- Final PR head `69ec80db3fe0234070344ed69454c748cb296b07` passed Quality, Smoke, E2E shards 1/3–3/3 and aggregate E2E. The merged SHA passed GitHub Pages deployment/recovery and live verification.
+- **WS15-B — future short-range matchup — ⚪ DEFERRED / NOT NOW:** repeat the matchup review only after the Shotgun character is activated in WS14-E. This deferred gate does **not** block WS16.
+- Stop rule remains: do not alter enemy HP, damage, spawn weights, wave pressure or attack coefficients under WS15 without repeatable deterministic or production evidence. WS16 owns wave/difficulty scaling.
+- **Next active balance workstream: WS16 — Wave/difficulty scaling vs player power.**
 
 ### Workstream 14 staged delivery — Shotgun character
 
@@ -314,7 +323,7 @@ To avoid temporary Runner reskins, patch-over-patch runtime ownership, or a prem
 - **WS10 Triple Riveter:** implementation is live; keep OPEN only for natural Production gameplay/D1 validation after Twin Riveter L2. Do not force, guarantee or bias the card into a roll just to close the gate.
 - **WS11 Prerequisites:** DONE. Shared requirement resolution owns offer eligibility and direct-application rejection; Twin L2 → Triple is the first production consumer.
 - **WS12 Compatibility:** DONE. Shared compatibility resolution filters explicit character/weapon impossibilities only. It is intentionally **not** a recommendation/synergy engine.
-- **Next:** WS13 Canonical Weapon Registry / signature-weapon resolution.
+- **Historical checkpoint:** WS13 Canonical Weapon Registry / signature-weapon resolution is complete; the current next active balance workstream is **WS16 — Wave/difficulty scaling vs player power**.
 
 ### Card-pool philosophy approved for Workstream 12
 
@@ -363,7 +372,7 @@ Survivability is now a formal build axis alongside single-target damage, crowd c
 
 ## Execution rule
 
-- Workstreams **1–9 and 11–13 are complete** under their required gates. Workstream **10 — Triple Riveter / advanced multishot** is implemented and deployed but remains intentionally open for one natural Twin L2 → Triple Production/D1 gameplay validation run; failure to roll it naturally is not treated as a defect and does not block later work. **Workstream 14 foundation is parked after WS14-B:** WS14-A architecture and WS14-B A1 weapon foundation are complete on `main` (`b2663805f4f4050278f531fc14b2ec92e283e3d7`), with exact-SHA Pages/live verification passed. WS14-C/D/E/F are explicitly **deferred future character scope** recorded above; do not start art generation, make the Shotgun character selectable, reuse Runner art as a shipping placeholder, or patch a start screen until we intentionally return to this workstream.
+- Workstreams **1–9, 11–13 and WS15-A are complete** under their required gates. Workstream **10 — Triple Riveter / advanced multishot** is implemented and deployed but remains intentionally open for one natural Twin L2 → Triple Production/D1 gameplay validation run; failure to roll it naturally is not treated as a defect and does not block later work. **Workstream 14 foundation is parked after WS14-B:** WS14-A architecture and WS14-B A1 weapon foundation are complete on `main` (`b2663805f4f4050278f531fc14b2ec92e283e3d7`), with exact-SHA Pages/live verification passed. WS14-C/D/E/F and WS15-B are explicitly **deferred future character scope**; do not start art generation, make the Shotgun character selectable, reuse Runner art as a shipping placeholder, patch a start screen, or run the short-range matchup gate until we intentionally return to that track. **Current active balance work continues with WS16 — Wave/difficulty scaling vs player power.**
 - The original baseline is frozen as pre-change evidence. New reports are compared against it; they do not replace it.
 - Heavy/Overclock/Twin/Pierce/Ricochet/Shrapnel values are frozen after green regression coverage plus RUN-0026 production validation; do not rebalance them again from a single noisy run.
 - Critical Rivet remains an observation item for later rarity/build-diversity work. RUN-0026 reached Critical Rivet 3 without producing a clear standalone reason to change it immediately.
