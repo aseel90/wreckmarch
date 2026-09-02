@@ -27,6 +27,15 @@ export function resolveHeroCriticalHit(combatStats = {}, rng = Math.random) {
   });
 }
 
+export function buildSymmetricSpreadOffsets(projectileCount = 1, halfSpreadRadians = 0) {
+  const count = Math.max(1, Math.floor(Number(projectileCount) || 1));
+  const halfSpread = Math.max(0, Number(halfSpreadRadians) || 0);
+  if (count === 1 || halfSpread === 0) return Array.from({ length: count }, () => 0);
+  if (count === 2) return [-halfSpread, halfSpread];
+  const step = (halfSpread * 2) / (count - 1);
+  return Array.from({ length: count }, (_, index) => -halfSpread + step * index);
+}
+
 const DEFAULT_HERO_PROFILE = Object.freeze({
   aimYOffset: 6,
   targetTurnRate: .22,
@@ -111,20 +120,52 @@ export class WeaponSystem {
     );
   }
 
+  heroVolleyProfile() {
+    const scene = this.scene;
+    const mechanicalState = scene.upgradeMechanicalState?.['triple-riveter'] || scene.upgradeMechanicalState?.['twin-riveter'];
+    const mechanicalCount = Math.max(0, Math.floor(Number(mechanicalState?.projectileCount) || 0));
+    if (mechanicalCount > 0) {
+      const halfSpreadRadians = mechanicalCount === 2 ? this.heroProfile.twinSpread2 : this.heroProfile.twinSpread3;
+      const stateScale = Number(mechanicalState?.projectileDamageScale);
+      const projectileDamageScale = Number.isFinite(stateScale) && stateScale > 0
+        ? stateScale
+        : 1 / mechanicalCount;
+      return Object.freeze({
+        source: 'upgrade',
+        projectileCount: mechanicalCount,
+        halfSpreadRadians,
+        volleyDamageMultiplier: projectileDamageScale * mechanicalCount,
+        projectileDamageScale,
+        spreads: Object.freeze(buildSymmetricSpreadOffsets(mechanicalCount, halfSpreadRadians))
+      });
+    }
+
+    const fireProfile = scene.primaryWeapon?.fireProfile || scene.weaponDefinition?.fireProfile || {};
+    const projectileCount = Math.max(1, Math.floor(Number(fireProfile.projectileCount) || 1));
+    const halfSpreadRadians = Math.max(0, Number(fireProfile.halfSpreadRadians) || 0);
+    const volleyDamageMultiplier = Number.isFinite(Number(fireProfile.volleyDamageMultiplier)) && Number(fireProfile.volleyDamageMultiplier) > 0
+      ? Number(fireProfile.volleyDamageMultiplier)
+      : 1;
+    return Object.freeze({
+      source: 'weapon',
+      projectileCount,
+      halfSpreadRadians,
+      volleyDamageMultiplier,
+      projectileDamageScale: volleyDamageMultiplier / projectileCount,
+      spreads: Object.freeze(buildSymmetricSpreadOffsets(projectileCount, halfSpreadRadians))
+    });
+  }
+
   heroSpreads() {
-    const multishotState = this.scene.upgradeMechanicalState?.['triple-riveter'] || this.scene.upgradeMechanicalState?.['twin-riveter'];
-    const mechanicalCount = multishotState?.projectileCount;
-    const count = Math.max(1, mechanicalCount || this.scene.twinShots || 1);
-    if (count === 1) return [0];
-    if (count === 2) return [-this.heroProfile.twinSpread2, this.heroProfile.twinSpread2];
-    return [-this.heroProfile.twinSpread3, 0, this.heroProfile.twinSpread3];
+    return [...this.heroVolleyProfile().spreads];
   }
 
   heroProjectileDamageScale(projectileCount = null) {
-    const mechanicalState = this.scene.upgradeMechanicalState?.['triple-riveter'] || this.scene.upgradeMechanicalState?.['twin-riveter'];
-    const stateScale = Number(mechanicalState?.projectileDamageScale);
-    if (Number.isFinite(stateScale) && stateScale > 0) return stateScale;
-    const count = projectileCount == null ? this.heroSpreads().length : Math.max(1, Number(projectileCount) || 1);
+    const profile = this.heroVolleyProfile();
+    if (projectileCount == null || Math.max(1, Number(projectileCount) || 1) === profile.projectileCount) {
+      return profile.projectileDamageScale;
+    }
+    const count = Math.max(1, Number(projectileCount) || 1);
     return count > 1 ? this.heroProfile.multiShotDamageScale : 1;
   }
 
@@ -222,10 +263,11 @@ export class WeaponSystem {
     if (!target || time < (scene.lastShot || 0) + fireDelay) return;
     scene.lastShot = time;
 
-    const spreads = this.heroSpreads();
+    const volleyProfile = this.heroVolleyProfile();
+    const spreads = volleyProfile.spreads;
     const shots = [];
     let flashPoint = null;
-    const projectileDamageScale = this.heroProjectileDamageScale(spreads.length);
+    const projectileDamageScale = volleyProfile.projectileDamageScale;
     const explosiveShotIndex = this.explosiveRivetRuntime.armed ? Math.floor(spreads.length / 2) : -1;
     spreads.forEach((spread, index) => {
       const shot = this.fireHeroProjectile(scene.weaponAim + spread, projectileDamageScale, {
