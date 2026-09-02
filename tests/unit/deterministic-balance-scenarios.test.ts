@@ -85,6 +85,9 @@ describe('deterministic balance scenario suite', () => {
 
     expect(survival.mechanics.projectileCount).toBe(1);
     expect(survival.resolvedStats.character.maxHp).toBeGreaterThan(100);
+    expect(survival.resolvedStats.character.moveSpeed).toBeGreaterThan(255);
+    expect(survivalLevels['fleet-feet']).toBe(3);
+    expect(survivalLevels['overclock']).toBeUndefined();
     expect(survivalLevels['armor-plate']).toBe(4);
     expect(survivalLevels['field-repair']).toBe(3);
     expect(survivalLevels['impact-shield']).toBe(2);
