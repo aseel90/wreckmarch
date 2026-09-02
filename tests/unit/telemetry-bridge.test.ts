@@ -48,6 +48,7 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain('game.__wreckmarchRunReportProvider');
     expect(runtime).toContain('telemetry.provider = transport.provider');
     expect(runtime).toContain('export async function sendCurrentRunReport');
+    expect(runtime).toContain('sendReport: reason => sendCurrentRunReport(game, reason)');
     expect(runtime).toContain('await provider.submit(report)');
     expect(runtime).toContain("manualReportFailure('finalize'");
     expect(runtime).toContain("manualReportFailure('transport'");
