@@ -31,7 +31,10 @@ export const BALANCE_SCENARIO_IDS = Object.freeze([
   'HEAVY_OVERCLOCK',
   'TWIN_SHRAPNEL',
   'TWIN_PIERCE_RICOCHET',
-  'CURRENT_MAX_POWER_BUILD'
+  'CURRENT_MAX_POWER_BUILD',
+  'WS20_SCALAR_PRECISION',
+  'WS20_CROWD_CHAIN',
+  'WS20_SURVIVAL_SUPPORT'
 ]);
 
 export const BALANCE_SCENARIOS = Object.freeze({
@@ -53,6 +56,37 @@ export const BALANCE_SCENARIOS = Object.freeze({
       ['ricochet', 2],
       ['shrapnel-impact', 2],
       ['critical-rivet', 4]
+    )
+  }),
+  WS20_SCALAR_PRECISION: Object.freeze({
+    seed: 0x11a0c009,
+    upgrades: plan(
+      ['heavy-rivets', 5],
+      ['overclock', 5],
+      ['critical-rivet', 4],
+      ['twin-riveter', 2]
+    )
+  }),
+  WS20_CROWD_CHAIN: Object.freeze({
+    seed: 0x11a0c00a,
+    upgrades: plan(
+      ['overclock', 5],
+      ['twin-riveter', 2],
+      ['piercing-rivets', 3],
+      ['ricochet', 2],
+      ['shrapnel-impact', 2],
+      ['explosive-rivet', 3]
+    )
+  }),
+  WS20_SURVIVAL_SUPPORT: Object.freeze({
+    seed: 0x11a0c00b,
+    upgrades: plan(
+      ['heavy-rivets', 4],
+      ['fleet-feet', 3],
+      ['armor-plate', 4],
+      ['field-repair', 3],
+      ['impact-shield', 2],
+      ['call-rig', 1]
     )
   })
 });
@@ -86,6 +120,12 @@ function createScenarioScene() {
     twinShots: 1,
     runStatState
   };
+  scene.rigSystem = Object.freeze({
+    summon() {
+      scene.rigSummoned = true;
+      return true;
+    }
+  });
   mirrorResolvedRunStats(scene, runStatState.resolve());
   return scene;
 }
