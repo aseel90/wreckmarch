@@ -20,7 +20,9 @@ These are validation candidates, not promised final meta builds:
 
 1. **Scalar / Precision** — Heavy Rivets + Overclock + Critical Rivet + Twin Riveter. Identity: concentrated primary-volley damage and cadence with bounded crit.
 2. **Crowd / Chain** — Overclock + Twin Riveter + Piercing + Ricochet + Shrapnel + Explosive Rivet. Identity: coverage and bounded one-depth secondary mechanics rather than pure scalar damage.
-3. **Survival / Support** — Heavy Rivets + Overclock + Armor Plate + Field Repair + Impact Shield + Call the Rig. Identity: lower primary ceiling exchanged for max-HP/recovery/shield/support pressure.
+3. **Survival / Support** — Heavy Rivets + Fleet Feet + Armor Plate + Field Repair + Impact Shield + Call the Rig. Identity: deliberately lower primary fire-rate ceiling exchanged for mobility, max-HP/recovery, shield and independent Rig support pressure.
+
+The first deterministic attempt used Overclock in all three candidates. The anti-mandatory-card gate correctly rejected that shape, so the Survival / Support candidate was changed to Fleet Feet L3 rather than weakening the gate.
 
 No candidate is allowed to become the definition of a recommended build in the offer system. Cards remain valid/off-build choices unless mechanically incompatible.
 
