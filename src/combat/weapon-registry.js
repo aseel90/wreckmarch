@@ -1,5 +1,6 @@
 /* WRECKMARCH — canonical weapon definition registry + signature resolution */
 import { RIVET_GUN_WEAPON } from './definitions/rivet-gun.js?v=2';
+import { SHOTGUN_WEAPON } from './definitions/shotgun.js?v=1';
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -76,7 +77,7 @@ export function createWeaponRegistry(definitions = []) {
   });
 }
 
-const WEAPON_REGISTRY = createWeaponRegistry([RIVET_GUN_WEAPON]);
+const WEAPON_REGISTRY = createWeaponRegistry([RIVET_GUN_WEAPON, SHOTGUN_WEAPON]);
 
 export function getWeaponDefinition(weaponId = 'rivet-gun') {
   return WEAPON_REGISTRY.get(weaponId);

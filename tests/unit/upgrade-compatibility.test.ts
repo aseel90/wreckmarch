@@ -38,9 +38,17 @@ describe('canonical upgrade compatibility filtering', () => {
   it('filters only explicitly incompatible weapon cards instead of curating the build', () => {
     const scene = sceneFor('shotgun', 'shotgunner');
 
-    expect(canApplyRegisteredUpgrade(scene, 'twin-riveter')).toBe(false);
-    expect(canApplyRegisteredUpgrade(scene, 'explosive-rivet')).toBe(false);
-    expect(canApplyRegisteredUpgrade(scene, 'heavy-rivets')).toBe(true);
+    for (const id of ['twin-riveter', 'triple-riveter', 'explosive-rivet']) {
+      const definition = getUpgradeDefinition(id)!;
+      expect(definition.compatibility).toEqual({ weaponIds: ['rivet-gun'] });
+      expect(meetsUpgradeCompatibility(scene, definition)).toBe(false);
+      expect(canApplyRegisteredUpgrade(scene, id)).toBe(false);
+    }
+    for (const id of ['heavy-rivets', 'overclock', 'piercing-rivets', 'ricochet', 'shrapnel-impact']) {
+      const definition = getUpgradeDefinition(id)!;
+      expect(meetsUpgradeCompatibility(scene, definition)).toBe(true);
+      expect(canApplyRegisteredUpgrade(scene, id)).toBe(true);
+    }
     expect(() => applyRegisteredUpgrade(scene, 'twin-riveter')).toThrow(/twin-riveter incompatible: weapon shotgun/);
 
     const choices = [
