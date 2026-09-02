@@ -42,7 +42,7 @@ describe('WS20 Production run classifier', () => {
         finalLevels: { 'heavy-rivets': 4, overclock: 4, 'critical-rivet': 4, 'twin-riveter': 2 },
         resolvedStats: {
           character: { critChance: 0.20 },
-          weapon: { damage: 43.2, fireDelay: 263.728 }
+          weapon: { damage: 35.52, fireDelay: 263.5135135135135 }
         }
       }
     }));
@@ -158,7 +158,7 @@ describe('WS20 Production run classifier', () => {
       },
       upgrades: {
         finalLevels: { 'heavy-rivets': 4, 'fleet-feet': 3, 'armor-plate': 4, 'field-repair': 3, 'impact-shield': 2, 'call-rig': 1 },
-        resolvedStats: { character: { maxHp: 160, moveSpeed: 278 }, weapon: { damage: 43.2, fireDelay: 390 } }
+        resolvedStats: { character: { maxHp: 160, moveSpeed: 278 }, weapon: { damage: 35.52, fireDelay: 390 } }
       }
     }));
 
