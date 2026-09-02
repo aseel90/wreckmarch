@@ -1,3 +1,4 @@
+/* WRECKMARCH — Cloudflare Worker for D1-backed run reports */
 const ALLOWED_ORIGINS = new Set([
   'https://aseel90.github.io',
   'http://localhost:4173',
@@ -77,6 +78,12 @@ function issueBody(label, report) {
     `- Shrapnel fragments: ${projectiles.shrapnelSpawned ?? 0}`,
     `- Peak active enemies: ${performance.peakActiveEnemies ?? 0}`,
     `- Peak active projectiles: ${performance.peakActiveProjectiles ?? 0}`,
+    `- Avg projectile spawns: ${Number(performance.averageProjectileSpawnsPerSecond || 0).toFixed(2)}/s`,
+    `- Peak projectile spawns (1s): ${performance.peakProjectileSpawns1s ?? 0}`,
+    `- Peak active hero projectiles: ${performance.peakActiveHeroProjectiles ?? 0}`,
+    `- Peak active Shrapnel: ${performance.peakActiveShrapnel ?? 0}`,
+    `- Peak active support projectiles: ${performance.peakActiveSupportProjectiles ?? 0}`,
+    `- Long frames (>=33.34ms): ${performance.longFrames ?? 0}`,
     `- Max frame time: ${Number(performance.maxFrameMs || 0).toFixed(2)}ms`,
     `- Full telemetry bytes: ${reportBytes}`,
     '',
@@ -117,72 +124,67 @@ function decodeJsonPart(input) {
 
 async function getOidcConfig() {
   if (oidcConfigCache) return oidcConfigCache;
-  const response = await fetch('https://token.actions.githubusercontent.com/.well-known/openid-configuration');
-  if (!response.ok) throw new Error(`GitHub OIDC configuration failed (${response.status})`);
+  const response = await fetch('https://token.actions.githubusercontent.com/.well-known/openid-configuration', { cache: 'no-store' });
+  if (!response.ok) throw new Error(`OIDC config ${response.status}`);
   oidcConfigCache = await response.json();
   return oidcConfigCache;
 }
 
 async function getJwks() {
-  const now = Date.now();
-  if (jwksCache && now < jwksExpiresAt) return jwksCache;
+  if (jwksCache && Date.now() < jwksExpiresAt) return jwksCache;
   const config = await getOidcConfig();
-  const response = await fetch(config.jwks_uri);
-  if (!response.ok) throw new Error(`GitHub OIDC JWKS failed (${response.status})`);
+  const response = await fetch(config.jwks_uri, { cache: 'no-store' });
+  if (!response.ok) throw new Error(`JWKS ${response.status}`);
   jwksCache = await response.json();
-  jwksExpiresAt = now + 60 * 60 * 1000;
+  jwksExpiresAt = Date.now() + 5 * 60 * 1000;
   return jwksCache;
 }
 
-async function verifyBridgeToken(request) {
-  const authorization = request.headers.get('authorization') || '';
-  if (!authorization.startsWith('Bearer ')) throw new Error('missing bearer token');
-  const token = authorization.slice(7).trim();
-  const parts = token.split('.');
-  if (parts.length !== 3) throw new Error('invalid JWT');
-  const [encodedHeader, encodedPayload, encodedSignature] = parts;
-  const header = decodeJsonPart(encodedHeader);
-  const payload = decodeJsonPart(encodedPayload);
-  if (header.alg !== 'RS256' || !header.kid) throw new Error('unsupported JWT header');
-  if (payload.iss !== 'https://token.actions.githubusercontent.com') throw new Error('invalid issuer');
-  const audiences = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-  if (!audiences.includes(BRIDGE_AUDIENCE)) throw new Error('invalid audience');
-  if (payload.repository !== BRIDGE_REPOSITORY) throw new Error('invalid repository');
-  if (payload.ref !== 'refs/heads/main') throw new Error('invalid ref');
-  if (!String(payload.workflow_ref || '').includes(`/.github/workflows/${BRIDGE_WORKFLOW}@refs/heads/main`)) throw new Error('invalid workflow');
-  const now = Math.floor(Date.now() / 1000);
-  if (!payload.exp || Number(payload.exp) < now - 30) throw new Error('expired token');
-  if (payload.nbf && Number(payload.nbf) > now + 30) throw new Error('token not active');
+function pemFromJwk(jwk) {
+  return crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+}
 
+async function verifyGithubOidc(token) {
+  const parts = String(token || '').split('.');
+  if (parts.length !== 3) throw new Error('invalid token');
+  const [headerPart, payloadPart, signaturePart] = parts;
+  const header = decodeJsonPart(headerPart);
+  const payload = decodeJsonPart(payloadPart);
+  if (header.alg !== 'RS256') throw new Error('unsupported alg');
+  if (payload.iss !== 'https://token.actions.githubusercontent.com') throw new Error('invalid issuer');
+  const audience = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+  if (!audience.includes(BRIDGE_AUDIENCE)) throw new Error('invalid audience');
+  if (payload.repository !== BRIDGE_REPOSITORY) throw new Error('invalid repository');
+  if (payload.workflow_ref && !String(payload.workflow_ref).includes(`/.github/workflows/${BRIDGE_WORKFLOW}@`)) throw new Error('invalid workflow');
+  const now = Math.floor(Date.now() / 1000);
+  if (!payload.exp || payload.exp < now || (payload.nbf && payload.nbf > now + 30)) throw new Error('expired token');
   const jwks = await getJwks();
-  const jwk = jwks.keys?.find(key => key.kid === header.kid && key.kty === 'RSA');
-  if (!jwk) throw new Error('signing key not found');
-  const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
-  const signed = new TextEncoder().encode(`${encodedHeader}.${encodedPayload}`);
-  const signature = decodeBase64Url(encodedSignature);
-  const verified = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, signature, signed);
-  if (!verified) throw new Error('invalid JWT signature');
+  const jwk = (jwks.keys || []).find(key => key.kid === header.kid);
+  if (!jwk) throw new Error('unknown key');
+  const key = await pemFromJwk(jwk);
+  const data = new TextEncoder().encode(`${headerPart}.${payloadPart}`);
+  const signature = decodeBase64Url(signaturePart);
+  const ok = await crypto.subtle.verify({ name: 'RSASSA-PKCS1-v1_5' }, key, signature, data);
+  if (!ok) throw new Error('invalid signature');
   return payload;
 }
 
 async function requireBridgeAuth(request, origin, handler) {
-  let claims;
+  const auth = request.headers.get('authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   try {
-    claims = await verifyBridgeToken(request);
+    const claims = await verifyGithubOidc(token);
+    return await handler(claims);
   } catch (error) {
-    return json({ error: 'bridge authorization failed', detail: safeError(error) }, 401, origin);
+    return json({ error: 'unauthorized', detail: safeError(error) }, 401, origin);
   }
-  return handler(claims);
 }
 
 async function handleReport(request, env, origin) {
-  if (!ALLOWED_ORIGINS.has(origin)) return json({ error: 'origin not allowed' }, 403, origin);
-
   let raw;
   try {
     raw = await request.text();
   } catch (error) {
-    console.error('run_report_read_failed', safeError(error));
     return json({ error: 'request_read_failed', stage: 'request_body' }, 400, origin);
   }
   const rawBytes = byteLength(raw);
@@ -249,61 +251,58 @@ async function handleBridgePending(request, env, origin) {
       ).bind(MAX_BRIDGE_BATCH).all();
       const reports = (result.results || []).map(row => {
         const report = JSON.parse(row.report_json);
-        const runId = runLabel(row.id);
+        const label = runLabel(row.id);
         return {
+          id: row.id,
           reportId: row.report_id,
-          runId,
-          issueTitle: issueTitle(runId, report),
-          issueBody: issueBody(runId, report),
-          issueComments: issueComments(row.report_id, report)
+          runId: label,
+          title: issueTitle(label, report),
+          body: issueBody(label, report),
+          comments: issueComments(row.report_id, report)
         };
       });
       return json({ reports }, 200, origin);
     } catch (error) {
-      const detail = safeError(error);
-      console.error('bridge_pending_failed', detail);
-      return json({ error: 'bridge_storage_failed', stage: 'bridge_pending', detail }, 500, origin);
+      return json({ error: 'bridge_read_failed', detail: safeError(error) }, 500, origin);
     }
   });
 }
 
-async function handleBridgeAck(request, env, origin) {
+async function handleBridgeComplete(request, env, origin) {
   return requireBridgeAuth(request, origin, async () => {
-    const body = await request.json().catch(() => null);
-    const reportId = String(body?.reportId || '');
-    const issueNumber = Number(body?.issueNumber || 0);
-    const issueUrl = String(body?.issueUrl || '');
-    if (!reportId || !Number.isInteger(issueNumber) || issueNumber < 1 || !issueUrl.startsWith('https://github.com/aseel90/wreckmarch/issues/')) {
-      return json({ error: 'invalid acknowledgement' }, 400, origin);
-    }
+    let payload;
+    try { payload = await request.json(); }
+    catch { return json({ error: 'invalid_json' }, 400, origin); }
+    const reportId = String(payload?.reportId || '');
+    const issueNumber = Number(payload?.issueNumber || 0);
+    const issueUrl = String(payload?.issueUrl || '');
+    if (!reportId || !Number.isFinite(issueNumber) || issueNumber <= 0 || !issueUrl) return json({ error: 'invalid completion payload' }, 400, origin);
     try {
       await env.RUN_REPORTS.prepare(
-        `UPDATE run_reports SET github_issue_number = ?, github_issue_url = ?, status = 'submitted', last_error = NULL WHERE report_id = ?`
+        `UPDATE run_reports SET github_issue_number = ?, github_issue_url = ?, status = 'github_created', last_error = NULL WHERE report_id = ?`
       ).bind(issueNumber, issueUrl, reportId).run();
-      return json({ acknowledged: true, reportId, issueNumber }, 200, origin);
+      return json({ ok: true }, 200, origin);
     } catch (error) {
-      const detail = safeError(error);
-      console.error('bridge_ack_failed', { reportId, detail });
-      return json({ error: 'bridge_storage_failed', stage: 'bridge_ack', detail }, 500, origin);
+      return json({ error: 'bridge_update_failed', detail: safeError(error) }, 500, origin);
     }
   });
 }
 
-async function handleBridgeError(request, env, origin) {
+async function handleBridgeFail(request, env, origin) {
   return requireBridgeAuth(request, origin, async () => {
-    const body = await request.json().catch(() => null);
-    const reportId = String(body?.reportId || '');
-    const message = String(body?.error || 'bridge failure').slice(0, 1000);
-    if (!reportId) return json({ error: 'invalid reportId' }, 400, origin);
+    let payload;
+    try { payload = await request.json(); }
+    catch { return json({ error: 'invalid_json' }, 400, origin); }
+    const reportId = String(payload?.reportId || '');
+    const detail = String(payload?.error || 'github bridge failed').slice(0, 2000);
+    if (!reportId) return json({ error: 'missing reportId' }, 400, origin);
     try {
       await env.RUN_REPORTS.prepare(
-        `UPDATE run_reports SET status = 'pending_github', last_error = ? WHERE report_id = ? AND github_issue_number IS NULL`
-      ).bind(message, reportId).run();
-      return json({ recorded: true }, 200, origin);
+        `UPDATE run_reports SET status = 'github_failed', last_error = ? WHERE report_id = ?`
+      ).bind(detail, reportId).run();
+      return json({ ok: true }, 200, origin);
     } catch (error) {
-      const detail = safeError(error);
-      console.error('bridge_error_record_failed', { reportId, detail });
-      return json({ error: 'bridge_storage_failed', stage: 'bridge_error', detail }, 500, origin);
+      return json({ error: 'bridge_fail_update_failed', detail: safeError(error) }, 500, origin);
     }
   });
 }
@@ -312,15 +311,11 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const origin = request.headers.get('origin') || '';
-
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) });
-    if (request.method === 'GET' && url.pathname === '/health') {
-      return json({ ok: true, service: 'wreckmarch-run-reports', schemaManagedByMigration: true, oidcBridge: true, fullTelemetryChunking: true }, 200, origin);
-    }
     if (request.method === 'POST' && url.pathname === '/report') return handleReport(request, env, origin);
     if (request.method === 'POST' && url.pathname === '/bridge/pending') return handleBridgePending(request, env, origin);
-    if (request.method === 'POST' && url.pathname === '/bridge/ack') return handleBridgeAck(request, env, origin);
-    if (request.method === 'POST' && url.pathname === '/bridge/error') return handleBridgeError(request, env, origin);
-    return json({ error: 'not found' }, 404, origin);
+    if (request.method === 'POST' && url.pathname === '/bridge/complete') return handleBridgeComplete(request, env, origin);
+    if (request.method === 'POST' && url.pathname === '/bridge/fail') return handleBridgeFail(request, env, origin);
+    return json({ error: 'not_found' }, 404, origin);
   }
 };

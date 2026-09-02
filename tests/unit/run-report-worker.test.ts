@@ -45,7 +45,17 @@ const report = {
   run: { durationSeconds: 12.3, finalWave: 2, level: 3 },
   combat: { kills: 4, damageDealt: 100, damageTaken: 20 },
   projectiles: {},
-  performance: {},
+  performance: {
+    averageProjectileSpawnsPerSecond: 19.13,
+    peakProjectileSpawns1s: 31,
+    peakActiveHeroProjectiles: 9,
+    peakActiveShrapnel: 14,
+    peakActiveSupportProjectiles: 2,
+    peakActiveProjectiles: 25,
+    peakActiveEnemies: 18,
+    longFrames: 0,
+    maxFrameMs: 18.4
+  },
   waves: [],
   upgrades: {}
 };
@@ -79,5 +89,19 @@ describe('wreckmarch run-report Worker ingestion', () => {
     expect(response.status).toBe(500);
     expect(payload).toMatchObject({ error: 'storage_failed', stage: 'd1_insert' });
     expect(response.headers.get('access-control-allow-origin')).toBe('https://aseel90.github.io');
+  });
+
+  it('surfaces WS21 projectile-pressure metrics in the bridged GitHub issue summary', async () => {
+    const source = await import('node:fs/promises').then(fs => fs.readFile(
+      new URL('../../infra/cloudflare/wreckmarch-run-reports/worker.js', import.meta.url),
+      'utf8'
+    ));
+
+    expect(source).toContain('Avg projectile spawns:');
+    expect(source).toContain('Peak projectile spawns (1s):');
+    expect(source).toContain('Peak active hero projectiles:');
+    expect(source).toContain('Peak active Shrapnel:');
+    expect(source).toContain('Peak active support projectiles:');
+    expect(source).toContain('Long frames (>=33.34ms):');
   });
 });
