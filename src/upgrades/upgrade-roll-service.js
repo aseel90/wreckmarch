@@ -1,4 +1,4 @@
-import { getUpgradeRarityRule, rollUpgradeRarity } from './upgrade-rarity.js?v=1';
+import { getUpgradeRarityRule, isUpgradeRarityAtLeast, normalizeUpgradeRarity, rollUpgradeRarity } from './upgrade-rarity.js?v=2';
 
 function hashSeed(seed) {
   const text = typeof seed === 'string' ? seed : String(seed);
@@ -78,8 +78,8 @@ function resolveRolledDescription(choice, powerMultiplier) {
   return resolved;
 }
 
-function attachRolledRarity(choice, rng) {
-  const rarity = rollUpgradeRarity(rng, choice.rarityConstraint ?? null);
+function attachRolledRarity(choice, rng, minimumRarity = null) {
+  const rarity = rollUpgradeRarity(rng, choice.rarityConstraint ?? null, minimumRarity);
   const rule = getUpgradeRarityRule(rarity);
   const originalApply = typeof choice.apply === 'function' ? choice.apply : null;
   const desc = resolveRolledDescription(choice, rule.powerMultiplier);
@@ -105,37 +105,45 @@ function readRoll(rng) {
 /**
  * @typedef {{ id: string, weight: number, available: () => boolean, rarityConstraint?: string | null, apply?: (rarity?: string | null) => unknown }} UpgradeRollChoice
  * @typedef {UpgradeRollChoice & { rarity: string, rarityLabel: string, rarityColor: number, rarityPowerMultiplier: number }} RolledUpgradeChoice
- * @typedef {{ count?: number, rng?: () => number, excludeIds?: string[] | Set<string> }} UpgradeRollOptions
+ * @typedef {{ count?: number, rng?: () => number, excludeIds?: string[] | Set<string>, minimumRarity?: string | null }} UpgradeRollOptions
  * @param {UpgradeRollChoice[]} choices
  * @param {UpgradeRollOptions} [options]
  * @returns {RolledUpgradeChoice[]}
  */
 export function rollUpgradeChoices(choices, options = {}) {
-  const { count = 3, rng = Math.random, excludeIds = [] } = options;
+  const { count = 3, rng = Math.random, excludeIds = [], minimumRarity = null } = options;
   if (!Array.isArray(choices)) throw new TypeError('Upgrade roll choices must be an array');
   requireCount(count);
   requireRng(rng);
   const excluded = normalizeExcludeIds(excludeIds);
+  const rarityFloor = minimumRarity == null ? null : normalizeUpgradeRarity(minimumRarity);
 
   const available = choices
     .map(normalizeChoice)
     .filter(choice => !excluded.has(choice.id) && choice.available() && choice.weight > 0);
 
+  const floorEligible = rarityFloor
+    ? available.filter(choice => choice.rarityConstraint == null || isUpgradeRarityAtLeast(choice.rarityConstraint, rarityFloor))
+    : available;
+  const requiredChoiceCount = Math.min(count, available.length);
+  const floorSupported = Boolean(rarityFloor) && floorEligible.length >= requiredChoiceCount && requiredChoiceCount > 0;
+  const rollPool = floorSupported ? [...floorEligible] : [...available];
+
   const chosen = [];
-  while (chosen.length < count && available.length) {
-    const totalWeight = available.reduce((sum, choice) => sum + choice.weight, 0);
+  while (chosen.length < count && rollPool.length) {
+    const totalWeight = rollPool.reduce((sum, choice) => sum + choice.weight, 0);
     if (!(totalWeight > 0)) break;
 
     let roll = readRoll(rng) * totalWeight;
-    let index = available.length - 1;
-    for (let candidate = 0; candidate < available.length; candidate += 1) {
-      roll -= available[candidate].weight;
+    let index = rollPool.length - 1;
+    for (let candidate = 0; candidate < rollPool.length; candidate += 1) {
+      roll -= rollPool[candidate].weight;
       if (roll <= 0) {
         index = candidate;
         break;
       }
     }
-    chosen.push(available.splice(index, 1)[0]);
+    chosen.push(rollPool.splice(index, 1)[0]);
   }
-  return chosen.map(choice => attachRolledRarity(choice, rng));
+  return chosen.map(choice => attachRolledRarity(choice, rng, floorSupported ? rarityFloor : null));
 }
