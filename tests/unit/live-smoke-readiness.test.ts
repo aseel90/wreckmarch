@@ -4,8 +4,9 @@ import { describe, expect, it } from 'vitest';
 const smokeSource = readFileSync('scripts/ci-smoke.mjs', 'utf8');
 
 describe('Live smoke readiness ownership', () => {
-  it('uses interval polling with a bounded slow-renderer budget', () => {
-    expect(smokeSource).toContain("{ polling: 250, timeout: 45_000 }");
+  it('passes interval polling options through Playwright’s third argument', () => {
+    expect(smokeSource).toContain("}, undefined, { polling: 250, timeout: 45_000 });");
+    expect(smokeSource).not.toContain("}, { polling: 250, timeout: 45_000 });");
     expect(smokeSource).not.toContain("{ timeout: 30_000 }");
   });
 
