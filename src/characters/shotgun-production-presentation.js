@@ -96,9 +96,11 @@ function installShotgunAimLayer(scene) {
   scene.weaponV3Gun
     .setVisible(true)
     .setTexture(presentation.weapon.key)
+    .setCrop()
     .setOrigin(presentation.weapon.origin.x, presentation.weapon.origin.y)
     .setScale(render.scale)
     .setFlipX(false)
+    .setFlipY(false)
     .clearTint?.();
   scene.hero
     .stop()
