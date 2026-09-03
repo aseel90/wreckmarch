@@ -29,6 +29,8 @@ describe('final presentation polish', () => {
     expect(hud).toContain('var(--wm-safe-right,env(safe-area-inset-right))');
     expect(hud).toContain('var(--wm-safe-bottom,env(safe-area-inset-bottom))');
     expect(hud).toContain('clampJoystickOrigin');
+    expect(hud).toContain('openUpgradeCards?.bind(scene)');
+    expect(hud).not.toContain('showUpgradeCards');
     expect(hud).toContain("wreckmarchMobileHud='compact-v5-test'");
     expect(hud).not.toContain('scene.endRun=');
     expect(hud).not.toContain('END_RUN_OWNER_VERSION');

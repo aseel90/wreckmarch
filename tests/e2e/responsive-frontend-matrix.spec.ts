@@ -3,9 +3,13 @@ import { expect, test } from '@playwright/test';
 const VIEWPORTS = [
   { name: 'compact-568x320', width: 568, height: 320, safe: { top: 0, right: 44, bottom: 21, left: 44 } },
   { name: 'small-667x375', width: 667, height: 375, safe: { top: 0, right: 44, bottom: 21, left: 44 } },
+  { name: 'classic-736x414', width: 736, height: 414, safe: { top: 0, right: 34, bottom: 21, left: 34 } },
+  { name: 'short-768x360', width: 768, height: 360, safe: { top: 0, right: 44, bottom: 21, left: 44 } },
   { name: 'notch-812x375', width: 812, height: 375, safe: { top: 0, right: 44, bottom: 21, left: 44 } },
   { name: 'canonical-844x390', width: 844, height: 390, safe: { top: 0, right: 34, bottom: 21, left: 34 } },
+  { name: 'wide-896x414', width: 896, height: 414, safe: { top: 0, right: 32, bottom: 21, left: 32 } },
   { name: 'modern-932x430', width: 932, height: 430, safe: { top: 0, right: 32, bottom: 21, left: 32 } },
+  { name: 'gameplay-baseline-960x540', width: 960, height: 540, safe: { top: 0, right: 0, bottom: 0, left: 0 } },
   { name: 'baseline-1024x600', width: 1024, height: 600, safe: { top: 0, right: 0, bottom: 0, left: 0 } },
   { name: 'desktop-1280x720', width: 1280, height: 720, safe: { top: 0, right: 0, bottom: 0, left: 0 } },
 ];
@@ -263,6 +267,46 @@ test('portrait rotate gate covers pause and confirmation overlays', async ({ pag
       pause: z('.wm-pause-screen'),
       confirm: z('.wm-confirm-overlay'),
     };
+  });
+  expect(layers.rotate).toBeGreaterThan(layers.pause);
+  expect(layers.rotate).toBeGreaterThan(layers.confirm);
+});
+
+test('812x375 notch landscape survives portrait round-trip without duplicate shell state', async ({ page }) => {
+  await page.setViewportSize({ width: 812, height: 375 });
+  await page.goto('/?debug=1');
+  await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 20_000 });
+  await applySafeArea(page, { top: 0, right: 44, bottom: 21, left: 44 });
+  await expect(page.locator('.wm-main-screen')).toHaveCount(1);
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await applySafeArea(page, { top: 47, right: 0, bottom: 34, left: 0 });
+  await expect(page.locator('#rotate')).toBeVisible();
+  await expect(page.locator('.wm-main-screen')).toHaveCount(1);
+
+  await page.setViewportSize({ width: 812, height: 375 });
+  await applySafeArea(page, { top: 0, right: 44, bottom: 21, left: 44 });
+  await expect(page.locator('#rotate')).toBeHidden();
+  await expect(page.locator('.wm-main-screen')).toBeVisible();
+  await expect(page.locator('.wm-main-screen')).toHaveCount(1);
+  await expectNoHorizontalOverflow(page, '.wm-main-screen');
+  await expectNoVerticalOverflow(page, '.wm-main-screen');
+});
+
+test('430x932 portrait rotate gate also covers frontend overlays', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?debug=1');
+  await expect(page.locator('#rotate')).toBeVisible();
+  await applySafeArea(page, { top: 47, right: 0, bottom: 34, left: 0 });
+  await page.evaluate(async () => {
+    const pause = await new Function('url', 'return import(url)')('/src/ui/pause-screen.js?v=4');
+    void pause.showPauseScreen();
+    const confirm = await new Function('url', 'return import(url)')('/src/ui/confirmation-modal.js?v=2');
+    void confirm.showConfirmationModal({ title: 'RESPONSIVE CHECK', body: 'Rotate must remain above this dialog.' });
+  });
+  const layers = await page.evaluate(() => {
+    const z = (selector: string) => Number.parseInt(getComputedStyle(document.querySelector(selector)!).zIndex || '0', 10);
+    return { rotate: z('#rotate'), pause: z('.wm-pause-screen'), confirm: z('.wm-confirm-overlay') };
   });
   expect(layers.rotate).toBeGreaterThan(layers.pause);
   expect(layers.rotate).toBeGreaterThan(layers.confirm);
