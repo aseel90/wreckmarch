@@ -181,4 +181,145 @@ for (const viewport of VIEWPORTS) {
   });
 }
 
-// existing canonical end-run, portrait coverage and viewport assertions continue below
+test('812x375 notch: real end-run stays canonical and horizontally sealed through Results and Workshop', async ({ page }) => {
+  const viewport = VIEWPORTS.find(item => item.name === 'notch-812x375')!;
+  await page.setViewportSize({ width: viewport.width, height: viewport.height });
+  await page.goto('/');
+  await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 20_000 });
+  await applySafeArea(page, viewport.safe);
+
+  await page.locator('[data-screen-id="character-select"]').click();
+  await expect(page.locator('.wm-character-select')).toBeVisible();
+  await page.locator('[data-character-id="runner"]').click();
+  await expect.poll(
+    () => page.evaluate(() => document.body.classList.contains('visual-ready')),
+    { timeout: 45_000 }
+  ).toBe(true);
+  await applySafeArea(page, viewport.safe);
+
+  const hudSafeArea = await page.evaluate(() => {
+    const scene = (window as any).__WM_GAME__?.scene?.getScene?.('Wreckmarch');
+    const layout = scene?.__mobileHudPolish;
+    return {
+      left: layout?.safeInsets?.left ?? 0,
+      right: layout?.safeInsets?.right ?? 0,
+      bottom: layout?.safeInsets?.bottom ?? 0,
+      hintY: scene?.hint?.y ?? 0,
+      gameHeight: scene?.scale?.gameSize?.height ?? 0,
+    };
+  });
+  expect(hudSafeArea.left).toBeGreaterThan(0);
+  expect(hudSafeArea.right).toBeGreaterThan(0);
+  expect(hudSafeArea.bottom).toBeGreaterThan(0);
+  expect(hudSafeArea.hintY).toBeLessThan(hudSafeArea.gameHeight);
+
+  await page.evaluate(() => {
+    const scene = (window as any).__WM_GAME__?.scene?.getScene?.('Wreckmarch');
+    scene.spawnEvent.paused = true;
+    scene.enemies.clear(true, true);
+    scene.runTime = 95;
+    scene.scrap = 63;
+    scene.level = 5;
+    scene.endRun('SYSTEM FAILURE');
+  });
+
+  await expect(page.locator('.wm-results-screen')).toBeVisible();
+  await expect(page.getByText('TEST UI v5')).toHaveCount(0);
+  await expect(page.getByText('RUNNER DOWN')).toHaveCount(0);
+  await expectNoHorizontalOverflow(page, '.wm-results-screen');
+  await expectNoVerticalOverflow(page, '.wm-results-screen');
+  await expectHorizontalFit(page, '.wm-results-header');
+  await expectHorizontalFit(page, '.wm-results-stats');
+  await expectHorizontalFit(page, '.wm-results-actions');
+  await expectHorizontalFit(page, '.wm-results-report');
+
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    page.locator('[data-results-action="main"]').click(),
+  ]);
+  await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 45_000 });
+  await applySafeArea(page, viewport.safe);
+  await page.locator('[data-screen-id="shop"]').click();
+  await expect(page.locator('.wm-progression-screen')).toBeVisible();
+
+  const afterDeepScroll = await page.locator('.wm-progression-screen').evaluate((element: HTMLElement) => {
+    element.scrollTop = element.scrollHeight;
+    element.scrollLeft = 99999;
+    window.scrollTo(99999, window.scrollY);
+    return {
+      scrollLeft: element.scrollLeft,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+      pageX: window.scrollX,
+    };
+  });
+  expect(afterDeepScroll.scrollLeft).toBe(0);
+  expect(afterDeepScroll.scrollWidth).toBeLessThanOrEqual(afterDeepScroll.clientWidth + EPSILON);
+  expect(afterDeepScroll.pageX).toBe(0);
+  await expectNoHorizontalOverflow(page, '.wm-progression-screen');
+  await expectHorizontalFit(page, '.wm-workshop-catalog');
+  await expectHorizontalFit(page, '[data-item-id="terminal-plate-rustline"]');
+});
+
+test('portrait rotate gate covers pause and confirmation overlays', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?debug=1');
+  await expect(page.locator('#rotate')).toBeVisible();
+  await applySafeArea(page, { top: 47, right: 0, bottom: 34, left: 0 });
+  await page.evaluate(async () => {
+    const pause = await new Function('url', 'return import(url)')('/src/ui/pause-screen.js?v=4');
+    void pause.showPauseScreen();
+    const confirm = await new Function('url', 'return import(url)')('/src/ui/confirmation-modal.js?v=2');
+    void confirm.showConfirmationModal({ title: 'RESPONSIVE CHECK', body: 'Rotate must remain above this dialog.' });
+  });
+  const layers = await page.evaluate(() => {
+    const z = (selector: string) => Number.parseInt(getComputedStyle(document.querySelector(selector)!).zIndex || '0', 10);
+    return {
+      rotate: z('#rotate'),
+      pause: z('.wm-pause-screen'),
+      confirm: z('.wm-confirm-overlay'),
+    };
+  });
+  expect(layers.rotate).toBeGreaterThan(layers.pause);
+  expect(layers.rotate).toBeGreaterThan(layers.confirm);
+});
+
+test('812x375 notch landscape survives portrait round-trip without duplicate shell state', async ({ page }) => {
+  await page.setViewportSize({ width: 812, height: 375 });
+  await page.goto('/?debug=1');
+  await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 20_000 });
+  await applySafeArea(page, { top: 0, right: 44, bottom: 21, left: 44 });
+  await expect(page.locator('.wm-main-screen')).toHaveCount(1);
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await applySafeArea(page, { top: 47, right: 0, bottom: 34, left: 0 });
+  await expect(page.locator('#rotate')).toBeVisible();
+  await expect(page.locator('.wm-main-screen')).toHaveCount(1);
+
+  await page.setViewportSize({ width: 812, height: 375 });
+  await applySafeArea(page, { top: 0, right: 44, bottom: 21, left: 44 });
+  await expect(page.locator('#rotate')).toBeHidden();
+  await expect(page.locator('.wm-main-screen')).toBeVisible();
+  await expect(page.locator('.wm-main-screen')).toHaveCount(1);
+  await expectNoHorizontalOverflow(page, '.wm-main-screen');
+  await expectNoVerticalOverflow(page, '.wm-main-screen');
+});
+
+test('430x932 portrait rotate gate also covers frontend overlays', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?debug=1');
+  await expect(page.locator('#rotate')).toBeVisible();
+  await applySafeArea(page, { top: 47, right: 0, bottom: 34, left: 0 });
+  await page.evaluate(async () => {
+    const pause = await new Function('url', 'return import(url)')('/src/ui/pause-screen.js?v=4');
+    void pause.showPauseScreen();
+    const confirm = await new Function('url', 'return import(url)')('/src/ui/confirmation-modal.js?v=2');
+    void confirm.showConfirmationModal({ title: 'RESPONSIVE CHECK', body: 'Rotate must remain above this dialog.' });
+  });
+  const layers = await page.evaluate(() => {
+    const z = (selector: string) => Number.parseInt(getComputedStyle(document.querySelector(selector)!).zIndex || '0', 10);
+    return { rotate: z('#rotate'), pause: z('.wm-pause-screen'), confirm: z('.wm-confirm-overlay') };
+  });
+  expect(layers.rotate).toBeGreaterThan(layers.pause);
+  expect(layers.rotate).toBeGreaterThan(layers.confirm);
+});
