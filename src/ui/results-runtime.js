@@ -13,7 +13,7 @@ function cleanGameplayForResults(scene) {
     if (scene.scene?.isActive?.(key)) scene.scene.stop(key);
   });
   scene.upgradeOpen = false;
-  scene.input.enabled = true;
+  scene.input.enabled = false;
   scene.setGameplayHudVisible?.(false);
 }
 
@@ -44,6 +44,7 @@ export function installResultsRuntime(game) {
     shell.navigate(SCREEN_IDS.RESULTS);
     scene.__wmPauseRuntimeInstalled?.syncTrigger?.();
     window.__WM_LOG__?.(`Canonical run result captured: ${result.reason} • ${result.survivedSeconds}s • scrap ${result.scrap}`);
+    document.documentElement.dataset.wreckmarchEndRunOwner = 'game-shell-results-v1';
 
     const sendReport = window.__WM_TELEMETRY_RUNTIME__?.sendReport;
     void showResultsScreen(result, { sendReport }).then(({ action }) => {

@@ -1,3 +1,5 @@
+import { getCharacterEntry } from '../characters/character-registry.js?v=5';
+
 const STYLESHEET_ID = 'wm-frontend-shell-styles';
 const RESULTS_STYLESHEET_ID = 'wm-results-styles';
 
@@ -18,6 +20,11 @@ function ensureStylesheets() {
   }
 }
 
+function characterDisplayName(characterId) {
+  try { return getCharacterEntry(characterId).displayName; }
+  catch { return String(characterId || 'UNKNOWN').toUpperCase(); }
+}
+
 function stat(label, value) {
   const item = document.createElement('div');
   item.className = 'wm-result-stat';
@@ -33,6 +40,7 @@ export function showResultsScreen(result, { sendReport } = {}) {
   if (!result) throw new TypeError('Results screen requires a canonical result');
   ensureStylesheets();
   document.body.classList.add('wm-results-active');
+  document.documentElement.dataset.wreckmarchResults = 'active';
 
   return new Promise(resolve => {
     const screen = document.createElement('section');
@@ -57,7 +65,7 @@ export function showResultsScreen(result, { sendReport } = {}) {
       stat('SURVIVED', `${result.survivedSeconds}s`),
       stat('SCRAP', String(result.scrap)),
       stat('LEVEL', String(result.level)),
-      stat('SURVIVOR', result.characterId.toUpperCase()),
+      stat('SURVIVOR', characterDisplayName(result.characterId)),
     );
 
     const actions = document.createElement('div');
@@ -115,6 +123,7 @@ export function showResultsScreen(result, { sendReport } = {}) {
     const finish = action => {
       screen.querySelectorAll('button').forEach(button => { button.disabled = true; });
       document.body.classList.remove('wm-results-active');
+      delete document.documentElement.dataset.wreckmarchResults;
       resolve(Object.freeze({ action }));
     };
     replay.addEventListener('click', () => finish('play-again'));

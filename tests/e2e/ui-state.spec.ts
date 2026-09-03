@@ -32,30 +32,53 @@ test('upgrade overlay suppresses gameplay HUD and restores it after selection UI
   expect(closed).toMatchObject({ upgradeOpen: false, titleVisible: true, xpVisible: true, joystickVisible: true, railVisible: true });
 });
 
-test('end-run overlay uses the live landscape viewport instead of legacy portrait constants', async ({ page }) => {
+test('canonical Results screen owns run end and covers the live landscape viewport', async ({ page }) => {
   await waitForGame(page);
   const result = await page.evaluate(() => {
-    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
+    const w = window as typeof window & { __WM_GAME__?: any; __WM_GAME_SHELL__?: any; __WM_LAST_RUN_RESULT__?: any; __WM_END_RUN_LAYOUT__?: any };
+    const game = w.__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
     scene.enemies.clear(true, true);
+    scene.runTime = 125.9;
+    scene.scrap = 87;
+    scene.level = 6;
     scene.endRun('SYSTEM FAILURE');
-    const layout = (window as typeof window & { __WM_END_RUN_LAYOUT__?: any }).__WM_END_RUN_LAYOUT__;
-    const canvas = document.querySelector('canvas')!.getBoundingClientRect();
-    return { scale: { width: scene.scale.width, height: scene.scale.height }, overlay: { x: layout.overlay.x, y: layout.overlay.y, width: layout.overlay.displayWidth, height: layout.overlay.displayHeight, scrollFactorX: layout.overlay.scrollFactorX, scrollFactorY: layout.overlay.scrollFactorY }, button: { x: layout.btn.x, y: layout.btn.y }, titleVisible: scene.titleText.visible, endRunVersion: document.documentElement.dataset.wreckmarchEndRunLayout, reportVisible: layout.reportBtn?.visible === true, canvas: { left: canvas.left, top: canvas.top, width: canvas.width, height: canvas.height } };
+    return {
+      shellScreen: w.__WM_GAME_SHELL__?.currentScreenId,
+      gameOver: scene.gameOver,
+      titleVisible: scene.titleText.visible,
+      legacyLayoutExists: Boolean(w.__WM_END_RUN_LAYOUT__),
+      result: w.__WM_LAST_RUN_RESULT__
+    };
   });
-  expect(result.scale).toEqual({ width: 960, height: 540 });
-  expect(result.overlay).toMatchObject({ x: 480, y: 270, width: 960, height: 540, scrollFactorX: 0, scrollFactorY: 0 });
-  expect(result.button.x).toBe(480);
-  expect(result.button.y).toBeCloseTo(332, 1);
+
+  const screen = page.locator('.wm-results-screen');
+  await expect(screen).toBeVisible();
+  await expect(screen.getByRole('heading', { name: 'SYSTEM FAILURE' })).toBeVisible();
+  await expect(screen.getByRole('button', { name: /PLAY AGAIN/i })).toBeVisible();
+  await expect(screen.getByRole('button', { name: /MAIN MENU/i })).toBeVisible();
+
+  const box = await screen.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.x).toBeCloseTo(0, 1);
+  expect(box!.y).toBeCloseTo(0, 1);
+  expect(box!.width).toBeCloseTo(960, 1);
+  expect(box!.height).toBeCloseTo(540, 1);
+  expect(result.shellScreen).toBe('results');
+  expect(result.gameOver).toBe(true);
   expect(result.titleVisible).toBe(false);
-  expect(result.endRunVersion).toBe('runtime-v5-test');
-  expect(result.reportVisible).toBe(true);
-  expect(result.canvas.width).toBeCloseTo(960, 1);
-  expect(result.canvas.height).toBeCloseTo(540, 1);
+  expect(result.legacyLayoutExists).toBe(false);
+  expect(result.result).toMatchObject({
+    reason: 'SYSTEM FAILURE',
+    survivedSeconds: 125,
+    scrap: 87,
+    level: 6,
+    characterId: 'runner'
+  });
 });
 
-test('normal live URL SEND REPORT uses isolated manual transport without enabling automatic telemetry', async ({ page }) => {
+test('normal live URL Results SEND REPORT uses isolated manual transport without enabling automatic telemetry', async ({ page }) => {
   let reportRequests = 0;
   await page.route('https://wreckmarch-run-reports.salahaseel82.workers.dev/report', async route => {
     reportRequests += 1;
@@ -71,51 +94,45 @@ test('normal live URL SEND REPORT uses isolated manual transport without enablin
 
   await waitForGame(page);
   const before = await page.evaluate(() => {
-    const w = window as typeof window & { __WM_GAME__?: any; __WM_END_RUN_LAYOUT__?: any; __WM_TELEMETRY_REMOTE_ENABLED__?: boolean };
+    const w = window as typeof window & { __WM_GAME__?: any; __WM_TELEMETRY_REMOTE_ENABLED__?: boolean };
     const game = w.__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
     scene.enemies.clear(true, true);
     scene.endRun('SYSTEM FAILURE');
-    const layout = w.__WM_END_RUN_LAYOUT__;
-    const snapshot = {
-      buttonActive: layout.reportBtn?.active === true,
-      buttonVisible: layout.reportBtn?.visible === true,
-      label: layout.reportLabel?.text,
-      status: layout.reportStatus?.text,
+    return {
       automaticRemoteEnabled: w.__WM_TELEMETRY_REMOTE_ENABLED__ === true,
       hasPersistentProvider: Boolean(game.__wreckmarchRunReportProvider)
     };
-    layout.reportBtn.emit('pointerdown');
-    return snapshot;
   });
 
+  const reportButton = page.locator('.wm-results-report-button');
+  await expect(reportButton).toHaveText('SEND REPORT');
+  await expect(reportButton).toBeEnabled();
   expect(before).toMatchObject({
-    buttonActive: true,
-    buttonVisible: true,
-    label: 'SEND REPORT',
     automaticRemoteEnabled: false,
     hasPersistentProvider: false
   });
+
+  await reportButton.click();
 
   await expect.poll(
     () => page.evaluate(() => document.documentElement.dataset.wreckmarchManualReport),
     { timeout: 5_000 }
   ).toBe('sent');
 
+  await expect(reportButton).toHaveText('REPORT SENT');
+  await expect(page.locator('.wm-results-report span')).toContainText('HTTP 202');
+
   const after = await page.evaluate(() => {
-    const w = window as typeof window & { __WM_GAME__?: any; __WM_END_RUN_LAYOUT__?: any; __WM_TELEMETRY_REMOTE_ENABLED__?: boolean };
+    const w = window as typeof window & { __WM_GAME__?: any; __WM_TELEMETRY_REMOTE_ENABLED__?: boolean };
     return {
-      label: w.__WM_END_RUN_LAYOUT__?.reportLabel?.text,
-      status: w.__WM_END_RUN_LAYOUT__?.reportStatus?.text,
       automaticRemoteEnabled: w.__WM_TELEMETRY_REMOTE_ENABLED__ === true,
       hasPersistentProvider: Boolean(w.__WM_GAME__?.__wreckmarchRunReportProvider)
     };
   });
 
   expect(reportRequests).toBe(1);
-  expect(after.label).toBe('REPORT SENT');
-  expect(after.status).toContain('HTTP 202');
   expect(after.automaticRemoteEnabled).toBe(false);
   expect(after.hasPersistentProvider).toBe(false);
 });
