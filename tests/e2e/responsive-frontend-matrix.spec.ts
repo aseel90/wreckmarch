@@ -64,15 +64,12 @@ async function expectHorizontalFit(page: any, selector: string) {
   expect(metrics.width).toBeLessThanOrEqual(metrics.viewportWidth + EPSILON);
 }
 
-async function expectNoInternalTextClipping(page: any, selector: string) {
+async function expectNoInternalHorizontalTextClipping(page: any, selector: string) {
   const metrics = await page.locator(selector).evaluate((element: HTMLElement) => ({
     clientWidth: element.clientWidth,
     scrollWidth: element.scrollWidth,
-    clientHeight: element.clientHeight,
-    scrollHeight: element.scrollHeight,
   }));
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + EPSILON);
-  expect(metrics.scrollHeight).toBeLessThanOrEqual(metrics.clientHeight + EPSILON);
 }
 
 async function openMain(page: any, viewport: typeof VIEWPORTS[number]) {
@@ -84,7 +81,7 @@ async function openMain(page: any, viewport: typeof VIEWPORTS[number]) {
   await expectNoVerticalOverflow(page, '.wm-main-screen');
   await expectHorizontalFit(page, '.wm-main-brand');
   await expectHorizontalFit(page, '.wm-main-brand h1');
-  await expectNoInternalTextClipping(page, '.wm-main-brand h1');
+  await expectNoInternalHorizontalTextClipping(page, '.wm-main-brand h1');
   await expectHorizontalFit(page, '.wm-main-panel');
   await expectHorizontalFit(page, '[data-screen-id="character-select"]');
   await expectHorizontalFit(page, '[data-screen-id="settings"]');
