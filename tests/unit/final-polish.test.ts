@@ -25,6 +25,9 @@ describe('final presentation polish', () => {
     expect(hud).toContain('safe-area-inset-left');
     expect(hud).toContain('safe-area-inset-right');
     expect(hud).toContain('safe-area-inset-bottom');
+    expect(hud).toContain('var(--wm-safe-left,env(safe-area-inset-left))');
+    expect(hud).toContain('var(--wm-safe-right,env(safe-area-inset-right))');
+    expect(hud).toContain('var(--wm-safe-bottom,env(safe-area-inset-bottom))');
     expect(hud).toContain('clampJoystickOrigin');
     expect(hud).toContain("wreckmarchMobileHud='compact-v5-test'");
     expect(hud).not.toContain('scene.endRun=');
