@@ -51,6 +51,11 @@ test('three-card selection stays readable and non-overlapping on target mobile l
 
     const snapshots: any[] = [];
     const measure = (upgradeScene: any, choices: any[]) => {
+      const canvasRect = game.canvas.getBoundingClientRect();
+      const logicalWidth = Number(upgradeScene.scale?.width || game.config.width || canvasRect.width);
+      const logicalHeight = Number(upgradeScene.scale?.height || game.config.height || canvasRect.height);
+      const sx = canvasRect.width / logicalWidth;
+      const sy = canvasRect.height / logicalHeight;
       const cards = upgradeScene.cards.map((card: any, index: number) => {
         const choice = choices[index];
         const scale = Number(card.g.scaleX || 1);
@@ -72,6 +77,10 @@ test('three-card selection stays readable and non-overlapping on target mobile l
           id: choice.id,
           scale,
           left, right, top, bottom,
+          screenLeft: canvasRect.left + left * sx,
+          screenRight: canvasRect.left + right * sx,
+          screenTop: canvasRect.top + top * sy,
+          screenBottom: canvasRect.top + bottom * sy,
           bgWidth, bgHeight,
           hitWidth: Number(hit?.width || 0),
           hitHeight: Number(hit?.height || 0),
@@ -90,7 +99,13 @@ test('three-card selection stays readable and non-overlapping on target mobile l
         };
       });
       const gaps = cards.slice(0, -1).map((card: any, index: number) => cards[index + 1].left - card.right);
-      return { cards, gaps, selectedIndex: upgradeScene.selectedIndex };
+      return {
+        cards,
+        gaps,
+        selectedIndex: upgradeScene.selectedIndex,
+        canvas: { left: canvasRect.left, top: canvasRect.top, right: canvasRect.right, bottom: canvasRect.bottom, width: canvasRect.width, height: canvasRect.height },
+        logical: { width: logicalWidth, height: logicalHeight }
+      };
     };
 
     for (let index = 0; index < groups.length; index += 1) {
@@ -127,11 +142,15 @@ test('three-card selection stays readable and non-overlapping on target mobile l
     for (const state of [snapshot.initial, snapshot.middleSelected]) {
       expect(state.cards).toHaveLength(3);
       expect(Math.min(...state.gaps)).toBeGreaterThanOrEqual(6);
+      expect(state.logical.width).toBeGreaterThan(0);
+      expect(state.logical.height).toBeGreaterThan(0);
+      expect(state.canvas.width).toBeGreaterThan(0);
+      expect(state.canvas.height).toBeGreaterThan(0);
       for (const card of state.cards) {
-        expect(card.left, `${card.id}: left`).toBeGreaterThanOrEqual(8);
-        expect(card.right, `${card.id}: right`).toBeLessThanOrEqual(TARGET_VIEWPORT.width - 8);
-        expect(card.top, `${card.id}: top`).toBeGreaterThanOrEqual(82);
-        expect(card.bottom, `${card.id}: bottom`).toBeLessThanOrEqual(TARGET_VIEWPORT.height - 8);
+        expect(card.screenLeft, `${card.id}: screen left`).toBeGreaterThanOrEqual(8);
+        expect(card.screenRight, `${card.id}: screen right`).toBeLessThanOrEqual(TARGET_VIEWPORT.width - 8);
+        expect(card.screenTop, `${card.id}: screen top`).toBeGreaterThanOrEqual(82);
+        expect(card.screenBottom, `${card.id}: screen bottom`).toBeLessThanOrEqual(TARGET_VIEWPORT.height - 8);
         expect(card.hitWidth, `${card.id}: hit width`).toBeGreaterThanOrEqual(220);
         expect(card.hitHeight, `${card.id}: hit height`).toBeGreaterThanOrEqual(260);
         expect(card.previewText, `${card.id}: preview arrow`).toContain('→');
