@@ -645,49 +645,241 @@ Do not add new enemy families before Phase B and Phase C are playable and tested
 
 ## 17. Canonical Frontend / Screen Ownership Roadmap
 
-This is the approved architecture for all current and future non-gameplay screens. It is a structural contract, not a visual redesign request.
+This is the approved architecture for all current and future frontend screens around the run. It is a structural contract first and a visual-design roadmap second. The goal is to avoid independent menus, duplicated navigation state, copied character data, and patch-on-patch UI ownership as Wreckmarch grows.
 
-### Single owner
+### 17.1 Single canonical owner
 
-- [ ] Introduce one canonical `GameShell` (or equivalently named single frontend-flow owner) for navigation and lifecycle of screens outside active gameplay.
-- [ ] `GameShell` is the only owner allowed to decide which frontend screen is active and how transitions enter/leave gameplay.
+- [x] Introduce one canonical `GameShell` as the frontend-flow owner.
+- [x] Introduce one canonical `ScreenRegistry` for registered screen identities.
+- [ ] `GameShell` must become the only owner allowed to decide which full frontend screen is active and how the application enters/leaves gameplay.
 - [ ] Do not add parallel menu routers, per-screen navigation state, temporary scene-switch hacks, or duplicated ownership.
-- [ ] Keep `GameScene` focused on gameplay. It must not accumulate main-menu, character-select, settings, shop, leaderboard, or other frontend navigation logic.
+- [ ] Keep `GameScene` focused on gameplay. It must not accumulate main-menu, character-select, settings, shop, leaderboard, results, or other frontend navigation logic.
+- [ ] Migrate incrementally. Existing gameplay must keep working while each screen is brought under the canonical owner.
 
-### Canonical supporting owners
+Current foundation note (2026-09-03): `GameShell` and `ScreenRegistry` exist with unit coverage, but the registry is not yet the final screen map. `MAIN` and `BOOT` still need to be added before the frontend flow is considered complete. The current default `GameShell` entry at `CHARACTER_SELECT` is a foundation default, not the final player-facing boot flow.
 
-- [ ] `ScreenRegistry`: one source of truth for available frontend screens/routes and their identity.
-- [ ] `CharacterRegistry`: one source of truth for character identity and availability/selectability. Character presentation/runtime data must not be copied into menu code.
+### 17.2 Canonical supporting owners
+
+- [x] `CharacterRegistry` exists as the canonical character-definition owner for the currently playable Runner.
+- [ ] Extend `CharacterRegistry` so character availability/selectability is canonical data, not inferred by UI code.
+- [ ] Shotgun Character must enter the registry through its own canonical definition/status rather than copied Runner data.
 - [ ] `SettingsStore`: one source of truth for persistent settings such as audio, controls, accessibility/display options when introduced.
-- [ ] Pause UI must ultimately use the same screen/shell ownership model rather than becoming a second unrelated UI architecture; gameplay pause state itself remains owned by the appropriate gameplay/runtime boundary.
+- [ ] Run/result data shown outside gameplay must come from one canonical run-summary/result boundary rather than being recomputed independently in the Results screen.
+- [ ] Pause presentation must use the shared shell/screen architecture; the actual paused/unpaused gameplay state remains owned by the gameplay/runtime boundary.
 
-### Screen rollout
+### 17.3 Final canonical full-screen map
 
-1. [ ] Establish the canonical shell/navigation boundary with tests before migrating screens.
-2. [ ] Add **Character Select** as the first screen through that boundary.
-   - Runner is the only selectable/launchable character initially.
-   - Shotgun Character may be shown for development/preview only while explicitly locked/non-playable.
-   - No `if shotgun` special-case navigation or copied Runner configuration is permitted.
-3. [ ] Route the main/start screen through the same owner without changing approved gameplay behavior.
-4. [ ] Migrate/add Settings through the same owner and canonical `SettingsStore`.
-5. [ ] Route future Shop, Leaderboard, progression/unlock, results and other out-of-run pages through the same shell/registry instead of creating independent navigation systems.
-6. [ ] Bring Pause presentation under the shared screen architecture only when this can be done without changing gameplay pause semantics.
+The following are the approved full-screen destinations that belong to the application/frontend flow:
 
-### Shotgun Character activation gate
+| Screen | Registry ID target | Phase | Purpose | Priority |
+| --- | --- | --- | --- | --- |
+| Boot / Loading | `boot` | boot | Initialize required assets/state, restore persistent state, and hand off to Main | Core |
+| Main / Start | `main` | shell | Primary home screen and entry point to Play, Settings, Shop/Progression and Leaderboard | Core |
+| Character Select | `character-select` | pre-run | Choose a canonical selectable character before a run | Core |
+| Gameplay | `gameplay` | run | Active Phaser gameplay | Existing |
+| Pause | `pause` | run-overlay | Resume, Settings access, Restart/Exit actions without creating a second UI architecture | Core |
+| Settings | `settings` | shell | Audio, controls and future display/accessibility settings | Core |
+| Results / Run End | `results` | post-run | Run outcome, statistics, rewards and next action | Core |
+| Shop / Progression | `shop` | shell | Permanent progression/unlocks and future economy surfaces | Phase 2 |
+| Leaderboard | `leaderboard` | shell | Ranking/result comparison when backend/product rules are ready | Phase 2 |
+| Help / How to Play | `help` | shell | Controls and concise core-system explanation when needed | Later |
+| Credits / About | `credits` | shell | Version, credits and required product/legal information | Later |
 
-- [ ] The Character Select screen does **not** authorize Shotgun gameplay by itself.
-- [ ] Shotgun remains non-selectable on `main` until its production art, separate weapon ownership, runtime animation/aim integration, CI, E2E and Live validation are all complete.
-- [ ] Only after those gates pass may `CharacterRegistry` change Shotgun from locked/non-playable to selectable.
+Rules:
 
-### Architecture acceptance gates
+- [ ] `BOOT` and `MAIN` must be added to `ScreenRegistry` before Character Select becomes a player-facing route.
+- [ ] `HELP` and `CREDITS` are approved future routes but should not block the core flow.
+- [ ] Do not add a new full-screen route merely because a temporary overlay or dialog is needed.
+- [ ] Full-screen identities must be declared once in `ScreenRegistry` and referenced by ID everywhere else.
 
-- [ ] Exactly one canonical owner controls frontend screen navigation.
+### 17.4 Gameplay overlays are not independent frontend screens
+
+The following remain gameplay-owned overlays/states and must **not** become independent frontend navigation routes just to simplify implementation:
+
+- Level-up / 3-card upgrade selector.
+- In-run transient notifications.
+- Damage/death feedback before Results owns the post-run flow.
+- Tooltips and contextual help.
+- Confirmation dialogs such as Restart Run / Exit Run / Reset Settings.
+- Temporary locked-character explanation/preview dialog when it does not require a full page.
+
+Overlay rules:
+
+- [ ] Level-up cards pause/resume through the gameplay/runtime system and do not navigate away from `GAMEPLAY`.
+- [ ] Reusable confirmation dialogs should use one shared modal/overlay pattern instead of separate ad-hoc DOM implementations.
+- [ ] An overlay may visually cover the screen, but that does not automatically make it a `ScreenRegistry` route.
+- [ ] Pause is the one intentional run-overlay registered with the shell because it owns navigation choices outside the immediate combat loop; pause semantics themselves remain runtime-owned.
+
+### 17.5 Approved player flow
+
+Normal launch/run loop:
+
+```text
+BOOT / LOADING
+      ↓
+MAIN
+      ↓
+CHARACTER SELECT
+      ↓
+GAMEPLAY
+      ↓
+RESULTS
+   ↙      ↘
+MAIN   PLAY AGAIN
+          ↓
+   CHARACTER SELECT
+```
+
+Main shell branches:
+
+```text
+MAIN
+ ├── PLAY → CHARACTER SELECT
+ ├── SETTINGS
+ ├── SHOP / PROGRESSION
+ ├── LEADERBOARD
+ ├── HELP          (later)
+ └── CREDITS       (later)
+```
+
+In-run flow:
+
+```text
+GAMEPLAY
+ ├── LEVEL-UP CARDS → GAMEPLAY
+ └── PAUSE
+      ├── RESUME → GAMEPLAY
+      ├── SETTINGS → return to PAUSE/GAMEPLAY context
+      ├── RESTART RUN → confirmation → GAMEPLAY
+      └── EXIT RUN → confirmation → MAIN
+```
+
+Post-run rules:
+
+- [ ] Hero death or the approved run-complete condition ends gameplay and creates one canonical run result.
+- [ ] Results presents that already-produced result; it does not independently calculate another score/reward state.
+- [ ] `PLAY AGAIN` returns through the canonical pre-run selection flow unless a later explicit quick-retry design is approved.
+- [ ] `MAIN MENU` returns to `MAIN` through `GameShell`.
+
+### 17.6 Character Select contract
+
+Character Select is the first screen to be implemented visually through the canonical shell after the screen map foundation is corrected.
+
+Initial behavior:
+
+- [ ] Runner appears as `selectable` and is the only character that may launch gameplay initially.
+- [ ] Shotgun Character may appear as `locked` / development preview.
+- [ ] A locked Shotgun cannot launch gameplay under any input path, deep link, test helper, or UI state.
+- [ ] Character Select reads character identity, presentation metadata and availability from canonical character ownership.
+- [ ] Do not copy Runner runtime/settings data into Character Select.
+- [ ] Do not implement `if shotgun` menu hacks, special navigation branches, or parallel Shotgun configuration.
+- [ ] The UI should be able to render future characters from registry data without adding character-specific navigation logic.
+
+Recommended canonical availability vocabulary:
+
+- `selectable` — visible and may start a run.
+- `locked` — visible/previewable but cannot start a run.
+- `hidden` — not shown to the normal player flow yet.
+
+The exact field names may differ during implementation, but one canonical owner must determine the state.
+
+### 17.7 Shotgun Character activation gate
+
+The Character Select screen does **not** authorize Shotgun gameplay by itself.
+
+- [ ] Shotgun remains non-selectable on the `main` branch until its production art gate is complete.
+- [ ] Separate Shotgun weapon ownership/configuration must be complete; no Runner weapon/config copy.
+- [ ] Runtime animation, movement, aim/weapon alignment and combat integration must be complete.
+- [ ] CharacterRegistry integration must be canonical and free of character-specific frontend hacks.
+- [ ] Unit tests must prove locked Shotgun cannot launch.
+- [ ] E2E must prove the normal player flow cannot launch locked Shotgun.
+- [ ] Full Quality, Smoke, all required E2E shards, aggregate E2E and Live validation must pass.
+- [ ] Only after every activation gate passes may `CharacterRegistry` change Shotgun from `locked` to `selectable`.
+
+### 17.8 Main / Start contract
+
+Main is the final player-facing landing screen after Boot completes.
+
+Core Main actions:
+
+- [ ] `PLAY` → Character Select.
+- [ ] `SETTINGS` → Settings through `GameShell`.
+- [ ] `SHOP / PROGRESSION` → future canonical route when implemented.
+- [ ] `LEADERBOARD` → future canonical route when implemented.
+- [ ] No direct gameplay launch from Main that bypasses Character Select unless a later explicit quick-play feature is designed and approved.
+
+Main must not duplicate character selection, settings state, progression calculations, or gameplay initialization.
+
+### 17.9 Pause contract
+
+Pause is required for the core mobile game and must not be deferred behind Shop/Leaderboard.
+
+- [ ] Provide Resume.
+- [ ] Provide Settings access without losing the paused-run context.
+- [ ] Provide Restart Run behind confirmation.
+- [ ] Provide Exit to Main behind confirmation.
+- [ ] Prevent gameplay simulation/input from continuing while pause is active according to the existing canonical runtime pause boundary.
+- [ ] Do not build a separate pause navigation/router architecture.
+
+### 17.10 Settings contract
+
+- [ ] Add one canonical `SettingsStore` before multiple screens begin reading/writing settings.
+- [ ] Main Settings and Pause Settings must use the same stored values and controls.
+- [ ] Initial settings scope should stay intentionally small: audio first, then controls/display/accessibility only when they have real behavior.
+- [ ] Do not expose toggles that do nothing.
+- [ ] Back navigation must restore the caller context correctly: Main → Settings → Main, or Pause → Settings → Pause.
+
+### 17.11 Results / Run End contract
+
+Results is part of the **core run loop**, not a low-priority extra screen.
+
+- [ ] Results is implemented before Shop/Leaderboard.
+- [ ] Show the approved run outcome and essential run statistics only after gameplay ends.
+- [ ] Show permanent rewards/unlocks only from canonical reward/result data.
+- [ ] Provide `PLAY AGAIN` and `MAIN MENU` as canonical shell actions.
+- [ ] Temporary testing/report controls, if still required during development, must remain clearly separated from the final player-facing Results design.
+
+### 17.12 Shop / Progression and Leaderboard contract
+
+These are Phase 2 shell screens and must not block completion of the core launch/run/result loop.
+
+- [ ] Shop/Progression uses canonical persistent progression data; no duplicated unlock state in the UI.
+- [ ] Character unlocks, if later sold/earned here, update the canonical availability owner used by Character Select.
+- [ ] Leaderboard consumes one approved score/result definition rather than inventing a separate scoring formula.
+- [ ] Backend/network failure must not prevent the player from reaching Main, Character Select, Gameplay or local Results.
+
+### 17.13 Implementation order
+
+Execute in this order unless a later documented dependency requires a change:
+
+1. [x] Create the `GameShell` / `ScreenRegistry` ownership foundation with unit coverage.
+2. [ ] Correct the canonical registry map: add `BOOT` and `MAIN`, preserve existing screen IDs, and test the final ownership model without visual redesign.
+3. [ ] Extend `CharacterRegistry` with canonical availability/selectability state and add the locked Shotgun definition/preview boundary without enabling Shotgun gameplay.
+4. [ ] Build **Character Select** through `GameShell`.
+5. [ ] Build/route **Main / Start** through the same shell and make Boot → Main the final launch flow.
+6. [ ] Bring **Pause** presentation under the shared architecture without changing runtime pause semantics.
+7. [ ] Add **Settings** with one canonical `SettingsStore`, supporting Main and Pause caller contexts.
+8. [ ] Add **Results / Run End** and connect the complete Main → Select → Run → Results → Main/Replay loop.
+9. [ ] Add **Shop / Progression** when its persistent data contract is ready.
+10. [ ] Add **Leaderboard** when score/backend contracts are ready.
+11. [ ] Add **Help / Credits** only when they are needed for release/polish.
+
+### 17.14 Architecture acceptance gates
+
+- [ ] Exactly one canonical owner controls full frontend screen navigation.
+- [ ] `BOOT`, `MAIN`, `CHARACTER_SELECT`, `GAMEPLAY`, `PAUSE`, `SETTINGS`, `RESULTS`, `SHOP` and `LEADERBOARD` are represented by one canonical registry model as they become active.
 - [ ] Screen definitions are not duplicated across menu/gameplay files.
 - [ ] Character availability is read from the canonical character owner, not inferred by UI code.
-- [ ] Settings have one persistent owner when introduced.
-- [ ] Starting a Runner run preserves current approved gameplay, balance, RNG, rarity and upgrade behavior.
+- [ ] Runner remains the only launchable character until another character passes its complete production gate.
 - [ ] Shotgun cannot accidentally start a run while its activation gate is incomplete.
-- [ ] Unit/E2E coverage protects navigation ownership, Runner launch, locked Shotgun behavior and mobile screen flow.
-- [ ] Full Quality, Smoke, all E2E shards and aggregate E2E are required before each migration step merges.
+- [ ] Settings have one persistent owner.
+- [ ] Level-up cards and transient dialogs remain overlays instead of becoming parallel routers.
+- [ ] Starting a Runner run preserves current approved gameplay, balance, RNG, rarity and upgrade behavior.
+- [ ] Pause does not change combat semantics beyond the approved paused state.
+- [ ] Results consumes canonical run outcome/reward data and cannot double-award rewards.
+- [ ] Main/Settings/Results/Character Select are usable on the supported mobile landscape viewport.
+- [ ] Unit/E2E coverage protects navigation ownership, boot/main flow, Runner launch, locked Shotgun behavior, pause/settings return context and results/replay flow.
+- [ ] Full Quality, Smoke, all required E2E shards and aggregate E2E are required before each migration step merges.
+- [ ] Live validation is required before a newly migrated core screen is considered complete.
 
-**Implementation rule:** migrate incrementally. Do not rewrite all existing UI at once. Each screen moves only when its current ownership is understood and the new canonical owner can replace it cleanly without patch-on-patch compatibility layers.
+**Implementation rule:** do not rewrite all existing UI at once. Each screen moves only when its current ownership is understood and the new canonical owner can replace it cleanly without compatibility patches layered on top of each other. The screen architecture must remain data-driven so adding future characters or frontend pages does not require character-specific or screen-specific hacks in unrelated systems.
