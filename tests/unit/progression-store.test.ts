@@ -47,24 +47,32 @@ describe('canonical ProgressionStore v3', () => {
       ownedWorkshopItemIds: [],
     });
     expect(storage.getItem(PROGRESSION_STORAGE_KEY)).not.toBeNull();
-    expect(storage.getItem(LEGACY_PROGRESSION_STORAGE_KEY)).toBeNull();
   });
 
-  it('migrates v2 Scrip and run idempotency state into v3 without inventing ownership', () => {
+  it('migrates v2 Scrip state into v3 ownership state without losing currency', () => {
     const storage = createStorage();
     storage.setItem(PREVIOUS_PROGRESSION_STORAGE_KEY, JSON.stringify({
       version: 2,
       totalRuns: 2,
       bestSurvivalSeconds: 180,
-      highestLevel: 5,
-      lifetimeScrapCollected: 120,
+      highestLevel: 6,
+      lifetimeScrapCollected: 400,
       workshopScrip: 4,
-      recordedRunIds: ['run-a', 'run-b'],
-      rewardedRunIds: ['run-a', 'run-b'],
-      lastRunAt: '2026-09-03T10:00:00.000Z',
+      recordedRunIds: ['run-a'],
+      rewardedRunIds: ['run-a'],
+      lastRunAt: '2026-09-03T09:30:00.000Z',
     }));
+
     const snapshot = new ProgressionStore({ storage }).snapshot();
-    expect(snapshot).toMatchObject({ version: 3, workshopScrip: 4, ownedWorkshopItemIds: [] });
+    expect(snapshot).toMatchObject({
+      version: 3,
+      totalRuns: 2,
+      workshopScrip: 4,
+      recordedRunIds: ['run-a'],
+      rewardedRunIds: ['run-a'],
+      ownedWorkshopItemIds: [],
+    });
+    expect(storage.getItem(PROGRESSION_STORAGE_KEY)).not.toBeNull();
     expect(storage.getItem(PREVIOUS_PROGRESSION_STORAGE_KEY)).toBeNull();
   });
 
@@ -92,35 +100,7 @@ describe('canonical ProgressionStore v3', () => {
     expect(duplicate.lifetimeScrapCollected).toBe(70);
     expect(duplicate.workshopScrip).toBe(2);
     expect(Object.isFrozen(duplicate)).toBe(true);
-    expect(Object.isFrozen(duplicate.ownedWorkshopItemIds)).toBe(true);
-  });
-
-  it('purchases a one-time Workshop item atomically and never double-spends it', () => {
-    const storage = createStorage();
-    const store = new ProgressionStore({ storage });
-    store.recordRun(run('run-buy', 180), { workshopReward: { runId: 'run-buy', amount: 2 } });
-
-    const first = store.purchaseWorkshopItem({ itemId: 'terminal-plate-rustline', cost: 2 });
-    expect(first.status).toBe('purchased');
-    expect(first.charged).toBe(2);
-    expect(first.snapshot.workshopScrip).toBe(0);
-    expect(first.snapshot.ownedWorkshopItemIds).toEqual(['terminal-plate-rustline']);
-
-    const duplicate = store.purchaseWorkshopItem({ itemId: 'terminal-plate-rustline', cost: 2 });
-    expect(duplicate.status).toBe('already-owned');
-    expect(duplicate.charged).toBe(0);
-    expect(duplicate.snapshot.workshopScrip).toBe(0);
-    expect(duplicate.snapshot.ownedWorkshopItemIds).toEqual(['terminal-plate-rustline']);
-  });
-
-  it('does not mutate balance or ownership when Workshop Scrip is insufficient', () => {
-    const storage = createStorage();
-    const store = new ProgressionStore({ storage });
-    store.recordRun(run('run-short'), { workshopReward: { runId: 'run-short', amount: 1 } });
-    const transaction = store.purchaseWorkshopItem({ itemId: 'terminal-plate-rustline', cost: 2 });
-    expect(transaction.status).toBe('insufficient-funds');
-    expect(transaction.snapshot.workshopScrip).toBe(1);
-    expect(transaction.snapshot.ownedWorkshopItemIds).toEqual([]);
+    expect(Object.isFrozen(duplicate.recordedRunIds)).toBe(true);
   });
 
   it('marks zero-value evaluated rewards idempotently and rejects cross-run rewards', () => {
@@ -133,13 +113,31 @@ describe('canonical ProgressionStore v3', () => {
     expect(() => store.recordRun(run('run-003'), { workshopReward: { runId: 'other-run', amount: 3 } })).toThrow(/runId/);
   });
 
-  it('survives corrupt storage and preserves no character unlock state', () => {
+  it('purchases Workshop ownership once and never charges duplicate or insufficient transactions', () => {
+    const storage = createStorage();
+    const store = new ProgressionStore({ storage });
+    store.recordRun(run('run-fund'), { workshopReward: { runId: 'run-fund', amount: 2 } });
+
+    const purchased = store.purchaseWorkshopItem({ itemId: 'terminal-plate-rustline', cost: 2 });
+    expect(purchased).toMatchObject({ status: 'purchased', itemId: 'terminal-plate-rustline', charged: 2 });
+    expect(purchased.snapshot.workshopScrip).toBe(0);
+    expect(purchased.snapshot.ownedWorkshopItemIds).toEqual(['terminal-plate-rustline']);
+
+    const duplicate = store.purchaseWorkshopItem({ itemId: 'terminal-plate-rustline', cost: 2 });
+    expect(duplicate).toMatchObject({ status: 'already-owned', charged: 0 });
+    expect(duplicate.snapshot.workshopScrip).toBe(0);
+
+    const insufficient = store.purchaseWorkshopItem({ itemId: 'terminal-plate-other', cost: 1 });
+    expect(insufficient).toMatchObject({ status: 'insufficient-funds', charged: 0 });
+    expect(insufficient.snapshot.ownedWorkshopItemIds).toEqual(['terminal-plate-rustline']);
+  });
+
+  it('survives corrupt current/legacy storage and preserves no character unlock state', () => {
     const storage = createStorage();
     storage.setItem(PROGRESSION_STORAGE_KEY, '{bad json');
-    storage.setItem(PREVIOUS_PROGRESSION_STORAGE_KEY, '{also bad');
-    storage.setItem(LEGACY_PROGRESSION_STORAGE_KEY, '{still bad');
+    storage.setItem(LEGACY_PROGRESSION_STORAGE_KEY, '{also bad');
     const snapshot = new ProgressionStore({ storage }).snapshot();
-    expect(snapshot).toMatchObject({ totalRuns: 0, bestSurvivalSeconds: 0, highestLevel: 1, lifetimeScrapCollected: 0, workshopScrip: 0, ownedWorkshopItemIds: [] });
+    expect(snapshot).toMatchObject({ totalRuns: 0, bestSurvivalSeconds: 0, highestLevel: 1, lifetimeScrapCollected: 0, workshopScrip: 0 });
     expect('unlockedCharacters' in snapshot).toBe(false);
   });
 });

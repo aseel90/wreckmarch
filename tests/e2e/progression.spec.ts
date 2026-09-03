@@ -72,7 +72,7 @@ test('canonical Results persist debug run records without awarding Workshop Scri
   await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
 });
 
-test('normal canonical run awards bounded Workshop Scrip once and persists it into Workshop', async ({ page }) => {
+test('normal canonical run awards Scrip, purchases a cosmetic once, and persists it into Main', async ({ page }) => {
   await clearProgressionOnce(page, 'wreckmarch.test.progression-scrip-cleared');
   await page.goto('/');
   await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 20_000 });
@@ -101,7 +101,7 @@ test('normal canonical run awards bounded Workshop Scrip once and persists it in
 
   expect(state.result.runId).toEqual(expect.any(String));
   expect(state.reward).toMatchObject({ amount: 2, eligible: true, reason: 'survival', runId: state.result.runId });
-  expect(state.progression).toMatchObject({ totalRuns: 1, lifetimeScrapCollected: 999, workshopScrip: 2 });
+  expect(state.progression).toMatchObject({ version: 3, totalRuns: 1, lifetimeScrapCollected: 999, workshopScrip: 2 });
   await expect(page.locator('[data-stat="workshop-scrip"]')).toContainText('+2');
 
   await Promise.all([
@@ -114,8 +114,22 @@ test('normal canonical run awards bounded Workshop Scrip once and persists it in
   await expect(page.locator('[data-stat="workshop-scrip"]')).toContainText('2');
   await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
 
+  const buy = page.locator('[data-purchase-item-id="terminal-plate-rustline"]');
+  await expect(buy).toBeEnabled();
+  await expect(buy).toContainText('BUY // 2 SCRIP');
+  await buy.click();
+  await expect(buy).toBeDisabled();
+  await expect(buy).toContainText('OWNED');
+  await expect(page.locator('[data-stat="workshop-scrip"]')).toContainText('0');
+  await expect(page.locator('.wm-workshop-purchase-status')).toContainText('FABRICATED');
+
   const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('wreckmarch.progression.v3') || '{}'));
-  expect(persisted.workshopScrip).toBe(2);
+  expect(persisted.workshopScrip).toBe(0);
   expect(persisted.recordedRunIds).toEqual([state.result.runId]);
   expect(persisted.rewardedRunIds).toEqual([state.result.runId]);
+  expect(persisted.ownedWorkshopItemIds).toEqual(['terminal-plate-rustline']);
+
+  await page.locator('.wm-shell-back').click();
+  await expect(page.locator('.wm-main-screen')).toBeVisible();
+  await expect(page.locator('[data-workshop-item-id="terminal-plate-rustline"]')).toContainText('RUSTLINE // FIELD WORN');
 });
