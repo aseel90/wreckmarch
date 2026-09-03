@@ -1,8 +1,8 @@
 # WRECKMARCH — Character Ownership Audit
 
 **Audit start:** 2026-09-03  
-**Baseline HEAD:** `fa77873d5786e6baee51ff46c671aa9e7dae7e62`  
-**Entry condition:** Responsive frontend acceptance gate verified.
+**Baseline HEAD:** `947bfb6dac550954cffe86128809208c34d4bb84`  
+**Entry condition:** Automated responsive frontend gate verified; post-fix real-device iOS re-check still pending. Read-only ownership audit may proceed, but runtime ownership changes are blocked until that re-check passes.
 
 ## Current canonical ownership
 
@@ -39,15 +39,17 @@ This does not change current Runner gameplay and must not be removed casually: i
 
 Before changing that self-test:
 
-1. Read the current complete `phase-d1-runtime.js` ownership path and its dependent tests/live workflow assertions.
-2. Replace literal character identity assumptions only if the new assertion can prove the same Runner invariants from canonical registry/system state.
-3. Preserve exact current Runner stats, weapon values, balance, RNG, rarity, upgrades and run behavior.
-4. Keep Shotgun locked/non-playable and do not add a Shotgun runtime definition or balance numbers.
-5. Require full Quality + E2E + Smoke + live verification before marking the ownership item complete.
+1. Complete the post-fix real-device iPhone responsive re-check for Main, Workshop/Progression and canonical Results.
+2. Read the current complete `phase-d1-runtime.js` ownership path and its dependent tests/live workflow assertions.
+3. Replace literal character identity assumptions only if the new assertion can prove the same Runner invariants from canonical registry/system state.
+4. Preserve exact current Runner stats, weapon values, balance, RNG, rarity, upgrades and run behavior.
+5. Keep Shotgun locked/non-playable and do not add a Shotgun runtime definition or balance numbers.
+6. Require full Quality + E2E + Smoke + live verification before marking the ownership item complete.
 
 ## Status
 
-- Responsive prerequisite: **verified**.
+- Responsive automated prerequisite: **verified**.
+- Responsive real-device iOS re-check: **pending; runtime ownership changes blocked**.
 - Canonical registry availability ownership: **verified**.
 - Locked Shotgun non-playable boundary: **verified**.
 - Character Select model ownership: **verified**.

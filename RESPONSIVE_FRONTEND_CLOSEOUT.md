@@ -1,10 +1,10 @@
 # WRECKMARCH — Responsive Frontend Remediation Closeout
 
 **Closeout date:** 2026-09-03  
-**Verified HEAD:** `fa77873d5786e6baee51ff46c671aa9e7dae7e62`  
-**Status:** RESPONSIVE ACCEPTANCE GATE VERIFIED
+**Automated baseline HEAD:** `947bfb6dac550954cffe86128809208c34d4bb84`  
+**Status:** AUTOMATED RESPONSIVE GATE VERIFIED — REAL-DEVICE iOS RE-CHECK PENDING
 
-This note closes the screenshot-driven remediation tracked by `RESPONSIVE_FRONTEND_AUDIT.md`. It does not replace the original audit evidence; it records the verified remediation state reached after that audit.
+This note records the automated closeout state for the screenshot-driven remediation tracked by `RESPONSIVE_FRONTEND_AUDIT.md`. It does not replace the original audit evidence. Final real-device acceptance remains pending until the post-fix iPhone landscape screenshots are re-checked.
 
 ## Verified remediation
 
@@ -38,17 +38,19 @@ Portrait/rotation coverage includes the 375×812 and 430×932 classes, with the 
 
 ## Verification evidence
 
-On verified HEAD `fa77873d5786e6baee51ff46c671aa9e7dae7e62`:
+On the stabilization PR merged as `947bfb6dac550954cffe86128809208c34d4bb84`:
 
 - Quality: **success**
-- E2E: **success**
+- E2E shards + aggregate: **success**
 - Smoke: **success**
-- Live Chromium smoke: **recovered / success**
-- iOS live verification: **PASSED**
-- Open `ci-failure` issues at closeout: **none**
+- Responsive matrix: **success**, including safe-area/notch and rotation coverage
+- Upgrade HUD suppression regression: **fixed and verified by E2E**
+- Main-branch Live Chromium redeploy for `947bfb6`: **awaiting final bridge confirmation at documentation correction time**
+- Real-device iOS re-check after `947bfb6`: **PENDING — user screenshots required**
+- Open `ci-failure` issues at documentation correction time: **none**
 
-The preceding regression on `00518d64c5a8ef897b1d81f5f8124bae914c510c` was real: upgrade overlay HUD suppression was lost while sharing the safe-area contract. `fa77873d` restored the existing `openUpgradeCards` ownership behavior and listener cleanup; the current-HEAD CI recovery verifies that fix.
+The preceding regression on `00518d64c5a8ef897b1d81f5f8124bae914c510c` was real: upgrade overlay HUD suppression was lost while sharing the safe-area contract. `fa77873d` restored the existing `openUpgradeCards` ownership behavior and listener cleanup. `947bfb6` then cache-busted the canonical HUD assets and extended the Live readiness window without changing gameplay behavior.
 
 ## Acceptance decision
 
-The responsive remediation gate is complete. Subsequent work may proceed to Character Ownership / later roadmap stages, subject to the normal requirement that new commits keep the responsive matrix, existing Runner behavior, gameplay balance, RNG, rarity and Shotgun lock gates green.
+The automated responsive remediation gate is complete. **Final real-device acceptance is not complete yet.** Character Ownership may continue as a read-only audit, but no Character Ownership runtime change should land until the post-fix iPhone re-check confirms Main, Workshop/Progression and canonical Results no longer require horizontal panning or show stale ownership. New commits must keep the responsive matrix, existing Runner behavior, gameplay balance, RNG, rarity and Shotgun lock gates green.
