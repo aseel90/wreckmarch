@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="148" viewBox="0 0 128 148" role="img" aria-label="Shotgun character idle frame 0">
+  <g id="shotgun-body" data-frame="idle-0" data-canvas="128x148" data-foot-line-y="140">
+    <ellipse cx="64" cy="140" rx="31" ry="3" fill="#17191b" opacity=".22"/>
+    <path d="M45 55 L83 55 L91 101 L82 116 L46 116 L37 101 Z" fill="#76553d" stroke="#201b18" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M48 58 L62 72 L80 57 L84 96 L43 96 Z" fill="#3f4848" stroke="#201b18" stroke-width="3"/>
+    <path d="M58 72 L70 72 L72 106 L56 106 Z" fill="#252a2b" opacity=".75"/>
+    <path d="M46 65 Q34 73 30 91 L38 96 Q44 82 54 78 Z" fill="#76553d" stroke="#201b18" stroke-width="4"/>
+    <path d="M81 64 Q91 70 98 83 L91 89 Q84 80 74 77 Z" fill="#76553d" stroke="#201b18" stroke-width="4"/>
+    <circle cx="95" cy="88" r="6" fill="#bb8a62" stroke="#201b18" stroke-width="3"/>
+    <path d="M47 110 L60 110 L58 137 L42 140 L40 135 Z" fill="#303638" stroke="#1c1d1d" stroke-width="4"/>
+    <path d="M68 110 L81 110 L88 135 L84 140 L69 137 Z" fill="#303638" stroke="#1c1d1d" stroke-width="4"/>
+    <path d="M39 137 L59 136 L61 140 L39 140 Z" fill="#17191b"/>
+    <path d="M68 136 L88 137 L89 140 L68 140 Z" fill="#17191b"/>
+    <circle cx="64" cy="34" r="24" fill="#bb8a62" stroke="#201b18" stroke-width="4"/>
+    <path d="M42 31 Q45 8 65 8 Q84 9 88 30 Q78 22 64 23 Q51 22 42 31 Z" fill="#2b2927" stroke="#201b18" stroke-width="4"/>
+    <path d="M47 36 Q64 29 82 36 L80 48 Q64 59 48 48 Z" fill="#2d2724"/>
+    <path d="M52 37 L61 36 L62 44 L51 44 Z M67 36 L77 37 L77 44 L66 44 Z" fill="#b7d4d1" stroke="#201b18" stroke-width="3"/>
+    <path d="M59 49 Q64 54 70 49" fill="none" stroke="#17191b" stroke-width="3" stroke-linecap="round"/>
+    <path d="M54 53 Q64 63 74 53 Q70 67 64 69 Q58 67 54 53 Z" fill="#312a25"/>
+  </g>
+</svg>
