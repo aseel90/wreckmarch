@@ -31,10 +31,10 @@
     window.__WM_LOG__=log;
     const fail=(m)=>{ console.error(m); document.body.classList.add('boot-error'); status.textContent='FAILED TO LOAD — OPEN DEBUG'; status.classList.add('error'); log(m); };
     const params=new URLSearchParams(location.search);
-    const debugEnabled=params.has('debug')||params.get('debug')==='1';
+    const debug=params.has('debug')||params.get('debug')==='1';
     const setStandaloneMode=()=>document.body.classList.toggle('standalone-mode',window.matchMedia?.('(display-mode: standalone)')?.matches||window.navigator.standalone===true);
     setStandaloneMode(); window.matchMedia?.('(display-mode: standalone)')?.addEventListener?.('change',setStandaloneMode);
-    if(debugEnabled) document.body.classList.add('debug-enabled');
+    document.body.classList.toggle('debug-enabled',debug);
     document.getElementById('copy-debug').onclick=async()=>{try{await navigator.clipboard?.writeText(logEl.textContent||'')}catch(e){log(`Clipboard: ${e}`)}};
     document.getElementById('copy-upgrade-debug').onclick=async()=>{try{const scene=window.__WM_GAME__?.scene?.getScene?.('Wreckmarch');if(!scene)throw new Error('Wreckmarch scene unavailable');const dumpApi=await import('./src/upgrades/upgrade-debug-dump.js?v=1');const dump=dumpApi.stringifyUpgradeDebugDump(scene);log(`UPGRADE_STATE ${dump}`);try{await navigator.clipboard?.writeText(dump)}catch(copyError){log(`UPGRADE_STATE_COPY_FAILED ${copyError}`)}}catch(e){log(`UPGRADE_STATE_ERROR ${e?.stack||e}`)}};
     const requestLandscapeLock=async(source='runtime')=>{

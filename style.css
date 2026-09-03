@@ -75,7 +75,7 @@ body.wm-upgrade-active #fs-btn { display: none !important; }
 
 #debug {
   display: none;
-  position: fixed; z-index: 10000;
+  position: fixed; z-index: 10002;
   right: calc(10px + env(safe-area-inset-right));
   bottom: calc(52px + env(safe-area-inset-bottom));
   width: min(520px, calc(100vw - 20px)); margin: 0;
