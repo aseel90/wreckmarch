@@ -10,6 +10,7 @@ async function waitForGame(page: any) {
 
 test('upgrade overlay suppresses gameplay HUD and restores it after selection UI closes', async ({ page }) => {
   await waitForGame(page);
+  await expect(page.locator('#fs-btn')).toBeVisible();
   const opened = await page.evaluate(async () => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
@@ -21,6 +22,7 @@ test('upgrade overlay suppresses gameplay HUD and restores it after selection UI
     return { upgradeOpen: scene.upgradeOpen, upgradeSceneActive: game.scene.isActive('UpgradeSceneV4'), titleVisible: scene.titleText.visible, xpVisible: scene.xpBg.visible, joystickVisible: scene.joyBase.visible, railVisible: rail?.visible };
   });
   expect(opened).toMatchObject({ upgradeOpen: true, upgradeSceneActive: true, titleVisible: false, xpVisible: false, joystickVisible: false, railVisible: false });
+  await expect(page.locator('#fs-btn')).toBeHidden();
   const closed = await page.evaluate(async () => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
@@ -30,6 +32,7 @@ test('upgrade overlay suppresses gameplay HUD and restores it after selection UI
     return { upgradeOpen: scene.upgradeOpen, titleVisible: scene.titleText.visible, xpVisible: scene.xpBg.visible, joystickVisible: scene.joyBase.visible, railVisible: rail?.visible };
   });
   expect(closed).toMatchObject({ upgradeOpen: false, titleVisible: true, xpVisible: true, joystickVisible: true, railVisible: true });
+  await expect(page.locator('#fs-btn')).toBeVisible();
 });
 
 test('canonical Results screen owns run end and covers the live landscape viewport', async ({ page }) => {
