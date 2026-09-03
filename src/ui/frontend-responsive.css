@@ -390,3 +390,45 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+@media (max-width: 600px) and (max-height: 420px) and (orientation: landscape) {
+  .wm-results-header p {
+    display: none;
+  }
+
+  .wm-results-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .wm-result-stat {
+    min-height: 44px;
+    padding: 6px;
+  }
+
+  .wm-results-action {
+    min-height: 44px;
+  }
+
+  .wm-results-report {
+    gap: 6px;
+  }
+}
+
+/* Confirmation */
+.wm-confirm-overlay {
+  padding:
+    calc(20px + var(--wm-safe-top))
+    calc(20px + var(--wm-safe-right))
+    calc(20px + var(--wm-safe-bottom))
+    calc(20px + var(--wm-safe-left));
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.wm-confirm-dialog {
+  width: min(500px, 100%);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
