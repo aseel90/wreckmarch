@@ -20,7 +20,7 @@ describe('U7 canonical Upgrade Scene ownership', () => {
     expect(canonical).toContain("class UpgradeSceneV4 extends Phaser.Scene");
     expect(canonical).toContain("scene.launch('UpgradeSceneV4'");
     expect(canonical).toContain('export async function installUpgradeScene(gameScene)');
-    expect(canonical).toContain("await waitForSceneRegistration(gameScene, 'UpgradeSceneV4')");
+    expect(canonical).toContain('Phaser.Core.Events.POST_STEP');
     expect(canonical).toContain('gameScene.openUpgradeCards = function()');
     expect(canonical).toContain('gameScene.closeUpgradeCards = function()');
     expect(canonical).toContain("gameScene.__upgradeSceneOwner = 'src/upgrades/upgrade-scene.js'");
