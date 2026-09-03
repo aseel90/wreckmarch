@@ -21,6 +21,7 @@ export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
   body: Object.freeze({
     canvas: SHOTGUN_ART_CONTRACT.canvas,
     render: SHOTGUN_ART_CONTRACT.render,
+    gripSocket: SHOTGUN_ART_CONTRACT.gripSocket,
     idle: Object.freeze(bodyIdle),
     run: Object.freeze(bodyRun),
     animationKeys: Object.freeze({
