@@ -105,7 +105,7 @@ try {
         legacyLayoutExists: Boolean(window.__WM_END_RUN_LAYOUT__)
       };
       if (before.shellScreen !== 'results' || before.owner !== 'game-shell-results-v1' || before.resultsState !== 'active' || !before.resultsVisible) throw new Error(`live canonical Results owner missing: ${JSON.stringify(before)}`);
-      if (!before.buttonActive && (!before.buttonVisible || !before.buttonEnabled || before.label !== 'SEND REPORT')) throw new Error(`live Results SEND REPORT control missing: ${JSON.stringify(before)}`);
+      if (!before.buttonVisible || !before.buttonEnabled || before.label !== 'SEND REPORT') throw new Error(`live Results SEND REPORT control missing: ${JSON.stringify(before)}`);
       if (before.legacyLayoutExists) throw new Error(`legacy end-run layout resurfaced under canonical Results: ${JSON.stringify(before)}`);
       reportButton.click();
       await new Promise(resolve => setTimeout(resolve, 120));
