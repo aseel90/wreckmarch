@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 const ROOT = resolve(import.meta.dirname, '../..');
 const read = (path: string) => readFileSync(resolve(ROOT, path), 'utf8');
 
+// U7 regression contract: legacy phases may consume, but must not own, the upgrade scene lifecycle.
 describe('U7 canonical Upgrade Scene ownership', () => {
   it('keeps scene lifecycle under src/upgrades and retires C1/C2/C3/C5 scene wrappers', () => {
     const canonical = read('src/upgrades/upgrade-scene.js');
