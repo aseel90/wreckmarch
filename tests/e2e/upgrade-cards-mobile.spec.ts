@@ -40,7 +40,7 @@ async function getEligibleOfferIds(page: any) {
 }
 
 async function measureGroup(page: any, groupIds: string[], groupIndex: number) {
-  return page.evaluate(async ({ ids, level }) => {
+  return page.evaluate(async ({ ids, level }: { ids: string[]; level: number }) => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
