@@ -110,6 +110,22 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
   await expectTouchTarget(page.locator('[data-character-id="runner"]'));
   await expectFullyInViewport(page, page.locator('[data-character-id="shotgun"]'));
   await expect(page.locator('[data-character-id="shotgun"]')).toHaveAttribute('data-availability', 'locked');
+  await expect(page.locator('[data-character-id="shotgun"] .wm-character-composition')).toBeVisible();
+  const shotgunPreviewLayout = await page.locator('[data-character-id="shotgun"]').evaluate((card: HTMLElement) => {
+    const stage = card.querySelector<HTMLElement>('.wm-character-composition');
+    const weapon = card.querySelector<HTMLElement>('.wm-character-weapon');
+    return {
+      stageAspectRatio: stage?.style.aspectRatio || '',
+      weaponLeft: weapon?.style.left || '',
+      weaponTop: weapon?.style.top || '',
+      weaponWidth: weapon?.style.width || '',
+      weaponHeight: weapon?.style.height || '',
+    };
+  });
+  expect(shotgunPreviewLayout.stageAspectRatio).toBe('128 / 148');
+  for (const value of [shotgunPreviewLayout.weaponLeft, shotgunPreviewLayout.weaponTop, shotgunPreviewLayout.weaponWidth, shotgunPreviewLayout.weaponHeight]) {
+    expect(value).toMatch(/^-?\d+(?:\.\d+)?%$/);
+  }
 
   await page.locator('[data-character-id="runner"]').click();
   await waitForGameplay(page);

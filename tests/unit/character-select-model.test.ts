@@ -9,6 +9,7 @@ import {
 type CharacterSelectOption = {
   id: string;
   availability: string;
+  preview?: { composition?: unknown };
 };
 
 describe('Character Select canonical model', () => {
@@ -19,6 +20,7 @@ describe('Character Select canonical model', () => {
     ]);
     expect(resolveCharacterSelection('runner')).toMatchObject({ characterId: 'runner', selectable: true });
     expect(resolveCharacterSelection('shotgun')).toMatchObject({ characterId: 'shotgun', selectable: false, availability: 'locked' });
+    expect(listCharacterSelectOptions().find((option: CharacterSelectOption) => option.id === 'shotgun')?.preview?.composition).toBeTruthy();
     expect(resolveFirstSelectableCharacter()).toMatchObject({ selectable: true, availability: 'selectable' });
   });
 

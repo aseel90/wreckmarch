@@ -1,4 +1,5 @@
 import { listCharacterSelectOptions, resolveCharacterSelection } from './character-select-model.js?v=2';
+import { resolveCharacterPreviewLayout } from './character-preview-layout.js?v=1';
 
 const STYLESHEET_ID = 'wm-frontend-shell-styles';
 
@@ -38,11 +39,48 @@ function makeCharacterCard(option, statusEl, resolve) {
   const art = document.createElement('span');
   art.className = 'wm-character-art';
   const body = makeImage(option.preview?.bodyAsset, 'wm-character-body', `${option.displayName} preview`);
-  if (body) art.append(body);
   const weapon = makeImage(option.preview?.weaponAsset, 'wm-character-weapon', '');
-  if (weapon) {
-    weapon.setAttribute('aria-hidden', 'true');
-    art.append(weapon);
+  if (weapon) weapon.setAttribute('aria-hidden', 'true');
+
+  const previewLayout = resolveCharacterPreviewLayout(option.preview?.composition);
+  if (previewLayout && body && weapon) {
+    art.classList.add('is-composed');
+    const stage = document.createElement('span');
+    stage.className = 'wm-character-composition';
+    Object.assign(stage.style, {
+      position: 'relative',
+      display: 'block',
+      height: '92%',
+      maxWidth: '92%',
+      maxHeight: '92%',
+      aspectRatio: previewLayout.stageAspectRatio,
+      pointerEvents: 'none',
+    });
+    Object.assign(body.style, {
+      position: 'absolute',
+      inset: '0',
+      width: '100%',
+      height: '100%',
+      maxWidth: 'none',
+      maxHeight: 'none',
+      objectFit: 'fill',
+      objectPosition: 'initial',
+    });
+    Object.assign(weapon.style, {
+      right: 'auto',
+      bottom: 'auto',
+      left: `${previewLayout.weaponLeftPercent}%`,
+      top: `${previewLayout.weaponTopPercent}%`,
+      width: `${previewLayout.weaponWidthPercent}%`,
+      height: `${previewLayout.weaponHeightPercent}%`,
+      maxHeight: 'none',
+      objectFit: 'fill',
+    });
+    stage.append(body, weapon);
+    art.append(stage);
+  } else {
+    if (body) art.append(body);
+    if (weapon) art.append(weapon);
   }
 
   const meta = document.createElement('span');
