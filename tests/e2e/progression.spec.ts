@@ -4,7 +4,7 @@ test.use({ viewport: { width: 960, height: 540 } });
 test.describe.configure({ timeout: 120_000 });
 
 async function clearProgressionOnce(page: any, marker: string) {
-  await page.addInitScript(({ marker }) => {
+  await page.addInitScript(({ marker }: { marker: string }) => {
     if (sessionStorage.getItem(marker)) return;
     localStorage.removeItem('wreckmarch.progression.v1');
     localStorage.removeItem('wreckmarch.progression.v2');

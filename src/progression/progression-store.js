@@ -1,3 +1,8 @@
+/**
+ * @typedef {{ runId: string, amount: number }} WorkshopReward
+ * @typedef {{ workshopReward?: WorkshopReward | null }} RecordRunOptions
+ */
+
 export const PROGRESSION_STORAGE_KEY = 'wreckmarch.progression.v2';
 export const LEGACY_PROGRESSION_STORAGE_KEY = 'wreckmarch.progression.v1';
 
@@ -103,6 +108,10 @@ export class ProgressionStore {
     return freezeSnapshot(this.state);
   }
 
+  /**
+   * @param {object} result
+   * @param {RecordRunOptions} [options]
+   */
   recordRun(result, { workshopReward = null } = {}) {
     const runId = canonicalRunId(result);
     const alreadyRecorded = this.state.recordedRunIds.includes(runId);
