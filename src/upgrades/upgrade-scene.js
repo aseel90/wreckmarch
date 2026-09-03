@@ -1,6 +1,8 @@
 import { createActiveUpgradeOfferChoices } from './upgrade-offer-pool.js?v=1';
 import { rollUpgradeChoices } from './upgrade-roll-service.js?v=2';
 
+// U7 canonical owner for upgrade selection scene lifecycle; phase runtimes must not wrap it.
+
 const CATEGORY_COLORS = {
   HERO: 0xd98446,
   UTILITY: 0x4fc8d8,
