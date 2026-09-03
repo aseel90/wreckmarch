@@ -7,8 +7,10 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
 
     const setup = await page.evaluate(async () => {
       const Phaser = (window as any).Phaser;
-      const { queueShotgunRuntimeAssets, SHOTGUN_RUNTIME_PRESENTATION } = await import('/src/characters/shotgun-runtime-presentation.js');
-      const { createShotgunRuntimeComposition, SHOTGUN_RUNTIME_COMPOSITION } = await import('/src/characters/shotgun-runtime-composition.js');
+      const presentationModulePath = '/src/characters/shotgun-runtime-presentation.js';
+      const compositionModulePath = '/src/characters/shotgun-runtime-composition.js';
+      const { queueShotgunRuntimeAssets, SHOTGUN_RUNTIME_PRESENTATION } = await import(presentationModulePath);
+      const { createShotgunRuntimeComposition, SHOTGUN_RUNTIME_COMPOSITION } = await import(compositionModulePath);
 
       const previous = document.getElementById('shotgun-phaser-gate');
       previous?.remove();
@@ -124,7 +126,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
       await page.evaluate(([nextMotion, nextFrame]) => {
         (window as any).__shotgunPhaserGate.setState(nextMotion, nextFrame, 'right', 0);
       }, [motion, frameIndex] as const);
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
       const snapshot = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
       expect(snapshot.bodyKey).toBe(`shotgun-body-${motion}-${frameIndex}`);
       expect(snapshot.weaponKey).toBe('shotgun-weapon');
@@ -139,7 +141,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     await page.evaluate(() => {
       (window as any).__shotgunPhaserGate.setState('idle', 0, 'left', 20);
     });
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
     const mirrored = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
     expect(mirrored.bodyFlipX).toBe(true);
     expect(mirrored.weaponFlipX).toBe(true);
