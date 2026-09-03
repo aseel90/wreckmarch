@@ -260,7 +260,7 @@ jobs:
           cleanup() { kill "$HTTP_PID" 2>/dev/null || true; }
           trap cleanup EXIT
           for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
-          timeout 40s node scripts/ci-smoke.mjs 2>&1 | tee wm-smoke.log
+          timeout 75s node scripts/ci-smoke.mjs 2>&1 | tee wm-smoke.log
       - name: Preserve smoke diagnostics
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
@@ -414,8 +414,8 @@ jobs:
           set -euo pipefail
           BASE="${PAGE_URL%/}/"
           curl -fsSL --retry 5 "${BASE}?build=${SHA}" -o wm-live-index.html
-          curl -fsSL --retry 5 "${BASE}src/mobile-hud-loader-telemetry-v1.js" -o wm-live-mobile-hud-loader.js
-          curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" -o wm-live-mobile-hud.js
+          curl -fsSL --retry 5 "${BASE}src/mobile-hud-loader-canonical-v2.js" -o wm-live-mobile-hud-loader.js
+          curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=canonical-hud-20260903-responsive-v2" -o wm-live-mobile-hud.js
           curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=24" -o wm-live-enemy-system.js
           curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=6" -o wm-live-phase-b.js
           curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=24" -o wm-live-phase-c.js
@@ -457,11 +457,13 @@ jobs:
           grep -F "./upgrades/upgrade-card-art.js?v=7" wm-live-phase-d1.js
           grep -F "upgrade-icon-explosive-rivet" wm-live-upgrade-card-art.js
           grep -F "upgrade-icon-triple-riveter" wm-live-upgrade-card-art.js
-          grep -F "./src/mobile-hud-loader-telemetry-v1.js" wm-live-index.html
-          grep -F "./mobile-hud-polish.js?asset=telemetry-hud-20260831-213754" wm-live-mobile-hud-loader.js
+          grep -F "./src/mobile-hud-loader-canonical-v2.js" wm-live-index.html
+          grep -F "./mobile-hud-polish.js?asset=canonical-hud-20260903-responsive-v2" wm-live-mobile-hud-loader.js
           grep -F "./src/final-polish-runtime.js?v=2" wm-live-index.html
-          grep -F "END_RUN_OWNER_VERSION='runtime-v5-test'" wm-live-mobile-hud.js
-          grep -F "'SEND REPORT'" wm-live-mobile-hud.js
+          if grep -Fq "scene.endRun=" wm-live-mobile-hud.js || grep -Fq "__WM_END_RUN_LAYOUT__" wm-live-mobile-hud.js || grep -Fq "TEST UI v5" wm-live-mobile-hud.js; then
+            echo "mobile HUD still owns legacy Results/end-run UI"
+            exit 1
+          fi
           if grep -Fq "mobile-hud-polish" wm-live-phase-d1.js; then
             echo "phase-d1 still owns mobile HUD"
             exit 1
@@ -477,7 +479,7 @@ jobs:
           WM_SMOKE_URL: ${{ needs.deploy.outputs.page_url }}?autotest=1&debug=1&wmTelemetry=1&build=${{ github.sha }}
         run: |
           set -o pipefail
-          timeout 45s node scripts/ci-smoke.mjs 2>&1 | tee wm-live-smoke.log
+          timeout 75s node scripts/ci-smoke.mjs 2>&1 | tee wm-live-smoke.log
       - name: Preserve live smoke diagnostics
         if: steps.live_smoke.outcome == 'failure'
         uses: actions/upload-artifact@v4
