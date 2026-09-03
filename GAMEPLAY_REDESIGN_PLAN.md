@@ -213,8 +213,6 @@ Examples:
 
 ### B. Hero Survival Upgrades
 
-Examples:
-
 **Armor Plate**
 
 - +Max HP.
@@ -563,80 +561,90 @@ Avoid:
 
 **Acceptance:** Player can move freely for an extended period without feeling trapped on one screen, and enemies enter naturally from outside the viewport.
 
-### PHASE C — Scrap Level Bar + Cards
+### PHASE C — Scrap / Level-up Core Loop
 
-- [ ] Top Scrap/XP bar.
-- [ ] Level progression and increasing requirements.
-- [ ] Overflow Scrap handling.
-- [ ] 3-card pause screen.
-- [ ] Weighted random pool.
-- [ ] Hero upgrade family.
-- [ ] Utility upgrade family.
+- [ ] Add enemy Scrap drops and pickup collection.
+- [ ] Add a top Scrap/XP progress bar and level indicator.
+- [ ] Add level progression and overflow Scrap carryover.
+- [ ] Pause gameplay on level up.
+- [ ] Present exactly 3 random valid upgrade cards.
+- [ ] Resume gameplay immediately after one card is selected.
+- [ ] Start with a small Hero/Utility card pool only.
 
-**Acceptance:** A 60-second run produces several meaningful build choices.
+**Acceptance:** The player can run around a large world, kill enemies, collect Scrap, level up, choose one of three random upgrades and continue fighting.
 
-### PHASE D — Fortress as Optional Companion
+### PHASE D — Upgrade Pool + Build Rules
 
-- [ ] Add `CALL THE RIG` card.
-- [ ] Summon entrance sequence.
-- [ ] Invulnerable/non-targetable companion logic.
-- [ ] Follow + catch-up movement.
-- [ ] Fortress attack logic.
-- [ ] Fortress upgrade cards unlock only after summon.
-- [ ] Visual chassis growth.
+- [ ] Move upgrade definitions to data-driven structures.
+- [ ] Add rarity weighting.
+- [ ] Add duplicate/max-level rules.
+- [ ] Add prerequisite filtering.
+- [ ] Add anti-frustration weighting without guaranteeing useful cards.
+- [ ] Add build-family weighting only after baseline randomness feels good.
 
-**Acceptance:** A run works both with and without the Fortress.
+**Acceptance:** Different runs naturally produce different builds without frequent invalid or obviously useless selections.
 
-### PHASE E — Build Depth
+### PHASE E — Optional Fortress Companion
 
-- [ ] More Hero weapons.
-- [ ] More Fortress modules.
-- [ ] Utility choices.
-- [ ] Synergy prerequisites.
-- [ ] First evolution combinations.
+- [ ] Add `CALL THE RIG` card to the random pool.
+- [ ] Keep all other Fortress cards hidden until Rig is summoned.
+- [ ] Add Fortress entry animation.
+- [ ] Implement follow/catch-up behavior.
+- [ ] Make Rig non-targetable / non-destructible.
+- [ ] Add first visible Rig module upgrade.
 
-### PHASE F — Enemy Variety
+**Acceptance:** Fortress feels like a powerful optional discovery, not an escort objective.
 
-- [ ] Scrap Brute.
-- [ ] Scrap Shooter.
-- [ ] Scrap Exploder.
-- [ ] Elite variants.
-- [ ] Mini boss.
+### PHASE F — Content / Polish
 
-### PHASE G — First Real Run
+- [ ] Add more upgrade cards.
+- [ ] Add first ranged enemy.
+- [ ] Add first elite modifier.
+- [ ] Improve impacts, VFX, sound and camera feedback.
+- [ ] Mobile performance pass.
+- [ ] Balance the first 8–10 minute run.
 
-- [ ] 8–12 minute pacing.
-- [ ] First boss.
-- [ ] End/run result screen.
-- [ ] First permanent unlock loop.
-- [ ] Audio pass.
-- [ ] Performance pass.
+### PHASE G — Evolution + Long-Term Progression
 
----
-
-## 15. Non-Negotiable Design Rules
-
-1. The hero is the thing the player protects.
-2. The Fortress must never recreate an annoying escort mission.
-3. Major upgrades should be visible or behavior-changing.
-4. Random choices should create variety without frequently creating dead runs.
-5. World movement must feel open, not confined to a phone-shaped arena.
-6. First-minute gameplay must already be marketable in a short vertical video.
-7. Mobile performance and readable silhouettes take priority over unnecessary visual complexity.
-8. No forced ads, no energy gate, no required paid backend for the core game.
+- [ ] Add upgrade synergies/evolutions.
+- [ ] Add permanent unlocks.
+- [ ] Add multiple worlds / biome variation.
+- [ ] Add monetization only after retention loop is fun.
 
 ---
 
-## 16. Immediate Next Build
+## 15. Balance Philosophy
 
-PHASE A is complete. The immediate implementation order is now intentionally **world-first** after mobile review showed the single-screen arena is too restrictive:
+Use the following hierarchy when tuning:
 
-1. ✅ Remove Fortress at spawn and all Fortress HP logic.
-2. ✅ Give hero a reliable starting auto-attack.
-3. ✅ Make enemies target hero.
-4. ✅ Move hero HP bar above hero.
-5. **PHASE B:** Expand world, remove the arena border, add smooth camera follow/look-ahead, and spawn enemies outside the viewport.
-6. **PHASE C:** Convert Scrap into the top level progress bar and build the first 3-card upgrade selector.
+1. Fun/readability.
+2. Player agency.
+3. Build diversity.
+4. Difficulty pressure.
+5. Long-term balance precision.
+
+Avoid balancing by making every card equal in isolation.
+
+The intended experience is:
+
+- Some cards are situational.
+- Some cards become strong only with a certain build.
+- Some random offers will not perfectly help the current build.
+- The player should still usually have at least one meaningful decision.
+- Strong combinations should feel discovered rather than guaranteed.
+
+---
+
+## 16. Immediate Development Order
+
+PHASE A is complete. The immediate implementation order is now intentionally **world first, then cards**:
+
+1. Finish and test Phase B large-world movement/camera.
+2. Verify hero HP, auto-fire and enemy targeting remain stable in world coordinates.
+3. Add Scrap drops and the top XP/level bar.
+4. Add the level-up pause + 3-card UI.
+5. Build a very small Hero/Utility upgrade pool.
+6. Test the first 60–90 seconds repeatedly on mobile.
 7. Add `CALL THE RIG` only after the open-world movement + level-up loop both feel good.
 
 Do not add new enemy families before Phase B and Phase C are playable and tested on mobile.
@@ -651,21 +659,21 @@ This is the approved architecture for all current and future frontend screens ar
 
 - [x] Introduce one canonical `GameShell` as the frontend-flow owner.
 - [x] Introduce one canonical `ScreenRegistry` for registered screen identities.
-- [ ] `GameShell` must become the only owner allowed to decide which full frontend screen is active and how the application enters/leaves gameplay.
-- [ ] Do not add parallel menu routers, per-screen navigation state, temporary scene-switch hacks, or duplicated ownership.
-- [ ] Keep `GameScene` focused on gameplay. It must not accumulate main-menu, character-select, settings, shop, leaderboard, results, or other frontend navigation logic.
+- [x] `GameShell` is the canonical owner deciding which full frontend screen is active and how the application enters/leaves gameplay.
+- [x] No parallel frontend router or duplicated full-screen navigation owner is used by the migrated core flow.
+- [x] Migrated Main, Character Select, Settings, Pause presentation and Results navigation remain outside `GameScene`.
 - [ ] Migrate incrementally. Existing gameplay must keep working while each screen is brought under the canonical owner.
 
-Current foundation note (2026-09-03): `GameShell` and `ScreenRegistry` exist with unit coverage, but the registry is not yet the final screen map. `MAIN` and `BOOT` still need to be added before the frontend flow is considered complete. The current default `GameShell` entry at `CHARACTER_SELECT` is a foundation default, not the final player-facing boot flow.
+Current foundation note (updated 2026-09-03): `GameShell` and `ScreenRegistry` own the migrated core frontend flow. `BOOT` and `MAIN` are registered, normal launch is `BOOT → MAIN → CHARACTER SELECT → GAMEPLAY`, and post-run navigation returns through canonical boot intents rather than bypassing the shell.
 
 ### 17.2 Canonical supporting owners
 
 - [x] `CharacterRegistry` exists as the canonical character-definition owner for the currently playable Runner.
-- [ ] Extend `CharacterRegistry` so character availability/selectability is canonical data, not inferred by UI code.
-- [ ] Shotgun Character must enter the registry through its own canonical definition/status rather than copied Runner data.
-- [ ] `SettingsStore`: one source of truth for persistent settings such as audio, controls, accessibility/display options when introduced.
-- [ ] Run/result data shown outside gameplay must come from one canonical run-summary/result boundary rather than being recomputed independently in the Results screen.
-- [ ] Pause presentation must use the shared shell/screen architecture; the actual paused/unpaused gameplay state remains owned by the gameplay/runtime boundary.
+- [x] `CharacterRegistry` owns canonical `selectable` / `locked` / `hidden` availability state.
+- [x] Shotgun exists as its own locked canonical preview entry with no copied Runner playable definition.
+- [x] `SettingsStore` is the single persistent settings owner; current implemented settings are Audio and Screen Shake.
+- [x] Results consumes one frozen canonical run-result snapshot and does not recompute gameplay outcome/reward state.
+- [x] Pause presentation uses the shared shell while Phaser/runtime remains the paused/unpaused state owner.
 
 ### 17.3 Final canonical full-screen map
 
@@ -687,7 +695,7 @@ The following are the approved full-screen destinations that belong to the appli
 
 Rules:
 
-- [ ] `BOOT` and `MAIN` must be added to `ScreenRegistry` before Character Select becomes a player-facing route.
+- [x] `BOOT` and `MAIN` are registered in `ScreenRegistry` and precede Character Select in the player-facing flow.
 - [ ] `HELP` and `CREDITS` are approved future routes but should not block the core flow.
 - [ ] Do not add a new full-screen route merely because a temporary overlay or dialog is needed.
 - [ ] Full-screen identities must be declared once in `ScreenRegistry` and referenced by ID everywhere else.
@@ -756,10 +764,10 @@ GAMEPLAY
 
 Post-run rules:
 
-- [ ] Hero death or the approved run-complete condition ends gameplay and creates one canonical run result.
-- [ ] Results presents that already-produced result; it does not independently calculate another score/reward state.
-- [ ] `PLAY AGAIN` returns through the canonical pre-run selection flow unless a later explicit quick-retry design is approved.
-- [ ] `MAIN MENU` returns to `MAIN` through `GameShell`.
+- [x] Hero death/run completion creates one canonical frozen run result.
+- [x] Results presents the already-produced canonical result without a second score/reward calculation.
+- [x] `PLAY AGAIN` returns through Character Select using the canonical boot-intent flow.
+- [x] `MAIN MENU` returns to `MAIN` through the canonical shell/boot-intent flow.
 
 ### 17.6 Character Select contract
 
@@ -767,13 +775,13 @@ Character Select is the first screen to be implemented visually through the cano
 
 Initial behavior:
 
-- [ ] Runner appears as `selectable` and is the only character that may launch gameplay initially.
-- [ ] Shotgun Character may appear as `locked` / development preview.
-- [ ] A locked Shotgun cannot launch gameplay under any input path, deep link, test helper, or UI state.
-- [ ] Character Select reads character identity, presentation metadata and availability from canonical character ownership.
-- [ ] Do not copy Runner runtime/settings data into Character Select.
-- [ ] Do not implement `if shotgun` menu hacks, special navigation branches, or parallel Shotgun configuration.
-- [ ] The UI should be able to render future characters from registry data without adding character-specific navigation logic.
+- [x] Runner appears as `selectable` and is the only character that may launch gameplay initially.
+- [x] Shotgun Character appears as `locked` / development preview.
+- [x] Locked Shotgun is blocked by canonical selectability/runtime-definition gates and cannot launch through the migrated frontend flow.
+- [x] Character Select reads identity, preview metadata and availability from `CharacterRegistry`.
+- [x] Character Select does not copy Runner runtime/settings data.
+- [x] No `if shotgun` menu/navigation branch is used.
+- [x] Character Select renders registry entries generically for future characters.
 
 Recommended canonical availability vocabulary:
 
@@ -790,9 +798,9 @@ The Character Select screen does **not** authorize Shotgun gameplay by itself.
 - [ ] Shotgun remains non-selectable on the `main` branch until its production art gate is complete.
 - [ ] Separate Shotgun weapon ownership/configuration must be complete; no Runner weapon/config copy.
 - [ ] Runtime animation, movement, aim/weapon alignment and combat integration must be complete.
-- [ ] CharacterRegistry integration must be canonical and free of character-specific frontend hacks.
-- [ ] Unit tests must prove locked Shotgun cannot launch.
-- [ ] E2E must prove the normal player flow cannot launch locked Shotgun.
+- [x] CharacterRegistry integration is canonical and free of Shotgun-specific frontend navigation hacks.
+- [x] Unit tests prove locked Shotgun cannot become a playable runtime definition.
+- [x] E2E covers the locked Shotgun path and selectable-character launch flow.
 - [ ] Full Quality, Smoke, all required E2E shards, aggregate E2E and Live validation must pass.
 - [ ] Only after every activation gate passes may `CharacterRegistry` change Shotgun from `locked` to `selectable`.
 
@@ -802,11 +810,11 @@ Main is the final player-facing landing screen after Boot completes.
 
 Core Main actions:
 
-- [ ] `PLAY` → Character Select.
-- [ ] `SETTINGS` → Settings through `GameShell`.
+- [x] `PLAY` → Character Select.
+- [x] `SETTINGS` → Settings through `GameShell`.
 - [ ] `SHOP / PROGRESSION` → future canonical route when implemented.
 - [ ] `LEADERBOARD` → future canonical route when implemented.
-- [ ] No direct gameplay launch from Main that bypasses Character Select unless a later explicit quick-play feature is designed and approved.
+- [x] Main has no direct gameplay launch that bypasses Character Select.
 
 Main must not duplicate character selection, settings state, progression calculations, or gameplay initialization.
 
@@ -814,30 +822,30 @@ Main must not duplicate character selection, settings state, progression calcula
 
 Pause is required for the core mobile game and must not be deferred behind Shop/Leaderboard.
 
-- [ ] Provide Resume.
-- [ ] Provide Settings access without losing the paused-run context.
+- [x] Provide Resume.
+- [x] Provide Settings access without losing the paused-run context.
 - [ ] Provide Restart Run behind confirmation.
 - [ ] Provide Exit to Main behind confirmation.
-- [ ] Prevent gameplay simulation/input from continuing while pause is active according to the existing canonical runtime pause boundary.
-- [ ] Do not build a separate pause navigation/router architecture.
+- [x] Gameplay simulation/input is paused through the Phaser/runtime pause boundary while Pause is active.
+- [x] Pause uses `GameShell`; no separate pause router exists.
 
 ### 17.10 Settings contract
 
-- [ ] Add one canonical `SettingsStore` before multiple screens begin reading/writing settings.
-- [ ] Main Settings and Pause Settings must use the same stored values and controls.
-- [ ] Initial settings scope should stay intentionally small: audio first, then controls/display/accessibility only when they have real behavior.
-- [ ] Do not expose toggles that do nothing.
-- [ ] Back navigation must restore the caller context correctly: Main → Settings → Main, or Pause → Settings → Pause.
+- [x] One canonical `SettingsStore` exists before Main/Pause settings share state.
+- [x] Main Settings and Pause Settings use the same stored values and controls.
+- [x] Initial settings are intentionally limited to Audio and Screen Shake, both with real runtime behavior.
+- [x] No inert settings toggles are exposed.
+- [x] Back navigation restores Main or paused-run caller context correctly.
 
 ### 17.11 Results / Run End contract
 
 Results is part of the **core run loop**, not a low-priority extra screen.
 
-- [ ] Results is implemented before Shop/Leaderboard.
-- [ ] Show the approved run outcome and essential run statistics only after gameplay ends.
-- [ ] Show permanent rewards/unlocks only from canonical reward/result data.
-- [ ] Provide `PLAY AGAIN` and `MAIN MENU` as canonical shell actions.
-- [ ] Temporary testing/report controls, if still required during development, must remain clearly separated from the final player-facing Results design.
+- [x] Results is implemented before Shop/Leaderboard.
+- [x] Results shows the approved run outcome and essential statistics only after gameplay ends.
+- [x] Results does not invent permanent rewards/unlocks; any future display must come from canonical reward/result data.
+- [x] `PLAY AGAIN` and `MAIN MENU` are canonical shell/boot-intent actions.
+- [x] The temporary `SEND REPORT` development control is visually separated from the primary player Results actions.
 
 ### 17.12 Shop / Progression and Leaderboard contract
 
@@ -853,32 +861,32 @@ These are Phase 2 shell screens and must not block completion of the core launch
 Execute in this order unless a later documented dependency requires a change:
 
 1. [x] Create the `GameShell` / `ScreenRegistry` ownership foundation with unit coverage.
-2. [ ] Correct the canonical registry map: add `BOOT` and `MAIN`, preserve existing screen IDs, and test the final ownership model without visual redesign.
-3. [ ] Extend `CharacterRegistry` with canonical availability/selectability state and add the locked Shotgun definition/preview boundary without enabling Shotgun gameplay.
-4. [ ] Build **Character Select** through `GameShell`.
-5. [ ] Build/route **Main / Start** through the same shell and make Boot → Main the final launch flow.
-6. [ ] Bring **Pause** presentation under the shared architecture without changing runtime pause semantics.
-7. [ ] Add **Settings** with one canonical `SettingsStore`, supporting Main and Pause caller contexts.
-8. [ ] Add **Results / Run End** and connect the complete Main → Select → Run → Results → Main/Replay loop.
+2. [x] Correct the canonical registry map: add `BOOT` and `MAIN`, preserve existing screen IDs, and test the final ownership model without visual redesign.
+3. [x] Extend `CharacterRegistry` with canonical availability/selectability state and add the locked Shotgun definition/preview boundary without enabling Shotgun gameplay.
+4. [x] Build **Character Select** through `GameShell`.
+5. [x] Build/route **Main / Start** through the same shell and make Boot → Main the final launch flow.
+6. [x] Bring **Pause** presentation under the shared architecture without changing runtime pause semantics.
+7. [x] Add **Settings** with one canonical `SettingsStore`, supporting Main and Pause caller contexts.
+8. [x] Add **Results / Run End** and connect the complete Main → Select → Run → Results → Main/Replay loop.
 9. [ ] Add **Shop / Progression** when its persistent data contract is ready.
 10. [ ] Add **Leaderboard** when score/backend contracts are ready.
 11. [ ] Add **Help / Credits** only when they are needed for release/polish.
 
 ### 17.14 Architecture acceptance gates
 
-- [ ] Exactly one canonical owner controls full frontend screen navigation.
-- [ ] `BOOT`, `MAIN`, `CHARACTER_SELECT`, `GAMEPLAY`, `PAUSE`, `SETTINGS`, `RESULTS`, `SHOP` and `LEADERBOARD` are represented by one canonical registry model as they become active.
-- [ ] Screen definitions are not duplicated across menu/gameplay files.
-- [ ] Character availability is read from the canonical character owner, not inferred by UI code.
-- [ ] Runner remains the only launchable character until another character passes its complete production gate.
-- [ ] Shotgun cannot accidentally start a run while its activation gate is incomplete.
-- [ ] Settings have one persistent owner.
-- [ ] Level-up cards and transient dialogs remain overlays instead of becoming parallel routers.
+- [x] Exactly one canonical owner controls the migrated full frontend screen navigation.
+- [x] `BOOT`, `MAIN`, `CHARACTER_SELECT`, `GAMEPLAY`, `PAUSE`, `SETTINGS`, `RESULTS`, `SHOP` and `LEADERBOARD` are represented by one canonical registry model.
+- [x] Migrated screen identities are not duplicated across menu/gameplay files.
+- [x] Character availability is read from `CharacterRegistry`, not inferred by UI code.
+- [x] Runner remains the only launchable character while Shotgun is locked.
+- [x] Shotgun cannot start a run while its activation gate is incomplete.
+- [x] Settings have one persistent owner.
+- [x] Level-up cards remain gameplay overlays instead of parallel frontend routes.
 - [ ] Starting a Runner run preserves current approved gameplay, balance, RNG, rarity and upgrade behavior.
-- [ ] Pause does not change combat semantics beyond the approved paused state.
-- [ ] Results consumes canonical run outcome/reward data and cannot double-award rewards.
+- [x] Pause does not change combat semantics beyond the approved paused state.
+- [x] Results consumes canonical run outcome data and does not calculate/award rewards a second time.
 - [ ] Main/Settings/Results/Character Select are usable on the supported mobile landscape viewport.
-- [ ] Unit/E2E coverage protects navigation ownership, boot/main flow, Runner launch, locked Shotgun behavior, pause/settings return context and results/replay flow.
+- [x] Unit/E2E coverage protects navigation ownership, boot/main flow, Runner launch, locked Shotgun behavior, pause/settings context and canonical Results ownership; Live validation remains a separate gate below.
 - [ ] Full Quality, Smoke, all required E2E shards and aggregate E2E are required before each migration step merges.
 - [ ] Live validation is required before a newly migrated core screen is considered complete.
 
