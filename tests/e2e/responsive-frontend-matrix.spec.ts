@@ -261,65 +261,51 @@ test('812x375 notch: real end-run stays canonical and horizontally sealed throug
   await expectHorizontalFit(page, '[data-item-id="terminal-plate-rustline"]');
 });
 
-test('portrait rotate gate covers pause and confirmation overlays', async ({ page }) => {
+test('portrait fallback no longer blocks the frontend with a rotate gate', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/?debug=1');
-  await expect(page.locator('#rotate')).toBeVisible();
+  await expect(page.locator('#rotate')).toHaveCount(0);
+  await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 20_000 });
   await applySafeArea(page, { top: 47, right: 0, bottom: 34, left: 0 });
-  await page.evaluate(async () => {
-    const pause = await new Function('url', 'return import(url)')('/src/ui/pause-screen.js?v=4');
-    void pause.showPauseScreen();
-    const confirm = await new Function('url', 'return import(url)')('/src/ui/confirmation-modal.js?v=2');
-    void confirm.showConfirmationModal({ title: 'RESPONSIVE CHECK', body: 'Rotate must remain above this dialog.' });
-  });
-  const layers = await page.evaluate(() => {
-    const z = (selector: string) => Number.parseInt(getComputedStyle(document.querySelector(selector)!).zIndex || '0', 10);
-    return {
-      rotate: z('#rotate'),
-      pause: z('.wm-pause-screen'),
-      confirm: z('.wm-confirm-overlay'),
-    };
-  });
-  expect(layers.rotate).toBeGreaterThan(layers.pause);
-  expect(layers.rotate).toBeGreaterThan(layers.confirm);
+  await expect(page.locator('.wm-main-screen')).toHaveCount(1);
 });
 
-test('812x375 notch landscape survives portrait round-trip without duplicate shell state', async ({ page }) => {
+test('812x375 notch landscape survives portrait round-trip without a rotate blocker or duplicate shell state', async ({ page }) => {
   await page.setViewportSize({ width: 812, height: 375 });
   await page.goto('/?debug=1');
   await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 20_000 });
   await applySafeArea(page, { top: 0, right: 44, bottom: 21, left: 44 });
   await expect(page.locator('.wm-main-screen')).toHaveCount(1);
+  await expect(page.locator('#rotate')).toHaveCount(0);
 
   await page.setViewportSize({ width: 375, height: 812 });
   await applySafeArea(page, { top: 47, right: 0, bottom: 34, left: 0 });
-  await expect(page.locator('#rotate')).toBeVisible();
+  await expect(page.locator('#rotate')).toHaveCount(0);
   await expect(page.locator('.wm-main-screen')).toHaveCount(1);
 
   await page.setViewportSize({ width: 812, height: 375 });
   await applySafeArea(page, { top: 0, right: 44, bottom: 21, left: 44 });
-  await expect(page.locator('#rotate')).toBeHidden();
   await expect(page.locator('.wm-main-screen')).toBeVisible();
   await expect(page.locator('.wm-main-screen')).toHaveCount(1);
   await expectNoHorizontalOverflow(page, '.wm-main-screen');
   await expectNoVerticalOverflow(page, '.wm-main-screen');
 });
 
-test('430x932 portrait rotate gate also covers frontend overlays', async ({ page }) => {
-  await page.setViewportSize({ width: 430, height: 932 });
+test('fullscreen path requests a landscape orientation lock when the browser supports it', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(screen.orientation, 'lock', {
+      configurable: true,
+      value: async (type: string) => { (window as any).__WM_TEST_ORIENTATION_LOCK__ = type; },
+    });
+    Object.defineProperty(Element.prototype, 'requestFullscreen', {
+      configurable: true,
+      value: async () => undefined,
+    });
+  });
+  await page.setViewportSize({ width: 812, height: 375 });
   await page.goto('/?debug=1');
-  await expect(page.locator('#rotate')).toBeVisible();
-  await applySafeArea(page, { top: 47, right: 0, bottom: 34, left: 0 });
-  await page.evaluate(async () => {
-    const pause = await new Function('url', 'return import(url)')('/src/ui/pause-screen.js?v=4');
-    void pause.showPauseScreen();
-    const confirm = await new Function('url', 'return import(url)')('/src/ui/confirmation-modal.js?v=2');
-    void confirm.showConfirmationModal({ title: 'RESPONSIVE CHECK', body: 'Rotate must remain above this dialog.' });
-  });
-  const layers = await page.evaluate(() => {
-    const z = (selector: string) => Number.parseInt(getComputedStyle(document.querySelector(selector)!).zIndex || '0', 10);
-    return { rotate: z('#rotate'), pause: z('.wm-pause-screen'), confirm: z('.wm-confirm-overlay') };
-  });
-  expect(layers.rotate).toBeGreaterThan(layers.pause);
-  expect(layers.rotate).toBeGreaterThan(layers.confirm);
+  await expect(page.locator('#fs-btn')).toBeVisible();
+  await page.locator('#fs-btn').click();
+  await expect.poll(() => page.evaluate(() => (window as any).__WM_TEST_ORIENTATION_LOCK__)).toBe('landscape');
+  await expect.poll(() => page.evaluate(() => (window as any).__WM_ORIENTATION__?.requested)).toBe('landscape');
 });
