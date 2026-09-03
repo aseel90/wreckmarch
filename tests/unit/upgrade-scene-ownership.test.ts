@@ -23,6 +23,7 @@ describe('U7 canonical Upgrade Scene ownership', () => {
     expect(canonical).toContain('gameScene.closeUpgradeCards = function()');
     expect(canonical).toContain("gameScene.__upgradeSceneOwner = 'src/upgrades/upgrade-scene.js'");
     expect(canonical).toContain("gameScene.scene.add('UpgradeSceneV4', UpgradeSceneV4, false)");
+    expect(canonical).toContain('Phaser.Core.Events.POST_STEP');
     expect(canonical).not.toContain('gameScene.game.scene.add');
     expect(canonical).not.toContain('gameScene.game.scene.getScene');
 
