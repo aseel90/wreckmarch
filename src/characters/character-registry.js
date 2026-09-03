@@ -1,18 +1,74 @@
-/* WRECKMARCH F0 — data-driven playable character registry */
+/* WRECKMARCH — canonical character identity, availability, and playable-definition registry */
 import { RUNNER_CHARACTER } from './definitions/runner.js?v=4';
+import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=1';
 
-const DEFINITIONS = new Map([[RUNNER_CHARACTER.id, RUNNER_CHARACTER]]);
+export const CHARACTER_AVAILABILITY = Object.freeze({
+  SELECTABLE: 'selectable',
+  LOCKED: 'locked',
+  HIDDEN: 'hidden',
+});
+
+const RUNNER_ENTRY = Object.freeze({
+  id: RUNNER_CHARACTER.id,
+  displayName: RUNNER_CHARACTER.displayName,
+  availability: CHARACTER_AVAILABILITY.SELECTABLE,
+  definition: RUNNER_CHARACTER,
+  preview: Object.freeze({
+    idleTexture: RUNNER_CHARACTER.render.idleTexture,
+    weaponId: RUNNER_CHARACTER.startingWeapon.id,
+  }),
+});
+
+const SHOTGUN_ENTRY = Object.freeze({
+  id: 'shotgun',
+  displayName: 'Shotgun',
+  availability: CHARACTER_AVAILABILITY.LOCKED,
+  definition: null,
+  lockReason: 'production-gate',
+  preview: Object.freeze({
+    bodyAsset: SHOTGUN_PRODUCTION_ART.body.idle[0],
+    weaponAsset: SHOTGUN_PRODUCTION_ART.weapon.path,
+    artStatus: SHOTGUN_PRODUCTION_ART.status,
+  }),
+});
+
+const ENTRIES = new Map([
+  [RUNNER_ENTRY.id, RUNNER_ENTRY],
+  [SHOTGUN_ENTRY.id, SHOTGUN_ENTRY],
+]);
+
+export function getCharacterEntry(characterId = 'runner') {
+  const entry = ENTRIES.get(characterId);
+  if (!entry) throw Error(`Unknown character: ${characterId}`);
+  return entry;
+}
+
+export function listCharacterEntries({ includeHidden = false } = {}) {
+  const entries = [...ENTRIES.values()];
+  return includeHidden ? entries : entries.filter(entry => entry.availability !== CHARACTER_AVAILABILITY.HIDDEN);
+}
+
+export function hasCharacterEntry(characterId) {
+  return ENTRIES.has(characterId);
+}
+
+export function isCharacterSelectable(characterId) {
+  const entry = ENTRIES.get(characterId);
+  return Boolean(entry && entry.availability === CHARACTER_AVAILABILITY.SELECTABLE && entry.definition);
+}
 
 export function getCharacterDefinition(characterId = 'runner') {
-  const definition = DEFINITIONS.get(characterId);
-  if (!definition) throw Error(`Unknown character: ${characterId}`);
-  return definition;
+  const entry = getCharacterEntry(characterId);
+  if (!isCharacterSelectable(characterId)) throw Error(`Character is not selectable: ${characterId}`);
+  return entry.definition;
 }
 
 export function listCharacterDefinitions() {
-  return [...DEFINITIONS.values()];
+  return [...ENTRIES.values()]
+    .filter(entry => entry.availability === CHARACTER_AVAILABILITY.SELECTABLE && entry.definition)
+    .map(entry => entry.definition);
 }
 
 export function hasCharacterDefinition(characterId) {
-  return DEFINITIONS.has(characterId);
+  return isCharacterSelectable(characterId);
 }

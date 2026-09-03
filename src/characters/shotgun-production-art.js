@@ -1,5 +1,5 @@
 /* WRECKMARCH WS14-C — inactive Shotgun production art manifest.
- * Assets are intentionally not imported by the playable character registry/runtime yet.
+ * Locked frontend preview metadata may reference this manifest. Playable runtime activation remains gated.
  */
 import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js';
 

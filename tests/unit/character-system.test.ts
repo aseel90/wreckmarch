@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { CharacterSystem } from '../../src/characters/character-system.js';
-import { getCharacterDefinition, listCharacterDefinitions } from '../../src/characters/character-registry.js';
+import {
+  CHARACTER_AVAILABILITY,
+  getCharacterDefinition,
+  getCharacterEntry,
+  isCharacterSelectable,
+  listCharacterDefinitions,
+  listCharacterEntries,
+} from '../../src/characters/character-registry.js';
 
 function makeScene() {
   return {
@@ -19,6 +26,24 @@ describe('CharacterSystem', () => {
     expect(runner.animations.idle.frameRate).toBe(2);
     expect(runner.animations.run.frameRate).toBe(10);
     expect(() => getCharacterDefinition('missing')).toThrow('Unknown character: missing');
+  });
+
+  it('exposes locked Shotgun preview data without creating a playable runtime definition', () => {
+    expect(listCharacterEntries().map(character => [character.id, character.availability])).toEqual([
+      ['runner', CHARACTER_AVAILABILITY.SELECTABLE],
+      ['shotgun', CHARACTER_AVAILABILITY.LOCKED],
+    ]);
+    const shotgun = getCharacterEntry('shotgun');
+    expect(shotgun.definition).toBeNull();
+    expect(shotgun.preview).toMatchObject({
+      bodyAsset: 'assets/hero/shotgun/idle-0.svg',
+      weaponAsset: 'assets/weapons/shotgun.svg',
+      artStatus: 'art-only',
+    });
+    expect(isCharacterSelectable('runner')).toBe(true);
+    expect(isCharacterSelectable('shotgun')).toBe(false);
+    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
+    expect(() => new CharacterSystem(makeScene(), 'shotgun')).toThrow('Character is not selectable: shotgun');
   });
 
   it('applies gameplay stats through the selected definition', () => {
