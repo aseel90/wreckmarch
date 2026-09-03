@@ -41,16 +41,32 @@ test('three-card selection stays readable and non-overlapping on target mobile l
       rarityPowerMultiplier: rarity.powerMultiplier
     }));
 
+    const distinctChoices = Array.from(new Map(allChoices.map((choice: any) => [choice.id, choice])).values()) as any[];
+    if (distinctChoices.length < 3) throw new Error(`mobile visual gate requires >=3 distinct offers, got ${distinctChoices.length}`);
+
     const groups: any[][] = [];
-    for (let start = 0; start < allChoices.length; start += 3) {
-      const group = allChoices.slice(start, start + 3);
-      let cursor = 0;
-      while (group.length < 3 && allChoices.length >= 3) {
-        group.push(allChoices[cursor % allChoices.length]);
-        cursor += 1;
+    for (let start = 0; start < distinctChoices.length; start += 3) {
+      const group = distinctChoices.slice(start, start + 3);
+      const used = new Set(group.map((choice: any) => choice.id));
+      for (const candidate of distinctChoices) {
+        if (group.length >= 3) break;
+        if (used.has(candidate.id)) continue;
+        group.push(candidate);
+        used.add(candidate.id);
       }
-      if (group.length === 3) groups.push(group);
+      if (group.length !== 3 || new Set(group.map((choice: any) => choice.id)).size !== 3) {
+        throw new Error(`could not build a distinct three-card group from ${group.map((choice: any) => choice.id).join(',')}`);
+      }
+      groups.push(group);
     }
+
+    const waitFor = async (predicate: () => boolean, label: string, attempts = 90) => {
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        if (predicate()) return;
+        await new Promise(resolve => requestAnimationFrame(() => resolve(undefined)));
+      }
+      throw new Error(`timed out waiting for ${label}`);
+    };
 
     const snapshots: any[] = [];
     const measure = (upgradeScene: any, choices: any[]) => {
@@ -112,14 +128,22 @@ test('three-card selection stays readable and non-overlapping on target mobile l
     };
 
     for (let index = 0; index < groups.length; index += 1) {
-      scene.scene.stop('UpgradeSceneV4');
+      if (game.scene.isActive('UpgradeSceneV4')) {
+        scene.scene.stop('UpgradeSceneV4');
+        await waitFor(() => !game.scene.isActive('UpgradeSceneV4'), 'UpgradeSceneV4 shutdown');
+      }
       scene.scene.launch('UpgradeSceneV4', { gameScene: scene, choices: groups[index], level: index + 1 });
       scene.scene.bringToTop('UpgradeSceneV4');
-      await new Promise(resolve => setTimeout(resolve, 40));
+      await waitFor(() => {
+        const active = game.scene.isActive('UpgradeSceneV4');
+        const current = game.scene.getScene('UpgradeSceneV4');
+        return active && Array.isArray(current?.cards) && current.cards.length === 3;
+      }, `UpgradeSceneV4 three-card render for group ${index}`);
       const upgradeScene = game.scene.getScene('UpgradeSceneV4');
       const initial = measure(upgradeScene, groups[index]);
       upgradeScene.selectedIndex = 1;
       upgradeScene.refresh();
+      await new Promise(resolve => requestAnimationFrame(() => resolve(undefined)));
       const middleSelected = measure(upgradeScene, groups[index]);
       snapshots.push({ ids: groups[index].map((choice: any) => choice.id), initial, middleSelected });
     }
@@ -131,7 +155,7 @@ test('three-card selection stays readable and non-overlapping on target mobile l
       presentationVersion: scene.__upgradeCardPresentationVersion,
       previewVersion: scene.__upgradeCardPreviewVersion,
       uniformCards: scene.__finalUniformUpgradeCards,
-      eligibleOfferIds: allChoices.map((choice: any) => choice.id),
+      eligibleOfferIds: distinctChoices.map((choice: any) => choice.id),
       snapshots
     };
   }, TARGET_VIEWPORT);
