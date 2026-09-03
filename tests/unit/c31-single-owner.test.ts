@@ -10,11 +10,14 @@ describe('Phase C3.1 single-owner boot contract', () => {
     const html = read('index.html');
     const c31 = read('src/phase-c3-frame-fix.js');
     expect(html).toContain("./src/phase-c3-runtime.js?v=8");
-    expect(html).toContain("./src/phase-c3-frame-fix.js?v=6");
+    expect(html).toContain("./src/phase-c3-frame-fix.js?v=7");
     expect(c31).toContain("const C31_OWNER_VERSION='single-owner-v1'");
     expect(c31).toContain('existingC31StateHealthy');
     expect(c31).toContain('adopted healthy legacy state');
     expect(c31).toContain('s.__wreckmarchC31Owner===C31_OWNER_VERSION');
     expect(c31).toContain('wreckmarchC31Owner=C31_OWNER_VERSION');
+    expect(c31).toContain('function weaponFootprintHealthy(gun)');
+    expect(c31).toContain('major>90&&minor>40');
+    expect(c31).not.toContain('s.weaponV3Gun.displayWidth>90&&s.weaponV3Gun.displayHeight>45');
   });
 });
