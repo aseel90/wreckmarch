@@ -89,7 +89,13 @@ describe('balance run report bridge contract', () => {
     expect(hud).toContain('scene.__mobileHudEndRunOwnerVersion===END_RUN_OWNER_VERSION');
     expect(hud).toContain('wreckmarchEndRunLayout=END_RUN_OWNER_VERSION');
     expect(smokeScript).toContain('TELEMETRY_SMOKE');
-    expect(smokeScript).toContain("endRunVersion !== 'runtime-v5-test'");
+    expect(smokeScript).toContain("document.querySelector('.wm-results-screen')");
+    expect(smokeScript).toContain("document.querySelector('.wm-results-report-button')");
+    expect(smokeScript).toContain("before.shellScreen !== 'results'");
+    expect(smokeScript).toContain("before.owner !== 'game-shell-results-v1'");
+    expect(smokeScript).toContain("before.label !== 'SEND REPORT'");
+    expect(smokeScript).toContain('reportButton.click()');
+    expect(smokeScript).not.toContain('layout?.reportBtn');
     expect(worker).toContain('INSERT OR IGNORE INTO run_reports');
     expect(worker).toContain("stage: 'd1_insert'");
     expect(worker).toContain('issueComments');

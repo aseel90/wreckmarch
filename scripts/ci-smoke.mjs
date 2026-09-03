@@ -83,21 +83,35 @@ try {
   if (TELEMETRY_SMOKE) {
     telemetryState = await page.evaluate(async () => {
       const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch');
+      const shell = window.__WM_GAME_SHELL__;
       if (!scene?.sys?.isActive?.()) throw new Error('telemetry live smoke scene unavailable');
       scene.spawnEvent && (scene.spawnEvent.paused = true);
       scene.waveEvent && (scene.waveEvent.paused = true);
       scene.enemies?.clear?.(true, true);
       scene.endRun('LIVE TELEMETRY SMOKE');
       await new Promise(resolve => setTimeout(resolve, 80));
-      const layout = window.__WM_END_RUN_LAYOUT__;
-      const before = { endRunVersion: document.documentElement.dataset.wreckmarchEndRunLayout || null, ownerVersion: scene.__mobileHudEndRunOwnerVersion || null, buttonActive: layout?.reportBtn?.active === true, buttonVisible: layout?.reportBtn?.visible === true, label: layout?.reportLabel?.text || null, status: layout?.reportStatus?.text || null };
-      if (!before.buttonActive || !before.buttonVisible || before.label !== 'SEND REPORT') throw new Error(`live SEND REPORT control missing: ${JSON.stringify(before)}`);
-      if (before.endRunVersion !== 'runtime-v5-test' || before.ownerVersion !== 'runtime-v5-test') throw new Error(`stale end-run owner: ${JSON.stringify(before)}`);
-      layout.reportBtn.emit('pointerdown');
+      const resultsScreen = document.querySelector('.wm-results-screen');
+      const reportButton = document.querySelector('.wm-results-report-button');
+      const reportStatus = document.querySelector('.wm-results-report span');
+      const before = {
+        shellScreen: shell?.currentScreenId || null,
+        owner: document.documentElement.dataset.wreckmarchEndRunOwner || null,
+        resultsState: document.documentElement.dataset.wreckmarchResults || null,
+        resultsVisible: Boolean(resultsScreen && resultsScreen.getClientRects().length),
+        buttonVisible: Boolean(reportButton && reportButton.getClientRects().length),
+        buttonEnabled: reportButton instanceof HTMLButtonElement && !reportButton.disabled,
+        label: reportButton?.textContent?.trim() || null,
+        status: reportStatus?.textContent?.trim() || null,
+        legacyLayoutExists: Boolean(window.__WM_END_RUN_LAYOUT__)
+      };
+      if (before.shellScreen !== 'results' || before.owner !== 'game-shell-results-v1' || before.resultsState !== 'active' || !before.resultsVisible) throw new Error(`live canonical Results owner missing: ${JSON.stringify(before)}`);
+      if (!before.buttonVisible || !before.buttonEnabled || before.label !== 'SEND REPORT') throw new Error(`live Results SEND REPORT control missing: ${JSON.stringify(before)}`);
+      if (before.legacyLayoutExists) throw new Error(`legacy end-run layout resurfaced under canonical Results: ${JSON.stringify(before)}`);
+      reportButton.click();
       await new Promise(resolve => setTimeout(resolve, 120));
-      return { before, label: layout?.reportLabel?.text || null, status: layout?.reportStatus?.text || null, manualState: document.documentElement.dataset.wreckmarchManualReport || null };
+      return { before, label: reportButton?.textContent?.trim() || null, status: reportStatus?.textContent?.trim() || null, manualState: document.documentElement.dataset.wreckmarchManualReport || null };
     });
-    if (telemetryState.label !== 'REPORT SENT' || telemetryState.manualState !== 'sent') throw new Error(`live manual telemetry send failed: ${JSON.stringify(telemetryState)}`);
+    if (telemetryState.label !== 'REPORT SENT' || telemetryState.manualState !== 'sent') throw new Error(`live Results report submission failed: ${JSON.stringify(telemetryState)}`);
   }
   if (browserEvents.length) throw new Error(`Browser emitted ${browserEvents.length} error event(s):\n${browserEvents.slice(-40).join('\n')}`);
   console.log(JSON.stringify({ ok: true, url: URL, readinessMs, state, e1Persistence, telemetryState, browserEvents }, null, 2));
