@@ -1,0 +1,55 @@
+name: One-shot frontend repair
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/repair-malformed-frontend.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore frontend to last known-good commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          GOOD=208c08d4b6454972b9ff4943498d355c2473b947
+          git checkout "$GOOD" -- \
+            index.html \
+            src/ui/character-select-screen.js \
+            src/ui/frontend-intent.js \
+            src/ui/frontend-runtime.js \
+            src/ui/frontend-shell.css \
+            src/ui/main-menu-screen.js \
+            src/ui/pause-runtime.js \
+            src/ui/pause-screen.js \
+            src/ui/results-runtime.js \
+            src/ui/results-screen.js \
+            src/ui/settings-screen.js \
+            tests/e2e/pause.spec.ts \
+            tests/unit/frontend-intent.test.ts
+          rm -f src/ui/confirmation-modal.js
+          if grep -R "REPLACE_" index.html src/ui tests/e2e/pause.spec.ts tests/unit/frontend-intent.test.ts; then
+            echo "Placeholder marker remains after repair" >&2
+            exit 1
+          fi
+      - name: Commit repaired files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A index.html src/ui tests/e2e/pause.spec.ts tests/unit/frontend-intent.test.ts
+          if git diff --cached --quiet; then
+            echo "Nothing to repair"
+            exit 0
+          fi
+          git commit -m "fix: restore frontend after malformed push"
+          git push origin HEAD:main
