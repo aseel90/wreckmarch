@@ -4,7 +4,12 @@ test.use({ viewport: { width: 960, height: 540 } });
 test.describe.configure({ timeout: 90_000 });
 
 test('canonical Results persist run records and Main Progression displays them without currency', async ({ page }) => {
-  await page.addInitScript(() => localStorage.removeItem('wreckmarch.progression.v1'));
+  await page.addInitScript(() => {
+    const marker = 'wreckmarch.test.progression-cleared';
+    if (sessionStorage.getItem(marker)) return;
+    localStorage.removeItem('wreckmarch.progression.v1');
+    sessionStorage.setItem(marker, '1');
+  });
   await page.goto('/?autotest=1&debug=1');
   await expect.poll(
     () => page.evaluate(() => document.body.classList.contains('visual-ready')),

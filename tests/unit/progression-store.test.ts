@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { ProgressionStore } from '../../src/progression/progression-store.js';
 
-function createStorage() {
+function createStorage(): Storage {
   const values = new Map<string, string>();
   return {
+    get length() { return values.size; },
+    clear: () => { values.clear(); },
     getItem: (key: string) => values.get(key) ?? null,
+    key: (index: number) => Array.from(values.keys())[index] ?? null,
+    removeItem: (key: string) => { values.delete(key); },
     setItem: (key: string, value: string) => { values.set(key, String(value)); },
   };
 }
