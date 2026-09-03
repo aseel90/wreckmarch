@@ -2,7 +2,7 @@ import { SCREEN_IDS } from './screen-registry.js?v=2';
 import { createRunResult } from './run-result.js?v=2';
 import { showResultsScreen } from './results-screen.js?v=2';
 import { requestNextBootScreen } from './frontend-intent.js?v=2';
-import { progressionStore } from '../progression/progression-store.js?v=2';
+import { progressionStore } from '../progression/progression-store.js?v=3';
 import { createWorkshopReward } from '../progression/workshop-reward.js?v=1';
 
 function cleanGameplayForResults(scene) {

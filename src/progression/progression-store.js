@@ -1,13 +1,15 @@
 /**
  * @typedef {{ runId: string, amount: number }} WorkshopReward
  * @typedef {{ workshopReward?: WorkshopReward | null }} RecordRunOptions
+ * @typedef {{ itemId: string, cost: number }} WorkshopPurchaseRequest
  */
 
-export const PROGRESSION_STORAGE_KEY = 'wreckmarch.progression.v2';
+export const PROGRESSION_STORAGE_KEY = 'wreckmarch.progression.v3';
+export const PREVIOUS_PROGRESSION_STORAGE_KEY = 'wreckmarch.progression.v2';
 export const LEGACY_PROGRESSION_STORAGE_KEY = 'wreckmarch.progression.v1';
 
 const DEFAULT_STATE = Object.freeze({
-  version: 2,
+  version: 3,
   totalRuns: 0,
   bestSurvivalSeconds: 0,
   highestLevel: 1,
@@ -15,6 +17,7 @@ const DEFAULT_STATE = Object.freeze({
   workshopScrip: 0,
   recordedRunIds: Object.freeze([]),
   rewardedRunIds: Object.freeze([]),
+  ownedWorkshopItemIds: Object.freeze([]),
   lastRunAt: null,
 });
 
@@ -35,7 +38,7 @@ function normalizeIdList(value) {
 
 function normalizeState(value = {}) {
   return {
-    version: 2,
+    version: 3,
     totalRuns: nonNegativeInt(value.totalRuns),
     bestSurvivalSeconds: nonNegativeInt(value.bestSurvivalSeconds),
     highestLevel: Math.max(1, nonNegativeInt(value.highestLevel, 1)),
@@ -43,6 +46,7 @@ function normalizeState(value = {}) {
     workshopScrip: nonNegativeInt(value.workshopScrip),
     recordedRunIds: normalizeIdList(value.recordedRunIds),
     rewardedRunIds: normalizeIdList(value.rewardedRunIds),
+    ownedWorkshopItemIds: normalizeIdList(value.ownedWorkshopItemIds),
     lastRunAt: typeof value.lastRunAt === 'string' && value.lastRunAt ? value.lastRunAt : null,
   };
 }
@@ -52,6 +56,7 @@ function freezeSnapshot(state) {
     ...state,
     recordedRunIds: Object.freeze([...state.recordedRunIds]),
     rewardedRunIds: Object.freeze([...state.rewardedRunIds]),
+    ownedWorkshopItemIds: Object.freeze([...state.ownedWorkshopItemIds]),
   });
 }
 
@@ -61,19 +66,37 @@ function canonicalRunId(result) {
   return result.runId;
 }
 
+function canonicalPurchaseRequest(request) {
+  if (!request || typeof request !== 'object') throw new TypeError('ProgressionStore.purchaseWorkshopItem requires a canonical purchase request');
+  const itemId = typeof request.itemId === 'string' ? request.itemId.trim() : '';
+  const cost = nonNegativeInt(request.cost, -1);
+  if (!itemId) throw new TypeError('Workshop purchase requires itemId');
+  if (cost < 1) throw new TypeError('Workshop purchase requires a positive integer cost');
+  return { itemId, cost };
+}
+
 export class ProgressionStore {
-  constructor({ storage = getDefaultStorage(), storageKey = PROGRESSION_STORAGE_KEY, legacyStorageKey = LEGACY_PROGRESSION_STORAGE_KEY } = {}) {
+  constructor({
+    storage = getDefaultStorage(),
+    storageKey = PROGRESSION_STORAGE_KEY,
+    previousStorageKey = PREVIOUS_PROGRESSION_STORAGE_KEY,
+    legacyStorageKey = LEGACY_PROGRESSION_STORAGE_KEY,
+  } = {}) {
     this.storage = storage;
     this.storageKey = storageKey;
+    this.previousStorageKey = previousStorageKey;
     this.legacyStorageKey = legacyStorageKey;
     this.listeners = new Set();
     const loaded = this.#load();
     this.state = loaded.state;
-    if (loaded.migrated) this.#persist();
+    if (loaded.migrated) {
+      this.#persist();
+      this.#removeStorageKey(loaded.sourceKey);
+    }
   }
 
   #read(key) {
-    if (!this.storage) return null;
+    if (!this.storage || !key) return null;
     try {
       const raw = this.storage.getItem(key);
       return raw ? JSON.parse(raw) : null;
@@ -82,14 +105,23 @@ export class ProgressionStore {
     }
   }
 
+  #removeStorageKey(key) {
+    if (!this.storage || !key || key === this.storageKey) return;
+    try { this.storage.removeItem(key); }
+    catch { /* Ignore unavailable storage mutations. */ }
+  }
+
   #load() {
-    if (!this.storage) return { state: normalizeState(DEFAULT_STATE), migrated: false };
+    if (!this.storage) return { state: normalizeState(DEFAULT_STATE), migrated: false, sourceKey: null };
     const current = this.#read(this.storageKey);
-    if (current) return { state: normalizeState(current), migrated: Number(current.version) !== 2 };
+    if (current) return { state: normalizeState(current), migrated: Number(current.version) !== 3, sourceKey: null };
+
+    const previous = this.#read(this.previousStorageKey);
+    if (previous) return { state: normalizeState(previous), migrated: true, sourceKey: this.previousStorageKey };
 
     const legacy = this.#read(this.legacyStorageKey);
-    if (legacy) return { state: normalizeState(legacy), migrated: true };
-    return { state: normalizeState(DEFAULT_STATE), migrated: false };
+    if (legacy) return { state: normalizeState(legacy), migrated: true, sourceKey: this.legacyStorageKey };
+    return { state: normalizeState(DEFAULT_STATE), migrated: false, sourceKey: null };
   }
 
   #persist() {
@@ -117,7 +149,12 @@ export class ProgressionStore {
     const alreadyRecorded = this.state.recordedRunIds.includes(runId);
     const rewardAlreadyProcessed = this.state.rewardedRunIds.includes(runId);
     let changed = false;
-    const next = { ...this.state, recordedRunIds: [...this.state.recordedRunIds], rewardedRunIds: [...this.state.rewardedRunIds] };
+    const next = {
+      ...this.state,
+      recordedRunIds: [...this.state.recordedRunIds],
+      rewardedRunIds: [...this.state.rewardedRunIds],
+      ownedWorkshopItemIds: [...this.state.ownedWorkshopItemIds],
+    };
 
     if (!alreadyRecorded) {
       const survivedSeconds = nonNegativeInt(result.survivedSeconds);
@@ -146,12 +183,33 @@ export class ProgressionStore {
     return this.#publish();
   }
 
+  /** @param {WorkshopPurchaseRequest} request */
+  purchaseWorkshopItem(request) {
+    const { itemId, cost } = canonicalPurchaseRequest(request);
+    if (this.state.ownedWorkshopItemIds.includes(itemId)) {
+      return Object.freeze({ status: 'already-owned', itemId, charged: 0, snapshot: this.snapshot() });
+    }
+    if (this.state.workshopScrip < cost) {
+      return Object.freeze({ status: 'insufficient-funds', itemId, charged: 0, snapshot: this.snapshot() });
+    }
+
+    const next = {
+      ...this.state,
+      workshopScrip: this.state.workshopScrip - cost,
+      recordedRunIds: [...this.state.recordedRunIds],
+      rewardedRunIds: [...this.state.rewardedRunIds],
+      ownedWorkshopItemIds: [...this.state.ownedWorkshopItemIds, itemId],
+    };
+    this.state = normalizeState(next);
+    this.#persist();
+    const snapshot = this.#publish();
+    return Object.freeze({ status: 'purchased', itemId, charged: cost, snapshot });
+  }
+
   reset() {
     this.state = normalizeState(DEFAULT_STATE);
-    if (this.storage) {
-      try { this.storage.removeItem(this.legacyStorageKey); }
-      catch { /* Ignore unavailable storage mutations. */ }
-    }
+    this.#removeStorageKey(this.previousStorageKey);
+    this.#removeStorageKey(this.legacyStorageKey);
     this.#persist();
     return this.#publish();
   }
