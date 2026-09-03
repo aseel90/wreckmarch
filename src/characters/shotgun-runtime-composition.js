@@ -56,6 +56,7 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
   let frameIndex = options.frameIndex ?? 0;
   let facing = requireFacing(options.facing ?? 'right');
   let aimDegrees = requireAimDegrees(options.aimDegrees ?? 0);
+  let locomotionElapsedMs = 0;
   const initialFrame = resolveFrame(motion, frameIndex);
 
   const body = scene.add.image(0, 0, initialFrame.key);
@@ -81,7 +82,33 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
     const frame = resolveFrame(nextMotion, nextFrameIndex);
     motion = nextMotion;
     frameIndex = nextFrameIndex;
+    locomotionElapsedMs = 0;
     body.setTexture(frame.key);
+    return api;
+  }
+
+  function advanceLocomotion(deltaMs, { motion: nextMotion = motion, frameDurationMs } = {}) {
+    if (!Number.isFinite(deltaMs) || deltaMs < 0) throw Error('Shotgun locomotion delta must be a finite non-negative number');
+    if (!Number.isFinite(frameDurationMs) || frameDurationMs <= 0) throw Error('Shotgun locomotion frame duration must be a finite positive number');
+    const frames = MOTIONS[nextMotion];
+    if (!frames) throw Error(`Unsupported Shotgun motion: ${nextMotion}`);
+
+    if (nextMotion !== motion) {
+      motion = nextMotion;
+      frameIndex = 0;
+      locomotionElapsedMs = 0;
+      body.setTexture(frames[0].key);
+    }
+
+    locomotionElapsedMs += deltaMs;
+    const steps = Math.floor(locomotionElapsedMs / frameDurationMs);
+    if (steps <= 0) return api;
+    locomotionElapsedMs -= steps * frameDurationMs;
+    const nextFrameIndex = (frameIndex + steps) % frames.length;
+    if (nextFrameIndex !== frameIndex) {
+      frameIndex = nextFrameIndex;
+      body.setTexture(frames[frameIndex].key);
+    }
     return api;
   }
 
@@ -115,7 +142,9 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
     get frameIndex() { return frameIndex; },
     get facing() { return facing; },
     get aimDegrees() { return aimDegrees; },
+    get locomotionElapsedMs() { return locomotionElapsedMs; },
     setMotion,
+    advanceLocomotion,
     setFacing,
     setAimDegrees,
     setPosition,

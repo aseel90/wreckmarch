@@ -60,6 +60,9 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
                 setState: (motion: string, frameIndex: number, facing = 'right', aimDegrees = 0) => {
                   composition.setMotion(motion, frameIndex).setFacing(facing).setAimDegrees(aimDegrees);
                 },
+                advance: (deltaMs: number, motion: string, frameDurationMs: number) => {
+                  composition.advanceLocomotion(deltaMs, { motion, frameDurationMs });
+                },
                 snapshot: () => ({
                   bodyKey: composition.body.texture.key,
                   bodyFlipX: composition.body.flipX,
@@ -152,6 +155,29 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(mirrored.weaponAngle).toBe(-20);
     expect(mirrored.weaponX).toBeLessThan(0);
     expect((await canvas.screenshot()).toString('base64')).not.toBe(rightImage);
+
+    await page.evaluate(() => {
+      const gate = (window as any).__shotgunPhaserGate;
+      gate.setState('idle', 0, 'left', 20);
+      gate.advance(250, 'idle', 250);
+    });
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    const advancedIdle = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
+    expect(advancedIdle.bodyKey).toBe('shotgun-body-idle-1');
+    expect(advancedIdle.bodyFlipX).toBe(true);
+    expect(advancedIdle.weaponFlipX).toBe(true);
+    expect(advancedIdle.weaponAngle).toBe(-20);
+
+    await page.evaluate(() => {
+      const gate = (window as any).__shotgunPhaserGate;
+      gate.advance(0, 'run', 100);
+      gate.advance(200, 'run', 100);
+    });
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    const advancedRun = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
+    expect(advancedRun.bodyKey).toBe('shotgun-body-run-2');
+    expect(advancedRun.bodyFlipX).toBe(true);
+    expect(advancedRun.weaponAngle).toBe(-20);
 
     await page.evaluate(() => {
       const gate = (window as any).__shotgunPhaserGate;
