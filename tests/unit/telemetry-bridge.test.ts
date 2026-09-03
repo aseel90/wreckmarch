@@ -77,8 +77,8 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain("offer('triple-riveter', 'EVOLUTION'");
     expect(pagesWorkflow).toContain('upgrade-icon-triple-riveter');
     expect(html).not.toContain('./src/telemetry/telemetry-debug-ui.js');
-    expect(html).toContain('./src/mobile-hud-loader-canonical-v2.js?rev=3');
-    expect(hudLoader).toContain('./mobile-hud-polish.js?asset=canonical-hud-20260903-responsive-v2&rev=3');
+    expect(html).toContain('./src/mobile-hud-loader-canonical-v2.js?rev=4');
+    expect(hudLoader).toContain('./mobile-hud-polish.js?asset=canonical-hud-20260903-responsive-v2&rev=4');
     expect(html).toContain('./src/final-polish-runtime.js?v=2');
     expect(phaseD1).not.toContain('mobile-hud-polish');
     expect(finalPolish).not.toContain('mobile-hud-polish');
