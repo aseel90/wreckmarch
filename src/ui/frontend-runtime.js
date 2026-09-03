@@ -1,7 +1,8 @@
 import { createGameShell } from './game-shell.js?v=2';
 import { SCREEN_IDS } from './screen-registry.js?v=2';
-import { showMainMenu } from './main-menu-screen.js?v=2';
+import { showMainMenu } from './main-menu-screen.js?v=3';
 import { showSettingsScreen } from './settings-screen.js?v=1';
+import { showProgressionScreen } from './progression-screen.js?v=1';
 import { chooseCharacter } from './character-select-screen.js?v=3';
 import { resolveFirstSelectableCharacter } from './character-select-model.js?v=2';
 import { getCharacterEntry, isCharacterSelectable } from '../characters/character-registry.js?v=5';
@@ -25,7 +26,6 @@ export async function runInitialFrontendFlow() {
 
   const requestedBootTarget = consumeNextBootScreen();
   const restartCharacterId = consumeRunRestartCharacterId();
-
   if (restartCharacterId && isCharacterSelectable(restartCharacterId)) {
     const restartEntry = getCharacterEntry(restartCharacterId);
     shell.navigate(SCREEN_IDS.CHARACTER_SELECT);
@@ -34,7 +34,6 @@ export async function runInitialFrontendFlow() {
   }
 
   let bootTarget = requestedBootTarget || (autotest ? SCREEN_IDS.CHARACTER_SELECT : SCREEN_IDS.MAIN);
-
   while (true) {
     if (bootTarget === SCREEN_IDS.MAIN) {
       shell.navigate(SCREEN_IDS.MAIN);
@@ -42,6 +41,12 @@ export async function runInitialFrontendFlow() {
       if (mainAction?.screenId === SCREEN_IDS.SETTINGS) {
         shell.navigate(SCREEN_IDS.SETTINGS);
         await showSettingsScreen({ returnLabel: 'MAIN' });
+        bootTarget = SCREEN_IDS.MAIN;
+        continue;
+      }
+      if (mainAction?.screenId === SCREEN_IDS.SHOP) {
+        shell.navigate(SCREEN_IDS.SHOP);
+        await showProgressionScreen();
         bootTarget = SCREEN_IDS.MAIN;
         continue;
       }

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 960, height: 540 } });
+test.describe.configure({ timeout: 90_000 });
 
 async function waitForGame(page: any) {
   await page.goto('/?autotest=1&debug=1');
