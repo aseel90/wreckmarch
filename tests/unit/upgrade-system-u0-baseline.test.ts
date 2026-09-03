@@ -122,13 +122,17 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(phaseD1).not.toContain('RARITY_STYLE');
   });
 
-  it('keeps the final Runner production boundary routed through CharacterSystem', () => {
+  it('keeps the final Runner production boundary routed through the generic character dispatcher and Runner presenter', () => {
     const d1 = read('src/phase-d1-runtime.js');
-    expect(d1).toContain("new CharacterSystem(s,s.characterId||'runner')");
-    expect(d1).toContain('character.installProductionVisuals()');
-    expect(d1).toContain('this.characterSystem.updateLocomotionVisuals()');
-    expect(d1).toContain('this.characterSystem.getWeaponSocket(q)');
-    expect(d1).toContain('this.characterSystem.getMuzzleReach(q)');
+    const dispatcher = read('src/characters/character-runtime-presentation.js');
+    const runnerPresentation = read('src/characters/runner-production-presentation.js');
+    expect(d1).toContain("installCharacterPresentationPhase(s,'d1')");
+    expect(dispatcher).toContain('new CharacterSystem(scene, definition.id)');
+    expect(dispatcher).toContain('system.select(definition.id)');
+    expect(runnerPresentation).toContain('character.installProductionVisuals()');
+    expect(runnerPresentation).toContain('this.characterSystem.updateLocomotionVisuals()');
+    expect(runnerPresentation).toContain('this.characterSystem.getWeaponSocket(q)');
+    expect(runnerPresentation).toContain('this.characterSystem.getMuzzleReach(q)');
   });
 
   it('locks the U1 Runner extension to data-only identity fields', () => {

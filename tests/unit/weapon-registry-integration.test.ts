@@ -15,11 +15,13 @@ describe('weapon registry live ownership', () => {
     expect(phaseC).not.toContain('projectileSpeed: scene.primaryWeapon.projectileSpeed || 720');
   });
 
-  it('requires exact signature weapon identity in the final Production self-test', () => {
+  it('requires exact Runner signature weapon identity in the Runner production presenter', () => {
     const d1 = read('src/phase-d1-runtime.js');
-    expect(d1).toContain("weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'");
-    expect(d1).toContain("s.activeWeaponId==='rivet-gun'");
-    expect(d1).toContain("s.primaryWeapon?.id==='rivet-gun'");
+    const runnerPresentation = read('src/characters/runner-production-presentation.js');
+    expect(d1).toContain("installCharacterPresentationPhase(s,'d1')");
+    expect(runnerPresentation).toContain("weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'");
+    expect(runnerPresentation).toContain("s.activeWeaponId==='rivet-gun'");
+    expect(runnerPresentation).toContain("s.primaryWeapon?.id==='rivet-gun'");
   });
 
   it('verifies the approved Shotgun foundation after the main Pages workflow without activating it', () => {
