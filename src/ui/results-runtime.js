@@ -1,7 +1,8 @@
 import { SCREEN_IDS } from './screen-registry.js?v=2';
 import { createRunResult } from './run-result.js?v=1';
 import { showResultsScreen } from './results-screen.js?v=1';
-import { requestNextBootScreen } from './frontend-intent.js?v=1';
+import { requestNextBootScreen } from './frontend-intent.js?v=2';
+import { progressionStore } from '../progression/progression-store.js?v=1';
 
 function cleanGameplayForResults(scene) {
   scene.gameOver = true;
@@ -40,7 +41,9 @@ export function installResultsRuntime(game) {
     scene.playTone?.(90, .30, 'sawtooth', .035, -55);
 
     const result = createRunResult(scene, reason);
+    const progression = progressionStore.recordRun(result);
     window.__WM_LAST_RUN_RESULT__ = result;
+    window.__WM_PROGRESSION_SNAPSHOT__ = progression;
     shell.navigate(SCREEN_IDS.RESULTS);
     scene.__wmPauseRuntimeInstalled?.syncTrigger?.();
     window.__WM_LOG__?.(`Canonical run result captured: ${result.reason} • ${result.survivedSeconds}s • scrap ${result.scrap}`);
