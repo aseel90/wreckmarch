@@ -108,7 +108,11 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(setup.weaponSource).toEqual({ width: 96, height: 40 });
     expect(setup.idleCount).toBe(2);
     expect(setup.runCount).toBe(3);
-    expect(setup.activation).toEqual({ playableOnMain: false, registryEntryAllowed: false });
+    expect(setup.activation).toEqual({
+      playableOnMain: false,
+      previewRegistryEntryAllowed: true,
+      playableRegistryDefinitionAllowed: false
+    });
 
     const canvas = page.locator('#shotgun-phaser-gate canvas');
     await expect(canvas).toBeVisible();

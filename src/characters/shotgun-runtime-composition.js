@@ -1,6 +1,7 @@
 /* WRECKMARCH WS14-C — inactive Phaser composition for Shotgun presentation.
  * Owns body/weapon layering, locomotion frame selection and relative aim only.
- * It intentionally has no registry, input, combat, projectile or gameplay ownership.
+ * It intentionally has no input, combat, projectile or playable-character ownership.
+ * A locked frontend preview registry entry is allowed, but a playable runtime definition is not.
  */
 import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js';
 
@@ -13,7 +14,11 @@ export const SHOTGUN_RUNTIME_COMPOSITION = Object.freeze({
   id: 'shotgun-inactive-composition',
   status: 'inactive-phaser-composition',
   motions: Object.freeze({ idle: 2, run: 3 }),
-  activation: Object.freeze({ playableOnMain: false, registryEntryAllowed: false })
+  activation: Object.freeze({
+    playableOnMain: false,
+    previewRegistryEntryAllowed: true,
+    playableRegistryDefinitionAllowed: false
+  })
 });
 
 function requireSceneBoundary(scene) {

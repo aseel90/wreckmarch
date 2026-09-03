@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { SHOTGUN_ART_CONTRACT } from '../../src/characters/shotgun-art-contract.js';
+import {
+  getCharacterEntry,
+  getCharacterDefinition,
+  isCharacterSelectable,
+} from '../../src/characters/character-registry.js';
 import { SHOTGUN_RUNTIME_PRESENTATION } from '../../src/characters/shotgun-runtime-presentation.js';
 import {
   SHOTGUN_RUNTIME_COMPOSITION,
@@ -110,9 +115,15 @@ describe('WS14-C inactive Shotgun Phaser composition', () => {
     expect(weapon.setAngle).toHaveBeenLastCalledWith(-15);
   });
 
-  it('keeps the composition explicitly inactive and outside the live character/runtime owners', () => {
-    expect(SHOTGUN_RUNTIME_COMPOSITION.activation).toEqual({ playableOnMain: false, registryEntryAllowed: false });
-    expect(read('src/characters/character-registry.js')).not.toMatch(/shotgun/i);
+  it('allows only a locked preview registry entry while keeping Shotgun outside live gameplay owners', () => {
+    expect(SHOTGUN_RUNTIME_COMPOSITION.activation).toEqual({
+      playableOnMain: false,
+      previewRegistryEntryAllowed: true,
+      playableRegistryDefinitionAllowed: false
+    });
+    expect(getCharacterEntry('shotgun')).toMatchObject({ id: 'shotgun', availability: 'locked', definition: null });
+    expect(isCharacterSelectable('shotgun')).toBe(false);
+    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
     expect(read('index.html')).not.toContain('shotgun-runtime-composition');
     expect(read('src/phase-d1-runtime.js')).not.toContain('shotgun-runtime-composition');
   });

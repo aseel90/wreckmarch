@@ -24,3 +24,9 @@ export function resolveCharacterSelection(characterId) {
     entry,
   });
 }
+
+export function resolveFirstSelectableCharacter() {
+  const option = listCharacterSelectOptions().find(candidate => candidate.selectable);
+  if (!option) throw new Error('No selectable character is registered');
+  return resolveCharacterSelection(option.id);
+}
