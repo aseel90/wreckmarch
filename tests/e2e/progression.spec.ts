@@ -44,6 +44,10 @@ test('canonical Results persist run records and Main Progression displays them w
   await expect(page.locator('.wm-progression-stats')).toContainText('77s');
   await expect(page.locator('.wm-progression-stats')).toContainText('51');
   await expect(page.locator('.wm-progression-note')).toContainText('NOT A SHOP CURRENCY');
+  await expect(page.locator('.wm-progression-rank')).toContainText('SCAVENGER');
+  await expect(page.locator('[data-milestone-id="first-deployment"]')).toHaveAttribute('data-complete', 'true');
+  await expect(page.locator('[data-milestone-id="scrap-hand"]')).toHaveAttribute('data-complete', 'false');
+  await expect(page.locator('[data-milestone-id="stay-moving"]')).toHaveAttribute('data-complete', 'false');
   await expect(page.locator('.wm-progression-roster')).toContainText('Runner');
   await expect(page.locator('.wm-progression-roster')).toContainText('Shotgun');
   await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
