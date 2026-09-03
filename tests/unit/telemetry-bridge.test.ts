@@ -48,7 +48,7 @@ describe('balance run report bridge contract', () => {
     expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=15');
     expect(html).toContain('./src/phase-d1-runtime.js?v=27&u5=3');
     expect(html).toContain('./src/mobile-hud-loader-telemetry-v1.js');
-    expect(html).toContain('./src/ui/results-runtime.js?v=2');
+    expect(html).toContain('./src/ui/results-runtime.js?v=3');
     expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=19');
     expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=27');
     expect(pagesWorkflow).toContain('src/phase-b-runtime.js?v=6');
@@ -70,11 +70,11 @@ describe('balance run report bridge contract', () => {
     const resultsScreen = read('src/ui/results-screen.js');
     const smokeScript = read('scripts/ci-smoke.mjs');
 
-    expect(resultsRuntime).toContain("shell.navigate(SCREEN_IDS.RESULTS)");
+    expect(resultsRuntime).toContain('shell.navigate(SCREEN_IDS.RESULTS)');
     expect(resultsRuntime).toContain("wreckmarchEndRunOwner = 'game-shell-results-v1'");
     expect(resultsScreen).toContain("wreckmarchResults = 'active'");
-    expect(resultsScreen).toContain("button.textContent = 'SEND REPORT'");
-    expect(resultsScreen).toContain("button.textContent = 'REPORT SENT'");
+    expect(resultsScreen).toContain("report.textContent = 'SEND REPORT'");
+    expect(resultsScreen).toContain("report.textContent = 'REPORT SENT'");
     expect(resultsScreen).toContain("wreckmarchManualReport = 'sent'");
 
     expect(smokeScript).toContain('TELEMETRY_SMOKE');
