@@ -108,10 +108,12 @@ export class UpgradeSceneV4 extends Phaser.Scene {
   }
 }
 
-export function installUpgradeScene(gameScene) {
-  if (!gameScene?.game?.scene) throw new Error('Upgrade scene install requires an active game scene');
-  if (!gameScene.game.scene.getScene('UpgradeSceneV4')) {
-    gameScene.game.scene.add('UpgradeSceneV4', UpgradeSceneV4, false);
+export async function installUpgradeScene(gameScene) {
+  if (!gameScene?.scene?.add || !gameScene?.game?.events) throw new Error('Upgrade scene install requires an active game scene');
+  if (!gameScene.__upgradeSceneRegistered) {
+    gameScene.__upgradeSceneRegistered = true;
+    gameScene.scene.add('UpgradeSceneV4', UpgradeSceneV4, false);
+    await new Promise(resolve => gameScene.game.events.once(Phaser.Core.Events.POST_STEP, resolve));
   }
   gameScene.__upgradeSceneOwner = 'src/upgrades/upgrade-scene.js';
 
