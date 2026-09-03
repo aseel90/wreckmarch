@@ -8,6 +8,7 @@ const read = (path: string) => readFileSync(resolve(ROOT, path), 'utf8');
 describe('U7 canonical Upgrade Scene ownership', () => {
   it('keeps scene lifecycle under src/upgrades and retires C1/C2/C3/C5 scene wrappers', () => {
     const canonical = read('src/upgrades/upgrade-scene.js');
+    const cardPresentation = read('src/upgrades/upgrade-card-presentation.js');
     const c1 = read('src/phase-c1-runtime.js');
     const c2 = read('src/phase-c2-runtime.js');
     const c3 = read('src/phase-c3-runtime.js');
@@ -31,7 +32,8 @@ describe('U7 canonical Upgrade Scene ownership', () => {
     expect(c2).not.toContain('c2-upgrade-art');
     expect(c3).not.toContain("const v3=s.game.scene.getScene('UpgradeSceneV3')");
     expect(c5).not.toContain('installCards(s)');
-    expect(d1).toContain("getScene('UpgradeSceneV4')");
+    expect(cardPresentation).toContain("getScene('UpgradeSceneV4')");
     expect(d1).toContain('installUpgradeCardPresentation');
+    expect(d1).not.toContain("getScene('UpgradeSceneV4')");
   });
 });
