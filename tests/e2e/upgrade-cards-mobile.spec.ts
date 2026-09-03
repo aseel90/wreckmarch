@@ -29,8 +29,9 @@ test('three-card selection stays readable and non-overlapping on target mobile l
     };
     scene.twinShots = 2;
 
-    const poolApi = await import('/src/upgrades/upgrade-offer-pool.js?v=1');
-    const rarityApi = await import('/src/upgrades/upgrade-rarity.js?v=1');
+    const runtimeImport = (specifier: string) => import(specifier);
+    const poolApi = await runtimeImport('/src/upgrades/upgrade-offer-pool.js?v=1');
+    const rarityApi = await runtimeImport('/src/upgrades/upgrade-rarity.js?v=1');
     const rarity = rarityApi.getUpgradeRarityRule('COMMON');
     const allChoices = poolApi.createActiveUpgradeOfferChoices(scene).map((choice: any) => ({
       ...choice,
