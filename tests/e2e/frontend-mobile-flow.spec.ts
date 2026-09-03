@@ -47,6 +47,14 @@ async function expectFullyInViewport(page: any, locator: any) {
   expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height + EPSILON);
 }
 
+async function expectTouchTarget(locator: any, minimum = 44) {
+  await expect(locator).toBeVisible();
+  const box = await locator.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.width).toBeGreaterThanOrEqual(minimum);
+  expect(box!.height).toBeGreaterThanOrEqual(minimum);
+}
+
 async function waitForGameplay(page: any) {
   await expect(page.locator('canvas')).toBeVisible({ timeout: 30_000 });
   await expect.poll(
@@ -65,12 +73,19 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
   await expectFullyInViewport(page, page.locator('[data-screen-id="character-select"]'));
   await expectFullyInViewport(page, page.locator('[data-screen-id="settings"]'));
   await expectFullyInViewport(page, page.locator('[data-screen-id="shop"]'));
+  await expectTouchTarget(page.locator('[data-screen-id="character-select"]'));
+  await expectTouchTarget(page.locator('[data-screen-id="settings"]'));
+  await expectTouchTarget(page.locator('[data-screen-id="shop"]'));
 
   await page.locator('[data-screen-id="settings"]').click();
   await expectScreenFits(page, '.wm-settings-screen');
   await expectFullyInViewport(page, page.locator('.wm-settings-screen .wm-shell-back'));
   await expectFullyInViewport(page, page.locator('[data-setting-key="audioEnabled"]'));
   await expectFullyInViewport(page, page.locator('[data-setting-key="screenShakeEnabled"]'));
+  await expectTouchTarget(page.locator('.wm-settings-screen .wm-shell-back'));
+  await expectTouchTarget(page.locator('[data-setting-key="audioEnabled"]'));
+  await expectTouchTarget(page.locator('[data-setting-key="screenShakeEnabled"]'));
+  await expectTouchTarget(page.locator('.wm-settings-reset'));
   await page.locator('.wm-settings-screen .wm-shell-back').click();
   await expect(page.locator('.wm-main-screen')).toBeVisible();
 
@@ -78,6 +93,7 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
   await expectScreenFits(page, '.wm-progression-screen', { allowVerticalScroll: true });
   await expectFullyInViewport(page, page.locator('.wm-progression-screen .wm-shell-back'));
   await expectFullyInViewport(page, page.locator('.wm-progression-rank'));
+  await expectTouchTarget(page.locator('.wm-progression-screen .wm-shell-back'));
   await page.locator('.wm-progression-screen').evaluate((element: HTMLElement) => {
     element.scrollTop = element.scrollHeight;
   });
@@ -90,12 +106,15 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
   await expectScreenFits(page, '.wm-character-select');
   await expectFullyInViewport(page, page.locator('.wm-character-select .wm-shell-back'));
   await expectFullyInViewport(page, page.locator('[data-character-id="runner"]'));
+  await expectTouchTarget(page.locator('.wm-character-select .wm-shell-back'));
+  await expectTouchTarget(page.locator('[data-character-id="runner"]'));
   await expectFullyInViewport(page, page.locator('[data-character-id="shotgun"]'));
   await expect(page.locator('[data-character-id="shotgun"]')).toHaveAttribute('data-availability', 'locked');
 
   await page.locator('[data-character-id="runner"]').click();
   await waitForGameplay(page);
   await expectFullyInViewport(page, page.locator('#wm-pause-trigger'));
+  await expectTouchTarget(page.locator('#wm-pause-trigger'));
 
   await page.locator('#wm-pause-trigger').click();
   await expect(page.locator('.wm-pause-screen')).toBeVisible();
@@ -104,6 +123,10 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
   await expectFullyInViewport(page, page.locator('[data-pause-action="settings"]'));
   await expectFullyInViewport(page, page.locator('[data-pause-action="restart"]'));
   await expectFullyInViewport(page, page.locator('[data-pause-action="exit"]'));
+  await expectTouchTarget(page.locator('[data-pause-action="resume"]'));
+  await expectTouchTarget(page.locator('[data-pause-action="settings"]'));
+  await expectTouchTarget(page.locator('[data-pause-action="restart"]'));
+  await expectTouchTarget(page.locator('[data-pause-action="exit"]'));
 
   await page.locator('[data-pause-action="settings"]').click();
   await expectScreenFits(page, '.wm-settings-screen');
@@ -135,6 +158,9 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
   await expectFullyInViewport(page, page.locator('[data-results-action="play-again"]'));
   await expectFullyInViewport(page, page.locator('[data-results-action="main"]'));
   await expectFullyInViewport(page, page.locator('.wm-results-report-button'));
+  await expectTouchTarget(page.locator('[data-results-action="play-again"]'));
+  await expectTouchTarget(page.locator('[data-results-action="main"]'));
+  await expectTouchTarget(page.locator('.wm-results-report-button'));
 
   await Promise.all([
     page.waitForNavigation({ waitUntil: 'domcontentloaded' }),

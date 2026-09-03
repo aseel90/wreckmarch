@@ -1,0 +1,24 @@
+:root {
+  --wm-touch-target-min: 44px;
+}
+
+/* Canonical cross-screen interaction contract for landscape touch play. */
+.wm-shell-back,
+.wm-pause-trigger,
+.wm-settings-reset,
+.wm-shell-screen .wm-results-report-button,
+.wm-main-action,
+.wm-character-card,
+.wm-pause-action,
+.wm-setting-row,
+.wm-results-action,
+.wm-confirm-button {
+  min-height: var(--wm-touch-target-min);
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+.wm-shell-back {
+  display: grid;
+  place-items: center;
+}
