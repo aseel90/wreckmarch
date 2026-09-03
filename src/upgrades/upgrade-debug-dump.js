@@ -1,12 +1,6 @@
-export const UPGRADE_DEBUG_DUMP_VERSION = 1;
+import { createRunBuildSnapshot } from './run-build-snapshot.js?v=1';
 
-function requireScene(scene) {
-  if (!scene || typeof scene !== 'object') throw new TypeError('Upgrade debug dump requires a scene');
-  if (!scene.runStatState || typeof scene.runStatState.resolve !== 'function') {
-    throw new Error('Upgrade debug dump requires initialized scene.runStatState');
-  }
-  return scene;
-}
+export const UPGRADE_DEBUG_DUMP_VERSION = 1;
 
 function debugNumber(value) {
   if (Number.isFinite(value)) return value;
@@ -16,44 +10,25 @@ function debugNumber(value) {
   return value;
 }
 
-function compactStatBlock(block) {
-  if (!block || typeof block !== 'object' || Array.isArray(block)) return {};
-  return Object.fromEntries(
-    Object.keys(block)
-      .sort()
-      .map(key => [key, debugNumber(block[key])])
-  );
-}
-
-function compactUpgradeList(scene) {
-  const levels = scene.upgradeLevels && typeof scene.upgradeLevels === 'object' && !Array.isArray(scene.upgradeLevels)
-    ? scene.upgradeLevels
-    : {};
-  const rarityHistory = scene.upgradeRarityHistory && typeof scene.upgradeRarityHistory === 'object' && !Array.isArray(scene.upgradeRarityHistory)
-    ? scene.upgradeRarityHistory
-    : {};
-
-  return Object.entries(levels)
-    .filter(([, rawLevel]) => Number.isInteger(Number(rawLevel)) && Number(rawLevel) > 0)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, rawLevel]) => {
-      const level = Number(rawLevel);
-      const history = Array.isArray(rarityHistory[id])
-        ? rarityHistory[id].slice(0, level).map(value => String(value))
-        : [];
-      return Object.freeze({ id, level, rarities: Object.freeze(history) });
-    });
+function debugStatBlock(block) {
+  return Object.freeze(Object.fromEntries(
+    Object.keys(block || {}).sort().map(key => [key, debugNumber(block[key])])
+  ));
 }
 
 export function createUpgradeDebugDump(scene) {
-  requireScene(scene);
-  const resolved = scene.runStatState.resolve();
+  const snapshot = createRunBuildSnapshot(scene);
+  const upgrades = Object.freeze(snapshot.upgrades.map(upgrade => Object.freeze({
+    id: upgrade.id,
+    level: upgrade.level,
+    rarities: Object.freeze([...upgrade.rarities])
+  })));
   return Object.freeze({
     version: UPGRADE_DEBUG_DUMP_VERSION,
-    upgrades: Object.freeze(compactUpgradeList(scene)),
+    upgrades,
     stats: Object.freeze({
-      character: Object.freeze(compactStatBlock(resolved?.character)),
-      weapon: Object.freeze(compactStatBlock(resolved?.weapon))
+      character: debugStatBlock(snapshot.character.stats),
+      weapon: debugStatBlock(snapshot.weapon.stats)
     })
   });
 }

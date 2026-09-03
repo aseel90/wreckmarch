@@ -1,6 +1,7 @@
 import { SCREEN_IDS } from './screen-registry.js?v=2';
-import { showPauseScreen } from './pause-screen.js?v=3';
+import { showPauseScreen } from './pause-screen.js?v=4';
 import { showSettingsScreen } from './settings-screen.js?v=1';
+import { showBuildPanel } from './build-panel.js?v=1';
 import { showConfirmationModal } from './confirmation-modal.js?v=1';
 import { requestNextBootScreen, requestRunRestart } from './frontend-intent.js?v=2';
 
@@ -59,6 +60,11 @@ export function installPauseRuntime(game) {
     try {
       while (true) {
         const result = await showPauseScreen();
+        if (result?.action === 'build') {
+          await showBuildPanel(scene);
+          shell.navigate(SCREEN_IDS.PAUSE);
+          continue;
+        }
         if (result?.action === 'settings') {
           shell.navigate(SCREEN_IDS.SETTINGS);
           await showSettingsScreen({ returnLabel: 'PAUSE' });
@@ -103,6 +109,11 @@ export function installPauseRuntime(game) {
   const onKeyDown = event => {
     if (event.key !== 'Escape') return;
     if (document.querySelector('.wm-confirm-overlay')) return;
+    const buildOverlay = document.querySelector('.wm-build-overlay');
+    if (buildOverlay) {
+      buildOverlay.querySelector('[data-build-action="close"]')?.click();
+      return;
+    }
     if (shell.currentScreenId === SCREEN_IDS.PAUSE) {
       document.querySelector('[data-pause-action="resume"]')?.click();
       return;

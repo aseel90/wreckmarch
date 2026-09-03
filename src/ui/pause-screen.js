@@ -2,6 +2,7 @@ const STYLESHEET_ID = 'wm-frontend-shell-styles';
 
 const PAUSE_ACTIONS = Object.freeze([
   Object.freeze({ id: 'resume', label: 'RESUME', eyebrow: 'RETURN TO RUN', enabled: true, primary: true }),
+  Object.freeze({ id: 'build', label: 'RUN BUILD', eyebrow: 'LIVE STATS', enabled: true }),
   Object.freeze({ id: 'settings', label: 'SETTINGS', eyebrow: 'SYSTEM', enabled: true }),
   Object.freeze({ id: 'restart', label: 'RESTART RUN', eyebrow: 'RUN CONTROL', enabled: true }),
   Object.freeze({ id: 'exit', label: 'EXIT TO MAIN', eyebrow: 'RUN CONTROL', enabled: true, danger: true }),
