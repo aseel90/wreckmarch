@@ -1,8 +1,6 @@
 import { SCREEN_IDS } from './screen-registry.js?v=2';
-import { showPauseScreen } from './pause-screen.js?v=3';
+import { showPauseScreen } from './pause-screen.js?v=2';
 import { showSettingsScreen } from './settings-screen.js?v=1';
-import { showConfirmationModal } from './confirmation-modal.js?v=1';
-import { requestNextBootScreen, requestRunRestart } from './frontend-intent.js?v=2';
 
 const PAUSE_TRIGGER_ID = 'wm-pause-trigger';
 
@@ -38,12 +36,6 @@ function createPauseTrigger() {
   return button;
 }
 
-function reloadFromPause({ screenId, restartCharacterId } = {}) {
-  if (restartCharacterId) requestRunRestart(restartCharacterId);
-  if (screenId) requestNextBootScreen(screenId);
-  window.location.reload();
-}
-
 export function installPauseRuntime(game) {
   const scene = getGameScene(game);
   const shell = getShell();
@@ -65,23 +57,6 @@ export function installPauseRuntime(game) {
     window.__WM_LOG__?.('Pause runtime resumed gameplay');
   };
 
-  const confirmRestart = async () => showConfirmationModal({
-    kicker: 'WRECKMARCH // RUN CONTROL',
-    title: 'RESTART RUN?',
-    body: 'Current run progress will be discarded. The same selectable survivor will redeploy in a fresh run.',
-    confirmLabel: 'RESTART',
-    cancelLabel: 'KEEP RUN',
-  });
-
-  const confirmExit = async () => showConfirmationModal({
-    kicker: 'WRECKMARCH // RUN CONTROL',
-    title: 'EXIT TO MAIN?',
-    body: 'Current run progress will be discarded and you will return to the deployment terminal.',
-    confirmLabel: 'EXIT RUN',
-    cancelLabel: 'KEEP RUN',
-    danger: true,
-  });
-
   const openPause = async () => {
     if (opening || !canPause(scene, shell)) return;
     opening = true;
@@ -99,29 +74,6 @@ export function installPauseRuntime(game) {
           shell.navigate(SCREEN_IDS.PAUSE);
           continue;
         }
-        if (result?.action === 'restart') {
-          const confirmed = await confirmRestart();
-          if (!confirmed) {
-            shell.navigate(SCREEN_IDS.PAUSE);
-            continue;
-          }
-          window.__WM_LOG__?.(`Pause runtime restarting run with canonical character: ${scene.characterId || window.__WM_SELECTED_CHARACTER__ || 'unknown'}`);
-          reloadFromPause({
-            screenId: SCREEN_IDS.CHARACTER_SELECT,
-            restartCharacterId: scene.characterId || window.__WM_SELECTED_CHARACTER__,
-          });
-          return;
-        }
-        if (result?.action === 'exit') {
-          const confirmed = await confirmExit();
-          if (!confirmed) {
-            shell.navigate(SCREEN_IDS.PAUSE);
-            continue;
-          }
-          window.__WM_LOG__?.('Pause runtime exiting current run to Main');
-          reloadFromPause({ screenId: SCREEN_IDS.MAIN });
-          return;
-        }
         resumeRun();
         break;
       }
@@ -135,7 +87,6 @@ export function installPauseRuntime(game) {
 
   const onKeyDown = event => {
     if (event.key !== 'Escape') return;
-    if (document.querySelector('.wm-confirm-overlay')) return;
     if (shell.currentScreenId === SCREEN_IDS.PAUSE) {
       document.querySelector('[data-pause-action="resume"]')?.click();
       return;

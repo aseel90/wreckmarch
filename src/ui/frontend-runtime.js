@@ -4,18 +4,10 @@ import { showMainMenu } from './main-menu-screen.js?v=2';
 import { showSettingsScreen } from './settings-screen.js?v=1';
 import { chooseCharacter } from './character-select-screen.js?v=3';
 import { resolveFirstSelectableCharacter } from './character-select-model.js?v=2';
-import { getCharacterEntry, isCharacterSelectable } from '../characters/character-registry.js?v=5';
-import { consumeNextBootScreen, consumeRunRestartCharacterId } from './frontend-intent.js?v=2';
+import { consumeNextBootScreen } from './frontend-intent.js?v=1';
 
 function isAutotestFlow() {
   return new URLSearchParams(globalThis.location?.search || '').get('autotest') === '1';
-}
-
-function acceptCharacter(shell, entry, suffix = '') {
-  window.__WM_SELECTED_CHARACTER__ = entry.id;
-  shell.navigate(SCREEN_IDS.GAMEPLAY);
-  window.__WM_LOG__?.(`GameShell character selection accepted: ${entry.id}${suffix}`);
-  return entry;
 }
 
 export async function runInitialFrontendFlow() {
@@ -23,17 +15,7 @@ export async function runInitialFrontendFlow() {
   const shell = createGameShell({ initialScreen: SCREEN_IDS.BOOT });
   window.__WM_GAME_SHELL__ = shell;
 
-  const requestedBootTarget = consumeNextBootScreen();
-  const restartCharacterId = consumeRunRestartCharacterId();
-
-  if (restartCharacterId && isCharacterSelectable(restartCharacterId)) {
-    const restartEntry = getCharacterEntry(restartCharacterId);
-    shell.navigate(SCREEN_IDS.CHARACTER_SELECT);
-    window.__WM_LOG__?.(`Canonical restart intent accepted: ${restartEntry.id}`);
-    return acceptCharacter(shell, restartEntry, ' (restart)');
-  }
-
-  let bootTarget = requestedBootTarget || (autotest ? SCREEN_IDS.CHARACTER_SELECT : SCREEN_IDS.MAIN);
+  let bootTarget = autotest ? SCREEN_IDS.CHARACTER_SELECT : (consumeNextBootScreen() || SCREEN_IDS.MAIN);
 
   while (true) {
     if (bootTarget === SCREEN_IDS.MAIN) {
@@ -63,7 +45,10 @@ export async function runInitialFrontendFlow() {
     }
     if (!selection?.selectable) throw new Error(`Character selection rejected: ${selection?.characterId || 'unknown'}`);
 
-    return acceptCharacter(shell, selection.entry, autotest ? ' (autotest)' : '');
+    window.__WM_SELECTED_CHARACTER__ = selection.characterId;
+    shell.navigate(SCREEN_IDS.GAMEPLAY);
+    window.__WM_LOG__?.(`GameShell character selection accepted: ${selection.characterId}${autotest ? ' (autotest)' : ''}`);
+    return selection.entry;
   }
 }
 
