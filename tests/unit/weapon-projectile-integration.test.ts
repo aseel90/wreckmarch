@@ -14,7 +14,8 @@ const historical = [
   'src/phase-c3-frame-fix.js',
   'src/phase-c4-runtime.js',
   'src/phase-c5-runtime.js',
-  'src/phase-d1-runtime.js'
+  'src/phase-d1-runtime.js',
+  'src/characters/runner-production-presentation.js'
 ];
 
 describe('Weapon / Projectile ownership integration', () => {
@@ -56,22 +57,24 @@ describe('Weapon / Projectile ownership integration', () => {
   });
 
   it('routes final Hero and Rig profiles through WeaponSystem', () => {
+    const runnerPresentation = read('src/characters/runner-production-presentation.js');
     expect(read('src/phase-c3-runtime.js')).toContain('s.weaponSystem.configureHero(');
     expect(read('src/phase-c4-runtime.js')).toContain('s.rigSystem=new RigSystem');
     expect(read('src/rig/rig-system.js')).toContain('scene.weaponSystem.fireSupportVolley(');
-    expect(read('src/phase-c5-runtime.js')).toContain('s.weaponSystem.setMuzzleResolver(');
-    expect(read('src/phase-d1-runtime.js')).toContain('s.weaponSystem.setMuzzleResolver(');
+    expect(read('src/phase-c5-runtime.js')).toContain("installCharacterPresentationPhase(s,'c5')");
+    expect(read('src/phase-d1-runtime.js')).toContain("installCharacterPresentationPhase(s,'d1')");
+    expect(runnerPresentation.match(/s\.weaponSystem\.setMuzzleResolver\(/g)?.length).toBe(2);
   });
 
-  it('keeps Hunter rivets compact and routes recoil through the visible D1 weapon', () => {
-    const d1 = read('src/phase-d1-runtime.js');
-    expect(d1).toContain("g.generateTexture('hunter-rivet',18,8)");
-    expect(d1).toContain('projectile:{lifeMs:1180,scale:.62,radius:4,offsetX:5,offsetY:0}');
-    expect(d1).toContain('s.weaponV3Recoil=Math.min(1.9');
-    expect(d1).toContain('this.weaponV3Recoil*=.62');
-    expect(d1).toContain("setScale(.31).setAlpha(.9).setBlendMode(Phaser.BlendModes.ADD)");
-    expect(d1).toContain("setScale(.14).setAlpha(1).setBlendMode(Phaser.BlendModes.ADD)");
-    expect(d1).toContain("bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx))");
+  it('keeps Hunter rivets compact and routes recoil through the visible Runner weapon presenter', () => {
+    const runnerPresentation = read('src/characters/runner-production-presentation.js');
+    expect(runnerPresentation).toContain("g.generateTexture('hunter-rivet',18,8)");
+    expect(runnerPresentation).toContain('projectile:{lifeMs:1180,scale:.62,radius:4,offsetX:5,offsetY:0}');
+    expect(runnerPresentation).toContain('s.weaponV3Recoil=Math.min(1.9');
+    expect(runnerPresentation).toContain('this.weaponV3Recoil*=.62');
+    expect(runnerPresentation).toContain("setScale(.31).setAlpha(.9).setBlendMode(Phaser.BlendModes.ADD)");
+    expect(runnerPresentation).toContain("setScale(.14).setAlpha(1).setBlendMode(Phaser.BlendModes.ADD)");
+    expect(runnerPresentation).toContain("bullet?.setTexture?.('hunter-rivet')?.setScale?.(.62)?.setRotation?.(Math.atan2(vy,vx))");
   });
 
   it('keeps Explosive Rivet in the canonical active upgrade offer pool', () => {
@@ -108,6 +111,7 @@ describe('Weapon / Projectile ownership integration', () => {
     expect(html).toContain("./src/enemies/enemy-system.js?v=28");
     expect(html).toContain("./src/phase-c-runtime.js?v=24");
     expect(html).toContain("./src/phase-c1-runtime.js?v=19");
-    expect(html).toContain("./src/phase-d1-runtime.js?v=27&u5=3");
+    expect(html).toContain("./src/phase-c5-runtime.js?v=9");
+    expect(html).toContain("./src/phase-d1-runtime.js?v=28&u5=3");
   });
 });

@@ -7,6 +7,7 @@ describe('selected character runtime binding', () => {
     const game: any = { scene: { getScene: () => scene } };
     await expect(applySelectedCharacterToGame(game, 'runner', 50)).resolves.toMatchObject({ id: 'runner' });
     expect(scene.characterId).toBe('runner');
+    expect(scene.characterDefinition?.id).toBe('runner');
   });
 
   it('rejects an unowned production-ready character before touching the gameplay scene', async () => {

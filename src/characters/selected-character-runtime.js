@@ -15,6 +15,7 @@ export async function applySelectedCharacterToGame(game, characterId, timeoutMs 
     const scene = game?.scene?.getScene?.('Wreckmarch');
     if (scene) {
       scene.characterId = definition.id;
+      scene.characterDefinition = definition;
       globalThis.__WM_LOG__?.(`Selected character bound to gameplay scene: ${definition.id}`);
       return definition;
     }
