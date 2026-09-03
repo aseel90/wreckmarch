@@ -18,7 +18,7 @@
   <link id="wm-workshop-styles" rel="stylesheet" href="./src/workshop/workshop.css?v=1" />
   <link id="wm-results-styles" rel="stylesheet" href="./src/ui/results.css?v=2" />
   <link id="wm-run-control-modal-styles" rel="stylesheet" href="./src/ui/run-control-modal.css?v=1" />
-  <link id="wm-frontend-responsive-styles" rel="stylesheet" href="./src/ui/frontend-responsive.css?v=2" />
+  <link id="wm-frontend-responsive-styles" rel="stylesheet" href="./src/ui/frontend-responsive.css?v=3" />
 </head>
 <body>
   <div id="game"></div>
@@ -30,10 +30,10 @@
     const log=(m)=>{ console.log(m); logEl.textContent += `\n${m}`; logEl.scrollTop=logEl.scrollHeight; };
     const fail=(m)=>{ console.error(m); document.body.classList.add('boot-error'); status.textContent='FAILED TO LOAD — OPEN DEBUG'; status.classList.add('error'); log(m); };
     const params=new URLSearchParams(location.search);
-    const debugEnabled=params.has('debug')||params.get('debug')==='1';
-    const setStandaloneMode=()=>document.body.classList.toggle('standalone-mode',window.matchMedia?.('(display-mode: standalone)')?.matches||navigator.standalone===true);
+    const debug=params.has('debug')||params.get('debug')==='1';
+    const setStandaloneMode=()=>document.body.classList.toggle('standalone-mode',window.matchMedia?.('(display-mode: standalone)')?.matches||window.navigator.standalone===true);
     setStandaloneMode(); window.matchMedia?.('(display-mode: standalone)')?.addEventListener?.('change',setStandaloneMode);
-    if(debugEnabled) document.body.classList.add('debug-enabled');
+    document.body.classList.toggle('debug-enabled',debug);
     document.getElementById('copy-debug').onclick=async()=>{try{await navigator.clipboard?.writeText(logEl.textContent||'')}catch(e){log(`Clipboard: ${e}`)}};
     document.getElementById('copy-upgrade-debug').onclick=async()=>{try{const scene=window.__WM_GAME__?.scene?.getScene?.('Wreckmarch');if(!scene)throw new Error('Wreckmarch scene unavailable');const dumpApi=await import('./src/upgrades/upgrade-debug-dump.js?v=1');const dump=dumpApi.stringifyUpgradeDebugDump(scene);log(`UPGRADE_STATE ${dump}`);try{await navigator.clipboard?.writeText(dump)}catch(copyError){log(`UPGRADE_STATE_COPY_FAILED ${copyError}`)}}catch(e){log(`UPGRADE_STATE_ERROR ${e?.stack||e}`)}};
     const requestLandscapeLock=async(source='runtime')=>{
