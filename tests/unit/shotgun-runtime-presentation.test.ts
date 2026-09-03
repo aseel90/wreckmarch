@@ -4,6 +4,11 @@ import { SHOTGUN_ART_CONTRACT } from '../../src/characters/shotgun-art-contract.
 import { SHOTGUN_PRODUCTION_ART } from '../../src/characters/shotgun-production-art.js';
 import { SHOTGUN_AIM_ALIGNMENT } from '../../src/characters/shotgun-aim-alignment.js';
 import {
+  getCharacterEntry,
+  getCharacterDefinition,
+  isCharacterSelectable,
+} from '../../src/characters/character-registry.js';
+import {
   SHOTGUN_RUNTIME_PRESENTATION,
   listShotgunRuntimeAssets,
   queueShotgunRuntimeAssets
@@ -35,25 +40,30 @@ describe('WS14-C inactive Shotgun runtime presentation boundary', () => {
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.muzzleFromGrip).toBe(SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip);
   });
 
-  it('can queue presentation assets through one explicit owner without touching the live registry', () => {
+  it('can queue presentation assets through one explicit owner without changing registry availability', () => {
     const svg = vi.fn();
+    const before = getCharacterEntry('shotgun');
     const result = queueShotgunRuntimeAssets({ load: { svg } } as any);
     expect(result).toBe(SHOTGUN_RUNTIME_PRESENTATION);
     expect(svg).toHaveBeenCalledTimes(6);
     for (const [index, asset] of listShotgunRuntimeAssets().entries()) {
       expect(svg).toHaveBeenNthCalledWith(index + 1, asset.key, asset.path);
     }
+    expect(getCharacterEntry('shotgun')).toBe(before);
     expect(() => queueShotgunRuntimeAssets({} as any)).toThrow('Phaser-like scene.load.svg boundary');
   });
 
-  it('remains impossible to select on main because registry/runtime imports stay untouched', () => {
+  it('remains impossible to select on main while a locked preview registry entry is allowed', () => {
     expect(SHOTGUN_RUNTIME_PRESENTATION.status).toBe('inactive-runtime-boundary');
     expect(SHOTGUN_RUNTIME_PRESENTATION.activation).toEqual({
       playableOnMain: false,
-      registryEntryAllowed: false,
+      previewRegistryEntryAllowed: true,
+      playableRegistryDefinitionAllowed: false,
       gameplayDefinitionReady: false
     });
-    expect(read('src/characters/character-registry.js')).not.toMatch(/shotgun/i);
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: null });
+    expect(isCharacterSelectable('shotgun')).toBe(false);
+    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
     expect(read('index.html')).not.toContain('shotgun-runtime-presentation');
     expect(read('src/phase-d1-runtime.js')).not.toContain('shotgun-runtime-presentation');
   });

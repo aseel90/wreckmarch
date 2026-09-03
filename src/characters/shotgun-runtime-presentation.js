@@ -1,6 +1,7 @@
 /* WRECKMARCH WS14-C — inactive Shotgun runtime presentation boundary.
  * This module gives the approved Shotgun art stable runtime-facing texture/animation
  * ownership without registering a playable character or changing gameplay.
+ * A locked frontend preview entry may reference this presentation boundary.
  */
 import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js';
 import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js';
@@ -40,7 +41,8 @@ export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
   }),
   activation: Object.freeze({
     playableOnMain: false,
-    registryEntryAllowed: false,
+    previewRegistryEntryAllowed: true,
+    playableRegistryDefinitionAllowed: false,
     gameplayDefinitionReady: false
   })
 });

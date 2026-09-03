@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { SHOTGUN_ART_CONTRACT } from '../../src/characters/shotgun-art-contract.js';
+import {
+  getCharacterEntry,
+  getCharacterDefinition,
+  isCharacterSelectable,
+} from '../../src/characters/character-registry.js';
 import { RUNNER_CHARACTER } from '../../src/characters/definitions/runner.js';
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
@@ -31,10 +36,12 @@ describe('WS14-C Shotgun production art contract', () => {
   it('remains an art gate only and cannot silently activate the character', () => {
     expect(SHOTGUN_ART_CONTRACT.weaponLayer.separateFromBody).toBe(true);
     expect(SHOTGUN_ART_CONTRACT.activation.playableOnMain).toBe(false);
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: null });
+    expect(isCharacterSelectable('shotgun')).toBe(false);
+    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
 
     const registry = read('src/characters/character-registry.js');
     expect(registry).not.toContain('SHOTGUN_ART_CONTRACT');
-    expect(registry).not.toMatch(/shotgun/i);
   });
 
   it('is pinned to the same normalization geometry used by current production Runner art', () => {
