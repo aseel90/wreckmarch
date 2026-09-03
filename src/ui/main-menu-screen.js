@@ -22,9 +22,8 @@ const MAIN_ACTIONS = Object.freeze([
     screenId: SCREEN_IDS.SHOP,
     label: 'PROGRESSION',
     eyebrow: 'WORKSHOP',
-    detail: 'Permanent unlocks and future loadout systems.',
-    enabled: false,
-    pendingLabel: 'LOCKED',
+    detail: 'Persistent run records and survivor program status.',
+    enabled: true,
   }),
   Object.freeze({
     screenId: SCREEN_IDS.LEADERBOARD,
@@ -69,24 +68,19 @@ function makeMenuAction(action, statusEl, resolve) {
 
   const copy = document.createElement('span');
   copy.className = 'wm-main-action-copy';
-
   const eyebrow = document.createElement('span');
   eyebrow.className = 'wm-main-action-eyebrow';
   eyebrow.textContent = action.eyebrow;
-
   const label = document.createElement('strong');
   label.textContent = action.label;
-
   const detail = document.createElement('span');
   detail.className = 'wm-main-action-detail';
   detail.textContent = action.detail;
-
   copy.append(eyebrow, label, detail);
 
   const state = document.createElement('span');
   state.className = 'wm-main-action-state';
   state.textContent = action.enabled ? 'OPEN' : action.pendingLabel;
-
   button.append(copy, state);
   button.addEventListener('click', () => {
     if (!action.enabled) {
@@ -119,28 +113,22 @@ export function showMainMenu() {
 
     const brand = document.createElement('header');
     brand.className = 'wm-main-brand';
-
     const kicker = document.createElement('span');
     kicker.className = 'wm-shell-kicker';
     kicker.textContent = 'WASTELAND DEPLOYMENT // ONLINE';
-
     const title = document.createElement('h1');
     title.id = 'wm-main-title';
     title.textContent = 'WRECKMARCH';
-
     const motto = document.createElement('p');
     motto.className = 'wm-main-motto';
     motto.textContent = 'BUILD • ROLL • SURVIVE';
-
     const description = document.createElement('p');
     description.className = 'wm-main-description';
     description.textContent = 'Scavenge scrap. Build a run. Keep moving when the wasteland closes in.';
-
     brand.append(kicker, title, motto, description);
 
     const panel = document.createElement('div');
     panel.className = 'wm-main-panel';
-
     const panelHeader = document.createElement('div');
     panelHeader.className = 'wm-main-panel-header';
     const panelLabel = document.createElement('span');
@@ -153,7 +141,6 @@ export function showMainMenu() {
     status.className = 'wm-main-status';
     status.setAttribute('aria-live', 'polite');
     status.textContent = 'SELECT AN ACTION.';
-
     const actions = document.createElement('div');
     actions.className = 'wm-main-actions';
 
@@ -165,13 +152,11 @@ export function showMainMenu() {
         resolvePromise(result);
       }, 120);
     };
-
     for (const action of MAIN_ACTIONS) actions.append(makeMenuAction(action, status, finish));
 
     const footer = document.createElement('footer');
     footer.className = 'wm-main-footer';
     footer.innerHTML = '<span>SCRAP RUNNER PROGRAM</span><span>LANDSCAPE MOBILE BUILD</span>';
-
     panel.append(panelHeader, actions, status);
     screen.append(atmosphere, brand, panel, footer);
     document.body.append(screen);
