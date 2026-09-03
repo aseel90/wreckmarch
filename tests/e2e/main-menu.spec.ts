@@ -41,7 +41,7 @@ test('Main is canonical; Settings and Progression return safely; locked routes c
   const leaderboard = page.locator('[data-screen-id="leaderboard"]');
   await expect(leaderboard).toHaveAttribute('data-enabled', 'false');
   await leaderboard.click();
-  await expect(page.locator('.wm-main-status')).toContainText('LOCKED');
+  await expect(page.locator('.wm-main-status')).toContainText('LEADERBOARD // OFFLINE.');
   expect(await page.evaluate(() => (window as any).__WM_GAME_SHELL__?.currentScreenId || null)).toBe('main');
 
   await page.locator('[data-screen-id="character-select"]').click();
