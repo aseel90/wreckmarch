@@ -1,0 +1,46 @@
+name: Bootstrap Clean U7 Migration
+
+on:
+  push:
+    branches: [u7/canonical-upgrade-scene-clean]
+
+permissions:
+  contents: write
+
+jobs:
+  copy-final-u7:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: u7/canonical-upgrade-scene-clean
+          fetch-depth: 0
+      - name: Fetch validated U7 source branch
+        run: git fetch origin u7/canonical-upgrade-scene
+      - name: Copy only final U7 files
+        run: |
+          set -euo pipefail
+          paths=(
+            src/phase-c1-runtime.js
+            src/phase-c2-runtime.js
+            src/phase-c3-runtime.js
+            src/phase-c5-runtime.js
+            src/upgrades/upgrade-scene.js
+            tests/unit/armor-plate-upgrade.test.ts
+            tests/unit/survivability-upgrades.test.ts
+            tests/unit/upgrade-scene-ownership.test.ts
+            tests/unit/upgrade-system-u0-baseline.test.ts
+            tests/unit/weapon-projectile-integration.test.ts
+          )
+          for path in "${paths[@]}"; do
+            mkdir -p "$(dirname "$path")"
+            git show "origin/u7/canonical-upgrade-scene:$path" > "$path"
+          done
+          git rm .github/workflows/u7-clean-copy.yml
+      - name: Commit clean migration
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/phase-c1-runtime.js src/phase-c2-runtime.js src/phase-c3-runtime.js src/phase-c5-runtime.js src/upgrades/upgrade-scene.js tests/unit/armor-plate-upgrade.test.ts tests/unit/survivability-upgrades.test.ts tests/unit/upgrade-scene-ownership.test.ts tests/unit/upgrade-system-u0-baseline.test.ts tests/unit/weapon-projectile-integration.test.ts .github/workflows/u7-clean-copy.yml
+          git commit -m 'Consolidate Upgrade Scene ownership'
+          git push origin HEAD:u7/canonical-upgrade-scene-clean
