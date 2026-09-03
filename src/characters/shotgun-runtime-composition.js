@@ -87,7 +87,14 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
     return api;
   }
 
-  function advanceLocomotion(deltaMs, { motion: nextMotion = motion, frameDurationMs } = {}) {
+  /**
+   * Advance the existing body frames using caller-owned timing.
+   * @param {number} deltaMs
+   * @param {{ motion?: 'idle' | 'run', frameDurationMs: number }} options
+   */
+  function advanceLocomotion(deltaMs, options) {
+    const nextMotion = options?.motion ?? motion;
+    const frameDurationMs = options?.frameDurationMs;
     if (!Number.isFinite(deltaMs) || deltaMs < 0) throw Error('Shotgun locomotion delta must be a finite non-negative number');
     if (!Number.isFinite(frameDurationMs) || frameDurationMs <= 0) throw Error('Shotgun locomotion frame duration must be a finite positive number');
     const frames = MOTIONS[nextMotion];
