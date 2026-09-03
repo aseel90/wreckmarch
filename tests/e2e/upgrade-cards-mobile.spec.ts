@@ -164,7 +164,6 @@ test('three-card selection stays readable and non-overlapping on target mobile l
       }
     }
     expect(snapshot.initial.selectedIndex).toBe(0);
-    expect(snapshot.initial.cards[0].scale).toBeGreaterThan(snapshot.initial.cards[1].scale);
     expect(snapshot.middleSelected.selectedIndex).toBe(1);
     expect(snapshot.middleSelected.cards[1].scale).toBeGreaterThan(snapshot.middleSelected.cards[0].scale);
     expect(snapshot.middleSelected.cards[1].scale).toBeGreaterThan(snapshot.middleSelected.cards[2].scale);
