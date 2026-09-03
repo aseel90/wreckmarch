@@ -81,7 +81,11 @@ async function renderAndMeasureGroup(page: any, ids: readonly string[], level: n
       const right = card.g.x + bgWidth * scale / 2;
       const top = card.g.y - bgHeight * scale / 2;
       const bottom = card.g.y + bgHeight * scale / 2;
-      const description = card.g.list.find((child: any) => child?.text === choice.desc);
+      const textChildren = card.g.list
+        .filter((child: any) => child?.type === 'Text' && Number.isFinite(Number(child.y)))
+        .filter((child: any) => Number(child.y) < Number(card.previewBackground.y))
+        .sort((a: any, b: any) => Number(b.y) - Number(a.y));
+      const description = textChildren[0] || null;
       const hit = card.g.list.find((child: any) => child?.type === 'Zone');
       const previewTop = card.g.y + (card.previewBackground.y - card.previewBackground.height / 2) * scale;
       const previewBottom = card.g.y + (card.previewBackground.y + card.previewBackground.height / 2) * scale;
@@ -149,8 +153,10 @@ test('three-card selection stays readable and non-overlapping on target mobile l
       expect(card.previewText, `${card.id}: preview arrow`).toContain('→');
       expect(card.previewTextWidth, `${card.id}: preview width`).toBeLessThanOrEqual(card.previewWidth - 8);
       expect(card.previewTextHeight, `${card.id}: preview height`).toBeLessThanOrEqual(card.previewHeight - 4);
+      expect(card.descriptionHeight, `${card.id}: description block`).toBeGreaterThan(0);
       expect(card.descriptionHeight, `${card.id}: description block`).toBeLessThanOrEqual(34);
-      expect(card.descriptionBottom, `${card.id}: description→preview gap`).toBeLessThanOrEqual(card.previewTop - 2);
+      expect(card.descriptionBottom, `${card.id}: description→preview gap`).not.toBeNull();
+      expect(card.descriptionBottom as number, `${card.id}: description→preview gap`).toBeLessThanOrEqual(card.previewTop - 2);
       expect(card.footerTop, `${card.id}: preview→footer gap`).toBeGreaterThanOrEqual(card.previewBottom + 4);
       expect(card.footerText, `${card.id}: level`).toContain('LV');
     }
