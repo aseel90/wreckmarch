@@ -12,8 +12,10 @@ const VIEWPORTS = [
 
 const EPSILON = 2;
 
-async function applySafeArea(page: any, safe: { top: number; right: number; bottom: number; left: number }) {
-  await page.evaluate(value => {
+type SafeArea = { top: number; right: number; bottom: number; left: number };
+
+async function applySafeArea(page: any, safe: SafeArea) {
+  await page.evaluate((value: SafeArea) => {
     const root = document.documentElement.style;
     root.setProperty('--wm-safe-top', `${value.top}px`);
     root.setProperty('--wm-safe-right', `${value.right}px`);
@@ -115,7 +117,7 @@ for (const viewport of VIEWPORTS) {
     await page.evaluate(async () => {
       document.querySelectorAll('.wm-shell-screen,.wm-pause-screen').forEach(element => element.remove());
       document.body.classList.remove('wm-character-select-active', 'wm-main-active', 'wm-settings-active', 'wm-progression-active');
-      const pause = await new Function('url', 'return import(url)')('/src/ui/pause-screen.js?v=3');
+      const pause = await new Function('url', 'return import(url)')('/src/ui/pause-screen.js?v=4');
       void pause.showPauseScreen();
     });
     await expect(page.locator('.wm-pause-screen')).toBeVisible();
@@ -126,7 +128,7 @@ for (const viewport of VIEWPORTS) {
     await page.evaluate(async () => {
       document.querySelectorAll('.wm-shell-screen,.wm-pause-screen').forEach(element => element.remove());
       document.body.classList.remove('wm-pause-active');
-      const results = await new Function('url', 'return import(url)')('/src/ui/results-screen.js?v=2');
+      const results = await new Function('url', 'return import(url)')('/src/ui/results-screen.js?v=3');
       void results.showResultsScreen({
         runId: 'responsive-matrix',
         reason: 'SYSTEM FAILURE',
@@ -153,9 +155,9 @@ test('portrait rotate gate covers pause and confirmation overlays', async ({ pag
   await expect(page.locator('#rotate')).toBeVisible();
   await applySafeArea(page, { top: 47, right: 0, bottom: 34, left: 0 });
   await page.evaluate(async () => {
-    const pause = await new Function('url', 'return import(url)')('/src/ui/pause-screen.js?v=3');
+    const pause = await new Function('url', 'return import(url)')('/src/ui/pause-screen.js?v=4');
     void pause.showPauseScreen();
-    const confirm = await new Function('url', 'return import(url)')('/src/ui/confirmation-modal.js?v=1');
+    const confirm = await new Function('url', 'return import(url)')('/src/ui/confirmation-modal.js?v=2');
     void confirm.showConfirmationModal({ title: 'RESPONSIVE CHECK', body: 'Rotate must remain above this dialog.' });
   });
   const layers = await page.evaluate(() => {
