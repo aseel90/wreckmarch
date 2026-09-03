@@ -1,6 +1,9 @@
 import { SCREEN_IDS } from './screen-registry.js?v=2';
+import { progressionStore } from '../progression/progression-store.js?v=3';
+import { getActiveTerminalPlate } from '../workshop/workshop-catalog.js?v=1';
 
 const STYLESHEET_ID = 'wm-frontend-shell-styles';
+const WORKSHOP_STYLESHEET_ID = 'wm-workshop-styles';
 
 const MAIN_ACTIONS = Object.freeze([
   Object.freeze({
@@ -20,9 +23,9 @@ const MAIN_ACTIONS = Object.freeze([
   }),
   Object.freeze({
     screenId: SCREEN_IDS.SHOP,
-    label: 'PROGRESSION',
-    eyebrow: 'WORKSHOP',
-    detail: 'Persistent run records and survivor program status.',
+    label: 'WORKSHOP',
+    eyebrow: 'FABRICATION',
+    detail: 'Permanent records, Scrip and terminal cosmetics.',
     enabled: true,
   }),
   Object.freeze({
@@ -46,6 +49,15 @@ function ensureStylesheet() {
   link.id = STYLESHEET_ID;
   link.rel = 'stylesheet';
   link.href = new URL('./frontend-shell.css?v=3', import.meta.url).href;
+  document.head.append(link);
+}
+
+function ensureWorkshopStylesheet() {
+  if (document.getElementById(WORKSHOP_STYLESHEET_ID)) return;
+  const link = document.createElement('link');
+  link.id = WORKSHOP_STYLESHEET_ID;
+  link.rel = 'stylesheet';
+  link.href = new URL('../workshop/workshop.css?v=1', import.meta.url).href;
   document.head.append(link);
 }
 
@@ -97,6 +109,7 @@ function makeMenuAction(action, statusEl, resolve) {
 
 export function showMainMenu() {
   ensureStylesheet();
+  ensureWorkshopStylesheet();
   document.body.classList.add('wm-main-active');
 
   return new Promise(resolvePromise => {
@@ -126,6 +139,14 @@ export function showMainMenu() {
     description.className = 'wm-main-description';
     description.textContent = 'Scavenge scrap. Build a run. Keep moving when the wasteland closes in.';
     brand.append(kicker, title, motto, description);
+    const terminalPlate = getActiveTerminalPlate(progressionStore.snapshot());
+    if (terminalPlate) {
+      const plate = document.createElement('div');
+      plate.className = 'wm-workshop-terminal-plate wm-main-terminal-plate';
+      plate.dataset.workshopItemId = terminalPlate.id;
+      plate.textContent = terminalPlate.presentation.label;
+      brand.append(plate);
+    }
 
     const panel = document.createElement('div');
     panel.className = 'wm-main-panel';

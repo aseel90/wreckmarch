@@ -1,9 +1,12 @@
-import { progressionStore } from '../progression/progression-store.js?v=2';
+import { progressionStore } from '../progression/progression-store.js?v=3';
 import { evaluateProgressionMilestones, getWorkshopRank } from '../progression/progression-milestones.js?v=1';
 import { listCharacterEntries } from '../characters/character-registry.js?v=5';
+import { listWorkshopCatalogItems } from '../workshop/workshop-catalog.js?v=1';
+import { purchaseWorkshopItem } from '../workshop/workshop-purchase-service.js?v=1';
 
 const SHELL_STYLESHEET_ID = 'wm-frontend-shell-styles';
 const PROGRESSION_STYLESHEET_ID = 'wm-progression-styles';
+const WORKSHOP_STYLESHEET_ID = 'wm-workshop-styles';
 
 function ensureStylesheets() {
   if (!document.getElementById(SHELL_STYLESHEET_ID)) {
@@ -19,6 +22,13 @@ function ensureStylesheets() {
     progression.rel = 'stylesheet';
     progression.href = new URL('./progression.css?v=4', import.meta.url).href;
     document.head.append(progression);
+  }
+  if (!document.getElementById(WORKSHOP_STYLESHEET_ID)) {
+    const workshop = document.createElement('link');
+    workshop.id = WORKSHOP_STYLESHEET_ID;
+    workshop.rel = 'stylesheet';
+    workshop.href = new URL('../workshop/workshop.css?v=1', import.meta.url).href;
+    document.head.append(workshop);
   }
 }
 
@@ -66,7 +76,7 @@ function makeMilestone(milestone) {
 export function showProgressionScreen() {
   ensureStylesheets();
   document.body.classList.add('wm-progression-active');
-  const profile = progressionStore.snapshot();
+  let profile = progressionStore.snapshot();
   const milestones = evaluateProgressionMilestones(profile);
   const workshopRank = getWorkshopRank(profile);
 
@@ -87,9 +97,9 @@ export function showProgressionScreen() {
     kicker.textContent = 'WRECKMARCH // WORKSHOP RECORD';
     const title = document.createElement('h1');
     title.id = 'wm-progression-title';
-    title.textContent = 'PROGRESSION';
+    title.textContent = 'WORKSHOP';
     const subtitle = document.createElement('p');
-    subtitle.textContent = 'Permanent field records, Workshop Scrip and milestones. Purchasing remains production-gated until the catalog contract is complete.';
+    subtitle.textContent = 'Permanent field records, Workshop Scrip and milestones. Catalog v1 is active for non-power terminal cosmetics. Character and combat unlocks remain production-gated.';
     header.append(kicker, title, subtitle);
 
     const rank = document.createElement('section');
@@ -114,6 +124,73 @@ export function showProgressionScreen() {
       stat('LIFETIME SCRAP', String(profile.lifetimeScrapCollected)),
       stat('WORKSHOP SCRIP', String(profile.workshopScrip), 'workshop-scrip'),
     );
+
+    const catalog = document.createElement('section');
+    catalog.className = 'wm-workshop-catalog';
+    const catalogTitle = document.createElement('h2');
+    catalogTitle.textContent = 'TERMINAL PLATES';
+    const catalogIntro = document.createElement('p');
+    catalogIntro.textContent = 'Permanent Workshop cosmetics only. Purchases do not grant combat power, cards or character activation.';
+    const catalogGrid = document.createElement('div');
+    catalogGrid.className = 'wm-workshop-catalog-grid';
+    const purchaseStatus = document.createElement('p');
+    purchaseStatus.className = 'wm-workshop-purchase-status';
+    purchaseStatus.setAttribute('aria-live', 'polite');
+    purchaseStatus.textContent = 'SELECT A WORKSHOP ITEM.';
+
+    const scripValue = stats.querySelector('[data-stat="workshop-scrip"] strong');
+    for (const item of listWorkshopCatalogItems()) {
+      const card = document.createElement('article');
+      card.className = 'wm-workshop-item';
+      card.dataset.itemId = item.id;
+      const copy = document.createElement('div');
+      copy.className = 'wm-workshop-item-copy';
+      const type = document.createElement('span');
+      type.textContent = 'TERMINAL COSMETIC';
+      const name = document.createElement('strong');
+      name.textContent = item.name;
+      const description = document.createElement('p');
+      description.textContent = item.description;
+      copy.append(type, name, description);
+      const buy = document.createElement('button');
+      buy.type = 'button';
+      buy.className = 'wm-workshop-buy';
+      buy.dataset.purchaseItemId = item.id;
+
+      const refresh = snapshot => {
+        const owned = snapshot.ownedWorkshopItemIds.includes(item.id);
+        card.dataset.owned = String(owned);
+        if (owned) {
+          buy.disabled = true;
+          buy.dataset.state = 'owned';
+          buy.textContent = 'OWNED';
+          return;
+        }
+        const shortfall = Math.max(0, item.cost - snapshot.workshopScrip);
+        buy.disabled = shortfall > 0;
+        buy.dataset.state = shortfall > 0 ? 'insufficient' : 'available';
+        buy.textContent = shortfall > 0 ? `NEED ${shortfall} SCRIP` : `BUY // ${item.cost} SCRIP`;
+      };
+
+      buy.addEventListener('click', () => {
+        const transaction = purchaseWorkshopItem(item.id);
+        profile = transaction.snapshot;
+        if (scripValue) scripValue.textContent = String(profile.workshopScrip);
+        refresh(profile);
+        purchaseStatus.dataset.state = transaction.status;
+        purchaseStatus.textContent = transaction.status === 'purchased'
+          ? `${item.name} // FABRICATED. DEPLOYMENT TERMINAL UPDATED.`
+          : transaction.status === 'already-owned'
+            ? `${item.name} // ALREADY OWNED.`
+            : transaction.status === 'insufficient-funds'
+              ? `${item.name} // INSUFFICIENT SCRIP.`
+              : `${item.name} // UNAVAILABLE.`;
+      });
+      refresh(profile);
+      card.append(copy, buy);
+      catalogGrid.append(card);
+    }
+    catalog.append(catalogTitle, catalogIntro, catalogGrid, purchaseStatus);
 
     const milestoneSection = document.createElement('section');
     milestoneSection.className = 'wm-progression-milestones';
@@ -145,7 +222,7 @@ export function showProgressionScreen() {
 
     const note = document.createElement('p');
     note.className = 'wm-progression-note';
-    note.textContent = 'SCRAP REMAINS AN IN-RUN STATISTIC. WORKSHOP SCRIP IS A SEPARATE PERMANENT CURRENCY — PURCHASING IS STILL LOCKED.';
+    note.textContent = 'SCRAP REMAINS AN IN-RUN STATISTIC. WORKSHOP SCRIP IS A SEPARATE PERMANENT CURRENCY. CATALOG V1 SELLS PRESENTATION ONLY.';
     const footer = document.createElement('footer');
     footer.className = 'wm-progression-footer';
     footer.textContent = 'SCRIP, RANK AND FIELD STAMPS CANNOT OVERRIDE PRODUCTION LOCKS OR GRANT COMBAT POWER';
@@ -156,7 +233,7 @@ export function showProgressionScreen() {
       resolve(Object.freeze({ action: 'back' }));
     };
     back.addEventListener('click', finish);
-    screen.append(back, header, rank, stats, milestoneSection, roster, note, footer);
+    screen.append(back, header, rank, stats, catalog, milestoneSection, roster, note, footer);
     document.body.append(screen);
   });
 }
