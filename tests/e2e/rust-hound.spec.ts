@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('Rust Hound uses baked transparent art with a readable committed ground slide', async ({ page }) => {
-  await page.goto('/?debug=1');
+  await page.goto('/?autotest=1&debug=1');
   await expect.poll(
     () => page.evaluate(() => document.body.classList.contains('visual-ready')),
     { timeout: 20_000 }
@@ -69,7 +69,7 @@ test('Rust Hound uses baked transparent art with a readable committed ground sli
         Number.isFinite(state?.vx) &&
         Number.isFinite(state?.vy) &&
         Number(state?.maxObservedSpeed) >= 330 &&
-        Number(state?.maxObservedSpeed) <= 380
+        Number(state?.maxObservedSpeed) < 380
       );
     }),
     { timeout: 8_000 }

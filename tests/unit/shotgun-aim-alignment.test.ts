@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { SHOTGUN_ART_CONTRACT } from '../../src/characters/shotgun-art-contract.js';
 import { SHOTGUN_PRODUCTION_ART } from '../../src/characters/shotgun-production-art.js';
 import { SHOTGUN_AIM_ALIGNMENT, getShotgunWeaponPlacement } from '../../src/characters/shotgun-aim-alignment.js';
+import {
+  getCharacterEntry,
+  getCharacterDefinition,
+  isCharacterSelectable,
+} from '../../src/characters/character-registry.js';
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const bodyPaths = [...SHOTGUN_PRODUCTION_ART.body.idle, ...SHOTGUN_PRODUCTION_ART.body.run];
@@ -39,12 +44,14 @@ describe('WS14-C Shotgun hold / aim alignment', () => {
     expect(SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip).toEqual({ x: 72, y: -5 });
   });
 
-  it('mirrors the hold point symmetrically for left aim and remains inactive', () => {
+  it('mirrors the hold point symmetrically for left aim and remains non-playable', () => {
     const right = getShotgunWeaponPlacement('right');
     const left = getShotgunWeaponPlacement('left');
     expect(left.grip.x).toBeCloseTo(SHOTGUN_ART_CONTRACT.canvas.width - right.grip.x, 8);
     expect(left.grip.y).toBeCloseTo(right.grip.y, 8);
     expect(SHOTGUN_AIM_ALIGNMENT.activation.playableOnMain).toBe(false);
-    expect(read('src/characters/character-registry.js')).not.toMatch(/shotgun/i);
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: null });
+    expect(isCharacterSelectable('shotgun')).toBe(false);
+    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
   });
 });
