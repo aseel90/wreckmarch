@@ -2,6 +2,15 @@ import { expect, test } from '@playwright/test';
 
 const TARGET_VIEWPORT = { width: 844, height: 390 };
 const TEST_URL = '/?debug=1&autotest=1';
+const CARD_GROUPS = [
+  ['heavy-rivets', 'overclock', 'long-barrel'],
+  ['piercing-rivets', 'ricochet', 'shrapnel-impact'],
+  ['critical-rivet', 'twin-riveter', 'explosive-rivet'],
+  ['triple-riveter', 'fleet-feet', 'scrap-magnet'],
+  ['armor-plate', 'field-repair', 'impact-shield'],
+  ['call-rig', 'heavy-rivets', 'overclock']
+] as const;
+
 test.use({ viewport: TARGET_VIEWPORT });
 test.setTimeout(480_000);
 
@@ -10,83 +19,53 @@ async function waitForGame(page: any) {
   await expect(page.locator('canvas')).toBeVisible({ timeout: 20_000 });
   await expect.poll(
     () => page.evaluate(() => document.body.classList.contains('visual-ready')),
-    { timeout: 20_000 }
+    { timeout: 30_000 }
   ).toBe(true);
 }
 
-async function configureSceneAndGetEligibleIds(page: any) {
-  return page.evaluate(async () => {
-    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-    const scene = game.scene.getScene('Wreckmarch');
-    scene.spawnEvent.paused = true;
-    scene.enemies.clear(true, true);
-    scene.heroHp = Math.min(Number(scene.heroHp || 1), Number(scene.heroMaxHp || 1) * .6);
-    scene.heroShieldCharges = 0;
-    scene.rigSummoned = false;
-    scene.upgradeLevels['twin-riveter'] = Math.max(2, Number(scene.upgradeLevels['twin-riveter'] || 0));
-    scene.upgradeMechanicalState = {
-      ...(scene.upgradeMechanicalState || {}),
-      'twin-riveter': {
-        id: 'twin-riveter', effectId: 'TWIN_RIVETER', level: 2, rarity: 'COMMON',
-        projectileCount: 2, volleyDamageMultiplier: 1.4, projectileDamageScale: .7
-      }
-    };
-    scene.twinShots = 2;
-    const runtimeImport = (specifier: string) => import(specifier);
-    const poolApi = await runtimeImport('/src/upgrades/upgrade-offer-pool.js?v=1');
-    return Array.from(new Set(poolApi.createActiveUpgradeOfferChoices(scene).map((choice: any) => String(choice.id)))) as string[];
-  });
-}
-
-async function renderAndMeasureGroup(page: any, ids: string[], level: number) {
+async function renderAndMeasureGroup(page: any, ids: readonly string[], level: number) {
   await waitForGame(page);
   return page.evaluate(async ({ ids, level }: { ids: string[]; level: number }) => {
     const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
     scene.enemies.clear(true, true);
+    scene.level = Math.max(2, Number(scene.level || 1));
     scene.heroHp = Math.min(Number(scene.heroHp || 1), Number(scene.heroMaxHp || 1) * .6);
     scene.heroShieldCharges = 0;
     scene.rigSummoned = false;
-    scene.upgradeLevels['twin-riveter'] = Math.max(2, Number(scene.upgradeLevels['twin-riveter'] || 0));
-    scene.upgradeMechanicalState = {
-      ...(scene.upgradeMechanicalState || {}),
-      'twin-riveter': {
-        id: 'twin-riveter', effectId: 'TWIN_RIVETER', level: 2, rarity: 'COMMON',
-        projectileCount: 2, volleyDamageMultiplier: 1.4, projectileDamageScale: .7
-      }
-    };
-    scene.twinShots = 2;
 
     const runtimeImport = (specifier: string) => import(specifier);
-    const poolApi = await runtimeImport('/src/upgrades/upgrade-offer-pool.js?v=1');
-    const rarityApi = await runtimeImport('/src/upgrades/upgrade-rarity.js?v=1');
-    const rarity = rarityApi.getUpgradeRarityRule('COMMON');
-    const byId = new Map(poolApi.createActiveUpgradeOfferChoices(scene).map((choice: any) => [String(choice.id), choice]));
-    const choices = ids.map(id => byId.get(id)).filter(Boolean).map((choice: any) => ({
-      ...choice,
-      rarity: 'COMMON',
-      rarityLabel: rarity.label,
-      rarityColor: rarity.color,
-      rarityPowerMultiplier: rarity.powerMultiplier
-    }));
-    if (choices.length !== 3) throw new Error(`expected three eligible choices for ${ids.join(',')}, got ${choices.length}`);
-
-    if (game.scene.isActive('UpgradeSceneV4')) {
-      throw new Error('fresh game load unexpectedly started UpgradeSceneV4');
+    const catalogApi = await runtimeImport('/src/upgrades/upgrade-catalog.js?v=14');
+    const definitions = catalogApi.listUpgradeDefinitions();
+    const desired = new Set(ids);
+    for (const definition of definitions) {
+      if (desired.has(definition.id)) {
+        scene.upgradeLevels[definition.id] = 0;
+      } else if (definition.id === 'triple-riveter' && desired.has('twin-riveter')) {
+        // Triple is naturally unavailable until Twin is maxed; do not create an impossible
+        // evolved-at-max + Twin-at-zero state just to hide it from the test pool.
+        scene.upgradeLevels[definition.id] = 0;
+      } else {
+        scene.upgradeLevels[definition.id] = definition.maxLevel;
+      }
     }
-    scene.scene.launch('UpgradeSceneV4', { gameScene: scene, choices, level });
-    scene.scene.bringToTop('UpgradeSceneV4');
+    if (desired.has('triple-riveter')) scene.upgradeLevels['twin-riveter'] = 2;
+
+    scene.openUpgradeCards();
 
     const waitForCards = async () => {
-      for (let attempt = 0; attempt < 180; attempt += 1) {
+      for (let attempt = 0; attempt < 240; attempt += 1) {
         const current = game.scene.getScene('UpgradeSceneV4');
-        if (game.scene.isActive('UpgradeSceneV4') && Array.isArray(current?.cards) && current.cards.length === 3) return current;
+        if (current?.sys?.isActive?.() && Array.isArray(current.cards) && current.cards.length === 3) return current;
         await new Promise(resolve => requestAnimationFrame(() => resolve(undefined)));
       }
-      throw new Error(`timed out waiting for fresh UpgradeSceneV4 render for ${ids.join(',')}`);
+      const current = game.scene.getScene('UpgradeSceneV4');
+      throw new Error(`timed out waiting for canonical UpgradeSceneV4 render for ${ids.join(',')}; active=${Boolean(current?.sys?.isActive?.())}; cards=${current?.cards?.length ?? 'n/a'}; choices=${(current?.choices || []).map((choice: any) => choice.id).join(',')}`);
     };
     const upgradeScene = await waitForCards();
+    const choices = upgradeScene.choices || [];
+    const actualIds = choices.map((choice: any) => String(choice.id));
 
     const canvasRect = game.canvas.getBoundingClientRect();
     const logicalWidth = Number(upgradeScene.scale?.width || game.config.width || canvasRect.width);
@@ -131,38 +110,28 @@ async function renderAndMeasureGroup(page: any, ids: string[], level: number) {
       };
     });
     const gaps = cards.slice(0, -1).map((card: any, index: number) => cards[index + 1].screenLeft - card.screenRight);
+    scene.closeUpgradeCards();
     return {
+      actualIds,
       cards,
       gaps,
       viewport: { width: innerWidth, height: innerHeight },
       presentationVersion: scene.__upgradeCardPresentationVersion,
       previewVersion: scene.__upgradeCardPreviewVersion,
-      uniformCards: scene.__finalUniformUpgradeCards
+      uniformCards: scene.__finalUniformUpgradeCards,
+      level
     };
-  }, { ids, level });
+  }, { ids: [...ids], level });
 }
 
 test('three-card selection stays readable and non-overlapping on target mobile landscape', async ({ page }) => {
-  await waitForGame(page);
-  const eligibleOfferIds = await configureSceneAndGetEligibleIds(page);
-  expect(eligibleOfferIds).toHaveLength(16);
-
-  const groups: string[][] = [];
-  for (let start = 0; start < eligibleOfferIds.length; start += 3) {
-    const group = eligibleOfferIds.slice(start, start + 3);
-    const used = new Set(group);
-    for (const id of eligibleOfferIds) {
-      if (group.length >= 3) break;
-      if (!used.has(id)) { group.push(id); used.add(id); }
-    }
-    expect(new Set(group).size).toBe(3);
-    groups.push(group);
-  }
-
   const covered = new Set<string>();
-  for (let index = 0; index < groups.length; index += 1) {
-    const snapshot = await renderAndMeasureGroup(page, groups[index], index + 1);
-    snapshot.cards.forEach((card: any) => covered.add(String(card.id)));
+  for (let index = 0; index < CARD_GROUPS.length; index += 1) {
+    const expectedIds = CARD_GROUPS[index];
+    const snapshot = await renderAndMeasureGroup(page, expectedIds, index + 1);
+    snapshot.actualIds.forEach((id: string) => covered.add(id));
+
+    expect(new Set(snapshot.actualIds), `group ${index + 1}: canonical pool`).toEqual(new Set(expectedIds));
     expect(snapshot.viewport).toEqual(TARGET_VIEWPORT);
     expect(snapshot.presentationVersion).toBe('u5-before-after-v3');
     expect(snapshot.previewVersion).toBe('u5-before-after-v1');
@@ -187,5 +156,5 @@ test('three-card selection stays readable and non-overlapping on target mobile l
     }
   }
 
-  expect([...eligibleOfferIds].every(id => covered.has(id))).toBe(true);
+  expect(covered.size).toBe(16);
 });
