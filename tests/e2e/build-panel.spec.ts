@@ -25,7 +25,8 @@ test('U6 Pause Build panel is read-only, canonical and contained on target mobil
 
   const state = await page.evaluate(async () => {
     const scene = (window as any).__WM_GAME__?.scene?.getScene?.('Wreckmarch');
-    const mod = await import('/src/upgrades/run-build-snapshot.js?v=1');
+    const snapshotModuleUrl = '/src/upgrades/run-build-snapshot.js?v=1';
+    const mod = await import(snapshotModuleUrl);
     const snapshot = mod.createRunBuildSnapshot(scene);
     const panel = document.querySelector('.wm-build-panel') as HTMLElement | null;
     const overlay = document.querySelector('.wm-build-overlay') as HTMLElement | null;
