@@ -1,15 +1,23 @@
-# Upgrade System 2.0 Roadmap
+# Wreckmarch — Upgrade System 2.0 Roadmap
 
-Status legend:
+> **Status:** Approved implementation roadmap  
+> **Scope:** Character stats, weapon stats, run stats, upgrade cards, rarity, build identity, UI and future extensibility.  
+> **Rule:** This document is the implementation checklist. A checkbox becomes `[x]` only after the feature is implemented **and tested in the actual game**.
 
-- **✅ DONE** — implementation and validation complete.
-- **🟡 PARTIAL** — some validated work landed, but the item is not fully closed.
-- **⚪ NOT STARTED** — no implementation yet.
-- **🧭 ACTIVE POLICY** — standing architectural rule, not a one-time task.
-- **⏸️ DEFERRED** — intentionally postponed to a later roadmap/phase.
+---
+## Status legend
+
+Every checklist item carries a current implementation state:
+
+- **✅ DONE** — completed and verified at the level required for that task.
+- **🟡 IMPLEMENTED / LIVE VERIFY** — code is on `main` and automated checks passed, but the deployed build still needs a confirmed Live Chromium pass before the milestone is closed.
+- **🔵 IN PROGRESS** — partially implemented or intentionally transitional.
+- **⚪ NOT STARTED** — planned but implementation has not started.
+- **⏸️ DEFERRED** — intentionally outside the current active phase.
+- **🧭 ACTIVE POLICY** — an architectural rule currently enforced during development; it remains visible rather than being treated as a one-time feature.
 - **🧹 POST-MIGRATION** — cleanup that becomes actionable only after the replacement path is verified.
 
-> **Last status review:** 2026-09-03. Statuses describe the actual repository state on `main`; they do not count intention as completion.
+> **Last status review:** 2026-09-02. Statuses describe the actual repository state on `main`; they do not count intention as completion.
 
 ---
 
@@ -109,214 +117,267 @@ Current cards include concepts such as:
 - Armor Plate
 - Call the Rig / disabled Rig-related upgrades
 
-The exact gameplay tuning of these cards can evolve, but they must be migrated intentionally rather than silently replaced.
+Upgrade System 2.0 must migrate working cards safely rather than deleting working gameplay and rebuilding everything at once.
 
 ---
 
-# 2. Character architecture
+# 2. Design model
 
-Goal: characters must be data-driven and independently configurable.
+The long-term build pipeline is:
 
-Each playable character should own at minimum:
+```text
+CHARACTER
+  Base Stats
+  Combat Profile
+  Passive
+  Starting Weapon
+       |
+       v
+WEAPON
+  Base weapon stats
+  Projectile behavior
+       |
+       v
+UPGRADES
+  Numeric modifiers
+  Mechanical modifiers
+  Rarity / levels / requirements
+       |
+       v
+STAT RESOLVER + RUN STATE
+       |
+       v
+COMBAT
+```
 
-- id
-- display name
-- max HP
+Future extensions:
+
+```text
+Character-specific cards
+Weapon-specific cards
+General cards
+        ↓
+Synergies
+        ↓
+Evolutions
+        ↓
+Future Companion / Robot Dog upgrade pool
+```
+
+---
+
+# 3. Character identity and stats
+
+Each playable character must eventually be more than a skin.
+
+A character definition should support:
+
+- `id`
+- display identity
+- base HP
 - movement speed
-- starting weapon id
-- passive definition/id
-- combat/physics profile where needed
-- animation/asset references or a clean reference to their visual definition
+- combat-stat modifiers
+- starting weapon ID
+- passive ID/config
+- character-specific upgrade tags/pool
+- physics/collision configuration where appropriate
+- canonical visual/animation references without allowing visuals to redefine gameplay identity
 
-Rules:
+## Runner/Hunter role
 
-- Runner/Hunter must keep the current production values during the migration unless there is a separate balance decision.
-- A future Shotgun character must not inherit Runner weapon values by accident.
-- Character visuals must not be re-selected later by unrelated art/runtime patches.
-- Adding a character must not require editing a large list of `if (character === ...)` branches across unrelated systems.
+Runner/Hunter remains the **baseline balanced character** while this system is built.
 
-Checklist:
+Do not rebalance the existing game around invented example numbers. Preserve current values first, then tune intentionally.
 
-- [x] Audit current character ownership. — **Status:** ✅ DONE
-- [x] Extend `CharacterRegistry`/definitions for upgrade-system needs. — **Status:** ✅ DONE
-- [x] Make character stats data-driven. — **Status:** ✅ DONE
-- [x] Add starting weapon ownership. — **Status:** ✅ DONE
-- [x] Add passive ownership/extension point. — **Status:** ✅ DONE
-- [x] Add regression test for Runner identity/stats/assets. — **Status:** ✅ DONE
-- [x] Ensure future character registration does not mutate Runner. — **Status:** ✅ DONE
+### Candidate combat stats
 
----
+These are architecture targets, not all finalized balance values:
 
-# 3. Weapon architecture
+- Max HP
+- Move Speed
+- Armor
+- Critical Chance
+- Critical Damage multiplier
+- Pickup Radius modifier
+- optional future recovery/utility modifiers
 
-Goal: weapons are separate from characters and can be tuned independently.
+### Critical hit note
 
-Each weapon definition should own at minimum:
+Crit is a **new combat capability**, not merely an existing number to expose.
 
-- id
-- display name
-- base damage
-- base fire delay/rate
-- projectile speed
-- range/lifetime semantics
-- base projectile count
-- base pierce count
-- muzzle/socket requirements
-- weapon-specific caps where appropriate
+Candidate starting balance for testing only:
 
-Rules:
+- Crit Chance: `5%`
+- Crit Damage: `x1.5`
 
-- A character points to a weapon id.
-- Upgrades modify weapon/run state, not the immutable base weapon definition.
-- Weapon behavior remains owned by `WeaponSystem`/combat layer.
-- Do not copy an entire weapon implementation for every character.
+These values are not final until tested.
 
-Checklist:
-
-- [x] Audit current primary weapon ownership. — **Status:** ✅ DONE
-- [x] Create/normalize weapon definition contract. — **Status:** ✅ DONE
-- [x] Route active character starting weapon through registry/definition. — **Status:** ✅ DONE
-- [x] Preserve current Runner weapon parity. — **Status:** ✅ DONE
-- [x] Add regression test for weapon stat resolution. — **Status:** ✅ DONE
+- [x] Extend character definition contract without breaking Runner. — **Status:** ✅ DONE
+- [x] Preserve Runner 100 HP / 255 base speed baseline. — **Status:** ✅ DONE
+- [x] Add starting weapon reference to character definition. — **Status:** ✅ DONE
+- [x] Add combat-stat profile support. — **Status:** ✅ DONE
+- [x] Add passive slot/config support without requiring a strong Runner passive yet. — **Status:** ✅ DONE
+- [x] Ensure character visuals cannot override selected character identity. — **Status:** ✅ DONE
+- [x] Add regression test: Runner definition always resolves to Runner assets/stats. — **Status:** ✅ DONE
+- [ ] Add regression test: adding a future second character cannot mutate Runner definition. — **Status:** ⚪ NOT STARTED
 
 ---
 
-# 4. Canonical run stat state / resolver
+# 4. Character stats vs weapon stats vs run state
 
-Goal: base values and upgrade modifiers resolve through one path.
+Do not mix these domains.
 
-Recommended conceptual model:
+## Character / combat stats
+
+Examples:
+
+- HP / Max HP
+- Move Speed
+- Armor
+- Crit Chance
+- Crit Damage
+- Pickup modifier
+
+## Weapon stats
+
+Examples:
+
+- Base Damage
+- Fire Rate / Fire Delay
+- Range
+- Projectile Speed
+- Projectile Count
+- Spread
+- Pierce count
+- Ricochet count
+- Explosion Radius
+- Knockback
+- weapon-specific mechanical flags/effects
+
+## Run state
+
+Run state contains the resolved result of:
 
 ```text
-Character Base Stats
-        +
-Weapon Base Stats
-        +
-Upgrade Modifiers
-        +
-Temporary Run Effects (future)
-        =
-Resolved Run Stats
+Base Character
++ Character modifiers/passive
++ Base Weapon
++ Upgrade modifiers
++ Temporary effects
+= Current effective state
 ```
 
-Do not scatter mutable final values throughout scenes.
-
-### Modifier operations
-
-Support explicit operations such as:
-
-- `ADD`
-- `MULTIPLY`
-- `OVERRIDE` only when truly necessary
-
-Example:
-
-```text
-base damage = 12
-Heavy Rivets L2 = +40%
-Legendary bonus (example) = +20%
-resolved damage = base × modifiers
-```
-
-The actual modifier stacking rule must be deterministic and documented before balancing around it.
-
-Checklist:
-
-- [x] Define stat keys. — **Status:** ✅ DONE
-- [x] Define modifier schema. — **Status:** ✅ DONE
-- [x] Define deterministic stacking order. — **Status:** ✅ DONE
-- [x] Add per-stat caps where necessary. — **Status:** ✅ DONE
-- [x] Ensure character/weapon base definitions remain immutable during a run. — **Status:** ✅ DONE
-- [x] Add tests for additive/multiplicative/capped stats. — **Status:** ✅ DONE
-- [x] Add read-only debug dump of resolved stats. — **Status:** ✅ DONE
+- [x] Audit current gameplay variables and classify each as Character / Weapon / Run / World. — **Status:** ✅ DONE
+- [x] Document canonical owner for each migrated stat. — **Status:** ✅ DONE
+- [x] Remove duplicate active ownership when migration is complete. — **Status:** ✅ DONE
 
 ---
 
-## 4.1. Verified stat ownership
+# 5. Deterministic Stat Resolver
 
-Current implementation uses:
+We need one clear path explaining how a final number is produced.
+
+Do not allow random systems to directly mutate the same stat in unrelated files without traceable ownership.
+
+Supported modifier types should include where useful:
+
+1. `FLAT`
+2. `ADDITIVE_PERCENT`
+3. `MULTIPLICATIVE_PERCENT`
+4. `OVERRIDE` / mechanical override when explicitly required
+
+Example conceptual calculation:
 
 ```text
-src/stats/stat-resolver.js
-src/stats/run-stat-state.js
+Base Damage
++ flat modifiers
++ additive percentage group
+× multiplicative modifiers
+= effective damage
 ```
 
-`RunStatState` owns current per-run modifiers and resolves immutable character/weapon bases through `StatResolver`.
+The exact formula must be documented and tested before migration is complete.
 
-Verified base values:
+### Why this is required
 
-```text
-Runner maxHp: 100
-Runner moveSpeed: 255
-Runner moveSpeed cap: 280
-Rivet Gun damage: 15
-Rivet Gun fireDelay: 330 ms
-Rivet Gun projectileSpeed: 810
-Rivet Gun range: 560
-```
+Current upgrades can directly multiply values, e.g. repeated damage multipliers. That can be valid, but stacking must become an intentional rule rather than an accidental consequence of call order.
 
-Regression coverage verifies the base definitions remain unchanged after upgrade applications.
+- [x] Inventory current direct stat mutations. — **Status:** ✅ DONE
+- [x] Define modifier ordering. — **Status:** ✅ DONE
+- [x] Implement canonical resolver or equivalent canonical calculation layer. — **Status:** ✅ DONE
+- [x] Ensure applying/removing/recalculating upgrades is deterministic. — **Status:** ✅ DONE
+- [x] Add tests for flat/additive/multiplicative ordering. — **Status:** ✅ DONE
+- [x] Add tests preventing the same upgrade from being applied twice accidentally. — **Status:** ✅ DONE
 
 ---
 
-# 5. Upgrade registry / schema
+# 6. Upgrade Registry — data-driven cards
 
-Goal: one canonical source for upgrade definitions.
+Move card definitions out of a monolithic runtime responsibility into a canonical registry.
 
-Every upgrade definition should include enough information for both selection logic and UI.
+Each upgrade definition should be able to express:
 
-Recommended fields:
-
-```js
-{
-  id,
-  title,
-  category,
-  description,
-  maxLevel,
-  rarity,
-  tags,
-  scope,
-  requirements,
-  modifiers,
-  mechanicalEffect,
-  ui,
-}
+```text
+id
+name
+description
+rarity
+maxLevel
+tags
+requirements / prerequisites
+weight / offer rules
+modifier data
+mechanical effect ID/config
+art ID
+scope: GENERAL | CHARACTER | WEAPON | COMPANION(future)
 ```
 
-Not every upgrade needs every field; however, behavior should be represented declaratively where practical.
+Not every card needs custom executable logic. Numeric cards should primarily be data-driven. Mechanical cards may call a focused registered effect implementation.
 
-Checklist:
+### Migration rule
 
+**Do not migrate all cards in one destructive rewrite.**
+
+- Build registry.
+- Migrate a small number of existing cards.
+- Test real gameplay.
+- Continue card-by-card/group-by-group.
+- Remove old duplicate implementation only when migrated behavior is verified.
+
+- [x] Create canonical Upgrade Registry. — **Status:** ✅ DONE
 - [x] Define upgrade schema. — **Status:** ✅ DONE
-- [x] Create upgrade registry. — **Status:** ✅ DONE
-- [x] Migrate current production upgrades one by one. — **Status:** ✅ DONE
-- [x] Keep IDs stable where existing telemetry/tests depend on them. — **Status:** ✅ DONE
-- [x] Add duplicate-ID validation. — **Status:** ✅ DONE
-- [x] Add invalid-definition validation. — **Status:** ✅ DONE
-- [x] Remove active duplicate definitions after migration. — **Status:** ✅ DONE
+- [x] Add validation for invalid definitions. — **Status:** ✅ DONE
+- [x] Migrate Heavy Rivets as first numeric reference card. — **Status:** ✅ DONE
+- [x] Verify Heavy Rivets gameplay parity. — **Status:** ✅ DONE
+  - Verified on `c9da716`: canonical definition/registry/runtime adapter, shared Phase C/C1 apply path, unit parity, targeted final-card E2E, Quality, full E2E, Smoke, deploy eligibility, and no Live Chromium failure issue after deployment.
+- [x] Migrate Overclock. — **Status:** ✅ DONE
+  - Verified on `8b57ef7`: canonical definition, 145ms resolved-stat floor, shared Phase C/C1 apply path, unit parity, final-card E2E, Quality, full E2E and Smoke all passed; no `[CI]` or `[LIVE] deployed main smoke failed` issue was opened after the deployment window.
+- [x] Migrate Long Barrel. — **Status:** ✅ DONE
+  - Gameplay migration merged in `d731bad`; after the Sawbug/CI stabilization merge, `main` `98de52f` recovered with quality=success, e2e=success, smoke=success and passed post-deploy Live Chromium.
+- [x] Migrate Twin Riveter. — **Status:** ✅ DONE
+  - Verified on `10ba433`: canonical mechanical-effect path, shared Phase C/C1 registry adapter, WeaponSystem mechanical-state ownership, level 1 → 2 rivets / level 2 → 3 rivets parity, unit/final-scene E2E, Quality, Smoke, all three E2E shards, aggregate E2E, deploy, Live Chromium and Pages recovery all passed.
+- [x] Migrate Fleet Feet. — **Status:** ✅ DONE
+  - Verified on `3fd680b`: canonical Character `moveSpeed` migration uses the `RUN_BALANCE` contract (+3% per level, max level 3, hard cap 280), shared Phase C/C1 stat adapter, unit parity against `getPlayerMoveSpeed()`, deterministic final-scene E2E, Quality, Smoke, all three E2E shards and aggregate E2E; post-merge Live Chromium passed on the same SHA with no open `[CI] main is failing` or `[LIVE] deployed main smoke failed` issue.
+- [x] Migrate Scrap Magnet. — **Status:** ✅ DONE
+  - Verified on `51a90d7`: canonical Character `pickupRadiusMultiplier` preserves the 135px Phase C base radius and applies +25% multiplicatively per level (max 4) through RunStatState. Shared Phase C/C1 registry adapter, unit parity, deterministic final-scene attraction E2E, Quality, Smoke, all three E2E shards, aggregate E2E and post-merge Live Chromium passed on the same `main` SHA with no open CI/Live failure issue.
+- [x] Migrate Armor Plate. — **Status:** ✅ DONE
+  - Verified on gameplay commit `361c26b` with production recovery on `f49a580`: canonical mixed upgrade adds +15 `character.maxHp` FLAT per level (max 4) plus transactional `RESTORE_HP` capped at the newly resolved max HP. Shared Phase C/C1 registry wiring, rollback coverage, Quality, Smoke, all E2E shards, aggregate E2E, deploy and post-deploy Live Chromium passed; stale Pages module caching was cleared by bumping the C3/C3.1 import fingerprints, and Live Issue #93 auto-closed after recovery.
+- [x] Decide temporary handling of Call the Rig without expanding old Rig system. — **Status:** ✅ DONE
+  - Verified on `a44f551`: registry-owned one-level `COMPANION` card with a named `SUMMON_RIG` effect delegates only to `RigSystem.summon()`. Level-2 offer gating is data-driven; reserved Rig Overdrive/Twin Cannon choices remain unavailable in Phase C/C1. Unit/final-scene coverage, Quality, Smoke, all three E2E shards, aggregate E2E, Pages deployment and post-deploy production browser gates passed with no open CI/Live failure issue.
+- [x] Remove/deactivate obsolete duplicate card definitions after migration. — **Status:** ✅ DONE
+  - Verified on `f723494`: removed reserved Phase C/C1 `rig-overdrive` / `twin-cannon` gameplay placeholders and the Companion V3 upgrade-level monkeypatch while preserving companion presentation/runtime behavior. Twin Riveter level 2 is proven through the real `UpgradeSceneV4`; Quality, Smoke, all three E2E shards, aggregate E2E and Pages deployment passed, and the post-deploy Live Chromium gate completed without opening a `[LIVE] deployed main smoke failed` issue. No `ci-failure` issue remains open.
+  - Manual deployed-build baseline after this cleanup: ✅ PASS — upgrade cards, Twin Riveter level 2, Call the Rig and general gameplay were confirmed working normally before the roll-service extraction began.
 
 ---
 
-# 6. Rarity system
+# 7. Rarity system
 
-Target rarity tiers:
+Target rarities:
 
-1. **Common**
-2. **Rare**
-3. **Epic**
-4. **Legendary**
-
-Initial weight target:
-
-```text
-Common      65
-Rare        24
-Epic         9
-Legendary    2
-```
-
-These are baseline weights, not a permanent promise. They are subject to telemetry and run pacing.
+- `COMMON`
+- `RARE`
+- `EPIC`
+- `LEGENDARY`
 
 Rarity must affect more than border color. It can control:
 
@@ -418,418 +479,472 @@ Candidate tags:
 
 Scopes:
 
+- `GENERAL`
 - `CHARACTER`
 - `WEAPON`
-- `RUN`
-- `COMPANION` (reserved)
+- `COMPANION` — reserved for future Robot Dog system
 
-Rules:
-
-- Tags describe what an upgrade affects.
-- Scope controls where it applies.
-- Requirements/prerequisites stay explicit.
-- Do not encode hidden synergy rules only in UI strings.
-
-- [x] Add tag support. — **Status:** ✅ DONE
-- [x] Add scope support. — **Status:** ✅ DONE
-- [x] Add requirement/prerequisite support. — **Status:** ✅ DONE
-- [x] Add compatibility filtering. — **Status:** ✅ DONE
+- [x] Implement tags. — **Status:** ✅ DONE
+- [x] Implement scopes. — **Status:** ✅ DONE
+- [x] Ensure Runner can use general + Runner-specific + compatible weapon cards. — **Status:** ✅ DONE — canonical compatibility context + resolver landed in PR #190
+- [x] Ensure incompatible future weapon cards cannot enter the offer pool. — **Status:** ✅ DONE — Rivet-only Twin/Triple/Explosive are explicitly `rivet-gun` compatible; deterministic future-shotgun context proves they are excluded
 
 ---
 
-# 10. Hunter / Rivet build identities
+## 9.1. Upgrade application transactions
 
-The initial Hunter card pool should support multiple real identities.
+Mixed stat/mechanical cards use one transaction-capable application path so a failed post-stat effect cannot leave half-applied state.
 
-## A. Heavy Rivets
-
-Theme: fewer, harder-hitting shots.
-
-Candidate core cards:
-
-- Heavy Rivets
-- Long Barrel
-- Piercing Rivets
-- Shrapnel Impact
-
-Expected feel:
-
-- high per-shot damage
-- longer reach
-- impact chains
-- useful against dense lines / durable enemies
-
-## B. Rapid Riveter
-
-Theme: fire-rate and projectile-volume pressure.
-
-Candidate core cards:
-
-- Overclock
-- Twin Riveter
-- Triple Riveter / advanced evolution candidate
-- Critical Rivet
-
-Expected feel:
-
-- faster cadence
-- high projectile volume
-- strong proc frequency
-- potentially higher performance cost, so must be measured
-
-## C. Explosive / Chaos
-
-Theme: periodic area control without permanently turning every shot into a bomb.
-
-Candidate core cards:
-
-- Explosive Rivet
-- Shrapnel Impact
-- Ricochet
-- Critical Rivet
-
-Expected feel:
-
-- periodic burst moments
-- chain reactions
-- area damage
-- not permanently OP
-
-The previously discussed idea of an **explosive shot every several seconds** belongs here and should be implemented with an explicit cooldown owner rather than making every projectile explosive.
+- [x] Add transaction-capable modifier application. — **Status:** ✅ DONE
+- [x] Add effect rollback for mixed stat/mechanical upgrades. — **Status:** ✅ DONE
+- [x] Prove Armor Plate rollback when its post-stat effect fails. — **Status:** ✅ DONE
+- [ ] Extend transaction coverage only when future companion/run effects require it. — **Status:** ⏳ FUTURE
 
 ---
 
-# 11. Initial Hunter card pool
+# 10. Hunter / Rivet build expansion
 
-The first production expansion should target approximately **10–12 core Hunter/Rivet cards**, not dozens.
+Target initial pool: approximately **10–12 strong Hunter-compatible cards**, including migrated current cards.
 
-Existing/migrated cards count toward this pool where they fit.
+The goal is not simply more cards; it is multiple recognizable builds.
 
-### Core baseline candidates
+## Existing foundations
 
-1. Heavy Rivets
-2. Overclock
-3. Long Barrel
-4. Twin Riveter
-5. Fleet Feet
-6. Scrap Magnet
-7. Armor Plate
+- Heavy Rivets — damage foundation
+- Overclock — fire-rate foundation
+- Long Barrel — range/projectile foundation
+- Twin Riveter — multishot foundation
+- Fleet Feet — mobility
+- Scrap Magnet — economy/utility
+- Armor Plate — defense
 
-### New card candidates
+## Candidate new cards
 
-8. Piercing Rivets
-9. Critical Rivet
-10. Ricochet
-11. Shrapnel Impact
-12. Explosive Rivet
+### Piercing Rivets
+Rivets penetrate additional enemies.
 
-### Advanced/evolution candidate
+**Implementation status:** ✅ DONE — PR #105, merged as `0b33898e66d0f9932330cd0cb53c7651596076e8`; exact-SHA production Live verification and Pages recovery passed. Canonical `pierceCount` weapon state, ordered multi-enemy swept hits, same-projectile duplicate-hit prevention, dedicated Wreckmarch card art, and deterministic Chromium coverage are live.
 
-13. Triple Riveter
+### Ricochet
+Rivets can redirect/bounce to a nearby valid enemy after impact.
 
-Notes:
+**Implementation status:** ✅ DONE — PR #109, merged as `6b499451bb5ff7fc29f184180d420db96fef88c6`; exact-SHA iOS Live verification and Pages recovery passed, and no open Live Chromium or main CI failure remained for the merged SHA. Canonical `ricochetCount`, Pierce-first/final-impact redirect behavior, duplicate-target prevention, overlap/sweep ordering protection, D1-owned card art and deterministic Chromium coverage are live.
 
-- Triple Riveter should probably require Twin Riveter or another prerequisite rather than appear as an early baseline card.
-- Do not make all 13 equally common or available from minute one.
-- Mechanical cards should be introduced incrementally with tests.
+### Shrapnel Impact
+Impact releases short-range damaging fragments or equivalent controlled secondary projectiles.
 
----
+**Implementation status:** ✅ DONE — PR #111, merged as `440611c87fdfae9ad36374700e6a5831afd49b7e`; exact-SHA iOS Live verification and Pages recovery passed, and no open Live Chromium or main CI failure remained after the production gate. Canonical `shrapnelCount`, ProjectileSystem-owned bounded secondary fragments, source-hit exclusion, recursion prevention, D1-owned card art and deterministic Chromium coverage are live.
 
-# 12. Piercing Rivets
+### Critical Rivet
+Introduces/increases crit-oriented play.
 
-Intent: one projectile can continue through enemies.
+**Implementation status:** ✅ DONE — PR #115, merged as `3af77d101ba1288ee5b349adecf271594fdea2bc`; exact-SHA iOS Live verification and Pages recovery passed, and no open Live Chromium or main CI failure remained after the production gate. Canonical character-domain `critChance`, one-roll-per-Hero-projectile resolution in WeaponSystem, Runner `critDamageMultiplier = 1.5`, Rig/support isolation, D1-owned card art and deterministic Chromium coverage are live.
 
-Design direction:
+### Explosive Rivet
+Controlled impact explosion / area damage.
 
-- starts with +1 pierce
-- additional levels can increase pierce count or damage retention
-- keep a hard cap
-- must not re-hit the same enemy accidentally
+### Triple Riveter
+Advanced multishot upgrade; likely prerequisite-based rather than an unconditional early card.
 
-Implementation requirements:
+Possible later advanced card concepts:
 
-- projectile tracks hit enemy IDs/entities
-- each valid new enemy consumes pierce budget
-- projectile is destroyed only after budget expires or range/lifetime ends
-- works through canonical projectile/combat system
+- Deadeye / execution-style crit specialization
+- specialized overclock payoff
+- heavy-rivet payoff
 
-- [x] Implement projectile pierce state. — **Status:** ✅ DONE
-- [x] Add no-repeat-hit protection. — **Status:** ✅ DONE
-- [x] Add E2E combat test. — **Status:** ✅ DONE
-- [x] Verify performance with dense enemies. — **Status:** ✅ DONE
+Exact names, values, rarities and requirements require balance passes.
 
----
+> **Protected approved card concepts:** Piercing Rivets, Ricochet, Shrapnel Impact, Critical Rivet, Explosive Rivet and Triple Riveter must remain in this roadmap until implemented, explicitly deferred, or explicitly removed with user approval under the Roadmap integrity guard.
 
-# 13. Critical Rivet
-
-Intent: probabilistic damage burst.
-
-Required stats:
-
-- crit chance
-- crit damage multiplier
-
-Rules:
-
-- crit roll occurs in canonical combat/firing path
-- crit modifies damage once
-- UI should expose chance/multiplier
-- companion/support damage should not silently inherit player crit unless explicitly designed
-
-- [x] Add crit stats. — **Status:** ✅ DONE
-- [x] Add deterministic RNG test. — **Status:** ✅ DONE
-- [x] Add visual/event feedback hook. — **Status:** ✅ DONE
-- [x] Verify support damage ownership. — **Status:** ✅ DONE
+- [x] Finalize initial 10–12 card pool. — **Status:** ✅ DONE — U4 locks a 12-card Hunter core: Heavy Rivets, Overclock, Long Barrel, Twin Riveter, Piercing Rivets, Ricochet, Shrapnel Impact, Critical Rivet, Explosive Rivet, Fleet Feet, Scrap Magnet and Armor Plate. Triple Riveter remains a prerequisite-based advanced unlock; Field Repair + Impact Shield remain survivability auxiliary choices; Call the Rig remains a companion auxiliary choice. `src/upgrades/upgrade-offer-pool.js` is the single offer-pool owner and preserves the existing active choice ordering/weights so normal RNG is not steered.
+- [x] Implement first new mechanical card. — **Status:** ✅ DONE — Piercing Rivets, PR #105 / `0b33898e66d0f9932330cd0cb53c7651596076e8`
+- [x] Implement Piercing Rivets. — **Status:** ✅ DONE — canonical weapon `pierceCount` + live projectile chain + dedicated card art; production exact-SHA verification passed
+- [x] Implement Ricochet. — **Status:** ✅ DONE — PR #109 / `6b499451bb5ff7fc29f184180d420db96fef88c6`; canonical ricochet behavior + dedicated card art; production exact-SHA verification passed
+- [x] Implement Shrapnel Impact. — **Status:** ✅ DONE — PR #111 / `440611c87fdfae9ad36374700e6a5831afd49b7e`; canonical bounded impact fragments + dedicated card art; production exact-SHA verification passed
+- [x] Implement Critical Rivet + crit combat support. — **Status:** ✅ DONE — PR #115 / `3af77d101ba1288ee5b349adecf271594fdea2bc`; canonical Hero projectile crit resolution + dedicated card art; production exact-SHA verification passed
+- [x] Implement Explosive Rivet. — **Status:** ✅ DONE — production D1 validated; later readability polish also deployed
+- [x] Implement advanced multishot progression. — **Status:** ✅ DONE — Triple Riveter landed in PR #188 with the Twin L2 prerequisite and 1.60x bounded 3-shot volley, then received natural Production/D1 validation on the normal random offer path when WS10 closed in `86355faf447ca8397c480a35d27767dc1056a1cd`; no roll forcing or recommendation bias was introduced.
+- [x] Test projectile-count/performance limits. — **Status:** ✅ DONE — WS21 closed its Production/D1 projectile/effect performance gate from report `wm-1e3b7683-8eae-4517-9de6-cb8f27ebb979`; measured load passed and no gameplay nerf was required.
+- [x] Test interactions between mechanical cards. — **Status:** ✅ DONE — WS22 deterministic combat interaction matrix landed in `f889d041df4b322165093077a0cee7dcc53c5d24`; high-risk mechanic combinations passed the shared secondary-damage budget and full CI without balance-value changes.
 
 ---
 
-# 14. Ricochet
+# 11. Build identities
 
-Intent: projectile redirects to a new nearby enemy after impact.
+We want runs to diverge into recognizable styles.
 
-Rules:
+Examples, not forced recipes:
 
-- never ricochet to same already-hit enemy
-- limited bounce count
-- search radius is bounded
-- damage retention rule is explicit
-- if no valid target, projectile ends normally
-
-- [x] Implement bounded target search. — **Status:** ✅ DONE
-- [x] Track hit targets. — **Status:** ✅ DONE
-- [x] Add bounce cap. — **Status:** ✅ DONE
-- [x] Add E2E behavior test. — **Status:** ✅ DONE
-
----
-
-# 15. Shrapnel Impact
-
-Intent: impact creates a limited number of secondary fragments.
-
-Rules:
-
-- fragments have reduced damage
-- fragment count is capped
-- fragments are shorter range/lifetime
-- secondary fragments should not recursively create infinite shrapnel unless explicitly intended
-
-- [x] Define fragment profile. — **Status:** ✅ DONE
-- [x] Prevent recursive explosion chains. — **Status:** ✅ DONE
-- [x] Add performance budget. — **Status:** ✅ DONE
-- [x] Add combat test. — **Status:** ✅ DONE
-
----
-
-# 16. Explosive Rivet
-
-Intent: periodic explosive shot, not permanent AOE on every projectile.
-
-Recommended first version:
+### Heavy / penetration build
 
 ```text
-Every N seconds, the next valid Hunter shot becomes explosive.
+Heavy Rivets
+→ Piercing Rivets
+→ Shrapnel / impact payoff
 ```
 
-Potential tuning knobs:
-
-- cooldown seconds
-- explosion radius
-- damage multiplier
-- falloff (optional later)
-- whether crit applies to explosion
-
-Rules:
-
-- cooldown owner is canonical upgrade/combat state
-- do not create a per-frame timer in UI
-- secondary/support weapons do not inherit it by accident
-- cannot recursively trigger shrapnel/explosion loops unless specifically approved
-
-- [x] Implement explicit cooldown state. — **Status:** ✅ DONE
-- [x] Mark/consume next explosive projectile. — **Status:** ✅ DONE
-- [x] Implement bounded AOE query. — **Status:** ✅ DONE
-- [x] Add recursion protection. — **Status:** ✅ DONE
-- [x] Add E2E tests. — **Status:** ✅ DONE
-
----
-
-# 17. Triple Riveter
-
-Intent: advanced multishot identity.
-
-Recommended direction:
-
-- prerequisite: Twin Riveter at required level
-- can replace/upgrade multishot behavior rather than stacking uncontrolled projectile duplication
-- apply per-projectile damage budget if needed for balance
-- hard cap projectile count
-
-- [x] Define prerequisite. — **Status:** ✅ DONE
-- [x] Define projectile-count rule. — **Status:** ✅ DONE
-- [x] Define damage budget. — **Status:** ✅ DONE
-- [x] Add regression test with Twin + Triple. — **Status:** ✅ DONE
-
----
-
-# 18. Survivability / utility cards
-
-Survivability cards should create choices without becoming mandatory every run.
-
-Existing candidates:
-
-- Armor Plate
-- Fleet Feet
-- Scrap Magnet
-
-Potential later additions:
-
-- Field Repair
-- Impact Shield
-- Emergency Patch
-
-Rules:
-
-- healing should not exceed max HP
-- shield state needs explicit owner if introduced
-- pickup radius should not change enemy balance
-- movement upgrades respect the hard cap
-
-- [x] Preserve Armor Plate semantics. — **Status:** ✅ DONE
-- [x] Preserve Fleet Feet cap. — **Status:** ✅ DONE
-- [x] Preserve Scrap Magnet ownership. — **Status:** ✅ DONE
-- [x] Add Field Repair only after HP ownership is clean. — **Status:** ✅ DONE
-- [x] Add Impact Shield only with explicit shield owner. — **Status:** ✅ DONE
-
----
-
-# 19. Upgrade UI / card presentation
-
-Goal: cards communicate meaningful gameplay change quickly on mobile.
-
-Required visible hierarchy:
+### Rapid multishot build
 
 ```text
-ART / ICON
-CARD NAME
-RARITY
-LEVEL
-WHAT CHANGES
+Overclock
+→ Twin Riveter
+→ Ricochet
+→ advanced multishot
 ```
 
-Cards should ideally show a useful before → after value when it can be computed safely.
+### Precision / critical build
+
+```text
+Critical Rivet
+→ Long Barrel
+→ advanced crit payoff
+```
+
+The system should encourage these patterns without making every run follow one fixed recipe.
+
+- [x] Verify at least 3 meaningfully different viable builds. — **Status:** ✅ DONE — WS20 closed after 3-of-3 Production validation in `c876ee8a355d2c973fe0f1611006b7709f6624a2`, with three distinct viable archetypes under the RNG-tolerant classifier.
+- [x] Ensure no single card is mandatory for every build. — **Status:** ✅ DONE — WS20's one-card attribution gate kept any single card at or below 35% direct-power share while preserving random/off-build valid offers.
+- [ ] Ensure defensive/utility choices remain useful without overwhelming offensive progression. — **Status:** ⚪ NOT STARTED
+
+---
+
+# 12. Prerequisites, synergies and evolutions
+
+## Prerequisites
+
+Supported in Upgrade System 2.0 architecture from the beginning.
 
 Examples:
 
+- require another card
+- require card level
+- require compatible weapon/tag
+- require character/tag
+
+## Synergies
+
+Implement after core registry/rarity/levels are stable.
+
+## Evolutions
+
+**Architect now, implement later.** Do not bundle full evolution implementation into the first migration.
+
+Potential future model:
+
 ```text
-DAMAGE
-15 → 18
-
-FIRE RATE
-3.0/s → 3.4/s
-
-PROJECTILES
-2 → 3
+Upgrade A at required level
++ Upgrade B / tag requirement
+→ unlock Epic/Evolution card
 ```
 
-Do not calculate UI values through a separate fake balance formula. UI must consume the same resolved-stat preview path used by gameplay.
-
-Checklist:
-
-- [x] Redesign card frames by rarity. — **Status:** ✅ DONE
-- [x] Improve icon/art consistency. — **Status:** ✅ DONE
-- [x] Show current/next level. — **Status:** ✅ DONE
-- [x] Show before/after values where safe. — **Status:** ✅ DONE
-- [x] Use real resolver for previews. — **Status:** ✅ DONE
-- [x] Add mobile visual regression test. — **Status:** ✅ DONE
+- [x] Prerequisite schema supported. — **Status:** ✅ DONE — shared upgrade-level requirement schema/resolver landed in PR #188
+- [x] Prerequisite offer filtering tested. — **Status:** ✅ DONE — Twin L1 remains ineligible; Twin L2 makes Triple eligible through the shared resolver, with direct-application enforcement also covered
+- [ ] Define synergy rules after initial pool is stable. — **Status:** ⏸️ DEFERRED
+- [ ] Design first evolution only after normal upgrade system passes balance testing. — **Status:** ⏸️ DEFERRED
+- [ ] Implement evolutions in a later sub-phase. — **Status:** ⏸️ DEFERRED
 
 ---
 
-# 20. Run stats / build panel
+# 13. Stat caps and safety limits
 
-The player needs a read-only view of their current build.
+Existing movement hard-cap behavior proves caps are already useful in Wreckmarch.
 
-Recommended fields:
+Potential capped/safety-controlled stats:
 
-Character:
-
-- HP / Max HP
 - Move Speed
-- Armor
-- Pickup Radius
-- Passive status
-
-Weapon:
-
-- Damage
-- Fire Rate
-- Projectile Count
-- Projectile Speed
-- Range
-- Pierce
+- Fire Rate / minimum fire delay
 - Crit Chance
-- Crit Damage
+- Armor / damage reduction
+- Projectile Count
+- Ricochet/Pierce counts where performance requires it
+- cooldown reduction if added later
 
-Build:
+Do not invent final cap values without gameplay testing.
 
-- acquired card IDs/names
-- card levels
-- rarity per acquired level or latest rarity, depending on final presentation
-
-Rules:
-
-- panel is read-only
-- panel never owns gameplay state
-- panel reads canonical resolved stats
-- panel should work during pause or another safe non-combat presentation state
-
-Checklist:
-
-- [x] Define safe read-only stat snapshot. — **Status:** ✅ DONE
-- [x] Separate character and weapon display. — **Status:** ✅ DONE
-- [x] Display upgrade levels. — **Status:** ✅ DONE
-- [x] Display relevant rarity information. — **Status:** ✅ DONE
-- [x] Validate displayed values against live combat. — **Status:** ✅ DONE
+- [x] Centralize relevant caps for migrated stats. — **Status:** ✅ DONE
+- [x] Preserve current movement cap behavior. — **Status:** ✅ DONE
+- [x] Add fire-rate safety limit. — **Status:** ✅ DONE
+- [ ] Add projectile-count/performance safety limit. — **Status:** 🟡 MEASURED / NO NEW HARD CAP REQUIRED — WS21 verified the current Production projectile/effect load inside the measured performance envelope; keep this open only if future mechanics require an explicit hard count cap.
+- [ ] Add crit cap when crit ships. — **Status:** ⚪ NOT STARTED
+- [ ] Add armor/damage-reduction cap when armor model is finalized. — **Status:** ⚪ NOT STARTED
 
 ---
 
-# 21. Testing strategy
+# 14. Upgrade card visual/UI improvement
 
-Every system layer needs tests proportional to its risk.
+The current card system should evolve visually without mixing UI ownership with gameplay logic.
 
-### Unit tests
+Target card information hierarchy:
 
-- stat resolver math
-- rarity selection/weights
-- prerequisite filtering
-- max-level filtering
-- card schema validation
-- modifier stacking
-- snapshot round-trip
+1. Card art
+2. Name
+3. Rarity
+4. Current/next level
+5. Short effect description
+6. Real stat preview when useful
 
-### E2E / browser tests
+Example:
 
-- upgrade cards open/close correctly
-- each mechanical card changes live combat as intended
-- no duplicate hit bugs
-- no runaway recursive projectiles
-- player-facing stats match live values
-- mobile landscape layout stays readable
+```text
+HEAVY RIVETS II
+RARE
 
-### Production/live evidence
+Damage +20%
+28.8 → 34.6
+```
 
-- full run duration
-- wave reached
-- levels gained
-- selected cards and rarities
-- DPS / damage pressure
-- projectile/effect counts for projectile-heavy builds
-- frame time / long frames
+Visual goals:
 
-Rules:
+- clearer premium frame language
+- rarity readability
+- improved card art consistency with Wreckmarch
+- remove confusing decorative elements
+- readable on mobile
+- no giant text blocks
 
-- deterministic tests prove mechanics
-- Production telemetry proves real-run behavior
-- do not nerf/buff from one unusual run without attribution
+- [x] Audit current card UI. — **Status:** ✅ DONE — final card rendering is owned by `src/upgrades/upgrade-card-presentation.js`; Phase D1 delegates presentation instead of owning a duplicate renderer, with unit + Chromium coverage.
+- [x] Finalize rarity frame language. — **Status:** ✅ DONE — deterministic Common/Rare/Epic/Legendary frame profiles and the `ART → NAME → RARITY → LEVEL → DESCRIPTION` hierarchy are canonical and Live-validated after issue #264 recovery.
+- [x] Show card level/max level. — **Status:** ✅ DONE — the presentation owner reads current level from canonical `upgradeLevels` and `maxLevel` directly from the registry definition via `getUpgradeDefinition(upgrade.id)`, without changing offer DTOs or duplicating progression rules; unit + Chromium coverage is in PR #269.
+- [ ] Add before → after stat preview where applicable. — **Status:** ⚪ NOT STARTED
+- [ ] Improve art consistency. — **Status:** ⚪ NOT STARTED
+- [ ] Test three-card selection on target mobile viewport. — **Status:** ⚪ NOT STARTED
+- [ ] Ensure UI reads resolved stats rather than duplicating calculations. — **Status:** ⚪ NOT STARTED
+
+---
+
+# 15. Run stats screen
+
+Do not overload the combat HUD.
+
+Preferred future location: Pause / Character / Build panel.
+
+Candidate presentation:
+
+```text
+RUNNER
+HP             115 / 115
+Damage          34.6
+Fire Rate       4.2/s
+Crit Chance      15%
+Crit Damage     150%
+Move Speed       263
+Armor              8
+
+RIVET GUN
+Projectiles        2
+Pierce             1
+Ricochet           0
+```
+
+- [x] Add canonical read-only build/stat snapshot API. — **Status:** ✅ DONE
+- [ ] Design compact run stats panel. — **Status:** ⚪ NOT STARTED
+- [ ] Show character and weapon stats separately. — **Status:** ⚪ NOT STARTED
+- [ ] Ensure displayed values match actual combat calculations. — **Status:** ⚪ NOT STARTED
+
+---
+
+# 16. Status effects — architecture only for now
+
+Future effects may include:
+
+- Burn
+- Bleed
+- Shock
+- Slow
+
+Do not implement a large status-effect system during the first Upgrade 2.0 migration unless required by an approved card.
+
+- [x] Ensure mechanical-effect architecture does not block future status effects. — **Status:** ✅ DONE
+- [ ] Defer full status-effect implementation. — **Status:** ⏸️ DEFERRED
+
+---
+
+# 17. Temporary run progression vs permanent progression
+
+Upgrade cards in this roadmap are **run progression** and reset between runs unless explicitly changed by a future design.
+
+Future meta progression must live outside the run-upgrade system.
+
+- [x] Keep run upgrade state isolated from future permanent progression. — **Status:** ✅ DONE
+- [x] Do not introduce permanent stat mutations through Upgrade System 2.0. — **Status:** ✅ DONE
+
+---
+
+## 17.1. Save/run-state snapshot readiness
+
+Upgrade System 2.0 now has a versioned JSON-safe runtime snapshot contract, but this is **readiness**, not a shipped save-slot/meta-progression feature.
+
+- [x] Snapshot upgrade levels + `upgradeRarityHistory`. — **Status:** ✅ DONE
+- [x] Snapshot Character/Weapon stat modifiers and caps. — **Status:** ✅ DONE
+- [x] Snapshot persistent mechanical upgrade state. — **Status:** ✅ DONE
+- [x] Restore Twin Riveter state without replaying acquisition. — **Status:** ✅ DONE
+- [x] Restore Call the Rig through canonical `RigSystem.summon()`. — **Status:** ✅ DONE
+- [x] Exclude acquisition-only `RESTORE_HP` so Armor Plate cannot heal twice on load. — **Status:** ✅ DONE
+- [x] Add unit + Chromium round-trip validation. — **Status:** ✅ DONE
+- [ ] Add actual persistence/save slots only under a separately approved persistence feature. — **Status:** ⏸️ DEFERRED
+
+Schema: `wreckmarch.upgrade-run-state` v1.  
+Verified gameplay commit: `a53dc9e`.
+
+---
+
+## 17.1. 2026-09-02 prerequisite / compatibility checkpoint
+
+- **Triple Riveter:** implemented and Production-deployed through PR #188; keep its roadmap item open only until a natural run acquires Twin L2 then Triple and sends D1 evidence. Do not force or bias the offer.
+- **Canonical prerequisites:** complete; shared resolver owns both offer eligibility and direct application rejection.
+- **Canonical technical compatibility:** complete through PR #190; explicit character/weapon impossibilities are filtered while valid weak, redundant or off-build cards remain eligible.
+- **Next architecture gate:** canonical Weapon Registry / signature-weapon resolution before implementing another playable weapon archetype.
+
+# 18. Future playable characters — compatibility contract
+
+Do **not** implement additional playable characters in this phase.
+
+Architecture must allow future archetypes such as:
+
+### Tank
+- higher HP/armor
+- lower speed
+- different passive/starting weapon
+
+### Scout
+- lower HP
+- higher mobility/crit tendency
+- different passive/starting weapon
+
+### Heavy Gunner
+- slower movement
+- stronger/heavier weapon profile
+
+These are examples, not approved balance values.
+
+A future character must be addable through a definition/registration path without copying Runner runtime code or adding a patch that overrides Runner.
+
+- [ ] Prove architecture with a test-only/mock second character definition. — **Status:** ⚪ NOT STARTED
+- [ ] Verify character selection/creation does not mutate another character. — **Status:** ⚪ NOT STARTED
+- [ ] Do not ship another playable character during this phase. — **Status:** ⏸️ DEFERRED
+
+---
+
+# 19. Robot Dog / Companion boundary
+
+The old Rig/Fortress path is not the focus of Upgrade System 2.0.
+
+Future direction: a **Robot Dog companion** with its own identity and upgrade pool.
+
+For now:
+
+- reserve `COMPANION` scope
+- do not build new Fortress/Rig upgrade content
+- do not let old disabled Rig cards pollute normal upgrade offers
+- avoid architecture that assumes the companion is the player weapon
+
+- [x] Confirm disabled legacy Rig cards cannot appear unexpectedly. — **Status:** ✅ DONE
+- [x] Reserve clean companion upgrade extension point. — **Status:** ✅ DONE
+- [ ] Defer Robot Dog implementation to its own roadmap/phase. — **Status:** ⏸️ DEFERRED
+
+---
+
+# 20. Balance targets
+
+Current baseline: approximately 10-minute run.
+
+Upgrade balance must account for:
+
+- expected number of level-ups in 10 minutes
+- how early build identity becomes visible
+- rarity frequency
+- max-level feasibility
+- elite reward quality
+- enemy HP scaling
+- DPS growth
+- projectile/performance growth
+
+Do not balance cards in isolation.
+
+- [ ] Record baseline no-upgrade / current-upgrade run metrics. — **Status:** 🟡 PARTIAL — current-upgrade Production windows from RUN-0047 and RUN-0048 are recorded and now drive the deterministic 10-minute progression gate; a dedicated no-upgrade baseline remains open.
+- [x] Define expected upgrade count by run end. — **Status:** ✅ DONE — canonical first-slice target is 10–14 total upgrades by 600s including approximately two Elite bonuses; `PROGRESSION_BALANCE` and PR #253 / `bf0bdc97d26bc21f5a8eeaaedfa9e93334859894` encode and test that target.
+- [ ] Define target timing for first meaningful build decision. — **Status:** ⚪ NOT STARTED
+- [ ] Tune rarity distribution. — **Status:** ⚪ NOT STARTED
+- [ ] Tune offensive scaling against enemy HP/wave scaling. — **Status:** ⚪ NOT STARTED
+- [ ] Validate at least one full 10-minute run after major balance changes. — **Status:** 🟡 POST-TUNING LIVE RUN PENDING — PR #253 deterministically replays the observed Production Scrap bounds into the 10–14 target, but a new full 10-minute Production run on the new curve is still required.
+
+---
+
+# 21. Testing and regression protection
+
+Every major step requires tests before its checkbox is completed.
+
+Required coverage:
+
+- Character identity cannot be replaced by another definition/art set.
+- Runner retains correct base stats.
+- Weapon stats resolve from the correct weapon.
+- Upgrade applies exactly once per awarded level.
+- Max-level cards stop appearing.
+- Prerequisites work.
+- Rarity guarantees work.
+- Stat resolver ordering is deterministic.
+- Mechanical projectile upgrades compose safely.
+- Run reset removes temporary upgrades.
+- Mobile upgrade UI remains usable.
+- Full game boots without old patch-order dependency.
+
+- [ ] Add/extend unit tests. — **Status:** 🔵 IN PROGRESS
+- [ ] Add integration tests. — **Status:** 🔵 IN PROGRESS
+- [ ] Add visual/mobile regression tests where appropriate. — **Status:** ⚪ NOT STARTED
+- [ ] Test a real playable build after each migration group. — **Status:** ⚪ NOT STARTED
+- [ ] Run full test suite before marking the phase complete. — **Status:** ⚪ NOT STARTED
+
+---
+
+# 21.1. Chromium live deployment gate
+
+This is the official production verification gate described in `TESTING_AND_DEPLOYMENT_POLICY.md`.
+
+- [x] Adopt Playwright Chromium as the canonical automated browser. — **Status:** ✅ DONE
+- [x] Run Chromium smoke in CI before deployment. — **Status:** ✅ DONE
+- [x] Run Live Chromium smoke after GitHub Pages deployment. — **Status:** ✅ DONE
+- [x] Collect `console.error`, `pageerror`, and `requestfailed`. — **Status:** ✅ DONE
+- [x] Save live-smoke diagnostics as workflow artifacts on failure. — **Status:** ✅ DONE
+- [x] Open/update one deduplicated GitHub Issue when deployed `main` fails. — **Status:** ✅ DONE
+- [x] Auto-close the live-smoke Issue after a later successful deployed `main`. — **Status:** ✅ DONE
+- [x] Confirm a successful post-deploy Live Chromium run on the current `main`. — **Status:** ✅ DONE
+  - Current verified gameplay commit: `89926f8` (optional compact Upgrade System debug dump; PR #100 Quality/Smoke/all E2E shards/aggregate E2E passed on final head `71eea81`, Pages/iOS live verification and recovery passed on exact SHA `89926f8818a415567138815ee91c6ca2474b343d`, the post-deploy Live Chromium failure bridge remained clean through the production run window, and no CI/Live failure issue is open).
+
+---
+
+
+# 21.2. Sharded Playwright E2E gate
+
+The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POLICY.md`. It replaces the single-runner/multi-worker approach with isolated runner-level parallelism.
+
+- [x] Pin Playwright CI execution to one worker per runner. — **Status:** ✅ DONE
+- [x] Split the E2E suite across three GitHub Actions shards. — **Status:** ✅ DONE
+- [x] Keep one stable aggregate check named `E2E` for branch protection and CI consumers. — **Status:** ✅ DONE
+- [x] Use Playwright blob reports per shard and merge them into one HTML diagnostic artifact. — **Status:** ✅ DONE
+- [x] Use `retryStrategy: isolated` with one CI retry. — **Status:** ✅ DONE
+- [x] Fail CI when Playwright classifies a test as flaky; a retry must not silently turn the gate green. — **Status:** ✅ DONE
+- [x] Record traces only on the first retry in CI. — **Status:** ✅ DONE
+- [x] Comment failing shard logs directly on the PR and keep aggregate diagnostics as a second layer. — **Status:** ✅ DONE
+- [x] Remove temporary diagnostic workflows from the canonical path. — **Status:** ✅ DONE
+- [x] Verify the new E2E architecture on PR, merge, and confirm `main` + Live Chromium before marking this gate complete. — **Status:** ✅ DONE
+  - Verified on `98de52f`: all three shards, stable aggregate `E2E`, Quality and Smoke passed on `main`; post-deploy Live Chromium passed and the prior CI failure Issue #83 auto-closed.
+
+Architecture rule: speed comes from independent CI shards, never by raising browser-worker contention inside one runner. Test retries are diagnostic only; flaky classifications remain failures.
+
+---
+
+# 21.3. Debug / observability
+
+- [x] Unit diagnostics expose upgrade/stat state. — **Status:** ✅ DONE
+- [x] Final-scene E2E can inspect canonical upgrade state deterministically. — **Status:** ✅ DONE
+- [x] CI preserves failing browser diagnostics. — **Status:** ✅ DONE
+- [x] Live Chromium captures `console.error`, `pageerror`, and `requestfailed`. — **Status:** ✅ DONE
+- [x] `?debug=1` exposes `COPY UPGRADE STATE` using a lazy compact JSON formatter. — **Status:** ✅ DONE
+
+The compact dump contains acquired upgrade levels, rarity history and canonical resolved Character/Weapon stats; normal gameplay does not load another gameplay owner.
+
+Verified gameplay commit: `89926f8`.
 
 ---
 
@@ -965,3 +1080,8 @@ When beginning any item:
 4. Test it.
 5. Only then change `[ ]` to `[x]` in this document.
 6. Make roadmap edits as localized patches; do not overwrite the file from a stale/local copy.
+7. Run `tests/unit/upgrade-roadmap-integrity.test.ts` and inspect the roadmap diff before push.
+8. If a protected section/card/build concept is intentionally removed, obtain explicit user approval and record `ROADMAP-REMOVAL:` in the commit/PR.
+9. Commit code + checklist update together when practical.
+
+**No checkbox is completed by intention. It is completed by working, tested game behavior. No approved roadmap scope is deleted by a status update.**
