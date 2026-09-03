@@ -1,8 +1,8 @@
 name: Bootstrap Clean U7 Migration
 
 on:
-  push:
-    branches: [u7/canonical-upgrade-scene-clean]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
