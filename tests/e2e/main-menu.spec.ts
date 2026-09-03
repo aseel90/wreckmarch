@@ -8,6 +8,7 @@ test('Main is canonical; Settings and Progression return safely; locked routes c
   await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('#wm-main-title')).toHaveText('WRECKMARCH');
   await expect(page.locator('.wm-main-motto')).toHaveText('BUILD • ROLL • SURVIVE');
+  await expect(page.locator('#fs-btn')).toBeHidden();
 
   await page.locator('[data-screen-id="settings"]').click();
   await expect(page.locator('.wm-settings-screen')).toBeVisible();
