@@ -1,32 +1,40 @@
 import {
-  getCharacterEntry,
-  isCharacterSelectable,
-  listCharacterEntries,
-} from '../characters/character-registry.js?v=5';
+  listCharacterAccess,
+  resolveCharacterAccess,
+  resolveFirstAccessibleCharacter,
+} from '../characters/character-access.js?v=1';
 
-export function listCharacterSelectOptions() {
-  return listCharacterEntries().map(entry => Object.freeze({
-    id: entry.id,
-    displayName: entry.displayName,
-    availability: entry.availability,
-    selectable: isCharacterSelectable(entry.id),
-    lockReason: entry.lockReason || null,
-    preview: entry.preview,
-  }));
-}
-
-export function resolveCharacterSelection(characterId) {
-  const entry = getCharacterEntry(characterId);
+function toSelection(access) {
   return Object.freeze({
-    characterId: entry.id,
-    selectable: isCharacterSelectable(entry.id),
-    availability: entry.availability,
-    entry,
+    characterId: access.characterId,
+    selectable: access.selectable,
+    availability: access.availability,
+    productionAvailability: access.productionAvailability,
+    productionReady: access.productionReady,
+    playerOwned: access.playerOwned,
+    lockReason: access.lockReason,
+    entry: access.entry,
   });
 }
 
-export function resolveFirstSelectableCharacter() {
-  const option = listCharacterSelectOptions().find(candidate => candidate.selectable);
-  if (!option) throw new Error('No selectable character is registered');
-  return resolveCharacterSelection(option.id);
+export function listCharacterSelectOptions(playerProfile) {
+  return listCharacterAccess(playerProfile).map(access => Object.freeze({
+    id: access.entry.id,
+    displayName: access.entry.displayName,
+    availability: access.availability,
+    productionAvailability: access.productionAvailability,
+    productionReady: access.productionReady,
+    playerOwned: access.playerOwned,
+    selectable: access.selectable,
+    lockReason: access.lockReason,
+    preview: access.entry.preview,
+  }));
+}
+
+export function resolveCharacterSelection(characterId, playerProfile) {
+  return toSelection(resolveCharacterAccess(characterId, playerProfile));
+}
+
+export function resolveFirstSelectableCharacter(playerProfile) {
+  return toSelection(resolveFirstAccessibleCharacter(playerProfile));
 }

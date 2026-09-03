@@ -12,14 +12,35 @@ type CharacterSelectOption = {
 };
 
 describe('Character Select canonical model', () => {
-  it('renders registry-owned availability without creating a Shotgun runtime definition', () => {
+  it('renders effective access without creating a Shotgun runtime definition', () => {
     expect(listCharacterSelectOptions().map((option: CharacterSelectOption) => [option.id, option.availability])).toEqual([
       ['runner', 'selectable'],
       ['shotgun', 'locked'],
     ]);
-    expect(resolveCharacterSelection('runner')).toMatchObject({ characterId: 'runner', selectable: true });
-    expect(resolveCharacterSelection('shotgun')).toMatchObject({ characterId: 'shotgun', selectable: false, availability: 'locked' });
+    expect(resolveCharacterSelection('runner')).toMatchObject({
+      characterId: 'runner', selectable: true, playerOwned: true, productionReady: true,
+    });
+    expect(resolveCharacterSelection('shotgun')).toMatchObject({
+      characterId: 'shotgun', selectable: false, availability: 'locked', productionReady: false,
+    });
     expect(resolveFirstSelectableCharacter()).toMatchObject({ selectable: true, availability: 'selectable' });
+  });
+
+  it('keeps ownership separate from production availability', () => {
+    expect(resolveCharacterSelection('runner', { ownedCharacterIds: [] })).toMatchObject({
+      selectable: false,
+      availability: 'locked',
+      productionAvailability: 'selectable',
+      productionReady: true,
+      playerOwned: false,
+      lockReason: 'not-owned',
+    });
+    expect(resolveCharacterSelection('shotgun', { ownedCharacterIds: ['shotgun'] })).toMatchObject({
+      selectable: false,
+      productionReady: false,
+      playerOwned: true,
+      lockReason: 'production-gate',
+    });
   });
 
   it('keeps character-specific branching out of the screen and autotest selection implementations', () => {
@@ -34,5 +55,6 @@ describe('Character Select canonical model', () => {
     expect(screenSource).toContain('option.availability');
     expect(screenSource).toContain('option.selectable');
     expect(runtimeSource).toContain('resolveFirstSelectableCharacter');
+    expect(runtimeSource).toContain('resolveCharacterAccess');
   });
 });

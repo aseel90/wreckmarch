@@ -1,4 +1,4 @@
-import { listCharacterSelectOptions, resolveCharacterSelection } from './character-select-model.js?v=2';
+import { listCharacterSelectOptions, resolveCharacterSelection } from './character-select-model.js?v=3';
 
 const STYLESHEET_ID = 'wm-frontend-shell-styles';
 
@@ -27,12 +27,21 @@ function makeImage(src, className, alt) {
   return image;
 }
 
+function lockedStatus(option) {
+  if (option.lockReason === 'not-owned') {
+    return `${option.displayName.toUpperCase()} IS LOCKED — UNLOCK THIS CHARACTER IN THE WORKSHOP.`;
+  }
+  return `${option.displayName.toUpperCase()} IS LOCKED — COMPLETE ITS PRODUCTION GATE FIRST.`;
+}
+
 function makeCharacterCard(option, statusEl, resolve) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'wm-character-card';
   button.dataset.characterId = option.id;
   button.dataset.availability = option.availability;
+  button.dataset.productionReady = String(option.productionReady);
+  button.dataset.playerOwned = String(option.playerOwned);
   button.setAttribute('aria-label', `${option.displayName} — ${option.availability}`);
 
   const art = document.createElement('span');
@@ -61,7 +70,7 @@ function makeCharacterCard(option, statusEl, resolve) {
   button.addEventListener('click', () => {
     const result = resolveCharacterSelection(option.id);
     if (!result.selectable) {
-      statusEl.textContent = `${option.displayName.toUpperCase()} IS LOCKED — COMPLETE ITS PRODUCTION GATE FIRST.`;
+      statusEl.textContent = lockedStatus(result);
       button.classList.remove('wm-denied');
       requestAnimationFrame(() => button.classList.add('wm-denied'));
       return;
@@ -124,7 +133,7 @@ export function chooseCharacter() {
 
     const footer = document.createElement('footer');
     footer.className = 'wm-character-select-footer';
-    footer.textContent = 'CHARACTER AVAILABILITY IS CONTROLLED BY THE CANONICAL REGISTRY';
+    footer.textContent = 'CHARACTER ACCESS = PRODUCTION READY + PLAYER OWNED';
 
     screen.append(back, header, grid, status, footer);
     document.body.append(screen);

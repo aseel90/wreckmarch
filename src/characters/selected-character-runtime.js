@@ -1,8 +1,13 @@
+import { resolveCharacterAccess } from './character-access.js?v=1';
 import { getCharacterDefinition } from './character-registry.js?v=5';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-export async function applySelectedCharacterToGame(game, characterId, timeoutMs = 5000) {
+export async function applySelectedCharacterToGame(game, characterId, timeoutMs = 5000, playerProfile) {
+  const access = resolveCharacterAccess(characterId, playerProfile);
+  if (!access.selectable) {
+    throw new Error(`Character is not selectable: ${characterId} (${access.lockReason})`);
+  }
   const definition = getCharacterDefinition(characterId);
   const start = performance.now();
 

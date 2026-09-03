@@ -3,9 +3,9 @@ import { SCREEN_IDS } from './screen-registry.js?v=2';
 import { showMainMenu } from './main-menu-screen.js?v=4';
 import { showSettingsScreen } from './settings-screen.js?v=1';
 import { showProgressionScreen } from './progression-screen.js?v=3';
-import { chooseCharacter } from './character-select-screen.js?v=3';
-import { resolveFirstSelectableCharacter } from './character-select-model.js?v=2';
-import { getCharacterEntry, isCharacterSelectable } from '../characters/character-registry.js?v=5';
+import { chooseCharacter } from './character-select-screen.js?v=4';
+import { resolveFirstSelectableCharacter } from './character-select-model.js?v=3';
+import { resolveCharacterAccess } from '../characters/character-access.js?v=1';
 import { consumeNextBootScreen, consumeRunRestartCharacterId } from './frontend-intent.js?v=2';
 
 function isAutotestFlow() {
@@ -26,11 +26,14 @@ export async function runInitialFrontendFlow() {
 
   const requestedBootTarget = consumeNextBootScreen();
   const restartCharacterId = consumeRunRestartCharacterId();
-  if (restartCharacterId && isCharacterSelectable(restartCharacterId)) {
-    const restartEntry = getCharacterEntry(restartCharacterId);
-    shell.navigate(SCREEN_IDS.CHARACTER_SELECT);
-    window.__WM_LOG__?.(`Canonical restart intent accepted: ${restartEntry.id}`);
-    return acceptCharacter(shell, restartEntry, ' (restart)');
+  if (restartCharacterId) {
+    const restartAccess = resolveCharacterAccess(restartCharacterId);
+    if (restartAccess.selectable) {
+      shell.navigate(SCREEN_IDS.CHARACTER_SELECT);
+      window.__WM_LOG__?.(`Canonical restart intent accepted: ${restartAccess.entry.id}`);
+      return acceptCharacter(shell, restartAccess.entry, ' (restart)');
+    }
+    window.__WM_LOG__?.(`Canonical restart intent rejected: ${restartAccess.entry.id} (${restartAccess.lockReason})`);
   }
 
   let bootTarget = requestedBootTarget || (autotest ? SCREEN_IDS.CHARACTER_SELECT : SCREEN_IDS.MAIN);
