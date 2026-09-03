@@ -10,106 +10,175 @@ async function getScene(timeoutMs = 9000) {
   while (performance.now() - started < timeoutMs) {
     const game = window.Phaser?.GAMES?.find(Boolean) || window.Phaser?.GAMES?.[0];
     const scene = game?.scene?.getScene?.('Wreckmarch');
-    if (scene?.sys?.isActive?.() && scene.hero && scene.weapon) return scene;
-    await wait(40);
+    if (scene?.sys?.isActive?.() && scene.hero && scene.primaryWeapon && scene.upgradeLevels) return scene;
+    await wait(60);
   }
-  throw new Error('Phase C.1 scene timeout');
+  throw new Error('Timed out waiting for Wreckmarch scene for Phase C.1');
 }
 
-function fillTexture(scene, key, source) {
-  if (scene.textures.exists(key)) return Promise.resolve();
+function loadAimAssets(scene) {
+  if (scene.textures.exists('c1-aim-atlas')) return Promise.resolve();
   return new Promise((resolve, reject) => {
     let failed = false;
-    const onError = file => {
+    const fail = file => {
       if (failed) return;
       failed = true;
-      reject(new Error(`Phase C.1 asset failed: ${file?.key || key}`));
+      reject(new Error(`Phase C.1 aim asset failed: ${file?.key || 'unknown'}`));
     };
-    scene.load.once('loaderror', onError);
+    scene.load.once('loaderror', fail);
     scene.load.once('complete', () => {
-      scene.load.off('loaderror', onError);
+      scene.load.off('loaderror', fail);
       if (!failed) resolve();
     });
-    scene.load.svg(key, source);
+    scene.load.svg('c1-aim-atlas', './assets/hero/aim-poses.svg');
     scene.load.start();
   });
 }
 
-async function loadHudAssets(scene) {
-  await Promise.all([
-    fillTexture(scene, 'c1-hud-panel', './assets/ui/hud-panel.svg'),
-    fillTexture(scene, 'c1-aim-poses', './assets/hero/aim-poses.svg')
-  ]);
+function installLandscapeCanvas(scene) {
+  scene.scale.setGameSize(W, H);
+  scene.cameras.main.setSize(W, H);
+  scene.cameras.main.setViewport(0, 0, W, H);
+  scene.cameras.main.setBounds(0, 0, 2200, 2200);
+  scene.cameras.main.centerOn(scene.hero.x, scene.hero.y);
 }
 
 function reinstallLandscapeJoystick(scene) {
-  scene.joyBase?.destroy?.();
-  scene.joyKnob?.destroy?.();
-  const joyX = 92;
-  const joyY = H - 82;
-  scene.joyBase = scene.add.circle(joyX, joyY, 52, 0x0c141d, .38).setScrollFactor(0).setDepth(1000).setStrokeStyle(2, 0x68c7d4, .26);
-  scene.joyKnob = scene.add.circle(joyX, joyY, 25, 0x91dbe5, .40).setScrollFactor(0).setDepth(1001);
+  scene.input.off('pointerdown');
+  scene.input.off('pointermove');
+  scene.input.off('pointerup');
+  scene.input.off('pointerupoutside');
+  scene.input.once('pointerdown', () => scene.unlockAudio?.());
+
+  scene.joy.radius = 62;
   scene.joy.active = false;
   scene.joy.id = null;
-  scene.joy.origin?.set?.(joyX, joyY);
-  scene.joy.current?.set?.(joyX, joyY);
+  const homeX = 96;
+  const homeY = H - 92;
+  scene.joyBase.setPosition(homeX, homeY).setAlpha(.38).setScrollFactor(0);
+  scene.joyKnob.setPosition(homeX, homeY).setAlpha(.4).setScrollFactor(0);
+
+  scene.input.on('pointerdown', p => {
+    if (scene.gameOver || scene.upgradeOpen || p.y < 92 || p.x > W * .58) return;
+    scene.joy.id = p.id;
+    scene.joy.active = true;
+    scene.joy.origin.set(p.x, p.y);
+    scene.joy.current.set(p.x, p.y);
+    scene.joyBase.setPosition(p.x, p.y).setAlpha(.7);
+    scene.joyKnob.setPosition(p.x, p.y).setAlpha(.86);
+  });
+  scene.input.on('pointermove', p => {
+    if (!scene.joy.active || p.id !== scene.joy.id) return;
+    scene.joy.current.set(p.x, p.y);
+    const d = new Phaser.Math.Vector2(p.x - scene.joy.origin.x, p.y - scene.joy.origin.y);
+    if (d.length() > scene.joy.radius) d.setLength(scene.joy.radius);
+    scene.joyKnob.setPosition(scene.joy.origin.x + d.x, scene.joy.origin.y + d.y);
+  });
+  const release = p => {
+    if (p.id !== scene.joy.id) return;
+    scene.joy.active = false;
+    scene.joy.id = null;
+    scene.joyBase.setPosition(homeX, homeY).setAlpha(.38);
+    scene.joyKnob.setPosition(homeX, homeY).setAlpha(.4);
+  };
+  scene.input.on('pointerup', release);
+  scene.input.on('pointerupoutside', release);
+}
+
+function angleToPose(angle) {
+  const normalized = Phaser.Math.Angle.Normalize(angle);
+  return Math.round(normalized / (Math.PI / 4)) % 8;
 }
 
 function installTwoHandAim(scene) {
-  scene.weapon?.setVisible?.(false);
-  scene.weaponV3Gun?.destroy?.();
-  scene.weaponV3HandA?.destroy?.();
-  scene.weaponV3HandB?.destroy?.();
+  scene.weaponRig?.setVisible?.(false);
+  scene.weaponArm?.setVisible?.(false);
+  scene.weaponSprite?.setVisible?.(false);
 
-  scene.weaponV3Gun = scene.add.image(scene.hero.x, scene.hero.y, 'c1-aim-poses').setDepth(32);
-  scene.weaponV3HandA = scene.add.circle(scene.hero.x, scene.hero.y, 5, 0xe7a56e, 1).setDepth(33);
-  scene.weaponV3HandB = scene.add.circle(scene.hero.x, scene.hero.y, 5, 0xe7a56e, 1).setDepth(33);
+  scene.aimPose?.destroy?.();
+  scene.aimPose = scene.add.image(scene.hero.x, scene.hero.y + 8, 'c1-aim-atlas')
+    .setOrigin(.5)
+    .setCrop(0, 0, 120, 100)
+    .setDisplaySize(90, 75)
+    .setDepth(26);
+  scene.weaponSprite = scene.aimPose;
+  scene.visualAimAngle = 0;
+  scene.currentAimPose = 0;
 
-  const old = scene.updateWeaponPose?.bind(scene);
   scene.updateWeaponPose = function() {
-    old?.();
-    const dx = Number(this.aimDir?.x || this.lastAim?.x || 1);
-    const dy = Number(this.aimDir?.y || this.lastAim?.y || 0);
-    const angle = Math.atan2(dy, dx);
-    const index = ((Math.round(angle / (Math.PI / 4)) % 8) + 8) % 8;
-    const cropW = 128;
-    const cropH = 128;
-    this.weaponV3Gun.setCrop(index * cropW, 0, cropW, cropH).setDisplaySize(108, 108);
-    const forward = 28;
-    const side = 10;
-    const px = this.hero.x + Math.cos(angle) * forward;
-    const py = this.hero.y + Math.sin(angle) * forward - 5;
-    const sx = Math.cos(angle + Math.PI / 2) * side;
-    const sy = Math.sin(angle + Math.PI / 2) * side;
-    this.weaponV3Gun.setPosition(px, py).setRotation(angle).setFlipY(Math.cos(angle) < 0);
-    this.weaponV3HandA.setPosition(this.hero.x + Math.cos(angle) * 10 + sx, this.hero.y - 2 + Math.sin(angle) * 10 + sy);
-    this.weaponV3HandB.setPosition(this.hero.x + Math.cos(angle) * 25 - sx * .35, this.hero.y - 2 + Math.sin(angle) * 25 - sy * .35);
+    const pose = angleToPose(this.weaponAim);
+    if (pose !== this.currentAimPose) {
+      this.currentAimPose = pose;
+      this.aimPose.setCrop(pose * 120, 0, 120, 100);
+    }
+    this.visualAimAngle = pose * (Math.PI / 4);
+    this.aimPose.setPosition(this.hero.x, this.hero.y + 8);
+    const behind = pose >= 5 && pose <= 7;
+    this.aimPose.setDepth(behind ? 18 : 27);
   };
+
+  scene.weaponSystem.configureHero({
+    aimYOffset: 6,
+    targetTurnRate: .24,
+    moveTurnRate: .18,
+    twinSpread2: .055,
+    twinSpread3: .085,
+    muzzleResolver: spread => {
+      const visual = scene.visualAimAngle + spread;
+      const radius = 49;
+      return new Phaser.Math.Vector2(
+        scene.hero.x + Math.cos(visual) * radius,
+        scene.hero.y + 8 + Math.sin(visual) * radius
+      );
+    },
+    fireFeedback: ({ visualAngle, muzzle }) => {
+      const flash = scene.add.image(muzzle.x, muzzle.y, 'flash')
+        .setDepth(31).setRotation(visualAngle).setScale(.5);
+      scene.tweens.add({ targets: flash, alpha: 0, scale: .08, duration: 68, onComplete: () => flash.destroy() });
+      scene.tweens.killTweensOf(scene.aimPose);
+      scene.aimPose.setDisplaySize(85, 71);
+      scene.tweens.add({ targets: scene.aimPose, displayWidth: 90, displayHeight: 75, duration: 72, ease: 'Quad.Out' });
+      scene.playTone?.(165, .045, 'square', .019, -34);
+    }
+  });
+
   scene.updateWeaponPose();
 }
 
 function installLandscapeHud(scene) {
-  const oldHud = [scene.titleText, scene.timerText, scene.waveText, scene.levelText, scene.scrapText, scene.xpBg, scene.xpFill];
-  oldHud.forEach(item => item?.destroy?.());
+  scene.children.list
+    .filter(obj => obj?.name === 'phase-b-hud-shade' || obj?.name === 'c1-hud-shade')
+    .forEach(obj => obj.destroy());
 
-  const hud = scene.add.rectangle(W / 2, 31, W, 62, 0x090d12, .74).setScrollFactor(0).setDepth(990);
-  hud.name = 'c1-hud-shade';
-  scene.titleText = scene.add.text(18, 8, 'WRECKMARCH', { fontFamily:'Arial Black, Arial', fontSize:'18px', color:'#e4b16d' }).setScrollFactor(0).setDepth(1002);
-  scene.timerText = scene.add.text(W - 18, 9, '00:00', { fontFamily:'Arial Black, Arial', fontSize:'14px', color:'#eef3f6' }).setOrigin(1,0).setScrollFactor(0).setDepth(1002);
-  scene.waveText = scene.add.text(W/2, 9, 'WAVE 1', { fontFamily:'Arial Black, Arial', fontSize:'10px', color:'#8fd5df' }).setOrigin(.5,0).setScrollFactor(0).setDepth(1002);
-  scene.xpBg = scene.add.rectangle(W/2, 44, 330, 7, 0x1b252e, .95).setScrollFactor(0).setDepth(1002);
-  scene.xpFill = scene.add.rectangle(W/2 - 165, 44, 0, 7, 0x59d4e2, 1).setOrigin(0,.5).setScrollFactor(0).setDepth(1003);
-  scene.levelText = scene.add.text(W/2 - 178, 43, 'LV 1', { fontFamily:'Arial Black, Arial', fontSize:'9px', color:'#c8d1d8' }).setOrigin(1,.5).setScrollFactor(0).setDepth(1003);
-  scene.scrapText = scene.add.text(W/2 + 178, 42, 'SCRAP 0', { fontFamily:'Arial Black, Arial', fontSize:'9px', color:'#c7a36a' }).setOrigin(0,.5).setScrollFactor(0).setDepth(1003);
+  scene.add.rectangle(W / 2, 45, W, 90, 0x090d13, .91)
+    .setDepth(890).setScrollFactor(0).setName('c1-hud-shade');
+
+  scene.titleText.setPosition(24, 14).setFontSize(22).setDepth(920).setScrollFactor(0);
+  scene.timerText.setPosition(W - 24, 16).setFontSize(16).setDepth(920).setScrollFactor(0);
+  scene.waveText.setPosition(W / 2, 18).setFontSize(12).setDepth(920).setScrollFactor(0);
+  scene.levelText.setPosition(205, 53).setFontSize(12).setDepth(922).setScrollFactor(0);
+  scene.scrapText.setPosition(W - 205, 50).setFontSize(13).setDepth(922).setScrollFactor(0);
+
+  scene.xpBg?.destroy?.();
+  scene.xpFill?.destroy?.();
+  scene.xpBg = scene.add.rectangle(W / 2, 61, 470, 12, 0x111820, .98)
+    .setStrokeStyle(2, 0x59636d, .75).setDepth(918).setScrollFactor(0);
+  scene.xpFill = scene.add.rectangle(W / 2 - 232, 61, 464, 7, 0x55d7e5, 1)
+    .setOrigin(0, .5).setDepth(919).setScrollFactor(0);
+
+  scene.hint.setPosition(W / 2, H - 12).setFontSize(10).setDepth(800).setScrollFactor(0);
+  scene.joyBase.setPosition(92, H - 118).setScrollFactor(0);
+  scene.joyKnob.setPosition(92, H - 118).setScrollFactor(0);
+
+  if (scene.hitboxButton) {
+    scene.hitboxButton.setPosition(W - 18, H - 50).setScrollFactor(0).setDepth(5100);
+  }
 
   scene.refreshProgressHud = function() {
-    this.timerText?.setText?.(this.formatTime?.(this.elapsed || 0) || '00:00');
-    this.waveText?.setText?.(`WAVE ${this.wave || 1}`);
-    this.levelText?.setText?.(`LV ${this.level || 1}`);
-    this.scrapText?.setText?.(`SCRAP ${this.scrap || 0}`);
-    const need = Math.max(1, Number(this.xpToNext || 1));
-    const ratio = Phaser.Math.Clamp(Number(this.xp || 0) / need, 0, 1);
-    this.xpFill?.setDisplaySize?.(330 * ratio, 7);
+    const ratio = Phaser.Math.Clamp(this.scrapXp / Math.max(1, this.scrapNeeded), 0, 1);
+    this.levelText.setText(`LV ${this.level}`);
+    this.scrapText.setText(`SCRAP ${this.scrapXp}/${this.scrapNeeded}`);
+    this.xpFill.setScale(ratio, 1);
   };
   scene.refreshProgressHud();
 }
@@ -117,17 +186,38 @@ function installLandscapeHud(scene) {
 function refineLandscapeScale(scene) {
   scene.hero.setScale(.70);
   scene.enemies.children.iterate(enemy => {
-    if (enemy?.active && enemy.setScale) enemy.setScale(enemy.elite ? .70 : .55);
+    if (!enemy?.active) return;
+    enemy.setScale(enemy.elite ? .67 : .54);
+    enemy.hitRadius = enemy.elite ? 29 : 24;
+  });
+
+  const baseSpawn = scene.spawnEnemy.bind(scene);
+  scene.spawnEnemy = function(elite = false) {
+    const before = new Set(this.enemies.getChildren());
+    baseSpawn(elite);
+    this.enemies.children.iterate(enemy => {
+      if (!enemy?.active || before.has(enemy)) return;
+      enemy.setScale(enemy.elite ? .67 : .54);
+      enemy.hitRadius = enemy.elite ? 29 : 24;
+    });
+  };
+
+  scene.children.list.forEach(obj => {
+    const key = obj?.texture?.key || '';
+    if (key === 'b1-wreck-a' || key === 'b1-wreck-b') {
+      obj.setScale(Math.max(obj.scaleX, 1.45));
+    }
   });
 }
 
 function addOrientationSignal() {
-  document.body.classList.add('wm-landscape-ui');
+  document.documentElement.dataset.wreckmarchOrientation = 'landscape';
 }
 
 export async function applyPhaseC1() {
   const scene = await getScene();
-  await loadHudAssets(scene);
+  await loadAimAssets(scene);
+  installLandscapeCanvas(scene);
   reinstallLandscapeJoystick(scene);
   installTwoHandAim(scene);
   installLandscapeHud(scene);
