@@ -29,6 +29,8 @@ describe('character runtime presentation registry', () => {
     expect(shotgun).toContain('SHOTGUN_RUNTIME_PRESENTATION');
     expect(shotgun).toContain('setMuzzleResolver');
     expect(shotgun).toContain('setFireFeedback');
+    expect(shotgun).toContain('.setCrop()');
+    expect(shotgun).toContain('.setFlipY(false)');
     expect(shotgun).not.toContain('runner-production-presentation');
     expect(shotgun).not.toContain('maxHp');
     expect(shotgun).not.toContain('moveSpeed');
