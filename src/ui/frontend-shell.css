@@ -801,3 +801,116 @@ body.wm-pause-active .wm-pause-trigger { display: none !important; }
     padding-right: calc(22px + env(safe-area-inset-right));
   }
 }
+
+/* Settings — persistent system configuration shared by Main and Pause. */
+.wm-settings-screen {
+  grid-template-rows: auto auto auto auto;
+}
+
+.wm-settings-header {
+  width: min(760px, 88vw);
+  text-align: center;
+}
+
+.wm-settings-header h1 {
+  margin: 0;
+  color: var(--wm-sand);
+  font: 1000 clamp(30px, 5vw, 50px)/.95 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .05em;
+}
+
+.wm-settings-header p {
+  margin: 8px auto 0;
+  color: #87949d;
+  font: 620 11px/1.45 ui-sans-serif, system-ui, sans-serif;
+}
+
+.wm-settings-panel {
+  display: grid;
+  gap: 8px;
+  width: min(620px, 86vw);
+}
+
+.wm-setting-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 18px;
+  min-height: 78px;
+  padding: 13px 15px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 11px;
+  color: var(--wm-text);
+  background: linear-gradient(145deg, rgba(31,41,48,.74), rgba(9,14,18,.88));
+  text-align: left;
+  cursor: pointer;
+}
+
+.wm-setting-row[data-value='on'] {
+  border-color: rgba(123,216,226,.28);
+  box-shadow: inset 3px 0 rgba(123,216,226,.7);
+}
+
+.wm-setting-row:focus-visible { outline: 2px solid var(--wm-cyan); outline-offset: 2px; }
+.wm-setting-copy { display: grid; gap: 4px; }
+.wm-setting-eyebrow {
+  color: #687780;
+  font: 850 8px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .15em;
+}
+.wm-setting-copy strong {
+  font: 950 clamp(16px, 2.2vw, 22px)/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .02em;
+}
+.wm-setting-detail {
+  color: #73818a;
+  font: 620 10px/1.35 ui-sans-serif, system-ui, sans-serif;
+}
+.wm-setting-toggle {
+  display: grid;
+  place-items: center;
+  min-width: 54px;
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 8px;
+  color: #77858d;
+  background: rgba(0,0,0,.2);
+  font: 950 9px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .12em;
+}
+.wm-setting-row[data-value='on'] .wm-setting-toggle {
+  border-color: rgba(123,216,226,.38);
+  color: #91e6ed;
+  background: rgba(53,124,133,.14);
+}
+
+.wm-settings-reset {
+  padding: 9px 12px 8px;
+  border: 1px solid rgba(187,112,64,.22);
+  border-radius: 8px;
+  color: #a4816b;
+  background: rgba(63,36,25,.14);
+  font: 900 8px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .12em;
+  cursor: pointer;
+}
+.wm-settings-reset:focus-visible { outline: 2px solid var(--wm-rust); outline-offset: 2px; }
+
+.wm-settings-footer {
+  color: #56636b;
+  text-align: center;
+  font: 800 8px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .13em;
+}
+
+@media (max-height: 470px) and (orientation: landscape) {
+  .wm-settings-header h1 { font-size: 28px; }
+  .wm-settings-header p { margin-top: 4px; font-size: 9px; }
+  .wm-settings-panel { gap: 6px; }
+  .wm-setting-row { min-height: 54px; padding: 8px 11px; }
+  .wm-setting-detail { display: none; }
+  .wm-setting-toggle { min-height: 28px; }
+  .wm-settings-reset { padding: 7px 10px; }
+  .wm-settings-footer { display: none; }
+}

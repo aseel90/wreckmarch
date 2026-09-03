@@ -16,8 +16,7 @@ const MAIN_ACTIONS = Object.freeze([
     label: 'SETTINGS',
     eyebrow: 'SYSTEM',
     detail: 'Audio, controls and accessibility.',
-    enabled: false,
-    pendingLabel: 'COMING ONLINE',
+    enabled: true,
   }),
   Object.freeze({
     screenId: SCREEN_IDS.SHOP,
@@ -40,14 +39,14 @@ const MAIN_ACTIONS = Object.freeze([
 function ensureStylesheet() {
   const existing = document.getElementById(STYLESHEET_ID);
   if (existing) {
-    const expected = new URL('./frontend-shell.css?v=2', import.meta.url).href;
+    const expected = new URL('./frontend-shell.css?v=3', import.meta.url).href;
     if (existing.href !== expected) existing.href = expected;
     return;
   }
   const link = document.createElement('link');
   link.id = STYLESHEET_ID;
   link.rel = 'stylesheet';
-  link.href = new URL('./frontend-shell.css?v=2', import.meta.url).href;
+  link.href = new URL('./frontend-shell.css?v=3', import.meta.url).href;
   document.head.append(link);
 }
 

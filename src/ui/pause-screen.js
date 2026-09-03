@@ -2,7 +2,7 @@ const STYLESHEET_ID = 'wm-frontend-shell-styles';
 
 const PAUSE_ACTIONS = Object.freeze([
   Object.freeze({ id: 'resume', label: 'RESUME', eyebrow: 'RETURN TO RUN', enabled: true, primary: true }),
-  Object.freeze({ id: 'settings', label: 'SETTINGS', eyebrow: 'SYSTEM', enabled: false, pendingLabel: 'COMING ONLINE' }),
+  Object.freeze({ id: 'settings', label: 'SETTINGS', eyebrow: 'SYSTEM', enabled: true }),
   Object.freeze({ id: 'restart', label: 'RESTART RUN', eyebrow: 'RUN CONTROL', enabled: false, pendingLabel: 'LIFECYCLE PENDING' }),
   Object.freeze({ id: 'exit', label: 'EXIT TO MAIN', eyebrow: 'RUN CONTROL', enabled: false, pendingLabel: 'LIFECYCLE PENDING' }),
 ]);
@@ -13,7 +13,7 @@ function ensureStylesheet() {
   const link = document.createElement('link');
   link.id = STYLESHEET_ID;
   link.rel = 'stylesheet';
-  link.href = new URL('./frontend-shell.css?v=2', import.meta.url).href;
+  link.href = new URL('./frontend-shell.css?v=3', import.meta.url).href;
   document.head.append(link);
 }
 

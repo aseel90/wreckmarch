@@ -1,5 +1,6 @@
 import { SCREEN_IDS } from './screen-registry.js?v=2';
-import { showPauseScreen } from './pause-screen.js?v=1';
+import { showPauseScreen } from './pause-screen.js?v=2';
+import { showSettingsScreen } from './settings-screen.js?v=1';
 
 const PAUSE_TRIGGER_ID = 'wm-pause-trigger';
 
@@ -65,9 +66,17 @@ export function installPauseRuntime(game) {
     window.__WM_LOG__?.('Pause runtime paused gameplay');
 
     try {
-      const result = await showPauseScreen();
-      if (result?.action === 'resume') resumeRun();
-      else resumeRun();
+      while (true) {
+        const result = await showPauseScreen();
+        if (result?.action === 'settings') {
+          shell.navigate(SCREEN_IDS.SETTINGS);
+          await showSettingsScreen({ returnLabel: 'PAUSE' });
+          shell.navigate(SCREEN_IDS.PAUSE);
+          continue;
+        }
+        resumeRun();
+        break;
+      }
     } catch (error) {
       resumeRun();
       throw error;
@@ -80,6 +89,10 @@ export function installPauseRuntime(game) {
     if (event.key !== 'Escape') return;
     if (shell.currentScreenId === SCREEN_IDS.PAUSE) {
       document.querySelector('[data-pause-action="resume"]')?.click();
+      return;
+    }
+    if (shell.currentScreenId === SCREEN_IDS.SETTINGS && scene.scene?.isPaused?.()) {
+      document.querySelector('.wm-settings-screen .wm-shell-back')?.click();
       return;
     }
     openPause();
