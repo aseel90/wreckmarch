@@ -5,14 +5,14 @@ const STYLESHEET_ID = 'wm-frontend-shell-styles';
 function ensureStylesheet() {
   const existing = document.getElementById(STYLESHEET_ID);
   if (existing) {
-    const expected = new URL('./frontend-shell.css?v=2', import.meta.url).href;
+    const expected = new URL('./frontend-shell.css?v=3', import.meta.url).href;
     if (existing.href !== expected) existing.href = expected;
     return;
   }
   const link = document.createElement('link');
   link.id = STYLESHEET_ID;
   link.rel = 'stylesheet';
-  link.href = new URL('./frontend-shell.css?v=2', import.meta.url).href;
+  link.href = new URL('./frontend-shell.css?v=3', import.meta.url).href;
   document.head.append(link);
 }
 

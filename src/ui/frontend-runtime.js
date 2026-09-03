@@ -1,7 +1,8 @@
 import { createGameShell } from './game-shell.js?v=2';
 import { SCREEN_IDS } from './screen-registry.js?v=2';
-import { showMainMenu } from './main-menu-screen.js?v=1';
-import { chooseCharacter } from './character-select-screen.js?v=2';
+import { showMainMenu } from './main-menu-screen.js?v=2';
+import { showSettingsScreen } from './settings-screen.js?v=1';
+import { chooseCharacter } from './character-select-screen.js?v=3';
 import { resolveFirstSelectableCharacter } from './character-select-model.js?v=2';
 
 function isAutotestFlow() {
@@ -18,6 +19,11 @@ export async function runInitialFrontendFlow() {
 
     if (!autotest) {
       const mainAction = await showMainMenu();
+      if (mainAction?.screenId === SCREEN_IDS.SETTINGS) {
+        shell.navigate(SCREEN_IDS.SETTINGS);
+        await showSettingsScreen({ returnLabel: 'MAIN' });
+        continue;
+      }
       if (mainAction?.screenId !== SCREEN_IDS.CHARACTER_SELECT) {
         throw new Error(`Main menu returned unsupported startup route: ${mainAction?.screenId || 'unknown'}`);
       }
@@ -38,5 +44,4 @@ export async function runInitialFrontendFlow() {
   }
 }
 
-// Transitional export for callers/tests that still use the old function name.
 export const runInitialCharacterSelect = runInitialFrontendFlow;
