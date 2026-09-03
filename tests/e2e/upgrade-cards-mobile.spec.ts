@@ -127,6 +127,7 @@ test('three-card selection stays readable and non-overlapping on target mobile l
       target: { width, height },
       presentationVersion: scene.__upgradeCardPresentationVersion,
       previewVersion: scene.__upgradeCardPreviewVersion,
+      uniformCards: scene.__finalUniformUpgradeCards,
       snapshots
     };
   }, TARGET_VIEWPORT);
@@ -134,6 +135,7 @@ test('three-card selection stays readable and non-overlapping on target mobile l
   expect(result.viewport).toEqual(result.target);
   expect(result.presentationVersion).toBe('u5-before-after-v3');
   expect(result.previewVersion).toBe('u5-before-after-v1');
+  expect(result.uniformCards).toBe(true);
   expect(result.snapshots).toHaveLength(6);
 
   const covered = new Set<string>();
@@ -147,6 +149,7 @@ test('three-card selection stays readable and non-overlapping on target mobile l
       expect(state.canvas.width).toBeGreaterThan(0);
       expect(state.canvas.height).toBeGreaterThan(0);
       for (const card of state.cards) {
+        expect(card.scale, `${card.id}: uniform mobile scale`).toBe(1);
         expect(card.screenLeft, `${card.id}: screen left`).toBeGreaterThanOrEqual(8);
         expect(card.screenRight, `${card.id}: screen right`).toBeLessThanOrEqual(TARGET_VIEWPORT.width - 8);
         expect(card.screenTop, `${card.id}: screen top`).toBeGreaterThanOrEqual(82);
@@ -165,8 +168,6 @@ test('three-card selection stays readable and non-overlapping on target mobile l
     }
     expect(snapshot.initial.selectedIndex).toBe(0);
     expect(snapshot.middleSelected.selectedIndex).toBe(1);
-    expect(snapshot.middleSelected.cards[1].scale).toBeGreaterThan(snapshot.middleSelected.cards[0].scale);
-    expect(snapshot.middleSelected.cards[1].scale).toBeGreaterThan(snapshot.middleSelected.cards[2].scale);
   }
   expect(covered.size).toBe(16);
 });
