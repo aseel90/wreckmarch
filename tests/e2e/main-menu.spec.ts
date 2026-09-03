@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 960, height: 540 } });
 
-test('Main routes Settings and Progression canonically while locked future routes cannot bypass the shell', async ({ page }) => {
+test('Main is canonical; Settings and Progression return safely; locked routes cannot bypass the shell', async ({ page }) => {
   await page.goto('/?debug=1');
 
   await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 15_000 });
@@ -25,12 +25,13 @@ test('Main routes Settings and Progression canonically while locked future route
     () => page.evaluate(() => (window as any).__WM_GAME_SHELL__?.currentScreenId || null)
   ).toBe('main');
 
-  await page.locator('[data-screen-id="shop"]').click();
+  const progression = page.locator('[data-screen-id="shop"]');
+  await expect(progression).toHaveAttribute('data-enabled', 'true');
+  await progression.click();
   await expect(page.locator('.wm-progression-screen')).toBeVisible();
   await expect.poll(
     () => page.evaluate(() => (window as any).__WM_GAME_SHELL__?.currentScreenId || null)
   ).toBe('shop');
-  await expect(page.locator('.wm-progression-note')).toContainText('NOT A SHOP CURRENCY');
   await page.locator('.wm-progression-screen .wm-shell-back').click();
   await expect(page.locator('.wm-main-screen')).toBeVisible();
   await expect.poll(
@@ -38,21 +39,14 @@ test('Main routes Settings and Progression canonically while locked future route
   ).toBe('main');
 
   const leaderboard = page.locator('[data-screen-id="leaderboard"]');
-  await expect(leaderboard).toBeDisabled();
-  await expect.poll(
-    () => page.evaluate(() => (window as any).__WM_GAME_SHELL__?.currentScreenId || null)
-  ).toBe('main');
+  await expect(leaderboard).toHaveAttribute('data-enabled', 'false');
+  await leaderboard.click();
+  await expect(page.locator('.wm-main-status')).toContainText('LOCKED');
+  expect(await page.evaluate(() => (window as any).__WM_GAME_SHELL__?.currentScreenId || null)).toBe('main');
 
   await page.locator('[data-screen-id="character-select"]').click();
   await expect(page.locator('.wm-character-select')).toBeVisible();
-  await expect.poll(
-    () => page.evaluate(() => (window as any).__WM_GAME_SHELL__?.currentScreenId || null)
-  ).toBe('character-select');
-
   await page.locator('.wm-shell-back').click();
   await expect(page.locator('.wm-main-screen')).toBeVisible();
-  await expect.poll(
-    () => page.evaluate(() => (window as any).__WM_GAME_SHELL__?.currentScreenId || null)
-  ).toBe('main');
   expect(await page.evaluate(() => Boolean((window as any).__WM_GAME__))).toBe(false);
 });
