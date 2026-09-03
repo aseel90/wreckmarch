@@ -5,6 +5,7 @@
 import { getCharacterDefinition } from './character-registry.js?v=5';
 import { CharacterSystem } from './character-system.js?v=10';
 import { installRunnerC5Presentation, installRunnerD1Presentation } from './runner-production-presentation.js?v=1';
+import { installShotgunC5Presentation, installShotgunD1Presentation } from './shotgun-production-presentation.js?v=1';
 
 const PRESENTATION_PHASES = Object.freeze({
   c5: 'c5',
@@ -15,6 +16,10 @@ const PRESENTERS = new Map([
   ['runner', Object.freeze({
     c5: installRunnerC5Presentation,
     d1: installRunnerD1Presentation
+  })],
+  ['shotgun', Object.freeze({
+    c5: installShotgunC5Presentation,
+    d1: installShotgunD1Presentation
   })]
 ]);
 

@@ -6,34 +6,33 @@ import {
   evaluateShotgunProductionGate
 } from '../../src/characters/shotgun-production-gate.js';
 import { getCharacterEntry, isCharacterSelectable } from '../../src/characters/character-registry.js';
+import { resolveShotgunPresentationPose } from '../../src/characters/shotgun-production-presentation.js';
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
 describe('canonical Shotgun production gate', () => {
-  it('recognizes completed weapon/art/composition/compatibility foundations', () => {
+  it('recognizes completed weapon/art/composition/compatibility/presenter foundations', () => {
     const gate = evaluateShotgunProductionGate();
     expect(gate.version).toBe(SHOTGUN_PRODUCTION_GATE_VERSION);
     expect(gate.requirements).toMatchObject({
       canonicalWeapon: true,
       runtimePresentation: true,
       runtimeComposition: true,
-      upgradeCompatibility: true
+      upgradeCompatibility: true,
+      c5Presentation: true,
+      d1Presentation: true
     });
   });
 
-  it('keeps activation blocked only on unfinished gameplay production requirements', () => {
+  it('keeps activation blocked only on unfinished character gameplay and real-run approval', () => {
     const gate = evaluateShotgunProductionGate();
     expect(gate.readyForActivation).toBe(false);
     expect(gate.blockers).toEqual([
       'characterDefinition',
-      'c5Presentation',
-      'd1Presentation',
       'fullRunValidation'
     ]);
     expect(gate.requirements).toMatchObject({
       characterDefinition: false,
-      c5Presentation: false,
-      d1Presentation: false,
       fullRunValidation: false
     });
     expect(SHOTGUN_FULL_RUN_VALIDATION).toEqual({ status: 'pending', evidence: null });
@@ -51,16 +50,29 @@ describe('canonical Shotgun production gate', () => {
     });
   });
 
-  it('does not duplicate Runner gameplay values or register a Shotgun phase hack', () => {
+  it('derives right/left grip and muzzle placement from the Shotgun presentation contract', () => {
+    const right = resolveShotgunPresentationPose(100, 80, 0);
+    const left = resolveShotgunPresentationPose(100, 80, Math.PI);
+    expect(right.facing).toBe('right');
+    expect(left.facing).toBe('left');
+    expect(right.grip.x).toBeGreaterThan(100);
+    expect(left.grip.x).toBeLessThan(100);
+    expect(right.muzzle.x).toBeGreaterThan(right.grip.x);
+    expect(left.muzzle.x).toBeLessThan(left.grip.x);
+    expect(Number.isFinite(right.muzzle.y)).toBe(true);
+    expect(Number.isFinite(left.muzzle.y)).toBe(true);
+  });
+
+  it('does not duplicate Runner gameplay values or add a Shotgun phase hack', () => {
     const gateSource = read('src/characters/shotgun-production-gate.js');
-    const dispatcherSource = read('src/characters/character-runtime-presentation.js');
+    const presenterSource = read('src/characters/shotgun-production-presentation.js');
     const d1Source = read('src/phase-d1-runtime.js');
     const c5Source = read('src/phase-c5-runtime.js');
 
     expect(gateSource).not.toContain('maxHp');
     expect(gateSource).not.toContain('moveSpeed');
-    expect(gateSource).not.toContain('runner-production-presentation');
-    expect(dispatcherSource).not.toContain("['shotgun'");
+    expect(presenterSource).not.toContain('maxHp');
+    expect(presenterSource).not.toContain('moveSpeed');
     expect(d1Source).not.toContain("=== 'shotgun'");
     expect(c5Source).not.toContain("=== 'shotgun'");
   });
