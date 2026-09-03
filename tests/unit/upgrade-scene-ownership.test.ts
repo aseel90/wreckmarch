@@ -6,7 +6,7 @@ const ROOT = resolve(import.meta.dirname, '../..');
 const read = (path: string) => readFileSync(resolve(ROOT, path), 'utf8');
 
 // U7 regression contract: legacy phases may consume, but must not own, the upgrade scene lifecycle.
-// Clean PR validation keeps the runtime owner and presentation owner as separate canonical boundaries.
+// Clean PR validation keeps runtime ownership and card presentation as separate canonical boundaries.
 describe('U7 canonical Upgrade Scene ownership', () => {
   it('keeps scene lifecycle under src/upgrades and retires C1/C2/C3/C5 scene wrappers', () => {
     const canonical = read('src/upgrades/upgrade-scene.js');
