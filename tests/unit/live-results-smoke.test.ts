@@ -30,8 +30,8 @@ describe('Live telemetry Results ownership', () => {
     expect(mobileHudSource).not.toContain('__WM_END_RUN_LAYOUT__');
     expect(mobileHudSource).not.toContain('TEST UI v5');
     expect(mobileHudSource).not.toContain('RUN COMPLETE');
-    expect(indexSource).toContain('mobile-hud-loader-canonical-v2.js?rev=3');
+    expect(indexSource).toContain('mobile-hud-loader-canonical-v2.js?rev=4');
     expect(indexSource).not.toContain('mobile-hud-loader-telemetry-v1.js');
-    expect(indexSource.indexOf('results-runtime.js?v=5')).toBeLessThan(indexSource.indexOf('mobile-hud-loader-canonical-v2.js?rev=3'));
+    expect(indexSource.indexOf('results-runtime.js?v=5')).toBeLessThan(indexSource.indexOf('mobile-hud-loader-canonical-v2.js?rev=4'));
   });
 });
