@@ -80,13 +80,15 @@ describe('Weapon / Projectile ownership integration', () => {
   it('keeps Explosive Rivet in the canonical active upgrade offer pool', () => {
     const phaseC = read('src/phase-c-runtime.js');
     const phaseC1 = read('src/phase-c1-runtime.js');
+    const upgradeScene = read('src/upgrades/upgrade-scene.js');
     const offerPool = read('src/upgrades/upgrade-offer-pool.js');
     expect(offerPool).toContain("offer('explosive-rivet', 'HERO'");
     expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
-    expect(phaseC1).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(upgradeScene).toContain('createActiveUpgradeOfferChoices(this)');
+    expect(phaseC1).not.toContain('createActiveUpgradeOfferChoices');
     expect(phaseC).not.toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet'");
     expect(phaseC1).not.toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet'");
-    expect(phaseC1).toContain('rollUpgradeChoices(c1UpgradePool(this), { count: 3 })');
+    expect(upgradeScene).toContain('rollUpgradeChoices(createActiveUpgradeOfferChoices(this), { count: 3 })');
   });
 
   it('keeps Triple Riveter in the canonical advanced pool behind canonical requirements', () => {
