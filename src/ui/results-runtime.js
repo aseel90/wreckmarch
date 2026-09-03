@@ -1,8 +1,9 @@
 import { SCREEN_IDS } from './screen-registry.js?v=2';
-import { createRunResult } from './run-result.js?v=1';
-import { showResultsScreen } from './results-screen.js?v=1';
+import { createRunResult } from './run-result.js?v=2';
+import { showResultsScreen } from './results-screen.js?v=2';
 import { requestNextBootScreen } from './frontend-intent.js?v=2';
-import { progressionStore } from '../progression/progression-store.js?v=1';
+import { progressionStore } from '../progression/progression-store.js?v=2';
+import { createWorkshopReward } from '../progression/workshop-reward.js?v=1';
 
 function cleanGameplayForResults(scene) {
   scene.gameOver = true;
@@ -23,6 +24,14 @@ function reloadTo(screenId) {
   window.location.reload();
 }
 
+function getWorkshopRewardContext() {
+  const params = new URLSearchParams(globalThis.location?.search || '');
+  return Object.freeze({
+    isDebug: params.get('debug') === '1',
+    isAutotest: params.get('autotest') === '1',
+  });
+}
+
 export function installResultsRuntime(game) {
   const scene = game?.scene?.getScene?.('Wreckmarch');
   const shell = window.__WM_GAME_SHELL__;
@@ -41,16 +50,18 @@ export function installResultsRuntime(game) {
     scene.playTone?.(90, .30, 'sawtooth', .035, -55);
 
     const result = createRunResult(scene, reason);
-    const progression = progressionStore.recordRun(result);
+    const workshopReward = createWorkshopReward(result, getWorkshopRewardContext());
+    const progression = progressionStore.recordRun(result, { workshopReward });
     window.__WM_LAST_RUN_RESULT__ = result;
+    window.__WM_LAST_WORKSHOP_REWARD__ = workshopReward;
     window.__WM_PROGRESSION_SNAPSHOT__ = progression;
     shell.navigate(SCREEN_IDS.RESULTS);
     scene.__wmPauseRuntimeInstalled?.syncTrigger?.();
-    window.__WM_LOG__?.(`Canonical run result captured: ${result.reason} • ${result.survivedSeconds}s • scrap ${result.scrap}`);
+    window.__WM_LOG__?.(`Canonical run result captured: ${result.reason} • ${result.survivedSeconds}s • scrap ${result.scrap} • scrip +${workshopReward.amount}`);
     document.documentElement.dataset.wreckmarchEndRunOwner = 'game-shell-results-v1';
 
     const sendReport = window.__WM_TELEMETRY_RUNTIME__?.sendReport;
-    void showResultsScreen(result, { sendReport }).then(({ action }) => {
+    void showResultsScreen(result, { sendReport, workshopReward }).then(({ action }) => {
       if (action === 'play-again') {
         shell.navigate(SCREEN_IDS.CHARACTER_SELECT);
         reloadTo(SCREEN_IDS.CHARACTER_SELECT);
@@ -62,7 +73,11 @@ export function installResultsRuntime(game) {
   };
 
   scene.endRun = endRun;
-  const api = Object.freeze({ endRun, getLastResult: () => window.__WM_LAST_RUN_RESULT__ || null });
+  const api = Object.freeze({
+    endRun,
+    getLastResult: () => window.__WM_LAST_RUN_RESULT__ || null,
+    getLastWorkshopReward: () => window.__WM_LAST_WORKSHOP_REWARD__ || null,
+  });
   scene.__wmResultsRuntimeInstalled = api;
   return api;
 }

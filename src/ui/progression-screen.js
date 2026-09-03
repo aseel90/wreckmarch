@@ -1,4 +1,4 @@
-import { progressionStore } from '../progression/progression-store.js?v=1';
+import { progressionStore } from '../progression/progression-store.js?v=2';
 import { evaluateProgressionMilestones, getWorkshopRank } from '../progression/progression-milestones.js?v=1';
 import { listCharacterEntries } from '../characters/character-registry.js?v=5';
 
@@ -17,14 +17,15 @@ function ensureStylesheets() {
     const progression = document.createElement('link');
     progression.id = PROGRESSION_STYLESHEET_ID;
     progression.rel = 'stylesheet';
-    progression.href = new URL('./progression.css?v=3', import.meta.url).href;
+    progression.href = new URL('./progression.css?v=4', import.meta.url).href;
     document.head.append(progression);
   }
 }
 
-function stat(label, value) {
+function stat(label, value, statId = '') {
   const item = document.createElement('div');
   item.className = 'wm-progression-stat';
+  if (statId) item.dataset.stat = statId;
   const name = document.createElement('span');
   name.textContent = label;
   const strong = document.createElement('strong');
@@ -88,7 +89,7 @@ export function showProgressionScreen() {
     title.id = 'wm-progression-title';
     title.textContent = 'PROGRESSION';
     const subtitle = document.createElement('p');
-    subtitle.textContent = 'Permanent field records and Workshop milestones. Purchases remain disabled until a separate economy contract is approved.';
+    subtitle.textContent = 'Permanent field records, Workshop Scrip and milestones. Purchasing remains production-gated until the catalog contract is complete.';
     header.append(kicker, title, subtitle);
 
     const rank = document.createElement('section');
@@ -111,6 +112,7 @@ export function showProgressionScreen() {
       stat('BEST SURVIVAL', `${profile.bestSurvivalSeconds}s`),
       stat('HIGHEST LEVEL', String(profile.highestLevel)),
       stat('LIFETIME SCRAP', String(profile.lifetimeScrapCollected)),
+      stat('WORKSHOP SCRIP', String(profile.workshopScrip), 'workshop-scrip'),
     );
 
     const milestoneSection = document.createElement('section');
@@ -143,10 +145,10 @@ export function showProgressionScreen() {
 
     const note = document.createElement('p');
     note.className = 'wm-progression-note';
-    note.textContent = 'LIFETIME SCRAP IS A RUN STATISTIC — IT IS NOT A SHOP CURRENCY.';
+    note.textContent = 'SCRAP REMAINS AN IN-RUN STATISTIC. WORKSHOP SCRIP IS A SEPARATE PERMANENT CURRENCY — PURCHASING IS STILL LOCKED.';
     const footer = document.createElement('footer');
     footer.className = 'wm-progression-footer';
-    footer.textContent = 'WORKSHOP RANK AND FIELD STAMPS ARE RECORDS ONLY — NO COMBAT BONUS OR SHOTGUN UNLOCK';
+    footer.textContent = 'SCRIP, RANK AND FIELD STAMPS CANNOT OVERRIDE PRODUCTION LOCKS OR GRANT COMBAT POWER';
 
     const finish = () => {
       screen.remove();

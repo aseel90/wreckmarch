@@ -22,7 +22,7 @@
 
 .wm-results-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(100px, 1fr));
+  grid-template-columns: repeat(5, minmax(92px, 1fr));
   gap: 8px;
   width: min(760px, 90vw);
 }
@@ -45,6 +45,8 @@
   color: var(--wm-sand);
   font: 950 clamp(16px, 2.4vw, 24px)/1 ui-sans-serif, system-ui, sans-serif;
 }
+.wm-result-stat[data-stat="workshop-scrip"] { border-color: rgba(242,209,155,.26); box-shadow: inset 0 2px 0 rgba(187,112,64,.42); }
+.wm-result-stat[data-stat="workshop-scrip"] strong { color: #f2d19b; }
 
 .wm-results-actions {
   display: grid;

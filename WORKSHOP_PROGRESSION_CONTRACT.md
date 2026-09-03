@@ -1,32 +1,71 @@
 # WRECKMARCH — Workshop / Permanent Progression Contract
 
-**Status:** Architecture and product gate only. Purchase economy is **not active**.
+**Status:** Workshop Scrip earning foundation approved. Purchase economy is **not active**.
 
 ## 1. Current production state
 
-The current Workshop/Progression screen is allowed to show only canonical persistent records and derived milestones:
+The current Workshop/Progression surface may show canonical persistent records, derived milestones and the permanent Workshop Scrip balance:
 
 - Total recorded runs.
 - Best survival time.
 - Highest reached level.
 - Lifetime Scrap collected as a statistic.
-- Workshop Rank / Field Stamps derived from those records.
+- Workshop Scrip balance.
+- Workshop Rank / Field Stamps derived from run records.
 - Character production availability from `CharacterRegistry`.
 
-These records have no combat effect and do not authorize character activation.
+Workshop records, Scrip, ranks and stamps do not grant combat power and do not authorize character activation.
 
-## 2. Scrap is not a shop currency
+## 2. Scrap and Workshop Scrip are separate systems
 
 `Scrap` remains the canonical **in-run XP/progression resource** and may also be recorded as a lifetime statistic after a run.
 
+`WORKSHOP SCRIP` is the canonical permanent Workshop currency.
+
 Non-negotiable rules:
 
-- Lifetime Scrap must not become spendable by silently reusing the in-run value.
-- Spending in the Workshop must never reduce, rewrite or reinterpret historical run Scrap.
-- If a permanent currency is introduced later, it must have its own canonical identity, balance rules and persistent field.
+- Lifetime Scrap is never spendable and is never converted into Scrip.
+- Spending Scrip must never reduce, rewrite or reinterpret historical run Scrap.
+- Scrip earning does not read Scrap, level, kills, DPS, rarity choices or selected upgrades.
 - No purchase system may change the approved random upgrade-card behavior by directly buying a desired card or guaranteeing a build path.
 
-## 3. Character ownership and production availability are separate gates
+## 3. Workshop Scrip v1 earning contract
+
+The first earning rule is intentionally simple, bounded and survival-only so it does not distort build/card decisions.
+
+Eligibility:
+
+- Normal player runs only.
+- Debug runs earn `0`.
+- Autotest runs earn `0`.
+- Restart/Exit paths do not create a canonical run-end reward and therefore earn `0`.
+- Runs shorter than `60s` earn `0` to discourage rapid failure farming.
+
+Formula (`workshop-scrip-v1`):
+
+- `60–179s` → `1` Scrip.
+- `180–299s` → `2` Scrip.
+- `300–419s` → `3` Scrip.
+- `420–539s` → `4` Scrip.
+- `540s+` → `5` Scrip maximum.
+
+Equivalent formula:
+
+`min(5, 1 + floor((survivedSeconds - 60) / 120))` for eligible runs of at least `60s`.
+
+The cap prevents extreme endless runs from dominating permanent progression and keeps future economy tuning independent from combat balance.
+
+## 4. Reward ownership and idempotency
+
+- Every canonical run result owns a stable `runId`.
+- The Workshop reward is produced once at the canonical run-end boundary before Results presentation.
+- Results may display the produced reward; Results must not calculate or award it.
+- `ProgressionStore` v2 records both run statistics and the produced Scrip reward against that `runId`.
+- Reprocessing the same `runId` cannot duplicate run statistics or Scrip.
+- The v2 persistence model migrates existing v1 run records with `workshopScrip = 0`; lifetime Scrap is never converted during migration.
+- Persistence failure must never block Main, Character Select, Gameplay or local Results.
+
+## 5. Character ownership and production availability are separate gates
 
 Future player unlock state must not replace `CharacterRegistry` production availability.
 
@@ -38,34 +77,25 @@ A character may only launch gameplay when **both** conditions are true:
 For the current Shotgun Character:
 
 - It remains production locked.
-- Workshop Rank, Field Stamps, lifetime Scrap, future currency, purchases or debug state cannot make it selectable.
+- Workshop Scrip, Rank, Field Stamps, lifetime Scrap, purchases or debug state cannot make it selectable.
 - No Shop UI branch may use `if shotgun` to bypass `CharacterRegistry`.
 
-## 4. Permanent economy activation prerequisites
+## 6. Permanent economy activation prerequisites
 
-Do not enable purchases until all of the following exist:
+Do not enable purchases until all remaining prerequisites exist:
 
-- [ ] One explicitly named permanent currency that is separate from in-run Scrap.
-- [ ] One documented earn formula and post-run award boundary.
-- [ ] One persistent progression owner with versioned migration rules.
+- [x] One explicitly named permanent currency separate from in-run Scrap: **Workshop Scrip**.
+- [x] One documented earn formula and canonical post-run award boundary.
+- [x] One persistent progression owner with versioned migration rules (`ProgressionStore` v2).
 - [ ] One canonical Shop/Catalog registry containing item identity, type, cost and availability requirements.
 - [ ] Idempotent purchase semantics so refreshing/retrying cannot double-spend or double-unlock.
 - [ ] A clear rule for duplicate/already-owned purchases.
 - [ ] A character-unlock owner that composes with, but cannot override, production availability.
-- [ ] Unit tests for persistence, migration, insufficient funds, duplicate purchase and locked production content.
+- [ ] Unit tests for purchase persistence, insufficient funds, duplicate purchase and locked production content.
 - [ ] E2E proving Shop navigation cannot bypass Character Select or the Shotgun activation gate.
-- [ ] Full Quality, Smoke, E2E and Live validation.
+- [ ] Full Quality, Smoke, E2E and Live validation for purchasing activation.
 
-## 5. Reward ownership
-
-If permanent currency is later awarded after a run:
-
-- The award must be produced once from the canonical end-of-run boundary.
-- Results may **display** the produced reward; Results must not independently calculate or award it again.
-- Reloading Results or returning from Main must not duplicate the reward.
-- Abandoned/restarted runs need an explicit reward rule before activation; do not infer one inside the UI.
-
-## 6. Shop content policy
+## 7. Shop content policy
 
 The first Workshop catalog should favor content that expands replayability without invalidating run randomness.
 
@@ -83,27 +113,27 @@ Avoid by default:
 - Paying to force rarity, guaranteed card offers or deterministic build paths.
 - Any Shop action that turns the locked Shotgun preview into playable content before its production gate passes.
 
-## 7. UI identity
+## 8. UI identity
 
 The Workshop remains part of the WRECKMARCH frontend shell:
 
 - Dark steel / wasteland surface.
-- Rust/sand accent for fabrication and locked machinery.
+- Rust/sand accent for fabrication, Scrip and locked machinery.
 - Cyan for live/validated systems.
 - Large readable mobile-landscape targets.
 - No generic storefront styling and no separate navigation router.
 
-## 8. Implementation order from the current state
+## 9. Implementation order from the current state
 
 1. [x] Persistent run-record `ProgressionStore`.
 2. [x] Results records one canonical run into Progression.
 3. [x] Main routes to Progression through `GameShell`.
 4. [x] Workshop Rank and Field Stamps are derived from canonical records with no gameplay effect.
-5. [ ] Approve permanent-currency identity and earning rules.
-6. [ ] Version/migrate the progression persistence model for real economy state.
+5. [x] Approve Workshop Scrip identity and bounded survival-only earning rules.
+6. [x] Version/migrate the progression persistence model for real economy state.
 7. [ ] Add canonical Shop/Catalog registry and purchase service.
 8. [ ] Add real purchasable content only when its ownership/runtime contract exists.
 9. [ ] Connect player unlock state to Character Select without weakening production gates.
-10. [ ] Validate on CI/E2E/Live before declaring Shop purchases active.
+10. [ ] Validate purchasing on CI/E2E/Live before declaring Shop purchases active.
 
-**Current decision:** Progression is active. Shop purchasing remains intentionally disabled until steps 5–10 are complete.
+**Current decision:** Workshop Scrip may be earned and displayed. Shop purchasing remains intentionally disabled until steps 7–10 are complete. Leaderboard scoring remains a separate contract and must not reuse Scrip as score.

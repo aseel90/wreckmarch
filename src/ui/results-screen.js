@@ -15,7 +15,7 @@ function ensureStylesheets() {
     const results = document.createElement('link');
     results.id = RESULTS_STYLESHEET_ID;
     results.rel = 'stylesheet';
-    results.href = new URL('./results.css?v=1', import.meta.url).href;
+    results.href = new URL('./results.css?v=2', import.meta.url).href;
     document.head.append(results);
   }
 }
@@ -25,9 +25,10 @@ function characterDisplayName(characterId) {
   catch { return String(characterId || 'UNKNOWN').toUpperCase(); }
 }
 
-function stat(label, value) {
+function stat(label, value, statId = '') {
   const item = document.createElement('div');
   item.className = 'wm-result-stat';
+  if (statId) item.dataset.stat = statId;
   const name = document.createElement('span');
   name.textContent = label;
   const strong = document.createElement('strong');
@@ -36,7 +37,7 @@ function stat(label, value) {
   return item;
 }
 
-export function showResultsScreen(result, { sendReport } = {}) {
+export function showResultsScreen(result, { sendReport, workshopReward = null } = {}) {
   if (!result) throw new TypeError('Results screen requires a canonical result');
   ensureStylesheets();
   document.body.classList.add('wm-results-active');
@@ -56,7 +57,9 @@ export function showResultsScreen(result, { sendReport } = {}) {
     title.id = 'wm-results-title';
     title.textContent = result.reason;
     const subtitle = document.createElement('p');
-    subtitle.textContent = 'Run data captured. Choose the next deployment.';
+    subtitle.textContent = workshopReward?.amount > 0
+      ? `Run data captured. +${workshopReward.amount} Workshop Scrip secured.`
+      : 'Run data captured. Choose the next deployment.';
     header.append(kicker, title, subtitle);
 
     const stats = document.createElement('div');
@@ -66,6 +69,7 @@ export function showResultsScreen(result, { sendReport } = {}) {
       stat('SCRAP', String(result.scrap)),
       stat('LEVEL', String(result.level)),
       stat('SURVIVOR', characterDisplayName(result.characterId)),
+      stat('WORKSHOP SCRIP', workshopReward?.amount > 0 ? `+${workshopReward.amount}` : '—', 'workshop-scrip'),
     );
 
     const actions = document.createElement('div');
@@ -131,7 +135,7 @@ export function showResultsScreen(result, { sendReport } = {}) {
 
     const footer = document.createElement('footer');
     footer.className = 'wm-results-footer';
-    footer.textContent = 'RESULTS CONSUME THE CANONICAL RUN OUTCOME — NO SECOND REWARD CALCULATION';
+    footer.textContent = 'RESULTS DISPLAY THE CANONICAL RUN + REWARD OUTCOME — NO SECOND CALCULATION';
 
     screen.append(header, stats, actions, reportWrap, footer);
     document.body.append(screen);
