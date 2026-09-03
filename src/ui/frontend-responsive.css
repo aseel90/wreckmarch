@@ -56,6 +56,12 @@
   overflow: hidden;
 }
 
+.wm-main-brand h1 {
+  max-width: 100%;
+  white-space: nowrap;
+  font-size: clamp(44px, 6.1vw, 88px);
+}
+
 .wm-main-panel,
 .wm-main-action {
   min-width: 0;
@@ -83,14 +89,17 @@
 
 @media (max-width: 920px) and (orientation: landscape) {
   .wm-shell-screen.wm-main-screen {
-    grid-template-columns: minmax(0, .85fr) minmax(300px, 1.15fr);
-    column-gap: clamp(14px, 3vw, 28px);
-    padding-left: calc(22px + var(--wm-safe-left));
-    padding-right: calc(22px + var(--wm-safe-right));
+    grid-template-columns: minmax(0, 1fr) minmax(270px, .92fr);
+    column-gap: clamp(10px, 2.2vw, 18px);
+    padding-left: calc(14px + var(--wm-safe-left));
+    padding-right: calc(14px + var(--wm-safe-right));
   }
 
   .wm-main-brand h1 {
-    font-size: clamp(36px, 5.8vw, 56px);
+    max-width: 100%;
+    white-space: nowrap;
+    font-size: clamp(32px, 4.8vw, 46px);
+    letter-spacing: -.045em;
   }
 
   .wm-main-description {
