@@ -3,8 +3,8 @@ const STYLESHEET_ID = 'wm-frontend-shell-styles';
 const PAUSE_ACTIONS = Object.freeze([
   Object.freeze({ id: 'resume', label: 'RESUME', eyebrow: 'RETURN TO RUN', enabled: true, primary: true }),
   Object.freeze({ id: 'settings', label: 'SETTINGS', eyebrow: 'SYSTEM', enabled: true }),
-  Object.freeze({ id: 'restart', label: 'RESTART RUN', eyebrow: 'RUN CONTROL', enabled: false, pendingLabel: 'LIFECYCLE PENDING' }),
-  Object.freeze({ id: 'exit', label: 'EXIT TO MAIN', eyebrow: 'RUN CONTROL', enabled: false, pendingLabel: 'LIFECYCLE PENDING' }),
+  Object.freeze({ id: 'restart', label: 'RESTART RUN', eyebrow: 'RUN CONTROL', enabled: true }),
+  Object.freeze({ id: 'exit', label: 'EXIT TO MAIN', eyebrow: 'RUN CONTROL', enabled: true, danger: true }),
 ]);
 
 function ensureStylesheet() {
@@ -20,7 +20,7 @@ function ensureStylesheet() {
 function makePauseAction(action, statusEl, resolve) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = `wm-pause-action${action.primary ? ' is-primary' : ''}`;
+  button.className = `wm-pause-action${action.primary ? ' is-primary' : ''}${action.danger ? ' is-danger' : ''}`;
   button.dataset.pauseAction = action.id;
   button.dataset.enabled = String(action.enabled);
 
@@ -35,18 +35,10 @@ function makePauseAction(action, statusEl, resolve) {
 
   const state = document.createElement('span');
   state.className = 'wm-pause-action-state';
-  state.textContent = action.enabled ? 'OPEN' : action.pendingLabel;
+  state.textContent = 'OPEN';
 
   button.append(copy, state);
-  button.addEventListener('click', () => {
-    if (!action.enabled) {
-      statusEl.textContent = `${action.label} // ${action.pendingLabel}.`;
-      button.classList.remove('wm-denied');
-      requestAnimationFrame(() => button.classList.add('wm-denied'));
-      return;
-    }
-    resolve(Object.freeze({ action: action.id }));
-  });
+  button.addEventListener('click', () => resolve(Object.freeze({ action: action.id })));
   return button;
 }
 
@@ -63,7 +55,6 @@ export function showPauseScreen() {
 
     const panel = document.createElement('div');
     panel.className = 'wm-pause-panel';
-
     const header = document.createElement('header');
     header.className = 'wm-pause-header';
     const kicker = document.createElement('span');
@@ -78,7 +69,6 @@ export function showPauseScreen() {
 
     const actions = document.createElement('div');
     actions.className = 'wm-pause-actions';
-
     const status = document.createElement('p');
     status.className = 'wm-pause-status';
     status.setAttribute('aria-live', 'polite');
@@ -92,16 +82,12 @@ export function showPauseScreen() {
     };
 
     for (const action of PAUSE_ACTIONS) actions.append(makePauseAction(action, status, finish));
-
     const footer = document.createElement('footer');
     footer.className = 'wm-pause-footer';
     footer.textContent = 'PAUSE STATE IS OWNED BY THE GAMEPLAY RUNTIME';
-
     panel.append(header, actions, status, footer);
     screen.append(panel);
     document.body.append(screen);
-
-    const resume = actions.querySelector('[data-pause-action="resume"]');
-    resume?.focus({ preventScroll: true });
+    actions.querySelector('[data-pause-action="resume"]')?.focus({ preventScroll: true });
   });
 }
