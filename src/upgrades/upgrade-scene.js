@@ -108,11 +108,28 @@ export class UpgradeSceneV4 extends Phaser.Scene {
   }
 }
 
-export function installUpgradeScene(gameScene) {
+async function waitForSceneRegistration(gameScene, key, timeoutMs = 2000) {
+  const started = performance.now();
+  while (performance.now() - started < timeoutMs) {
+    try {
+      const registered = gameScene.scene.get(key);
+      if (registered) return registered;
+    } catch (_error) {
+      // ScenePlugin queues add/remove operations until the SceneManager can safely process them.
+    }
+    await new Promise(resolve => setTimeout(resolve, 16));
+  }
+  throw new Error(`Timed out waiting for queued scene registration: ${key}`);
+}
+
+export async function installUpgradeScene(gameScene) {
   if (!gameScene?.scene) throw new Error('Upgrade scene install requires an active ScenePlugin');
   let upgradeScene = null;
   try { upgradeScene = gameScene.scene.get('UpgradeSceneV4'); } catch (_error) { upgradeScene = null; }
-  if (!upgradeScene) gameScene.scene.add('UpgradeSceneV4', UpgradeSceneV4, false);
+  if (!upgradeScene) {
+    gameScene.scene.add('UpgradeSceneV4', UpgradeSceneV4, false);
+    upgradeScene = await waitForSceneRegistration(gameScene, 'UpgradeSceneV4');
+  }
   gameScene.__upgradeSceneOwner = 'src/upgrades/upgrade-scene.js';
 
   gameScene.openUpgradeCards = function() {
