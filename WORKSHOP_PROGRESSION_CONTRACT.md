@@ -1,10 +1,10 @@
 # WRECKMARCH — Workshop / Permanent Progression Contract
 
-**Status:** Workshop Scrip earning foundation approved. Purchase economy is **not active**.
+**Status:** Workshop Scrip earning is active. Catalog v1 purchasing is implemented for non-power terminal cosmetics and remains gated by CI/Live validation before broader Shop content is added.
 
 ## 1. Current production state
 
-The current Workshop/Progression surface may show canonical persistent records, derived milestones and the permanent Workshop Scrip balance:
+The current Workshop surface may show canonical persistent records, derived milestones, the permanent Workshop Scrip balance and the canonical non-power catalog:
 
 - Total recorded runs.
 - Best survival time.
@@ -13,6 +13,8 @@ The current Workshop/Progression surface may show canonical persistent records, 
 - Workshop Scrip balance.
 - Workshop Rank / Field Stamps derived from run records.
 - Character production availability from `CharacterRegistry`.
+- One-time owned Workshop item IDs from the same versioned persistent progression owner.
+- Catalog v1 terminal cosmetics from `WorkshopCatalog`.
 
 Workshop records, Scrip, ranks and stamps do not grant combat power and do not authorize character activation.
 
@@ -60,9 +62,10 @@ The cap prevents extreme endless runs from dominating permanent progression and 
 - Every canonical run result owns a stable `runId`.
 - The Workshop reward is produced once at the canonical run-end boundary before Results presentation.
 - Results may display the produced reward; Results must not calculate or award it.
-- `ProgressionStore` v2 records both run statistics and the produced Scrip reward against that `runId`.
+- `ProgressionStore` v3 records run statistics, produced Scrip rewards and owned Workshop item IDs.
 - Reprocessing the same `runId` cannot duplicate run statistics or Scrip.
-- The v2 persistence model migrates existing v1 run records with `workshopScrip = 0`; lifetime Scrap is never converted during migration.
+- Reprocessing an already-owned one-time catalog item returns `already-owned` and charges `0`.
+- The v3 persistence model migrates existing v2 Scrip/idempotency state and v1 run records without converting lifetime Scrap.
 - Persistence failure must never block Main, Character Select, Gameplay or local Results.
 
 ## 5. Character ownership and production availability are separate gates
@@ -82,17 +85,17 @@ For the current Shotgun Character:
 
 ## 6. Permanent economy activation prerequisites
 
-Do not enable purchases until all remaining prerequisites exist:
+Do not enable character/combat purchases until all remaining prerequisites exist:
 
 - [x] One explicitly named permanent currency separate from in-run Scrap: **Workshop Scrip**.
 - [x] One documented earn formula and canonical post-run award boundary.
-- [x] One persistent progression owner with versioned migration rules (`ProgressionStore` v2).
-- [ ] One canonical Shop/Catalog registry containing item identity, type, cost and availability requirements.
-- [ ] Idempotent purchase semantics so refreshing/retrying cannot double-spend or double-unlock.
-- [ ] A clear rule for duplicate/already-owned purchases.
+- [x] One persistent progression owner with versioned migration rules (`ProgressionStore` v3).
+- [x] One canonical Shop/Catalog registry containing item identity, type, cost and availability requirements.
+- [x] Idempotent purchase semantics so refreshing/retrying cannot double-spend or double-own.
+- [x] A clear rule for duplicate/already-owned purchases: return `already-owned` and charge `0`.
 - [ ] A character-unlock owner that composes with, but cannot override, production availability.
-- [ ] Unit tests for purchase persistence, insufficient funds, duplicate purchase and locked production content.
-- [ ] E2E proving Shop navigation cannot bypass Character Select or the Shotgun activation gate.
+- [x] Unit tests for purchase persistence, insufficient funds, duplicate purchase and locked production content.
+- [x] E2E covers canonical Workshop navigation, purchase persistence and the Shotgun production lock.
 - [ ] Full Quality, Smoke, E2E and Live validation for purchasing activation.
 
 ## 7. Shop content policy
@@ -131,9 +134,9 @@ The Workshop remains part of the WRECKMARCH frontend shell:
 4. [x] Workshop Rank and Field Stamps are derived from canonical records with no gameplay effect.
 5. [x] Approve Workshop Scrip identity and bounded survival-only earning rules.
 6. [x] Version/migrate the progression persistence model for real economy state.
-7. [ ] Add canonical Shop/Catalog registry and purchase service.
-8. [ ] Add real purchasable content only when its ownership/runtime contract exists.
+7. [x] Add canonical Shop/Catalog registry and purchase service.
+8. [x] Add the first real non-power purchasable content: `RUSTLINE SIGNAL PLATE` terminal cosmetic.
 9. [ ] Connect player unlock state to Character Select without weakening production gates.
-10. [ ] Validate purchasing on CI/E2E/Live before declaring Shop purchases active.
+10. [ ] Validate purchasing on CI/E2E/Live before declaring broader Shop purchases active.
 
-**Current decision:** Workshop Scrip may be earned and displayed. Shop purchasing remains intentionally disabled until steps 7–10 are complete. Leaderboard scoring remains a separate contract and must not reuse Scrip as score.
+**Current decision:** Workshop Scrip may be earned and spent only on canonical non-power Catalog v1 content. `RUSTLINE SIGNAL PLATE` costs 2 Scrip and changes deployment-terminal presentation only. Character/combat unlocks remain disabled, Shotgun remains production locked, and Leaderboard scoring remains a separate contract that must not reuse Scrip as score.

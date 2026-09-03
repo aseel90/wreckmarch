@@ -8,6 +8,7 @@ async function clearProgressionOnce(page: any, marker: string) {
     if (sessionStorage.getItem(marker)) return;
     localStorage.removeItem('wreckmarch.progression.v1');
     localStorage.removeItem('wreckmarch.progression.v2');
+    localStorage.removeItem('wreckmarch.progression.v3');
     sessionStorage.setItem(marker, '1');
   }, { marker });
 }
@@ -34,7 +35,7 @@ test('canonical Results persist debug run records without awarding Workshop Scri
     };
   });
   expect(state.progression).toMatchObject({
-    version: 2,
+    version: 3,
     totalRuns: 1,
     bestSurvivalSeconds: 77,
     highestLevel: 4,
@@ -55,7 +56,7 @@ test('canonical Results persist debug run records without awarding Workshop Scri
   await expect(progressionButton).toHaveAttribute('data-enabled', 'true');
   await progressionButton.click();
   await expect(page.locator('.wm-progression-screen')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'PROGRESSION' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'WORKSHOP' })).toBeVisible();
   await expect(page.locator('.wm-progression-stats')).toContainText('RUNS');
   await expect(page.locator('.wm-progression-stats')).toContainText('77s');
   await expect(page.locator('.wm-progression-stats')).toContainText('51');
@@ -113,7 +114,7 @@ test('normal canonical run awards bounded Workshop Scrip once and persists it in
   await expect(page.locator('[data-stat="workshop-scrip"]')).toContainText('2');
   await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
 
-  const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('wreckmarch.progression.v2') || '{}'));
+  const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('wreckmarch.progression.v3') || '{}'));
   expect(persisted.workshopScrip).toBe(2);
   expect(persisted.recordedRunIds).toEqual([state.result.runId]);
   expect(persisted.rewardedRunIds).toEqual([state.result.runId]);
