@@ -66,7 +66,7 @@ test('canonical Results screen owns run end and covers the live landscape viewpo
   await waitForGame(page);
 
   const result = await page.evaluate(async () => {
-    const w = window as typeof window & { __WM_GAME__?: any };
+    const w = window as typeof window & { __WM_GAME__?: any; __WM_LAST_RESULT__?: any };
     const game = w.__WM_GAME__;
     const scene = game.scene.getScene('Wreckmarch');
     scene.spawnEvent.paused = true;
