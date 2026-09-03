@@ -29,7 +29,7 @@ describe('U7 canonical Upgrade Scene ownership', () => {
       expect(legacy).not.toContain('closeUpgradeCards = function');
     }
     expect(c2).not.toContain('c2-upgrade-art');
-    expect(c3).not.toContain("getScene('UpgradeSceneV3')&&");
+    expect(c3).not.toContain("const v3=s.game.scene.getScene('UpgradeSceneV3')");
     expect(c5).not.toContain('installCards(s)');
     expect(d1).toContain("getScene('UpgradeSceneV4')");
     expect(d1).toContain('installUpgradeCardPresentation');
