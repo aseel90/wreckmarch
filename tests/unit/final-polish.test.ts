@@ -10,7 +10,7 @@ describe('final presentation polish', () => {
     const html = read('index.html');
     const rat = html.indexOf("./src/enemies/scrap-rat-visuals.js");
     const phaseD1 = html.indexOf("./src/phase-d1-runtime.js?v=27");
-    const hud = html.indexOf("./src/mobile-hud-loader-canonical-v2.js?rev=3");
+    const hud = html.indexOf("./src/mobile-hud-loader-canonical-v2.js?rev=4");
     const polish = html.indexOf("./src/final-polish-runtime.js?v=2");
     expect(rat).toBeGreaterThan(-1);
     expect(phaseD1).toBeGreaterThan(-1);
@@ -30,6 +30,7 @@ describe('final presentation polish', () => {
     expect(hud).toContain('var(--wm-safe-bottom,env(safe-area-inset-bottom))');
     expect(hud).toContain('clampJoystickOrigin');
     expect(hud).toContain('openUpgradeCards?.bind(scene)');
+    expect(hud).toContain("classList.toggle('wm-gameplay-overlay-active',!visible)");
     expect(hud).not.toContain('showUpgradeCards');
     expect(hud).toContain("wreckmarchMobileHud='compact-v5-test'");
     expect(hud).not.toContain('scene.endRun=');
@@ -55,6 +56,7 @@ describe('final presentation polish', () => {
     expect(css).toContain('#debug {');
     expect(css).toContain('display: none;');
     expect(css).toContain('body.debug-enabled #debug { display: block; }');
+    expect(css).toContain('body.wm-gameplay-overlay-active #fs-btn');
     expect(css).toContain('-webkit-touch-callout: none');
   });
 });
