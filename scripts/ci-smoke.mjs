@@ -38,7 +38,7 @@ try {
     const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
     const fullBleed = !!rect && Math.abs(rect.left) < 1.5 && Math.abs(rect.top) < 1.5 && Math.abs(rect.width - window.innerWidth) < 1.5 && Math.abs(rect.height - window.innerHeight) < 1.5;
     return !!canvas && document.body.classList.contains('visual-ready') && fullBleed && !!game && !!scene?.sys?.isActive?.() && scene?.__finalPolishReady === true && document.documentElement.dataset.wreckmarchFinalPolish === 'presentation-v1' && document.documentElement.dataset.wreckmarchMobileHud === 'compact-v5-test' && document.documentElement.dataset.wreckmarchPhaseE1 === 'active' && document.documentElement.dataset.wreckmarchE1SelfTest === 'passed';
-  }, undefined, { polling: 250, timeout: 70_000 });
+  }, undefined, { polling: 250, timeout: 25_000 });
   readinessMs = Date.now() - readinessStartedAt;
 
   const readE1RoadState = () => page.evaluate(() => {
