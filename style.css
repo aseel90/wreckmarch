@@ -57,18 +57,6 @@ body.visual-ready #game { opacity: 1; pointer-events: auto; }
 body.visual-ready #boot { opacity: 0; visibility: hidden; }
 body.boot-error #boot { opacity: 1; visibility: visible; }
 
-#rotate {
-  display: none; position: fixed; inset: 0; z-index: 10030;
-  background: radial-gradient(circle at 50% 40%, #17232a, #090d13 70%);
-  color: #f2d19b;
-  align-content: center; justify-items: center; text-align: center;
-  gap: 10px;
-  padding: calc(28px + env(safe-area-inset-top)) calc(28px + env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) calc(28px + env(safe-area-inset-left));
-  letter-spacing: .08em;
-}
-#rotate strong { font: 900 22px/1.1 ui-sans-serif, system-ui; }
-#rotate span { max-width: 320px; color: #93a0aa; font-size: 13px; letter-spacing: .03em; }
-
 #fs-btn {
   position: fixed; z-index: 10001;
   right: calc(12px + env(safe-area-inset-right));
@@ -118,15 +106,6 @@ body.debug-enabled #debug { display: block; }
   user-select: text; -webkit-user-select: text;
 }
 
-@media (orientation: portrait) {
-  #rotate { display: grid; }
-  #game { visibility: hidden; }
-  #fs-btn, #debug { visibility: hidden !important; }
-}
-@media (orientation: landscape) {
-  #rotate { display: none; }
-  #game { visibility: visible; }
-}
 @media (prefers-reduced-motion: reduce) {
   #game, #boot { transition: none; }
 }
