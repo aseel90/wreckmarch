@@ -13,10 +13,10 @@ Every accepted Shotgun body frame must use the same production geometry as the c
 - Foot line: **Y = 140**.
 - Render origin: **X = 0.50, Y = 0.52**.
 - Runtime render scale: **0.78**.
-- Grip socket baseline: **X = ±15 px, Y = -5 px** from hero world origin, mirrored using the existing aim-facing contract.
+- Current canonical grip socket baseline: **X = ±10 px, Y = +3 px** from hero world origin, mirrored using the existing aim-facing contract.
 - Body and Shotgun remain separate layers. The weapon must never be baked into the body sprites.
 
-These values are not approximations. They are frozen from the currently deployed Runner production path so the new character cannot become larger/smaller, float, sink, or drift at the grip when frames change.
+These values are not approximations. They are frozen from the current Runner production sources so the new character cannot become larger/smaller, float, sink, or drift at the grip when frames change. Earlier planning text that referenced a `±15,-5` grip offset is superseded by the current canonical Runner definition (`±10,+3`).
 
 ## Minimal frame set
 

@@ -39,10 +39,11 @@ describe('WS14-C Shotgun production art contract', () => {
 
   it('is pinned to the same normalization geometry used by current production Runner art', () => {
     const locomotion = read('src/characters/runner-locomotion-art.js');
-    expect(locomotion).toContain('const maxBodyW = 104');
-    expect(locomotion).toContain('const maxBodyH = 132');
-    expect(locomotion).toContain('const drawX = Math.round((128 - drawW) / 2)');
-    expect(locomotion).toContain('const drawY = 140 - drawH');
-    expect(locomotion).toContain('scene.textures.createCanvas(targetKey, 128, 148)');
+    expect(locomotion).toContain('const OUTPUT_WIDTH = 128;');
+    expect(locomotion).toContain('const OUTPUT_HEIGHT = 148;');
+    expect(locomotion).toContain('const TARGET_WIDTH = 104;');
+    expect(locomotion).toContain('const TARGET_HEIGHT = 132;');
+    expect(locomotion).toContain('const BASELINE_Y = 140;');
+    expect(locomotion).toContain('scene.textures.createCanvas(targetKey, OUTPUT_WIDTH, OUTPUT_HEIGHT)');
   });
 });
