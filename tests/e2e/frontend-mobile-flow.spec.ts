@@ -81,8 +81,8 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
   await page.locator('.wm-progression-screen').evaluate((element: HTMLElement) => {
     element.scrollTop = element.scrollHeight;
   });
-  await expect(page.locator('.wm-progression-footer')).toBeVisible();
-  await expect(page.locator('.wm-progression-roster')).toBeVisible();
+  await expectFullyInViewport(page, page.locator('.wm-progression-footer'));
+  await expectFullyInViewport(page, page.locator('.wm-progression-roster'));
   await page.locator('.wm-progression-screen .wm-shell-back').click();
   await expect(page.locator('.wm-main-screen')).toBeVisible();
 
@@ -132,7 +132,7 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
 
   await expectScreenFits(page, '.wm-results-screen');
   await expectFullyInViewport(page, page.locator('.wm-results-stats'));
-  await expectFullyInViewport(page, page.locator('[data-results-action="replay"]'));
+  await expectFullyInViewport(page, page.locator('[data-results-action="play-again"]'));
   await expectFullyInViewport(page, page.locator('[data-results-action="main"]'));
   await expectFullyInViewport(page, page.locator('.wm-results-report-button'));
 
