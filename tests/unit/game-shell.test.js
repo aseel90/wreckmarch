@@ -3,7 +3,7 @@ import { GameShell } from '../../src/ui/game-shell.js';
 import { SCREEN_IDS, getScreenDefinition, listScreenDefinitions } from '../../src/ui/screen-registry.js';
 
 describe('canonical GameShell ownership', () => {
-  it('starts at character select without changing live gameplay', () => {
+  it('keeps the temporary foundation default at character select until the player-facing boot flow is migrated', () => {
     const shell = new GameShell();
     expect(shell.currentScreenId).toBe(SCREEN_IDS.CHARACTER_SELECT);
     expect(shell.currentScreen).toEqual(getScreenDefinition(SCREEN_IDS.CHARACTER_SELECT));
@@ -20,13 +20,22 @@ describe('canonical GameShell ownership', () => {
     expect(listener.mock.calls[0][1].id).toBe(SCREEN_IDS.CHARACTER_SELECT);
   });
 
+  it('registers Boot and Main as canonical entry screens without changing live gameplay startup yet', () => {
+    const shell = new GameShell({ initialScreen: SCREEN_IDS.BOOT });
+    expect(shell.currentScreen).toEqual({ id: SCREEN_IDS.BOOT, phase: 'boot' });
+    shell.navigate(SCREEN_IDS.MAIN);
+    expect(shell.currentScreen).toEqual({ id: SCREEN_IDS.MAIN, phase: 'shell' });
+  });
+
   it('rejects parallel or unknown screen identifiers', () => {
     const shell = new GameShell();
     expect(() => shell.navigate('shotgun-menu')).toThrow('Unknown screen: shotgun-menu');
   });
 
-  it('registers the agreed future screens in one canonical source', () => {
+  it('registers the agreed canonical screens in one source', () => {
     expect(listScreenDefinitions().map(screen => screen.id)).toEqual([
+      SCREEN_IDS.BOOT,
+      SCREEN_IDS.MAIN,
       SCREEN_IDS.CHARACTER_SELECT,
       SCREEN_IDS.GAMEPLAY,
       SCREEN_IDS.SETTINGS,

@@ -1,5 +1,7 @@
 /* WRECKMARCH — canonical front-end screen registry */
 export const SCREEN_IDS = Object.freeze({
+  BOOT: 'boot',
+  MAIN: 'main',
   CHARACTER_SELECT: 'character-select',
   GAMEPLAY: 'gameplay',
   SETTINGS: 'settings',
@@ -10,6 +12,8 @@ export const SCREEN_IDS = Object.freeze({
 });
 
 const SCREENS = new Map([
+  [SCREEN_IDS.BOOT, Object.freeze({ id: SCREEN_IDS.BOOT, phase: 'boot' })],
+  [SCREEN_IDS.MAIN, Object.freeze({ id: SCREEN_IDS.MAIN, phase: 'shell' })],
   [SCREEN_IDS.CHARACTER_SELECT, Object.freeze({ id: SCREEN_IDS.CHARACTER_SELECT, phase: 'pre-run' })],
   [SCREEN_IDS.GAMEPLAY, Object.freeze({ id: SCREEN_IDS.GAMEPLAY, phase: 'run' })],
   [SCREEN_IDS.SETTINGS, Object.freeze({ id: SCREEN_IDS.SETTINGS, phase: 'shell' })],
