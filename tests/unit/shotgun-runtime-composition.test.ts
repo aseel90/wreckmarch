@@ -115,6 +115,34 @@ describe('WS14-C inactive Shotgun Phaser composition', () => {
     expect(weapon.setAngle).toHaveBeenLastCalledWith(-15);
   });
 
+  it('advances deterministic idle/run cycles without owning cadence or disturbing aim/facing', () => {
+    const { scene, body, weapon } = sceneStub();
+    const composition = createShotgunRuntimeComposition(scene as any, { facing: 'left', aimDegrees: 20 });
+
+    composition.advanceLocomotion(249, { frameDurationMs: 250 });
+    expect(composition.frameIndex).toBe(0);
+    composition.advanceLocomotion(1, { frameDurationMs: 250 });
+    expect(composition.frameIndex).toBe(1);
+    expect(body.setTexture).toHaveBeenLastCalledWith(SHOTGUN_RUNTIME_PRESENTATION.body.idle[1].key);
+
+    composition.advanceLocomotion(250, { frameDurationMs: 250 });
+    expect(composition.frameIndex).toBe(0);
+    expect(body.setTexture).toHaveBeenLastCalledWith(SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key);
+
+    composition.advanceLocomotion(0, { motion: 'run', frameDurationMs: 100 });
+    expect(composition.motion).toBe('run');
+    expect(composition.frameIndex).toBe(0);
+    composition.advanceLocomotion(300, { frameDurationMs: 100 });
+    expect(composition.frameIndex).toBe(0);
+    composition.advanceLocomotion(200, { frameDurationMs: 100 });
+    expect(composition.frameIndex).toBe(2);
+    expect(body.setTexture).toHaveBeenLastCalledWith(SHOTGUN_RUNTIME_PRESENTATION.body.run[2].key);
+
+    expect(body.setFlipX).toHaveBeenLastCalledWith(true);
+    expect(weapon.setFlipX).toHaveBeenLastCalledWith(true);
+    expect(weapon.setAngle).toHaveBeenLastCalledWith(-20);
+  });
+
   it('allows only a locked preview registry entry while keeping Shotgun outside live gameplay owners', () => {
     expect(SHOTGUN_RUNTIME_COMPOSITION.activation).toEqual({
       playableOnMain: false,
@@ -143,5 +171,8 @@ describe('WS14-C inactive Shotgun Phaser composition', () => {
     const composition = createShotgunRuntimeComposition(fourth.scene as any);
     expect(() => composition.setMotion('run', 3)).toThrow('Invalid Shotgun run frame index');
     expect(() => composition.setPosition(Number.POSITIVE_INFINITY, 0)).toThrow('position must be finite');
+    expect(() => composition.advanceLocomotion(-1, { frameDurationMs: 100 })).toThrow('delta must be a finite non-negative number');
+    expect(() => composition.advanceLocomotion(1, { frameDurationMs: 0 })).toThrow('frame duration must be a finite positive number');
+    expect(() => composition.advanceLocomotion(1, { motion: 'fly', frameDurationMs: 100 } as any)).toThrow('Unsupported Shotgun motion');
   });
 });
