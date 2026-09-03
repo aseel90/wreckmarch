@@ -13,9 +13,10 @@ describe('balance run report bridge contract', () => {
     const worker = read('infra/cloudflare/wreckmarch-run-reports/worker.js');
     const migration = read('infra/cloudflare/wreckmarch-run-reports/migrations/001_run_reports.sql');
     const hud = read('src/mobile-hud-polish.js');
-    const hudLoader = read('src/mobile-hud-loader-telemetry-v1.js');
+    const hudLoader = read('src/mobile-hud-loader-canonical-v2.js');
     const phaseD1 = read('src/phase-d1-runtime.js');
     const finalPolish = read('src/final-polish-runtime.js');
+    const resultsScreen = read('src/ui/results-screen.js');
     const smokeScript = read('scripts/ci-smoke.mjs');
 
     expect(workflow).toContain('id-token: write');
@@ -76,18 +77,17 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain("offer('triple-riveter', 'EVOLUTION'");
     expect(pagesWorkflow).toContain('upgrade-icon-triple-riveter');
     expect(html).not.toContain('./src/telemetry/telemetry-debug-ui.js');
-    expect(html).toContain('./src/mobile-hud-loader-telemetry-v1.js');
-    expect(hudLoader).toContain('./mobile-hud-polish.js?asset=telemetry-hud-20260831-213754');
+    expect(html).toContain('./src/mobile-hud-loader-canonical-v2.js');
+    expect(hudLoader).toContain('./mobile-hud-polish.js?asset=canonical-hud-20260903-responsive-v2');
     expect(html).toContain('./src/final-polish-runtime.js?v=2');
     expect(phaseD1).not.toContain('mobile-hud-polish');
     expect(finalPolish).not.toContain('mobile-hud-polish');
-    expect(hud).toContain("'SEND REPORT'");
-    expect(hud).toContain("window.__WM_TELEMETRY_RUNTIME__?.sendReport");
-    expect(hud).toContain('FINALIZE → QUEUE → HTTP');
-    expect(hud).toContain('__WM_LAST_MANUAL_REPORT_RESULT__');
-    expect(hud).toContain("END_RUN_OWNER_VERSION='runtime-v5-test'");
-    expect(hud).toContain('scene.__mobileHudEndRunOwnerVersion===END_RUN_OWNER_VERSION');
-    expect(hud).toContain('wreckmarchEndRunLayout=END_RUN_OWNER_VERSION');
+    expect(resultsScreen).toContain("report.textContent = 'SEND REPORT'");
+    expect(resultsScreen).toContain('wm-results-report-button');
+    expect(hud).not.toContain('scene.endRun=');
+    expect(hud).not.toContain('END_RUN_OWNER_VERSION');
+    expect(hud).not.toContain('wreckmarchEndRunLayout');
+    expect(hud).not.toContain('TEST UI v5');
     expect(smokeScript).toContain('TELEMETRY_SMOKE');
     expect(smokeScript).toContain("document.querySelector('.wm-results-screen')");
     expect(smokeScript).toContain("document.querySelector('.wm-results-report-button')");
