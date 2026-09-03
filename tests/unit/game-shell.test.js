@@ -3,26 +3,33 @@ import { GameShell } from '../../src/ui/game-shell.js';
 import { SCREEN_IDS, getScreenDefinition, listScreenDefinitions } from '../../src/ui/screen-registry.js';
 
 describe('canonical GameShell ownership', () => {
-  it('keeps the temporary foundation default at character select until the player-facing boot flow is migrated', () => {
+  it('starts at Boot now that the player-facing frontend entry flow is active', () => {
     const shell = new GameShell();
-    expect(shell.currentScreenId).toBe(SCREEN_IDS.CHARACTER_SELECT);
-    expect(shell.currentScreen).toEqual(getScreenDefinition(SCREEN_IDS.CHARACTER_SELECT));
+    expect(shell.currentScreenId).toBe(SCREEN_IDS.BOOT);
+    expect(shell.currentScreen).toEqual(getScreenDefinition(SCREEN_IDS.BOOT));
   });
 
-  it('owns validated navigation and emits one transition', () => {
+  it('owns the canonical Boot → Main → Character Select → Gameplay transition chain', () => {
     const shell = new GameShell();
     const listener = vi.fn();
     shell.subscribe(listener);
+
+    shell.navigate(SCREEN_IDS.MAIN);
+    shell.navigate(SCREEN_IDS.CHARACTER_SELECT);
     shell.navigate(SCREEN_IDS.GAMEPLAY);
+
     expect(shell.currentScreenId).toBe(SCREEN_IDS.GAMEPLAY);
-    expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener.mock.calls[0][0].id).toBe(SCREEN_IDS.GAMEPLAY);
-    expect(listener.mock.calls[0][1].id).toBe(SCREEN_IDS.CHARACTER_SELECT);
+    expect(listener).toHaveBeenCalledTimes(3);
+    expect(listener.mock.calls.map(([next, previous]) => [previous.id, next.id])).toEqual([
+      [SCREEN_IDS.BOOT, SCREEN_IDS.MAIN],
+      [SCREEN_IDS.MAIN, SCREEN_IDS.CHARACTER_SELECT],
+      [SCREEN_IDS.CHARACTER_SELECT, SCREEN_IDS.GAMEPLAY],
+    ]);
   });
 
-  it('registers Boot and Main as canonical entry screens without changing live gameplay startup yet', () => {
-    const shell = new GameShell({ initialScreen: SCREEN_IDS.BOOT });
-    expect(shell.currentScreen).toEqual({ id: SCREEN_IDS.BOOT, phase: 'boot' });
+  it('supports returning from Character Select to Main without creating a second router', () => {
+    const shell = new GameShell({ initialScreen: SCREEN_IDS.MAIN });
+    shell.navigate(SCREEN_IDS.CHARACTER_SELECT);
     shell.navigate(SCREEN_IDS.MAIN);
     expect(shell.currentScreen).toEqual({ id: SCREEN_IDS.MAIN, phase: 'shell' });
   });

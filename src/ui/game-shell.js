@@ -2,10 +2,10 @@ import { SCREEN_IDS, getScreenDefinition } from './screen-registry.js';
 
 /*
  * Canonical owner for navigation between Wreckmarch front-end screens.
- * This foundation intentionally does not render UI or start/stop Phaser scenes yet.
+ * Rendering and gameplay scene lifecycle stay outside this state owner.
  */
 export class GameShell {
-  constructor({ initialScreen = SCREEN_IDS.CHARACTER_SELECT } = {}) {
+  constructor({ initialScreen = SCREEN_IDS.BOOT } = {}) {
     getScreenDefinition(initialScreen);
     this.currentScreenId = initialScreen;
     this.listeners = new Set();

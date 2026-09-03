@@ -1,7 +1,298 @@
+:root {
+  --wm-steel-0: #080c11;
+  --wm-steel-1: #11191f;
+  --wm-steel-2: #222d35;
+  --wm-sand: #f2d19b;
+  --wm-rust: #bb7040;
+  --wm-cyan: #7bd8e2;
+  --wm-cyan-soft: rgba(123, 216, 226, .16);
+  --wm-text: #e7edf2;
+  --wm-muted: #8f9ca6;
+}
+
+body.wm-main-active #boot,
 body.wm-character-select-active #boot {
   opacity: 0;
   visibility: hidden;
   transition: none;
+}
+
+.wm-shell-back {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top));
+  left: calc(24px + env(safe-area-inset-left));
+  z-index: 2;
+  padding: 10px 13px 9px;
+  border: 1px solid rgba(123,216,226,.24);
+  border-radius: 8px;
+  color: #a9bac3;
+  background: rgba(7,11,15,.72);
+  font: 900 9px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .13em;
+  cursor: pointer;
+}
+
+.wm-shell-back:focus-visible {
+  outline: 2px solid var(--wm-cyan);
+  outline-offset: 3px;
+}
+
+/* Main / Start — same steel, rust, sand and signal-cyan language as the live wasteland. */
+.wm-main-screen {
+  grid-template-columns: minmax(300px, 1.05fr) minmax(340px, .95fr);
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  justify-items: stretch;
+  column-gap: clamp(34px, 7vw, 100px);
+  padding-left: calc(clamp(34px, 7vw, 100px) + env(safe-area-inset-left));
+  padding-right: calc(clamp(34px, 7vw, 100px) + env(safe-area-inset-right));
+  background:
+    radial-gradient(circle at 17% 34%, rgba(187,112,64,.13), transparent 26%),
+    radial-gradient(circle at 78% 23%, rgba(123,216,226,.12), transparent 25%),
+    linear-gradient(118deg, rgba(7,10,14,.99), rgba(17,24,29,.98) 48%, rgba(8,12,16,.995));
+}
+
+.wm-main-screen::before {
+  opacity: .32;
+  background-image:
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+    repeating-linear-gradient(112deg, transparent 0 74px, rgba(187,112,64,.025) 75px 76px);
+  background-size: 30px 30px, 30px 30px, auto;
+  mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 88%);
+}
+
+.wm-main-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.wm-main-atmosphere::before {
+  content: '';
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  bottom: -44px;
+  height: 38%;
+  opacity: .22;
+  background:
+    linear-gradient(to top, rgba(7,10,14,.96), transparent 72%),
+    url('../../assets/wasteland/ground-a.svg') center bottom / 430px auto repeat-x;
+  filter: saturate(.72) contrast(1.05);
+}
+
+.wm-main-atmosphere::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(187,112,64,.28), rgba(123,216,226,.18), transparent);
+  box-shadow: 0 0 32px rgba(187,112,64,.09);
+}
+
+.wm-main-wreck {
+  position: absolute;
+  bottom: 4%;
+  width: clamp(160px, 20vw, 300px);
+  opacity: .13;
+  filter: saturate(.55) brightness(.66) contrast(1.12);
+  user-select: none;
+}
+
+.wm-main-wreck-a { left: -2.5%; transform: rotate(-3deg); }
+.wm-main-wreck-b { right: -3%; transform: scaleX(-1) rotate(-2deg); opacity: .09; }
+
+.wm-main-brand {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  max-width: 690px;
+}
+
+.wm-main-brand::before {
+  content: '';
+  display: block;
+  width: clamp(70px, 10vw, 126px);
+  height: 5px;
+  margin-bottom: clamp(15px, 3vh, 28px);
+  background: linear-gradient(90deg, var(--wm-rust) 0 62%, var(--wm-cyan) 62% 78%, transparent 78%);
+  box-shadow: 0 0 18px rgba(187,112,64,.16);
+}
+
+.wm-main-brand h1 {
+  margin: 2px 0 0;
+  color: var(--wm-sand);
+  font: 1000 clamp(48px, 8.4vw, 108px)/.78 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -.035em;
+  text-shadow: 0 14px 42px rgba(0,0,0,.58);
+}
+
+.wm-main-motto {
+  margin: clamp(15px, 3vh, 24px) 0 0;
+  color: var(--wm-cyan);
+  font: 900 clamp(12px, 1.7vw, 18px)/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .24em;
+}
+
+.wm-main-description {
+  max-width: 520px;
+  margin: 16px 0 0;
+  color: #8897a1;
+  font: 650 clamp(11px, 1.4vw, 14px)/1.55 ui-sans-serif, system-ui, sans-serif;
+}
+
+.wm-main-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 520px);
+  justify-self: end;
+  padding: clamp(14px, 2.2vw, 22px);
+  border: 1px solid rgba(242,209,155,.16);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(31,41,48,.84), rgba(9,14,18,.94));
+  box-shadow: 0 22px 58px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.025);
+  backdrop-filter: blur(8px);
+}
+
+.wm-main-panel::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 18px;
+  width: 27%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--wm-rust), transparent);
+}
+
+.wm-main-panel-header,
+.wm-main-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #67757e;
+  font: 800 8px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .16em;
+}
+
+.wm-main-panel-header {
+  margin: 1px 2px 13px;
+}
+
+.wm-main-actions {
+  display: grid;
+  gap: 7px;
+}
+
+.wm-main-action {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 66px;
+  padding: 10px 12px 10px 15px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  color: var(--wm-text);
+  background: rgba(8,13,17,.52);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+
+.wm-main-action::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: #49545b;
+  opacity: .5;
+}
+
+.wm-main-action[data-enabled='false'] {
+  color: #818c93;
+  cursor: default;
+}
+
+.wm-main-action.is-primary {
+  min-height: 82px;
+  border-color: rgba(123,216,226,.38);
+  background:
+    linear-gradient(90deg, rgba(60,132,141,.18), transparent 68%),
+    rgba(10,17,21,.72);
+  box-shadow: inset 0 0 0 1px rgba(123,216,226,.04), 0 10px 26px rgba(0,0,0,.18);
+}
+
+.wm-main-action.is-primary::before {
+  background: var(--wm-cyan);
+  opacity: 1;
+  box-shadow: 0 0 14px rgba(123,216,226,.36);
+}
+
+.wm-main-action:not(:disabled):active { transform: scale(.992); }
+.wm-main-action:focus-visible { outline: 2px solid var(--wm-cyan); outline-offset: 2px; }
+.wm-main-action.is-primary:hover { border-color: rgba(123,216,226,.68); }
+
+.wm-main-action-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.wm-main-action-eyebrow {
+  color: #697780;
+  font: 850 8px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .17em;
+}
+
+.wm-main-action strong {
+  font: 950 clamp(18px, 2.5vw, 27px)/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .025em;
+}
+
+.wm-main-action.is-primary strong { color: #eef7f7; }
+
+.wm-main-action-detail {
+  color: #6f7e87;
+  font: 620 10px/1.3 ui-sans-serif, system-ui, sans-serif;
+}
+
+.wm-main-action-state {
+  padding: 7px 8px 6px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 6px;
+  color: #738089;
+  background: rgba(0,0,0,.18);
+  font: 900 8px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+
+.wm-main-action.is-primary .wm-main-action-state {
+  border-color: rgba(123,216,226,.35);
+  color: #8ce3ea;
+  background: rgba(49,117,125,.15);
+}
+
+.wm-main-status {
+  min-height: 13px;
+  margin: 11px 2px 0;
+  color: #6f7d85;
+  font: 800 8px/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .11em;
+}
+
+.wm-main-footer {
+  grid-column: 1 / -1;
+  align-self: end;
+  width: 100%;
+  padding-top: 4px;
 }
 
 .wm-shell-screen {
@@ -261,4 +552,42 @@ body.wm-character-select-active #boot {
 @media (prefers-reduced-motion: reduce) {
   .wm-character-card { transition: none; }
   .wm-character-card.wm-denied { animation: none; }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .wm-main-screen {
+    column-gap: clamp(24px, 5vw, 62px);
+    padding-top: calc(14px + env(safe-area-inset-top));
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  .wm-main-brand::before { margin-bottom: 12px; height: 4px; }
+  .wm-main-brand h1 { font-size: clamp(43px, 9.2vw, 82px); }
+  .wm-main-motto { margin-top: 12px; font-size: 11px; }
+  .wm-main-description { margin-top: 10px; font-size: 10px; max-width: 440px; }
+  .wm-main-panel { padding: 11px; }
+  .wm-main-panel-header { margin-bottom: 8px; }
+  .wm-main-actions { gap: 5px; }
+  .wm-main-action { min-height: 48px; padding-top: 7px; padding-bottom: 7px; }
+  .wm-main-action.is-primary { min-height: 58px; }
+  .wm-main-action strong { font-size: clamp(16px, 2.7vw, 22px); }
+  .wm-main-action-detail { display: none; }
+  .wm-main-status { margin-top: 7px; }
+  .wm-main-footer { font-size: 7px; }
+  .wm-shell-back { top: calc(10px + env(safe-area-inset-top)); left: calc(12px + env(safe-area-inset-left)); }
+}
+
+@media (max-width: 760px) {
+  .wm-main-screen {
+    grid-template-columns: minmax(220px, .82fr) minmax(300px, 1.18fr);
+    column-gap: 18px;
+    padding-left: calc(22px + env(safe-area-inset-left));
+    padding-right: calc(22px + env(safe-area-inset-right));
+  }
+  .wm-main-brand h1 { font-size: clamp(38px, 8.5vw, 64px); }
+  .wm-main-description { display: none; }
+  .wm-main-panel { padding: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-main-action { transition: none; }
 }

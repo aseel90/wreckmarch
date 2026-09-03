@@ -1,13 +1,18 @@
-import { listCharacterSelectOptions, resolveCharacterSelection } from './character-select-model.js?v=1';
+import { listCharacterSelectOptions, resolveCharacterSelection } from './character-select-model.js?v=2';
 
 const STYLESHEET_ID = 'wm-frontend-shell-styles';
 
 function ensureStylesheet() {
-  if (document.getElementById(STYLESHEET_ID)) return;
+  const existing = document.getElementById(STYLESHEET_ID);
+  if (existing) {
+    const expected = new URL('./frontend-shell.css?v=2', import.meta.url).href;
+    if (existing.href !== expected) existing.href = expected;
+    return;
+  }
   const link = document.createElement('link');
   link.id = STYLESHEET_ID;
   link.rel = 'stylesheet';
-  link.href = new URL('./frontend-shell.css?v=1', import.meta.url).href;
+  link.href = new URL('./frontend-shell.css?v=2', import.meta.url).href;
   document.head.append(link);
 }
 
@@ -76,6 +81,12 @@ export function chooseCharacter() {
     screen.className = 'wm-shell-screen wm-character-select';
     screen.setAttribute('aria-labelledby', 'wm-character-select-title');
 
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'wm-shell-back';
+    back.textContent = '← MAIN';
+    back.setAttribute('aria-label', 'Back to main menu');
+
     const header = document.createElement('header');
     header.className = 'wm-character-select-header';
     const kicker = document.createElement('span');
@@ -97,13 +108,15 @@ export function chooseCharacter() {
     grid.className = 'wm-character-grid';
 
     const finish = result => {
-      grid.querySelectorAll('button').forEach(button => { button.disabled = true; });
+      screen.querySelectorAll('button').forEach(button => { button.disabled = true; });
       window.setTimeout(() => {
         screen.remove();
         document.body.classList.remove('wm-character-select-active');
         resolvePromise(result);
       }, 120);
     };
+
+    back.addEventListener('click', () => finish(Object.freeze({ action: 'back' })));
 
     for (const option of listCharacterSelectOptions()) {
       grid.append(makeCharacterCard(option, status, finish));
@@ -113,7 +126,7 @@ export function chooseCharacter() {
     footer.className = 'wm-character-select-footer';
     footer.textContent = 'CHARACTER AVAILABILITY IS CONTROLLED BY THE CANONICAL REGISTRY';
 
-    screen.append(header, grid, status, footer);
+    screen.append(back, header, grid, status, footer);
     document.body.append(screen);
   });
 }

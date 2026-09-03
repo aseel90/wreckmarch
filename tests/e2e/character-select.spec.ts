@@ -2,20 +2,26 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 960, height: 540 } });
 
-test('Character Select blocks locked preview and launches only a canonical selectable character', async ({ page }) => {
+test('Main routes through Character Select; locked preview cannot launch gameplay', async ({ page }) => {
   await page.goto('/?debug=1');
 
-  const screen = page.locator('.wm-character-select');
-  await expect(screen).toBeVisible({ timeout: 15_000 });
-  await expect(page.locator('[data-character-id="runner"]')).toHaveAttribute('data-availability', 'selectable');
-  await expect(page.locator('[data-character-id="shotgun"]')).toHaveAttribute('data-availability', 'locked');
+  const main = page.locator('.wm-main-screen');
+  await expect(main).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('[data-screen-id="character-select"]')).toContainText('PLAY');
 
-  const before = await page.evaluate(() => ({
+  const onMain = await page.evaluate(() => ({
     gameReady: Boolean((window as any).__WM_GAME__),
     shellScreen: (window as any).__WM_GAME_SHELL__?.currentScreenId || null,
     selected: (window as any).__WM_SELECTED_CHARACTER__ || null,
   }));
-  expect(before).toEqual({ gameReady: false, shellScreen: 'character-select', selected: null });
+  expect(onMain).toEqual({ gameReady: false, shellScreen: 'main', selected: null });
+
+  await page.locator('[data-screen-id="character-select"]').click();
+
+  const screen = page.locator('.wm-character-select');
+  await expect(screen).toBeVisible();
+  await expect(page.locator('[data-character-id="runner"]')).toHaveAttribute('data-availability', 'selectable');
+  await expect(page.locator('[data-character-id="shotgun"]')).toHaveAttribute('data-availability', 'locked');
 
   await page.locator('[data-character-id="shotgun"]').click();
   await expect(page.locator('.wm-character-select-status')).toContainText('IS LOCKED');
