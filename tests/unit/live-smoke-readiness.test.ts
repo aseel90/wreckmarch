@@ -5,8 +5,8 @@ const smokeSource = readFileSync('scripts/ci-smoke.mjs', 'utf8');
 
 describe('Live smoke readiness ownership', () => {
   it('passes interval polling options through Playwright’s third argument', () => {
-    expect(smokeSource).toContain("}, undefined, { polling: 250, timeout: 45_000 });");
-    expect(smokeSource).not.toContain("}, { polling: 250, timeout: 45_000 });");
+    expect(smokeSource).toContain("}, undefined, { polling: 250, timeout: 70_000 });");
+    expect(smokeSource).not.toContain("}, { polling: 250, timeout: 70_000 });");
     expect(smokeSource).not.toContain("{ timeout: 30_000 }");
   });
 
