@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const smokeSource = readFileSync('scripts/ci-smoke.mjs', 'utf8');
+const mobileHudSource = readFileSync('src/mobile-hud-polish.js', 'utf8');
+const indexSource = readFileSync('index.html', 'utf8');
 
 describe('Live telemetry Results ownership', () => {
   it('drives the canonical GameShell Results screen instead of the legacy Phaser end-run overlay', () => {
@@ -21,5 +23,15 @@ describe('Live telemetry Results ownership', () => {
     expect(smokeSource).toContain('reportButton.click()');
     expect(smokeSource).toContain("telemetryState.label !== 'REPORT SENT'");
     expect(smokeSource).toContain("telemetryState.manualState !== 'sent'");
+  });
+
+  it('keeps mobile HUD presentation out of canonical end-run ownership', () => {
+    expect(mobileHudSource).not.toContain('scene.endRun=');
+    expect(mobileHudSource).not.toContain('__WM_END_RUN_LAYOUT__');
+    expect(mobileHudSource).not.toContain('TEST UI v5');
+    expect(mobileHudSource).not.toContain('RUN COMPLETE');
+    expect(indexSource).toContain('mobile-hud-loader-canonical-v2.js');
+    expect(indexSource).not.toContain('mobile-hud-loader-telemetry-v1.js');
+    expect(indexSource.indexOf('results-runtime.js?v=5')).toBeLessThan(indexSource.indexOf('mobile-hud-loader-canonical-v2.js'));
   });
 });
