@@ -43,8 +43,6 @@ async function renderAndMeasureGroup(page: any, ids: readonly string[], level: n
       if (desired.has(definition.id)) {
         scene.upgradeLevels[definition.id] = 0;
       } else if (definition.id === 'triple-riveter' && desired.has('twin-riveter')) {
-        // Triple is naturally unavailable until Twin is maxed; do not create an impossible
-        // evolved-at-max + Twin-at-zero state just to hide it from the test pool.
         scene.upgradeLevels[definition.id] = 0;
       } else {
         scene.upgradeLevels[definition.id] = definition.maxLevel;
@@ -114,7 +112,12 @@ async function renderAndMeasureGroup(page: any, ids: readonly string[], level: n
       };
     });
     const gaps = cards.slice(0, -1).map((card: any, index: number) => cards[index + 1].screenLeft - card.screenRight);
+    const fullscreenDuringUpgrade = {
+      upgradeClass: document.body.classList.contains('wm-upgrade-active'),
+      display: getComputedStyle(document.getElementById('fs-btn')!).display,
+    };
     scene.closeUpgradeCards();
+    const upgradeClassAfterClose = document.body.classList.contains('wm-upgrade-active');
     return {
       actualIds,
       cards,
@@ -123,6 +126,8 @@ async function renderAndMeasureGroup(page: any, ids: readonly string[], level: n
       presentationVersion: scene.__upgradeCardPresentationVersion,
       previewVersion: scene.__upgradeCardPreviewVersion,
       uniformCards: scene.__finalUniformUpgradeCards,
+      fullscreenDuringUpgrade,
+      upgradeClassAfterClose,
       level
     };
   }, { ids: [...ids], level });
@@ -140,6 +145,9 @@ test('three-card selection stays readable and non-overlapping on target mobile l
     expect(snapshot.presentationVersion).toBe('u5-before-after-v3');
     expect(snapshot.previewVersion).toBe('u5-before-after-v1');
     expect(snapshot.uniformCards).toBe(true);
+    expect(snapshot.fullscreenDuringUpgrade.upgradeClass).toBe(true);
+    expect(snapshot.fullscreenDuringUpgrade.display).toBe('none');
+    expect(snapshot.upgradeClassAfterClose).toBe(false);
     expect(snapshot.cards).toHaveLength(3);
     expect(Math.min(...snapshot.gaps)).toBeGreaterThanOrEqual(4);
     for (const card of snapshot.cards) {

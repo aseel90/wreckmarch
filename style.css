@@ -83,6 +83,7 @@ body.boot-error #boot { opacity: 1; visibility: visible; }
   letter-spacing: .08em; touch-action: manipulation;
 }
 body.standalone-mode #fs-btn, #fs-btn[hidden] { display: none !important; }
+body.wm-upgrade-active #fs-btn { display: none !important; }
 
 #debug {
   display: none;

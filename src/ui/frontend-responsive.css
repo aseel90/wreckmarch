@@ -83,14 +83,14 @@
 
 @media (max-width: 920px) and (orientation: landscape) {
   .wm-shell-screen.wm-main-screen {
-    grid-template-columns: minmax(0, .85fr) minmax(300px, 1.15fr);
+    grid-template-columns: minmax(0, .95fr) minmax(260px, 1.05fr);
     column-gap: clamp(14px, 3vw, 28px);
     padding-left: calc(22px + var(--wm-safe-left));
     padding-right: calc(22px + var(--wm-safe-right));
   }
 
   .wm-main-brand h1 {
-    font-size: clamp(36px, 5.8vw, 56px);
+    font-size: clamp(32px, 5.2vw, 48px);
   }
 
   .wm-main-description {
@@ -104,14 +104,14 @@
 
 @media (max-width: 640px) and (max-height: 420px) and (orientation: landscape) {
   .wm-shell-screen.wm-main-screen {
-    grid-template-columns: minmax(150px, .72fr) minmax(250px, 1.28fr);
+    grid-template-columns: minmax(180px, .82fr) minmax(220px, 1.18fr);
     column-gap: 10px;
     padding-left: calc(14px + var(--wm-safe-left));
     padding-right: calc(14px + var(--wm-safe-right));
   }
 
   .wm-main-brand h1 {
-    font-size: clamp(26px, 5vw, 34px);
+    font-size: clamp(22px, 4.5vw, 28px);
   }
 
   .wm-main-brand::before {
@@ -389,46 +389,4 @@
   .wm-results-actions {
     grid-template-columns: 1fr 1fr;
   }
-}
-
-@media (max-width: 600px) and (max-height: 420px) and (orientation: landscape) {
-  .wm-results-header p {
-    display: none;
-  }
-
-  .wm-results-stats {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 4px;
-  }
-
-  .wm-result-stat {
-    min-height: 44px;
-    padding: 6px;
-  }
-
-  .wm-results-action {
-    min-height: 44px;
-  }
-
-  .wm-results-report {
-    gap: 6px;
-  }
-}
-
-/* Confirmation */
-.wm-confirm-overlay {
-  padding:
-    calc(20px + var(--wm-safe-top))
-    calc(20px + var(--wm-safe-right))
-    calc(20px + var(--wm-safe-bottom))
-    calc(20px + var(--wm-safe-left));
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.wm-confirm-dialog {
-  width: min(500px, 100%);
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
 }
