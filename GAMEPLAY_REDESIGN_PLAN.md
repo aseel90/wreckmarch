@@ -1,492 +1,565 @@
-# WRECKMARCH — Core Gameplay Redesign Plan
+# Wreckmarch Gameplay Redesign Plan
 
-**Status:** Approved design direction, ready for implementation  
-**Decision date:** 2026-08-24  
-**Primary target:** Mobile portrait, Western audience, short 8–12 minute runs
+## 1. Product Goal
 
-## 1. New Core Identity
+Transform the current Wreckmarch prototype into a **mobile-first survivor roguelite** where the player directly controls a single hero, survives enemy waves, collects Scrap, levels up, and builds a different combat setup each run.
 
-WRECKMARCH remains a **Survivor Roguelite + Build/Evolution game**, but the player is now the center of combat.
+The Fortress/Rig is no longer the primary protected object. It becomes an **optional combat companion** that appears only if the player chooses the relevant upgrade during a run.
 
-The run starts with **the hero alone**. The moving Fortress is no longer mandatory at spawn and is no longer an objective that can be destroyed. Instead, it becomes a powerful optional companion that can appear as a random upgrade choice during the run.
+Primary target:
 
-Core fantasy:
-
-> **Fight as the Scrap Runner, collect scrap, choose a build, and optionally summon and evolve a giant moving war rig beside you.**
-
-This removes the frustrating escort feeling and preserves the strongest visual hook: a small support rig can eventually become a ridiculous rolling fortress.
-
----
-
-## 2. Core Run Loop
-
-```text
-Move + dodge
-↓
-Hero auto-attacks enemies
-↓
-Enemies drop Scrap
-↓
-Collect Scrap to fill the top XP/Scrap bar
-↓
-Level Up
-↓
-Pause briefly and show 3 random upgrade cards
-↓
-Choose 1 card
-↓
-Build hero / utility / Fortress / synergy path
-↓
-Fight denser hordes, elites, events and bosses
-↓
-Finish or die
-```
-
-The player must always feel responsible for survival. There is only one fail state during normal combat: **the hero reaches 0 HP**.
+- Mobile browser first.
+- Android APK later through the existing GitHub workflow.
+- Landscape orientation.
+- Short, readable sessions.
+- Strong replayability through randomized build choices.
+- No required backend or paid service for the core game.
 
 ---
 
-## 3. Hero Rules
+## 2. Core Gameplay Loop
 
-### Hero is the primary combat unit
+1. Start the run with only the hero.
+2. Move freely around the battlefield.
+3. Hero attacks automatically.
+4. Enemies target the hero.
+5. Killed enemies drop Scrap.
+6. Scrap fills the level bar.
+7. On level up, gameplay pauses.
+8. Player chooses **1 of 3 random upgrade cards**.
+9. The selected upgrade changes the current build.
+10. Resume the run.
+11. Survive escalating waves and elites.
+12. Reach boss/end condition.
+13. Receive permanent rewards/unlocks.
+14. Start a new run with a potentially different build.
 
-- Hero starts every run alone.
-- Hero has the only normal HP pool.
-- Enemies primarily target the hero.
-- Hero auto-attacks the nearest valid enemy.
-- Player controls movement and dodging with one thumb.
-- Hero weapons and abilities should be the main source of damage early in a run.
+The important change is:
 
-### Hero health presentation
-
-Remove the large Fortress HP bar from the top UI.
-
-Use a compact HP bar **directly above the hero**:
-
-- Tracks hero position.
-- Only becomes visually prominent when damaged or not full.
-- Damage number can briefly appear on hit.
-- Short hit flash + knockback / micro-stagger.
-- Short invulnerability window after a hit to prevent instant multi-hit death.
-
-Recommended initial values:
-
-- Hero HP: `100`
-- Hit invulnerability: `350–500 ms`
-- Damage feedback: red flash + small screen shake + floating damage value
+> The player is building a **run**, not following a fixed upgrade tree.
 
 ---
 
-## 4. Scrap / Level System
+## 3. Player Character
 
-Scrap now functions as the **in-run XP resource**.
+### Role
 
-### Top HUD
+The hero is the central combat unit and the main object the player must keep alive.
 
-The top of the screen should contain:
+### Controls
 
-- Current Level
-- Scrap/XP progress bar
-- Run timer
-- Optional kill count / wave indicator later
+- Left virtual joystick for movement.
+- Auto-aim toward valid enemy targets.
+- Auto-fire by default.
+- No manual fire button in the base version.
+- No second joystick unless later testing proves it is necessary.
 
-Example:
+### Starting State
+
+The player starts with:
+
+- One basic weapon.
+- Base movement speed.
+- Base HP.
+- No Fortress.
+- No active build upgrades.
+
+### Death
+
+The run ends when the hero reaches 0 HP.
+
+There is no Fortress HP dependency in the core loop.
+
+---
+
+## 4. Scrap and Leveling
+
+### Scrap
+
+Scrap is the run XP resource.
+
+Enemies drop Scrap on death.
+
+### HUD
+
+Use a top progress bar:
 
 ```text
-LV. 4       ███████████░░░░       01:42
+SCRAP   Lv. 3
+██████████████░░░░░░
+68 / 100
 ```
 
-### Scrap behavior
+### Level Formula
 
-- Enemies drop Scrap pickups.
-- Pickups have a readable glow and attraction radius.
-- Collection fills the top bar.
-- When the bar reaches 100%, level up triggers.
-- Overflow Scrap should carry into the next level when practical.
-- Required Scrap increases gradually per level.
-
-Initial progression target:
+Initial suggested values:
 
 ```text
-Level 1 → 12 Scrap
-Level 2 → 16
-Level 3 → 21
-Level 4 → 27
-Level 5 → 34
+Level 1 → 30 Scrap
+Level 2 → 50 Scrap
+Level 3 → 75 Scrap
+Level 4 → 105 Scrap
+Level 5 → 140 Scrap
 ```
 
-Exact tuning will be tested on mobile.
+General formula candidate:
+
+```text
+requiredScrap = base + level * growth + level² * curve
+```
+
+Exact values should be tuned through playtesting.
+
+### Overflow
+
+If the player collects more Scrap than required:
+
+```text
+currentScrap -= requiredScrap
+level += 1
+```
+
+Remaining Scrap carries into the next level.
 
 ---
 
 ## 5. Upgrade Card System
 
-On level-up:
+Every level up:
 
-1. Gameplay pauses.
-2. Background dims slightly.
-3. Three upgrade cards appear.
-4. Player chooses exactly one.
-5. Choice applies immediately.
-6. Gameplay resumes quickly.
+- Pause gameplay.
+- Present 3 cards.
+- Player chooses one.
+- Apply upgrade.
+- Resume gameplay.
 
-Target selection time should be short. Cards must be understandable in a glance.
+### Card Structure
 
-### Card anatomy
+Each card contains:
 
-Each card should have:
+- Icon.
+- Upgrade name.
+- Short effect description.
+- Rarity color.
+- Optional prerequisite indicator.
 
-- Large icon / visual
-- Upgrade name
-- One short description
-- Rarity color / badge when needed
-- Level/evolution indicator if already owned
+Example:
 
-Do not overload cards with stats.
+```text
+┌────────────────────┐
+│  HEAVY RIVETS      │
+│                    │
+│  +25% Damage       │
+│  -10% Fire Rate    │
+│                    │
+│  [COMMON]          │
+└────────────────────┘
+```
+
+### Rarity
+
+Suggested initial rarity weights:
+
+- Common: 60%
+- Rare: 28%
+- Epic: 10%
+- Legendary: 2%
+
+Rarity affects:
+
+- Numeric strength.
+- Visual presentation.
+- Frequency.
+
+Do not make higher rarity automatically correct in every situation. Build synergy matters more.
 
 ---
 
 ## 6. Upgrade Families
 
-### A. HERO
-
-Direct player weapons and combat behavior.
+### A. Hero Weapon Upgrades
 
 Examples:
 
-- Scrap Blaster
-- Shotgun Burst
-- Ricochet Bolts
-- Chain Lightning
-- Burning Wrench
-- Orbiting Blades
-- Piercing Slugs
+**Heavy Rivets**
 
-Hero upgrades should change gameplay, not only increase percentages.
+- +25% projectile damage.
+- -10% fire rate.
 
-### B. FORTRESS
+**Twin Riveter**
 
-Fortress cards are locked until the player acquires the summon card.
+- Fire 2 projectiles.
+- Each projectile deals reduced base damage.
 
-First unlock card:
+**Piercing Rivets**
 
-**CALL THE RIG**  
-Summons the Level 1 Fortress companion.
+- Projectiles pass through one additional enemy.
 
-Once summoned, Fortress upgrades enter the random pool:
+**Ricochet Plate**
 
-- Twin Cannon
-- Tesla Coil
-- Rocket Rack
-- Flamethrower
-- Drone Bay
-- Magnet Module
-- Support Beacon
-- Armor/visual chassis upgrades
+- Projectile can bounce to another nearby target.
 
-### C. UTILITY
+**Long Barrel**
 
-Movement, survival, collection and quality-of-life build choices.
+- Increased projectile speed.
+- Increased effective range.
+
+**Overclock**
+
+- Increased fire rate.
+- Slightly reduced projectile damage.
+
+---
+
+### B. Hero Survival Upgrades
 
 Examples:
 
-- Movement Speed
-- Pickup Magnet
-- Dodge / dash enhancement
-- Max HP
-- Healing on elite kill
-- Cooldown reduction
-- Luck / rarity weighting
+**Armor Plate**
 
-Utility upgrades should be useful but should not dominate every build.
+- +Max HP.
 
-### D. SYNERGY / EVOLUTION
+**Emergency Weld**
 
-Special cards that only enter the pool after prerequisites are met.
+- Heal a percentage of missing HP.
+
+**Fleet Feet**
+
+- +Movement speed.
+
+**Reactive Plating**
+
+- Temporary damage reduction after taking damage.
+
+---
+
+### C. Utility Upgrades
 
 Examples:
 
-- Fire weapon + Oil module → **INFERNO RIG**
-- Tesla + Wet/Water effect → **ELECTRIC STORM**
-- Drone + Rockets → **MISSILE SWARM**
-- Freeze + Saw → **FROZEN SHREDDER**
+**Scrap Magnet**
 
-These should be visually dramatic and rare enough to feel discovered.
+- Increased Scrap pickup radius.
 
----
+**Lucky Find**
 
-## 7. Weighted Random Upgrade Logic
+- Slight increase to higher-rarity card chance.
 
-The card system must feel random but not unfair.
+**Field Repairs**
 
-### Rules
-
-- Always offer 3 distinct valid cards.
-- Do not offer maxed upgrades.
-- Fortress upgrades cannot appear before `CALL THE RIG` is owned.
-- Synergies cannot appear before prerequisites are met.
-- If the player has too few offensive options, slightly increase Hero weapon weight.
-- If a player commits to a build family, increase related upgrade weight modestly without guaranteeing it.
-- Avoid three weak stat-only choices at once.
-
-### Later controls
-
-Add later, not in the first implementation:
-
-- `Reroll ×1`
-- `Skip`
-- Permanent unlocks that alter pool contents
+- Small heal after elite kills.
 
 ---
 
-## 8. Fortress Companion Redesign
+## 7. Fortress / Rig Redesign
 
-### Important rule
+The Fortress is no longer present at the start of the run.
 
-**The Fortress does not have HP and cannot be killed by enemies.**
+It becomes an optional build path.
 
-It is a combat companion, not an escort objective.
+### Unlock Card
 
-### Behavior
-
-- Hidden at the start of each run.
-- Appears only if the player chooses `CALL THE RIG`.
-- Enters with a strong arrival animation/effect.
-- Follows the hero at a short comfortable distance.
-- Uses catch-up acceleration if it falls too far behind.
-- Enemies do not target it as a normal damage objective.
-- Fortress weapons auto-target enemies independently or assist hero targeting.
-
-### Visual progression
-
-The Fortress must transform physically as upgrades are chosen:
+Example:
 
 ```text
-No Rig
-↓
-Level 1 small scrap vehicle
-↓
-Extra turret / module
-↓
-Expanded chassis
-↓
-Heavy rolling war machine
-↓
-Late-run absurd moving fortress
+CALL THE RIG
+
+Summon your mobile fortress.
+It follows you and attacks nearby enemies.
 ```
 
-This visible growth remains one of the main marketing hooks.
+### Summon Behavior
 
----
+When selected:
 
-## 9. Large World / Camera Redesign
+1. Warning horn / visual signal.
+2. Fortress enters from outside the screen.
+3. Dust / debris effect.
+4. Fortress joins the player.
 
-The current single-screen rounded arena must be removed.
+### Fortress Rules
 
-### First implementation target
+- No HP bar.
+- Cannot die.
+- Cannot block player movement.
+- Cannot trap the player.
+- Enemies do not target it.
+- It follows the player.
+- It provides offensive/support utility.
 
-Use a world substantially larger than the viewport, approximately:
+### Follow Logic
 
-- `2200 × 2200` minimum initial test area
-
-The exact size may change after performance testing.
-
-### Camera
-
-- Smooth camera follow on hero.
-- Small look-ahead in movement direction.
-- Hero does not need to stay exactly at screen center.
-- Keep useful space visible in front of movement direction.
-
-### No visible arena border
-
-- Remove the rounded rectangle playfield border.
-- Environment should extend beyond the camera.
-- Player should not feel trapped in a corridor.
-
-### Enemy spawning
-
-- Spawn enemies outside the current camera viewport.
-- Use a safe spawn ring around the visible screen.
-- Avoid obvious pop-in directly beside the hero.
-
-### Environment
-
-World 1 / Wasteland should include non-obstructive dressing:
-
-- Wrecked cars
-- Scrap piles
-- Barrels
-- Broken signs
-- Tire stacks
-- Industrial debris
-- Cracked road / sand patches
-- Power poles / ruined structures at safe positions
-
-Later, selected environmental elements can become gameplay objects such as explosive barrels or oil pools.
-
-### Future scalable world
-
-After the fixed large-world version is stable, move toward chunk-based or recycled world sections so the run can feel much larger without heavy memory cost.
-
----
-
-## 10. Enemy Targeting and Combat
-
-### Initial enemy rule
-
-- Standard enemies target the hero.
-- Enemies should not stop to attack the Fortress.
-- Melee contact damages hero.
-- Ranged enemies attack hero with telegraphed projectiles.
-
-### Enemy family after core redesign
-
-1. **Scrap Rat** — fast basic melee enemy
-2. **Scrap Brute** — slower, heavy attack, strong telegraph
-3. **Scrap Shooter** — ranged pressure
-4. **Scrap Exploder** — rush / danger zone / explosion
-5. Elite variants later
-
-Do not add all enemy types before the new core loop is proven.
-
----
-
-## 11. UI Redesign
-
-### Top HUD
-
-Keep it clean and gameplay-first.
-
-Recommended structure:
+Desired behavior:
 
 ```text
-LV. 3     [ SCRAP / XP BAR ]     01:24
+if distance < 100:
+    idle
+
+if distance >= 100 and distance < 280:
+    follow normally
+
+if distance >= 280:
+    use catch-up speed
 ```
 
-Optional later row:
+The Fortress should feel like a companion, not an escort objective.
+
+---
+
+## 8. Fortress Upgrade Path
+
+Fortress cards are locked until `CALL THE RIG` has been selected.
+
+After summon, cards can include:
+
+### Weapon Modules
+
+**Side Turret**
+
+- Adds an automatic turret.
+
+**Rear Cannon**
+
+- Adds slow high-damage shots.
+
+**Tesla Coil**
+
+- Chain lightning between enemies.
+
+**Rocket Rack**
+
+- Periodic area damage.
+
+### Utility Modules
+
+**Scrap Vacuum**
+
+- Fortress attracts nearby Scrap.
+
+**Repair Field**
+
+- Periodically heals the hero slightly.
+
+**Suppressive Fire**
+
+- Enemies near Fortress move slower.
+
+### Visual Growth
+
+Upgrades must visibly modify the Fortress.
+
+Example progression:
 
 ```text
-KILLS 148        WAVE / THREAT 2
+Base Rig
+   ↓
+Side Turret
+   ↓
+Twin Turrets
+   ↓
+Armor Frame
+   ↓
+Tesla Coil
+   ↓
+Heavy War Rig
 ```
 
-### Remove
-
-- Fortress HP bar
-- Permanent fortress health text
-- UI that implies the rig is an escort objective
-
-### Hero HP
-
-- Floating above hero
-- Compact and readable
-- Damage feedback local to hero
-
-### Upgrade screen
-
-- 3 vertical/mobile-friendly cards
-- Fast tap targets
-- Big icons
-- Minimal text
-- Pause combat while choosing
+This visual evolution is important for player satisfaction and marketing screenshots/video.
 
 ---
 
-## 12. First 60-Second Target Experience
+## 9. Upgrade Prerequisites
 
-### 0–10 sec
+Not every card should always be available.
 
-- Hero alone.
-- Immediate movement and auto-fire.
-- First Rats enter from outside screen.
-- Scrap begins dropping.
+Example:
 
-### 10–25 sec
+```text
+CALL THE RIG
+      ↓
+SIDE TURRET
+      ↓
+TWIN TURRET
+      ↓
+TESLA COIL
+```
 
-- First level-up.
-- 3 card choices.
-- Player visibly changes weapon or behavior.
+Other example:
 
-### 25–45 sec
+```text
+HEAVY RIVETS + PIERCING RIVETS
+      ↓
+ARMOR BREAKER
+```
 
-- Enemy density increases.
-- Second/third level-up.
-- Player begins forming a build.
-
-### 45–60 sec
-
-- `CALL THE RIG` may appear depending on random weighting.
-- If chosen, Fortress makes a dramatic entrance and begins assisting.
-
-Important: the Fortress should feel like a reward/discovery, not something the player is forced to protect.
+Prerequisites create build identity and reduce random noise.
 
 ---
 
-## 13. Technical Architecture Plan
+## 10. Evolution System
 
-### Systems to separate
+Later phase only.
 
-Refactor toward distinct modules/classes as the prototype grows:
+Certain upgrade combinations unlock evolved abilities.
 
-- `PlayerSystem`
-- `EnemySystem`
-- `CombatSystem`
-- `PickupSystem`
-- `LevelSystem`
-- `UpgradePool`
-- `UpgradeCardUI`
-- `FortressCompanion`
-- `WorldSystem`
-- `CameraSystem`
-- `HUD`
+Example:
 
-The current prototype may remain partially monolithic during the first refactor, but new functionality should not make `game.js` increasingly unmaintainable.
+```text
+Twin Riveter
++
+Piercing Rivets
++
+Overclock
 
-### Data-driven upgrade definitions
-
-Prefer upgrade definitions in data objects rather than hardcoded UI logic.
-
-Example concept:
-
-```js
-{
-  id: 'call_the_rig',
-  family: 'fortress',
-  rarity: 'rare',
-  prerequisites: [],
-  maxLevel: 1,
-  weight: 0.55,
-  title: 'CALL THE RIG',
-  description: 'Summon a mobile war rig that fights beside you.'
-}
+→ BULLET STORM
 ```
 
-This allows weighting, unlock rules, synergies and future localization.
+Another:
+
+```text
+Tesla Coil
++
+Overcharge
+
+→ THUNDER ENGINE
+```
+
+Evolution should not be implemented until the base card loop already feels good.
+
+---
+
+## 11. Enemy Design Direction
+
+Enemies now target the hero.
+
+### Basic Enemy Families
+
+**Scrap Grunt**
+
+- Basic melee chaser.
+
+**Scrap Brute**
+
+- Slow, high HP.
+
+**Scrap Shooter**
+
+- Keeps distance and fires projectiles.
+
+**Scrap Exploder**
+
+- Rushes hero and explodes.
+
+**Scrap Rider**
+
+- Fast movement and hit-and-run behavior.
+
+### Elites
+
+Elites can have modifiers:
+
+- Armored.
+- Fast.
+- Explosive.
+- Regenerating.
+- Shielded.
+
+### Bosses
+
+Bosses should test builds, not just HP.
+
+Examples:
+
+- Large armored vehicle.
+- Mobile artillery machine.
+- Giant scrap construct.
+
+---
+
+## 12. Difficulty Scaling
+
+Difficulty increases over time through:
+
+- Spawn rate.
+- Enemy HP.
+- Enemy speed.
+- Elite frequency.
+- Enemy composition.
+
+Avoid scaling only HP.
+
+Suggested structure:
+
+```text
+0–2 min
+Basic enemies
+
+2–4 min
+More enemies + first ranged units
+
+4–6 min
+Elites introduced
+
+6–8 min
+Dense mixed waves
+
+8–10 min
+Mini boss / major event
+```
+
+---
+
+## 13. Monetization Direction
+
+Core game should remain playable without paid backend infrastructure.
+
+Possible future monetization:
+
+### Cosmetic
+
+- Character skins.
+- Fortress skins.
+- Projectile effects.
+- Death effects.
+
+### Rewarded Ads
+
+Optional only:
+
+- Revive once.
+- Reroll upgrade cards.
+- Double post-run reward.
+
+Avoid:
+
+- Forced ads during active combat.
+- Energy systems.
+- Hard pay-to-win upgrades.
 
 ---
 
 ## 14. Implementation Roadmap
 
-### PHASE A — Core Ownership Shift
+### PHASE A — Core Conversion
 
-- [ ] Hero is primary damage source.
-- [ ] Remove Fortress from run start.
-- [ ] Remove Fortress HP/damage/fail state.
-- [ ] Enemies target hero only.
-- [ ] Hero HP bar above player.
-- [ ] Hero damage feedback and invulnerability window.
+- [x] Remove Fortress from run start.
+- [x] Remove Fortress HP dependency.
+- [x] Enemies target hero.
+- [x] Hero gets reliable starting weapon.
+- [x] Hero HP displayed above hero.
+- [x] Run ends when hero dies.
 
-**Acceptance:** Player can run alone and survive/fight without any rig present.
+**Acceptance:** Game is fully playable with hero only.
 
-### PHASE B — Large World + Camera
+### PHASE B — Open Battlefield / World Expansion
 
-- [ ] Expand world beyond viewport (initial target about `2200 × 2200`).
-- [ ] Smooth camera follow.
-- [ ] Add small camera look-ahead in movement direction.
-- [ ] Remove visible rounded arena border.
-- [ ] Spawn enemies outside camera using a safe spawn ring.
-- [ ] Expand wasteland dressing across world coordinates.
-- [ ] Make pickups/projectiles/enemies safe in world coordinates and clean up far-away objects.
+- [ ] Expand the playable world so the hero can keep travelling beyond the initial viewport instead of being constrained to one screen.
+- [ ] Remove the hard arena border/box from normal gameplay.
+- [ ] Add a smooth camera that follows the hero while preserving a comfortable look-ahead zone.
+- [ ] Spawn enemies outside the current viewport and let them enter the visible area naturally.
+- [ ] Keep joystick and HUD screen-space locked while the world/camera moves independently.
+- [ ] Rework ground/road decoration so movement across the larger world does not reveal empty or obviously repeated screen edges.
+- [ ] Keep the first implementation lightweight enough for Safari iPhone and Chrome Android.
 
 **Acceptance:** Player can move freely for an extended period without feeling trapped on one screen, and enemies enter naturally from outside the viewport.
 
@@ -567,3 +640,54 @@ PHASE A is complete. The immediate implementation order is now intentionally **w
 7. Add `CALL THE RIG` only after the open-world movement + level-up loop both feel good.
 
 Do not add new enemy families before Phase B and Phase C are playable and tested on mobile.
+
+---
+
+## 17. Canonical Frontend / Screen Ownership Roadmap
+
+This is the approved architecture for all current and future non-gameplay screens. It is a structural contract, not a visual redesign request.
+
+### Single owner
+
+- [ ] Introduce one canonical `GameShell` (or equivalently named single frontend-flow owner) for navigation and lifecycle of screens outside active gameplay.
+- [ ] `GameShell` is the only owner allowed to decide which frontend screen is active and how transitions enter/leave gameplay.
+- [ ] Do not add parallel menu routers, per-screen navigation state, temporary scene-switch hacks, or duplicated ownership.
+- [ ] Keep `GameScene` focused on gameplay. It must not accumulate main-menu, character-select, settings, shop, leaderboard, or other frontend navigation logic.
+
+### Canonical supporting owners
+
+- [ ] `ScreenRegistry`: one source of truth for available frontend screens/routes and their identity.
+- [ ] `CharacterRegistry`: one source of truth for character identity and availability/selectability. Character presentation/runtime data must not be copied into menu code.
+- [ ] `SettingsStore`: one source of truth for persistent settings such as audio, controls, accessibility/display options when introduced.
+- [ ] Pause UI must ultimately use the same screen/shell ownership model rather than becoming a second unrelated UI architecture; gameplay pause state itself remains owned by the appropriate gameplay/runtime boundary.
+
+### Screen rollout
+
+1. [ ] Establish the canonical shell/navigation boundary with tests before migrating screens.
+2. [ ] Add **Character Select** as the first screen through that boundary.
+   - Runner is the only selectable/launchable character initially.
+   - Shotgun Character may be shown for development/preview only while explicitly locked/non-playable.
+   - No `if shotgun` special-case navigation or copied Runner configuration is permitted.
+3. [ ] Route the main/start screen through the same owner without changing approved gameplay behavior.
+4. [ ] Migrate/add Settings through the same owner and canonical `SettingsStore`.
+5. [ ] Route future Shop, Leaderboard, progression/unlock, results and other out-of-run pages through the same shell/registry instead of creating independent navigation systems.
+6. [ ] Bring Pause presentation under the shared screen architecture only when this can be done without changing gameplay pause semantics.
+
+### Shotgun Character activation gate
+
+- [ ] The Character Select screen does **not** authorize Shotgun gameplay by itself.
+- [ ] Shotgun remains non-selectable on `main` until its production art, separate weapon ownership, runtime animation/aim integration, CI, E2E and Live validation are all complete.
+- [ ] Only after those gates pass may `CharacterRegistry` change Shotgun from locked/non-playable to selectable.
+
+### Architecture acceptance gates
+
+- [ ] Exactly one canonical owner controls frontend screen navigation.
+- [ ] Screen definitions are not duplicated across menu/gameplay files.
+- [ ] Character availability is read from the canonical character owner, not inferred by UI code.
+- [ ] Settings have one persistent owner when introduced.
+- [ ] Starting a Runner run preserves current approved gameplay, balance, RNG, rarity and upgrade behavior.
+- [ ] Shotgun cannot accidentally start a run while its activation gate is incomplete.
+- [ ] Unit/E2E coverage protects navigation ownership, Runner launch, locked Shotgun behavior and mobile screen flow.
+- [ ] Full Quality, Smoke, all E2E shards and aggregate E2E are required before each migration step merges.
+
+**Implementation rule:** migrate incrementally. Do not rewrite all existing UI at once. Each screen moves only when its current ownership is understood and the new canonical owner can replace it cleanly without patch-on-patch compatibility layers.
