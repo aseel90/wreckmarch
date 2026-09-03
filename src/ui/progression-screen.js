@@ -17,7 +17,7 @@ function ensureStylesheets() {
     const progression = document.createElement('link');
     progression.id = PROGRESSION_STYLESHEET_ID;
     progression.rel = 'stylesheet';
-    progression.href = new URL('./progression.css?v=2', import.meta.url).href;
+    progression.href = new URL('./progression.css?v=3', import.meta.url).href;
     document.head.append(progression);
   }
 }
@@ -33,33 +33,30 @@ function stat(label, value) {
   return item;
 }
 
-function makeMilestone(milestone) {
-  const item = document.createElement('article');
-  item.className = 'wm-progression-milestone';
-  item.dataset.complete = String(milestone.complete);
-  item.dataset.milestoneId = milestone.id;
-
+function milestoneRow(milestone) {
+  const row = document.createElement('div');
+  row.className = 'wm-progression-milestone';
+  row.dataset.milestoneId = milestone.id;
+  row.dataset.complete = String(milestone.complete);
   const copy = document.createElement('div');
   copy.className = 'wm-progression-milestone-copy';
-  const label = document.createElement('strong');
-  label.textContent = milestone.label;
+  const title = document.createElement('strong');
+  title.textContent = milestone.label;
   const detail = document.createElement('span');
   detail.textContent = milestone.detail;
-  copy.append(label, detail);
-
+  copy.append(title, detail);
   const status = document.createElement('div');
   status.className = 'wm-progression-milestone-status';
-  const state = document.createElement('strong');
-  state.textContent = milestone.complete ? 'STAMPED' : milestone.progressLabel;
+  const value = document.createElement('strong');
+  value.textContent = milestone.complete ? 'STAMPED' : milestone.progressLabel;
   const rail = document.createElement('span');
   rail.className = 'wm-progression-milestone-rail';
   const fill = document.createElement('i');
   fill.style.width = `${Math.round(milestone.progress * 100)}%`;
   rail.append(fill);
-  status.append(state, rail);
-
-  item.append(copy, status);
-  return item;
+  status.append(value, rail);
+  row.append(copy, status);
+  return row;
 }
 
 export function showProgressionScreen() {
@@ -67,7 +64,7 @@ export function showProgressionScreen() {
   document.body.classList.add('wm-progression-active');
   const profile = progressionStore.snapshot();
   const milestones = evaluateProgressionMilestones(profile);
-  const workshopRank = getWorkshopRank(profile);
+  const rank = getWorkshopRank(profile);
 
   return new Promise(resolve => {
     const screen = document.createElement('section');
@@ -88,21 +85,20 @@ export function showProgressionScreen() {
     title.id = 'wm-progression-title';
     title.textContent = 'PROGRESSION';
     const subtitle = document.createElement('p');
-    subtitle.textContent = 'Permanent field records and Workshop milestones. Purchases remain disabled until a separate economy contract is approved.';
+    subtitle.textContent = 'Persistent run records and Workshop stamps. Purchase economy remains production-gated.';
     header.append(kicker, title, subtitle);
 
-    const rank = document.createElement('section');
-    rank.className = 'wm-progression-rank';
-    rank.dataset.completedMilestones = String(workshopRank.completed);
+    const rankPanel = document.createElement('section');
+    rankPanel.className = 'wm-progression-rank';
     const rankCopy = document.createElement('div');
-    const rankEyebrow = document.createElement('span');
-    rankEyebrow.textContent = 'WORKSHOP RANK';
+    const rankLabel = document.createElement('span');
+    rankLabel.textContent = 'WORKSHOP RANK';
     const rankName = document.createElement('strong');
-    rankName.textContent = workshopRank.label;
-    rankCopy.append(rankEyebrow, rankName);
-    const rankCount = document.createElement('strong');
-    rankCount.textContent = `${workshopRank.completed}/${workshopRank.total} STAMPS`;
-    rank.append(rankCopy, rankCount);
+    rankName.textContent = rank.label;
+    rankCopy.append(rankLabel, rankName);
+    const stampCount = document.createElement('strong');
+    stampCount.textContent = `${rank.completedMilestones}/${rank.totalMilestones} FIELD STAMPS`;
+    rankPanel.append(rankCopy, stampCount);
 
     const stats = document.createElement('div');
     stats.className = 'wm-progression-stats';
@@ -119,7 +115,7 @@ export function showProgressionScreen() {
     milestoneTitle.textContent = 'FIELD STAMPS';
     const milestoneGrid = document.createElement('div');
     milestoneGrid.className = 'wm-progression-milestone-grid';
-    milestones.forEach(milestone => milestoneGrid.append(makeMilestone(milestone)));
+    for (const milestone of milestones) milestoneGrid.append(milestoneRow(milestone));
     milestoneSection.append(milestoneTitle, milestoneGrid);
 
     const roster = document.createElement('section');
@@ -146,7 +142,7 @@ export function showProgressionScreen() {
     note.textContent = 'LIFETIME SCRAP IS A RUN STATISTIC — IT IS NOT A SHOP CURRENCY.';
     const footer = document.createElement('footer');
     footer.className = 'wm-progression-footer';
-    footer.textContent = 'WORKSHOP RANK AND FIELD STAMPS ARE RECORDS ONLY — NO COMBAT BONUS OR SHOTGUN UNLOCK';
+    footer.textContent = 'RANKS AND STAMPS ARE RECORD MARKERS ONLY — NO COMBAT POWER OR SHOTGUN ACTIVATION';
 
     const finish = () => {
       screen.remove();
@@ -154,7 +150,7 @@ export function showProgressionScreen() {
       resolve(Object.freeze({ action: 'back' }));
     };
     back.addEventListener('click', finish);
-    screen.append(back, header, rank, stats, milestoneSection, roster, note, footer);
+    screen.append(back, header, rankPanel, stats, milestoneSection, roster, note, footer);
     document.body.append(screen);
   });
 }
