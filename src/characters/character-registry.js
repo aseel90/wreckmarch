@@ -14,6 +14,8 @@ const RUNNER_ENTRY = Object.freeze({
   availability: CHARACTER_AVAILABILITY.SELECTABLE,
   definition: RUNNER_CHARACTER,
   preview: Object.freeze({
+    bodyAsset: 'assets/hero/idle-gun/idle_gun_01.png.png',
+    weaponAsset: 'assets/weapons/rivet-gun.svg',
     idleTexture: RUNNER_CHARACTER.render.idleTexture,
     weaponId: RUNNER_CHARACTER.startingWeapon.id,
   }),
