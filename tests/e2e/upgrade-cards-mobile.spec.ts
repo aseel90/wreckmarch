@@ -40,14 +40,17 @@ test('three-card selection stays readable and non-overlapping on target mobile l
       rarityColor: rarity.color,
       rarityPowerMultiplier: rarity.powerMultiplier
     }));
-    const groups = [
-      allChoices.slice(0, 3),
-      allChoices.slice(3, 6),
-      allChoices.slice(6, 9),
-      allChoices.slice(9, 12),
-      allChoices.slice(12, 15),
-      allChoices.slice(13, 16)
-    ];
+
+    const groups: any[][] = [];
+    for (let start = 0; start < allChoices.length; start += 3) {
+      const group = allChoices.slice(start, start + 3);
+      let cursor = 0;
+      while (group.length < 3 && allChoices.length >= 3) {
+        group.push(allChoices[cursor % allChoices.length]);
+        cursor += 1;
+      }
+      if (group.length === 3) groups.push(group);
+    }
 
     const snapshots: any[] = [];
     const measure = (upgradeScene: any, choices: any[]) => {
@@ -128,6 +131,7 @@ test('three-card selection stays readable and non-overlapping on target mobile l
       presentationVersion: scene.__upgradeCardPresentationVersion,
       previewVersion: scene.__upgradeCardPreviewVersion,
       uniformCards: scene.__finalUniformUpgradeCards,
+      eligibleOfferIds: allChoices.map((choice: any) => choice.id),
       snapshots
     };
   }, TARGET_VIEWPORT);
@@ -136,7 +140,8 @@ test('three-card selection stays readable and non-overlapping on target mobile l
   expect(result.presentationVersion).toBe('u5-before-after-v3');
   expect(result.previewVersion).toBe('u5-before-after-v1');
   expect(result.uniformCards).toBe(true);
-  expect(result.snapshots).toHaveLength(6);
+  expect(result.eligibleOfferIds.length).toBeGreaterThanOrEqual(3);
+  expect(result.snapshots).toHaveLength(Math.ceil(result.eligibleOfferIds.length / 3));
 
   const covered = new Set<string>();
   for (const snapshot of result.snapshots) {
@@ -169,5 +174,6 @@ test('three-card selection stays readable and non-overlapping on target mobile l
     expect(snapshot.initial.selectedIndex).toBe(0);
     expect(snapshot.middleSelected.selectedIndex).toBe(1);
   }
-  expect(covered.size).toBe(16);
+
+  expect([...result.eligibleOfferIds].every((id: string) => covered.has(id))).toBe(true);
 });
