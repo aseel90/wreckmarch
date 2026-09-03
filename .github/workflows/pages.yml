@@ -1,1 +1,76 @@
-PLACEHOLDER
+name: Temporary U7 Smoke Diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: u7-smoke-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Vendor Phaser locally
+        run: |
+          mkdir -p vendor
+          curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js
+      - name: Run Chromium smoke
+        id: smoke
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >wm-http.log 2>&1 &
+          HTTP_PID=$!
+          trap 'kill "$HTTP_PID" 2>/dev/null || true' EXIT
+          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          timeout 75s node scripts/ci-smoke.mjs 2>&1 | tee wm-smoke.log
+      - name: Comment smoke diagnostics
+        if: steps.smoke.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            printf 'Temporary U7 Chromium smoke diagnostic.\n\n### wm-smoke.log\n```text\n'
+            tail -c 20000 wm-smoke.log || true
+            printf '\n```\n\n### wm-http.log\n```text\n'
+            tail -c 4000 wm-http.log || true
+            printf '\n```\n'
+          } > /tmp/u7-smoke.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/u7-smoke.md
+      - name: Restore canonical workflow from main
+        if: always()
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:.github/workflows/pages.yml > .github/workflows/pages.yml
+          if git diff --quiet -- .github/workflows/pages.yml; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/pages.yml
+          git commit -m 'Restore canonical CI workflow after U7 diagnostic'
+          git push origin HEAD:${{ github.head_ref }}
+      - name: Enforce diagnostic smoke result
+        if: steps.smoke.outcome == 'failure'
+        run: exit 1
