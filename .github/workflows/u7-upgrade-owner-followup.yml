@@ -1,0 +1,100 @@
+name: U7 upgrade owner followup
+
+on:
+  push:
+    branches:
+      - u7/canonical-upgrade-scene
+
+permissions:
+  contents: write
+
+jobs:
+  followup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retire Phase C UI owner and update ownership contracts
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def repl(s, old, new, label):
+              if old not in s:
+                  raise SystemExit(f'missing {label}')
+              return s.replace(old, new, 1)
+
+          p=Path('src/phase-c-runtime.js'); s=p.read_text()
+          s=repl(s,
+            "import { createActiveUpgradeOfferChoices } from './upgrades/upgrade-offer-pool.js?v=1';\nimport { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';",
+            "import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';",
+            'Phase C upgrade imports')
+          start=s.index('function createUpgradePool(scene) {')
+          end=s.index('function installScrapProgression(scene) {')
+          s=s[:start]+s[end:]
+          s=repl(s,'  installUpgradeCards(scene);','  installUpgradeScene(scene);','Phase C install')
+          p.write_text(s)
+
+          p=Path('src/phase-c1-runtime.js'); s=p.read_text()
+          s=s.replace("import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';\n\n",'')
+          s=s.replace('  installUpgradeScene(scene);\n','')
+          s=s.replace(' + canonical upgrade-scene owner','')
+          s=s.replace(' + canonical upgrade scene','')
+          p.write_text(s)
+
+          p=Path('tests/unit/upgrade-system-u0-baseline.test.ts'); s=p.read_text()
+          s=repl(s,
+            "    const phaseC1 = read('src/phase-c1-runtime.js');\n    const offerPool = read('src/upgrades/upgrade-offer-pool.js');",
+            "    const phaseC1 = read('src/phase-c1-runtime.js');\n    const upgradeScene = read('src/upgrades/upgrade-scene.js');\n    const offerPool = read('src/upgrades/upgrade-offer-pool.js');",
+            'U0 upgrade scene read')
+          s=s.replace("    expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');\n    expect(phaseC1).toContain('createActiveUpgradeOfferChoices(scene)');",
+                      "    expect(phaseC).toContain('installUpgradeScene(scene)');\n    expect(upgradeScene).toContain('createActiveUpgradeOfferChoices(this)');\n    expect(phaseC1).not.toContain('createActiveUpgradeOfferChoices');")
+          s=s.replace("    expect(phaseC).toContain(\"rollUpgradeChoices(createUpgradePool(this), { count: 3 })\");\n    expect(phaseC1).toContain(\"rollUpgradeChoices(c1UpgradePool(this), { count: 3 })\");",
+                      "    expect(upgradeScene).toContain(\"rollUpgradeChoices(createActiveUpgradeOfferChoices(this), { count: 3 })\");\n    expect(phaseC).not.toContain('rollUpgradeChoices');\n    expect(phaseC1).not.toContain('rollUpgradeChoices');")
+          s=s.replace("    expect(phaseC5).toContain('rarityText:rarity');",
+                      "    expect(phaseC5).not.toContain('class UpgradeSceneV4');\n    expect(upgradeScene).toContain('class UpgradeSceneV4 extends Phaser.Scene');")
+          p.write_text(s)
+
+          p=Path('tests/unit/weapon-projectile-integration.test.ts'); s=p.read_text()
+          old="""    const phaseC = read('src/phase-c-runtime.js');
+    const phaseC1 = read('src/phase-c1-runtime.js');
+    const offerPool = read('src/upgrades/upgrade-offer-pool.js');
+    expect(offerPool).toContain("offer('explosive-rivet', 'HERO'");
+    expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(phaseC1).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(phaseC).not.toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet'");
+    expect(phaseC1).not.toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet'");
+    expect(phaseC1).toContain('rollUpgradeChoices(c1UpgradePool(this), { count: 3 })');
+"""
+          new="""    const phaseC = read('src/phase-c-runtime.js');
+    const phaseC1 = read('src/phase-c1-runtime.js');
+    const upgradeScene = read('src/upgrades/upgrade-scene.js');
+    const offerPool = read('src/upgrades/upgrade-offer-pool.js');
+    expect(offerPool).toContain("offer('explosive-rivet', 'HERO'");
+    expect(phaseC).toContain('installUpgradeScene(scene)');
+    expect(upgradeScene).toContain('createActiveUpgradeOfferChoices(this)');
+    expect(phaseC1).not.toContain('createActiveUpgradeOfferChoices');
+    expect(phaseC).not.toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet'");
+    expect(phaseC1).not.toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet'");
+    expect(upgradeScene).toContain('rollUpgradeChoices(createActiveUpgradeOfferChoices(this), { count: 3 })');
+"""
+          s=repl(s,old,new,'weapon explosive owner contract')
+          p.write_text(s)
+
+          p=Path('tests/unit/upgrade-scene-ownership.test.ts'); s=p.read_text()
+          s=s.replace("    const c1 = read('src/phase-c1-runtime.js');", "    const phaseC = read('src/phase-c-runtime.js');\n    const c1 = read('src/phase-c1-runtime.js');")
+          s=s.replace("    expect(c1).toContain(\"import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';\");\n    expect(c1).toContain('installUpgradeScene(scene);');",
+                      "    expect(phaseC).toContain(\"import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';\");\n    expect(phaseC).toContain('installUpgradeScene(scene);');\n    expect(c1).not.toContain('installUpgradeScene');")
+          s=s.replace("    for (const legacy of [c1, c2, c3, c5]) {",
+                      "    for (const legacy of [phaseC, c1, c2, c3, c5]) {")
+          p.write_text(s)
+          PY
+
+          rm .github/workflows/u7-upgrade-owner-followup.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/phase-c-runtime.js src/phase-c1-runtime.js tests/unit/upgrade-system-u0-baseline.test.ts tests/unit/weapon-projectile-integration.test.ts tests/unit/upgrade-scene-ownership.test.ts .github/workflows/u7-upgrade-owner-followup.yml
+          git diff --cached --check
+          git commit -m "U7 retire Phase C upgrade UI owner"
+          git push origin HEAD:u7/canonical-upgrade-scene
