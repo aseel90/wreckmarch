@@ -1,18 +1,8 @@
-/* WRECKMARCH — Phase C.2: adaptive viewport + dimensional two-hand weapon art + illustrated cards */
+/* WRECKMARCH — Phase C.2: adaptive viewport + dimensional two-hand weapon art */
 const BASE_H = 540;
 const MIN_W = 760;
 const MAX_W = 1180;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-const ICON_IDS = [
-  'heavy-rivets', 'overclock', 'long-barrel', 'twin-riveter', 'fleet-feet',
-  'scrap-magnet', 'armor-plate', 'call-rig', 'rig-overdrive', 'twin-cannon'
-];
-const CATEGORY_COLORS = {
-  HERO: 0xd98446,
-  UTILITY: 0x4fc8d8,
-  FORTRESS: 0xd4ad62,
-  EVOLUTION: 0x9d6be8
-};
 
 async function getScene(timeoutMs = 9000) {
   const started = performance.now();
@@ -35,7 +25,7 @@ function getViewport() {
 }
 
 function loadVisualAssets(scene) {
-  if (scene.textures.exists('c2-aim-atlas') && scene.textures.exists('c2-upgrade-art')) return Promise.resolve();
+  if (scene.textures.exists('c2-aim-atlas')) return Promise.resolve();
   return new Promise((resolve, reject) => {
     let failed = false;
     const fail = file => {
@@ -49,7 +39,6 @@ function loadVisualAssets(scene) {
       if (!failed) resolve();
     });
     if (!scene.textures.exists('c2-aim-atlas')) scene.load.svg('c2-aim-atlas', './assets/hero/aim-poses-v2.svg');
-    if (!scene.textures.exists('c2-upgrade-art')) scene.load.svg('c2-upgrade-art', './assets/ui/upgrade-art-v2.svg');
     scene.load.start();
   });
 }
@@ -184,137 +173,13 @@ function installDimensionalAim(scene) {
   scene.updateWeaponPose();
 }
 
-function categoryColor(category) {
-  return CATEGORY_COLORS[category] || CATEGORY_COLORS.HERO;
-}
-
-class UpgradeSceneV2 extends Phaser.Scene {
-  constructor() { super('UpgradeSceneV2'); }
-  init(data) {
-    this.payload = data || {};
-    this.selectedIndex = 0;
-    this.locked = false;
-    this.cardViews = [];
-  }
-  create() {
-    const { gameScene, choices = [], level = 1 } = this.payload;
-    this.gameScene = gameScene;
-    this.choices = choices;
-    const W = this.scale.width;
-    const H = this.scale.height;
-    this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
-    this.add.rectangle(W / 2, H / 2, W, H, 0x06090d, .92);
-    this.add.text(W / 2, 26, `LEVEL ${level}`, { fontFamily:'Arial Black, Arial', fontSize:'13px', color:'#59d4e2' }).setOrigin(.5);
-    this.add.text(W / 2, 54, 'CHOOSE YOUR UPGRADE', { fontFamily:'Arial Black, Arial', fontSize:'24px', color:'#f0d09b' }).setOrigin(.5);
-    this.add.text(W / 2, 79, 'Build the run. Change the machine.', { fontFamily:'Arial', fontSize:'11px', color:'#82909b' }).setOrigin(.5);
-
-    const margin = Phaser.Math.Clamp(W * .055, 34, 58);
-    const gap = Phaser.Math.Clamp(W * .022, 14, 24);
-    const cardW = Math.min(292, (W - margin * 2 - gap * 2) / 3);
-    const cardH = Math.min(352, H - 126);
-    const total = cardW * 3 + gap * 2;
-    const start = (W - total) / 2 + cardW / 2;
-    choices.forEach((upgrade, i) => this.createCard(start + i * (cardW + gap), H * .60, cardW, cardH, upgrade, i));
-    this.refreshSelection();
-
-    this.input.keyboard?.on('keydown-LEFT', () => this.moveSelection(-1));
-    this.input.keyboard?.on('keydown-RIGHT', () => this.moveSelection(1));
-    this.input.keyboard?.on('keydown-ENTER', () => this.choose(this.selectedIndex));
-    this.input.keyboard?.on('keydown-SPACE', () => this.choose(this.selectedIndex));
-    this.input.keyboard?.on('keydown-ONE', () => this.choose(0));
-    this.input.keyboard?.on('keydown-TWO', () => this.choose(1));
-    this.input.keyboard?.on('keydown-THREE', () => this.choose(2));
-  }
-  createCard(x, y, cardW, cardH, upgrade, index) {
-    const accent = categoryColor(upgrade.category);
-    const group = this.add.container(x, y).setDepth(5);
-    const shadow = this.add.rectangle(6, 9, cardW, cardH, 0x000000, .34).setOrigin(.5);
-    const bg = this.add.rectangle(0, 0, cardW, cardH, 0x151b22, .99).setStrokeStyle(2, accent, .78).setOrigin(.5);
-    const strip = this.add.rectangle(0, -cardH/2 + 7, cardW, 14, accent, .94).setOrigin(.5);
-    const category = this.add.text(-cardW/2 + 18, -cardH/2 + 29, upgrade.category, {
-      fontFamily:'Arial Black, Arial', fontSize:'10px', color:Phaser.Display.Color.IntegerToColor(accent).rgba
-    }).setOrigin(0,.5);
-
-    const artIndex = Math.max(0, ICON_IDS.indexOf(upgrade.id));
-    const artY = -cardH * .19;
-    const art = this.add.image(0, artY, 'c2-upgrade-art')
-      .setCrop(artIndex * 240, 0, 240, 160)
-      .setDisplaySize(cardW - 30, Math.min(132, cardH * .38));
-    const artFrame = this.add.rectangle(0, artY, cardW - 30, Math.min(132, cardH * .38), 0x0c1116, 0)
-      .setStrokeStyle(1.5, accent, .36);
-
-    const title = this.add.text(0, cardH * .08, upgrade.title, {
-      fontFamily:'Arial Black, Arial', fontSize:`${Math.max(14,Math.min(19,cardW/14))}px`, color:'#f2f4f6', align:'center', wordWrap:{width:cardW-34}
-    }).setOrigin(.5);
-    const desc = this.add.text(0, cardH * .22, upgrade.desc, {
-      fontFamily:'Arial', fontSize:'12px', color:'#aab5bf', align:'center', wordWrap:{width:cardW-38}, lineSpacing:2
-    }).setOrigin(.5,0);
-    const level = this.gameScene?.upgradeLevels?.[upgrade.id] || 0;
-    const footer = this.add.text(0, cardH/2 - 25, level > 0 ? `CURRENT  LV ${level}` : 'NEW UPGRADE', {
-      fontFamily:'Arial Black, Arial', fontSize:'9px', color:'#74808b'
-    }).setOrigin(.5);
-    const hit = this.add.zone(0, 0, cardW, cardH).setOrigin(.5).setInteractive({ useHandCursor:true });
-    hit.on('pointerover', () => { this.selectedIndex=index; this.refreshSelection(); });
-    hit.on('pointerdown', (_p,_x,_y,event) => { event?.stopPropagation?.(); this.choose(index); });
-    group.add([shadow,bg,strip,category,art,artFrame,title,desc,footer,hit]);
-    this.cardViews.push({group,bg,strip,accent,art});
-  }
-  moveSelection(delta) {
-    if (!this.choices.length || this.locked) return;
-    this.selectedIndex = (this.selectedIndex + delta + this.choices.length) % this.choices.length;
-    this.refreshSelection();
-  }
-  refreshSelection() {
-    this.cardViews.forEach((v,i)=>{
-      const selected=i===this.selectedIndex;
-      v.group.setScale(selected?1.025:1);
-      v.bg.setStrokeStyle(selected?4:2,v.accent,selected?1:.72);
-      v.strip.setAlpha(selected?1:.82);
-      v.art.setAlpha(selected?1:.88);
-    });
-  }
-  choose(index) {
-    if (this.locked || !this.choices[index]) return;
-    this.locked=true;
-    this.choices[index].apply();
-    this.cameras.main.flash(75,75,198,215,false);
-    this.time.delayedCall(80,()=>this.gameScene?.closeUpgradeCards?.());
-  }
-}
-
-function installIllustratedUpgradeScene(scene) {
-  if (!scene.game.scene.getScene('UpgradeSceneV2')) scene.game.scene.add('UpgradeSceneV2', UpgradeSceneV2, false);
-  const openC1 = scene.openUpgradeCards.bind(scene);
-  const closeC1 = scene.closeUpgradeCards.bind(scene);
-
-  scene.openUpgradeCards = function() {
-    if (this.upgradeOpen || this.gameOver) return;
-    const plugin = this.scene;
-    const launch = plugin.launch.bind(plugin);
-    const bringToTop = plugin.bringToTop.bind(plugin);
-    plugin.launch = (key, data) => launch(key === 'UpgradeScene' ? 'UpgradeSceneV2' : key, data);
-    plugin.bringToTop = key => bringToTop(key === 'UpgradeScene' ? 'UpgradeSceneV2' : key);
-    try { openC1(); }
-    finally {
-      plugin.launch = launch;
-      plugin.bringToTop = bringToTop;
-    }
-  };
-
-  scene.closeUpgradeCards = function() {
-    this.scene.stop('UpgradeSceneV2');
-    closeC1();
-  };
-}
-
 export async function applyPhaseC2() {
   const scene = await getScene();
   await loadVisualAssets(scene);
   applyAdaptiveViewport(scene);
   installDimensionalAim(scene);
-  installIllustratedUpgradeScene(scene);
   window.__WM_PHASE_C2__ = true;
   document.documentElement.dataset.wreckmarchPhaseC2 = 'active';
-  window.__WM_LOG__?.('Phase C.2 active: adaptive viewport + dimensional weapon poses + illustrated upgrade cards');
+  window.__WM_LOG__?.('Phase C.2 active: adaptive viewport + dimensional weapon poses');
   return true;
 }
