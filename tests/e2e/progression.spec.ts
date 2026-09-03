@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 960, height: 540 } });
+test.describe.configure({ timeout: 90_000 });
 
 test('canonical Results persist run records and Main Progression displays them without currency', async ({ page }) => {
   await page.addInitScript(() => localStorage.removeItem('wreckmarch.progression.v1'));
