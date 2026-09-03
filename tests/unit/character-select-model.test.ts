@@ -6,9 +6,14 @@ import {
   resolveFirstSelectableCharacter,
 } from '../../src/ui/character-select-model.js';
 
+type CharacterSelectOption = {
+  id: string;
+  availability: string;
+};
+
 describe('Character Select canonical model', () => {
   it('renders registry-owned availability without creating a Shotgun runtime definition', () => {
-    expect(listCharacterSelectOptions().map(option => [option.id, option.availability])).toEqual([
+    expect(listCharacterSelectOptions().map((option: CharacterSelectOption) => [option.id, option.availability])).toEqual([
       ['runner', 'selectable'],
       ['shotgun', 'locked'],
     ]);
