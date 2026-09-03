@@ -8,6 +8,7 @@ export const SHOTGUN_PRODUCTION_ART = Object.freeze({
   body: Object.freeze({
     canvas: SHOTGUN_ART_CONTRACT.canvas,
     footLineY: SHOTGUN_ART_CONTRACT.body.footLineY,
+    authoredGripMarker: Object.freeze({ x: 77, y: 81 }),
     idle: Object.freeze([
       'assets/hero/shotgun/idle-0.svg',
       'assets/hero/shotgun/idle-1.svg'
