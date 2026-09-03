@@ -2,7 +2,7 @@
 
 Persistent project implementation log. Update this file after every meaningful development batch.
 
-**Last updated:** 2026-08-26
+**Last updated:** 2026-09-03
 
 Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planned · ❌ superseded/removed
 
@@ -102,18 +102,36 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 - ✅ `game.js` updates the authoritative `ProjectileSystem` then `WeaponSystem`; ownership is installed with Enemy Foundation before the historical visual/gameplay phases run.
 - ✅ Unit + Playwright coverage guards target acquisition, support volleys, exclusive projectile construction and absence of legacy weapon/projectile scene callbacks.
 
-## Later roadmap
+## Later roadmap — ordered future run/world expansion
 
-- ⬜ Scrap Brute.
-- ⬜ Scrap Shooter.
-- ⬜ Scrap Exploder.
-- ⬜ Elite variants.
-- ⬜ Mini boss + first world boss.
-- ⬜ Hero weapon build paths.
-- ⬜ Fortress module build paths.
-- ⬜ Utility builds and cross-system synergies.
+This expansion is **approved for later implementation only**. Do not start it before the current repair/stability, Character Ownership/character-production and active Upgrade System 2.0 work is closed.
 
-See `GAMEPLAY_REDESIGN_PLAN.md` for the full approved design and architecture.
+Canonical ordered roadmap: `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md`.
+
+High-level dependency order:
+
+- ⬜ Future-run data/telemetry contract while retaining the current 10-wave curve as the regression baseline.
+- ⬜ Large-world streaming/activation foundation; compare `7200 / 9600 / 12000`, with `~9600 × 9600` the current preferred target.
+- ⬜ Districts, landmarks and Boss-capable clearings.
+- ⬜ Encounter Director v2 + five-Act pacing + event/threat budgets.
+- ⬜ Boss Encounter Controller: warning → enemy retreat → temporary arena lock → Boss fight → reward → arena release.
+- ⬜ Special-encounter reward framework.
+- ⬜ Early roster expansion: E04 Wreckling + E05 Fuse Tick + first random Events.
+- ⬜ Champion framework + M01 Wreck Hound Alpha (~5:00).
+- ⬜ E10 Magnet Warden + M02 Boilerback (~10:00).
+- ⬜ Mid-game roles: E06 Scrap Drone + E07 Pipe Crawler + E12 Signal Herald.
+- ⬜ B02 The Roadbreaker Major Boss / first full locked Boss Arena (~15:00).
+- ⬜ Late-game roles: E08 Hook Raider + E09 Rivet Brute + E11 Ash Stalker + E13 Arc Warden.
+- ⬜ M03 Chain Hauler (~20:00) + late Event layer.
+- ⬜ Final Surge + B01 The Scrap Marshal Final Boss (~25:00); Boss death = standard-run Win.
+- ⬜ Survival Cards / Synergies / Evolutions integration for longer-run build depth.
+- ⬜ Full 25-minute production balance/performance closeout.
+- ⬜ Workshop Scrip recalibration only after final run duration is proven.
+- ⬜ Standard Win polish; Endless / `KEEP DRIVING` remains a far-later post-win mode.
+
+The current `2200 × 2200` world and 10-wave curve remain valid production/test baselines until this future roadmap is activated; they are not the final intended game length/world size.
+
+See `GAMEPLAY_REDESIGN_PLAN.md` for the earlier approved redesign foundation and `WRECKMARCH_ENEMY_ROSTER.md` for accepted enemy identities.
 
 ## Phase C.1 — Landscape combat UX rebuild
 

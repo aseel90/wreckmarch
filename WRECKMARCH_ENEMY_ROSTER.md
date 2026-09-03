@@ -17,7 +17,13 @@ Production rule for all new enemies: follow **[WRECKMARCH_ENEMY_PRODUCTION_GUIDE
 | E09 | Rivet Brute | Scavenger | Heavy melee | Huge armored hammer unit |
 | E10 | Magnet Warden | Machine | Control Elite | Tripod magnetic machine with field pulses |
 | E11 | Ash Stalker | Mutant beast | Ambusher Elite | Tall crouched predator that vanishes/reappears |
-| B01 | The Scrap Marshal | Scavenger mech | Multi-phase boss | Warlord inside a welded asymmetrical exosuit |
+| E12 | Signal Herald | Scavenger | Support Elite | Tall scavenger with oversized radio pack/mast and red warning beacon |
+| E13 | Arc Warden | Machine | Lane-control Elite | Low four-legged machine with large copper coils / arc cutter |
+| M01 | Wreck Hound Alpha | Mutant beast | Mini Boss | Oversized Hound with heavy road-sign armor; leap + scripted pack pressure |
+| M02 | Boilerback | Scrap insect | Mini Boss | Giant scrap beetle with pressure boiler and exposed acid tank |
+| M03 | Chain Hauler | Scavenger machine | Mini Boss | Low wide tow-rig with huge hook/chain and displacement lanes |
+| B02 | The Roadbreaker | Demolition machine | Multi-phase boss | Asymmetric plow/tracks/exhaust stacks/side cannons; first Major Boss Arena |
+| B01 | The Scrap Marshal | Scavenger mech | Final multi-phase boss | Warlord inside a welded asymmetrical exosuit |
 
 Visual concepts are references, not final production sprites. Each enemy must remain identifiable by silhouette before color/detail.
 
@@ -26,4 +32,10 @@ Visual concepts are references, not final production sprites. Each enemy must re
 - **E01 Scrap Rat:** production baseline.
 - **E02 Rust Hound:** production enemy with dedicated animation/attack pipeline.
 - **E03 Sawbug:** current production target. Accepted direction is a hazard-yellow acid-spitting scrap insect with a minimal frame set and separate projectile/splash FX.
-- **E04+**: follow the production guide; do not assume roster concept art is final sprite art.
+- **E04–E09:** accepted future normal-role identities; follow the production guide one at a time.
+- **E10–E13:** accepted future Signature Elite identities; behavior must justify each control/support role without uncontrolled projectile spam.
+- **M01–M03:** accepted future Mini Boss concepts for the 5/10/20-minute milestones.
+- **B02 The Roadbreaker:** accepted future first Major Boss / locked-arena proof at roughly 15 minutes.
+- **B01 The Scrap Marshal:** accepted Final Boss identity for the future standard run at roughly 25 minutes.
+- Final timing, stats and art remain production-gated; concept acceptance does not make an enemy playable/active.
+- Ordered implementation and the Boss Arena contract live in `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md`.
