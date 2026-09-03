@@ -1,5 +1,6 @@
 /* WRECKMARCH — canonical character identity, availability, and playable-definition registry */
 import { RUNNER_CHARACTER } from './definitions/runner.js?v=4';
+import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=1';
 import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=1';
 
 export const CHARACTER_AVAILABILITY = Object.freeze({
@@ -30,7 +31,7 @@ const SHOTGUN_ENTRY = Object.freeze({
   preview: Object.freeze({
     bodyAsset: SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].path,
     weaponAsset: SHOTGUN_RUNTIME_PRESENTATION.weapon.path,
-    artStatus: SHOTGUN_RUNTIME_PRESENTATION.status,
+    artStatus: SHOTGUN_PRODUCTION_ART.status,
     composition: Object.freeze({
       bodyCanvas: SHOTGUN_RUNTIME_PRESENTATION.body.canvas,
       bodyRender: SHOTGUN_RUNTIME_PRESENTATION.body.render,
