@@ -1,124 +1,105 @@
 import { expect, test } from '@playwright/test';
 
-test('Rust Hound uses production animated artwork and still pounces', async ({ page }) => {
+test('Rust Hound uses baked transparent art with a readable committed ground slide', async ({ page }) => {
   await page.goto('/?autotest=1&debug=1');
   await expect.poll(
     () => page.evaluate(() => document.body.classList.contains('visual-ready')),
     { timeout: 20_000 }
   ).toBe(true);
 
-  const initial = await page.evaluate(() => {
-    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-    const scene = game?.scene?.getScene?.('Wreckmarch');
-    if (!scene) return null;
+  const setup = await page.evaluate(() => {
+    const w = window as typeof window & { __WM_GAME__?: any; __WM_E2E_HOUND_NAME__?: string };
+    const scene = w.__WM_GAME__?.scene?.getScene?.('Wreckmarch');
+    if (!scene?.spawnSystem || !scene?.hero || !scene?.enemies) return { ok: false };
 
-    scene.spawnEvent && (scene.spawnEvent.paused = true);
+    if (scene.spawnEvent) scene.spawnEvent.paused = true;
     scene.fireDelay = 999999;
     if (scene.primaryWeapon) scene.primaryWeapon.fireDelay = 999999;
     scene.lastShot = Number.MAX_SAFE_INTEGER;
     scene.bullets?.clear?.(true, true);
     scene.enemies?.clear?.(true, true);
+    scene.heroHp = Math.max(9999, Number(scene.heroHp) || 0);
+    scene.lastHeroHit = -999999;
+    scene.hero.setPosition?.(320, 480);
+    scene.hero.setVelocity?.(0, 0);
 
-    scene.hero?.setPosition?.(520, 480);
-    scene.hero?.setVelocity?.(0, 0);
-    const hound = scene.spawnSystem?.spawn?.('rust-hound', { elite: false });
-    hound?.setPosition?.(330, 480);
-    if (hound) {
-      hound.hp = 999999;
-      hound.maxHp = 999999;
-      hound.behaviorConfig = {
-        ...hound.behaviorConfig,
-        warmupMs: 80,
-        activeMs: 100,
-        recoverMs: 120,
-        cooldownMinMs: 160,
-        cooldownMaxMs: 160
-      };
-    }
+    const hound = scene.spawnSystem.spawn('rust-hound', { elite: false });
+    if (!hound) return { ok: false };
+    hound.setPosition?.(105, 480);
+    hound.hp = 999999;
+    hound.maxHp = 999999;
+    hound.__houndMotion = null;
+    w.__WM_E2E_HOUND_NAME__ = hound.name;
 
     return {
-      spawned: !!hound,
-      enemyId: hound?.enemyId,
-      behaviorKey: hound?.behaviorKey,
-      threatValue: hound?.threatValue,
-      texture: hound?.texture?.key,
-      visual: hound?.__rustHoundVisual,
-      bakedFrames: hound?.__rustHoundBakedFrames,
-      visualVersion: hound?.__rustHoundVisualVersion,
-      anis: {
-        idle: scene.anims.exists('rust-hound-idle'),
-        run: scene.anims.exists('rust-hound-run'),
-        pounce: scene.anims.exists('rust-hound-pounce'),
-        recover: scene.anims.exists('rust-hound-recover')
-      }
+      ok: true,
+      visual: hound.__rustHoundVisual === true,
+      bakedFrames: hound.__rustHoundBakedFrames === true,
+      transparentMaster: hound.__rustHoundTransparentMaster === true,
+      visualVersion: hound.__rustHoundVisualVersion,
+      behavior: hound.behaviorKey === 'hound-pounce',
+      threat: hound.threatValue === 2
     };
   });
 
-  expect(initial).toMatchObject({
-    spawned: true,
-    enemyId: 'rust-hound',
-    behaviorKey: 'hound-pounce',
-    threatValue: 3,
+  expect(setup).toMatchObject({
+    ok: true,
     visual: true,
     bakedFrames: true,
-    visualVersion: 'production-v3-clean',
-    anis: { idle: true, run: true, pounce: true, recover: true }
+    transparentMaster: true,
+    visualVersion: 'production-v3-baked-alpha',
+    behavior: true,
+    threat: true
   });
-  expect(String(initial?.texture)).toMatch(/^rust-hound-(?:idle|run|pounce|recover)-[01]$/);
 
   await expect.poll(
     () => page.evaluate(() => {
-      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-      const scene = game?.scene?.getScene?.('Wreckmarch');
-      const hound = scene?.enemies?.getChildren?.().find((enemy: any) => enemy?.enemyId === 'rust-hound');
-      if (!scene || !hound?.active || !scene.hero?.active) return false;
-      const state = hound.__houndState;
-      if (!state) return false;
-      scene.hero.setPosition?.(520, 480);
-      scene.hero.setVelocity?.(0, 0);
-      hound.setPosition?.(330, 480);
-      hound.setVelocity?.(0, 0);
-      state.phase = 'stalk';
-      state.nextPounceAt = Number(scene.time?.now) || 0;
-      return true;
-    }),
-    { timeout: 4_000 }
-  ).toBe(true);
-
-  await expect.poll(
-    () => page.evaluate(() => {
-      const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-      const scene = game?.scene?.getScene?.('Wreckmarch');
-      const hound = scene?.enemies?.getChildren?.().find((enemy: any) => enemy?.enemyId === 'rust-hound');
-      const state = hound?.__houndState;
-      const phase = state?.phase || '';
-      return {
-        phase,
-        pounces: Number(hound?.__houndPounceCount) || 0,
-        anim: hound?.anims?.currentAnim?.key || null,
-        active: !!hound?.active
-      };
+      const w = window as typeof window & { __WM_GAME__?: any; __WM_E2E_HOUND_NAME__?: string };
+      const scene = w.__WM_GAME__?.scene?.getScene?.('Wreckmarch');
+      const hound = scene?.enemies?.getChildren?.().find((enemy: any) => enemy?.name === w.__WM_E2E_HOUND_NAME__);
+      const state = hound?.__houndMotion;
+      return Boolean(
+        hound?.active &&
+        hound.__rustHoundBakedFrames === true &&
+        hound.__rustHoundTransparentMaster === true &&
+        Number(hound.__houndTelegraphCount) >= 1 &&
+        Number(hound.__houndSlideCount) >= 1 &&
+        Number(hound.__houndLastSlideSpeed) >= 350 &&
+        Number(hound.__houndLastSlideSpeed) <= 370 &&
+        Number.isFinite(state?.vx) &&
+        Number.isFinite(state?.vy) &&
+        Number(state?.maxObservedSpeed) >= 330 &&
+        Number(state?.maxObservedSpeed) < 380
+      );
     }),
     { timeout: 8_000 }
-  ).toMatchObject({
-    active: true,
-    pounces: expect.any(Number)
-  });
+  ).toBe(true);
 
-  const final = await page.evaluate(() => {
-    const game = (window as typeof window & { __WM_GAME__?: any }).__WM_GAME__;
-    const scene = game?.scene?.getScene?.('Wreckmarch');
-    const hound = scene?.enemies?.getChildren?.().find((enemy: any) => enemy?.enemyId === 'rust-hound');
+  const result = await page.evaluate(() => {
+    const w = window as typeof window & { __WM_GAME__?: any; __WM_E2E_HOUND_NAME__?: string };
+    const scene = w.__WM_GAME__?.scene?.getScene?.('Wreckmarch');
+    const hound = scene?.enemies?.getChildren?.().find((enemy: any) => enemy?.name === w.__WM_E2E_HOUND_NAME__);
     return {
-      active: !!hound?.active,
-      pounces: Number(hound?.__houndPounceCount) || 0,
-      phase: hound?.__houndPhase || hound?.__houndState?.phase || null,
-      anim: hound?.anims?.currentAnim?.key || null
+      active: Boolean(hound?.active),
+      phase: hound?.__houndPhase,
+      slides: Number(hound?.__houndSlideCount) || 0,
+      telegraphs: Number(hound?.__houndTelegraphCount) || 0,
+      lastSlideSpeed: Number(hound?.__houndLastSlideSpeed) || 0,
+      maxObservedSpeed: Math.round(Number(hound?.__houndMotion?.maxObservedSpeed) || 0),
+      visualVersion: hound?.__rustHoundVisualVersion,
+      bakedFrames: hound?.__rustHoundBakedFrames === true,
+      transparentMaster: hound?.__rustHoundTransparentMaster === true
     };
   });
 
-  expect(final.active).toBe(true);
-  expect(final.pounces).toBeGreaterThanOrEqual(1);
-  expect(['warmup', 'pounce', 'recover', 'stalk']).toContain(final.phase);
-  expect(String(final.anim)).toMatch(/^rust-hound-(?:run|pounce|recover|idle)$/);
+  expect(result.active).toBe(true);
+  expect(result.bakedFrames).toBe(true);
+  expect(result.transparentMaster).toBe(true);
+  expect(result.visualVersion).toBe('production-v3-baked-alpha');
+  expect(result.telegraphs).toBeGreaterThanOrEqual(1);
+  expect(result.slides).toBeGreaterThanOrEqual(1);
+  expect(result.lastSlideSpeed).toBeGreaterThanOrEqual(350);
+  expect(result.lastSlideSpeed).toBeLessThanOrEqual(370);
+  expect(result.maxObservedSpeed).toBeGreaterThanOrEqual(330);
+  expect(result.maxObservedSpeed).toBeLessThanOrEqual(380);
 });
