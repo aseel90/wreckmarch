@@ -1,14 +1,36 @@
 # Workstream 14-C — Shotgun Character Visual Identity & Art Gate
 
-Status: ⚪ FUTURE / DEFERRED — ART NOT GENERATED; DO NOT START UNTIL THIS WORKSTREAM IS EXPLICITLY REOPENED
+Status: ✅ ART FOUNDATION COMPLETE / PLAYABLE ACTIVATION STILL LOCKED
 
-WS14-B is complete. The canonical Shotgun weapon foundation is merged, tested and production-deployed, but it remains unreachable from the live character flow. WS14-C will later own the **dedicated visual identity and minimal production animation set** for the future Shotgun character. The workstream is currently parked; this document preserves the production contract for when the project returns to character work.
+WS14-B is complete. The canonical Shotgun weapon foundation is merged, tested and production-deployed. The dedicated Shotgun visual foundation is also now implemented: two idle frames, three run frames, an independent Shotgun weapon asset, aim-alignment/runtime composition, and character-driven C5/D1 presenters. The character remains intentionally unreachable as playable content because its canonical gameplay definition and real Production full-run approval are still blocked by the Shotgun production gate.
 
-This workstream must not invent a temporary Runner reskin and must not build the character-selection screen. Selection belongs to WS14-D; live character activation belongs to WS14-E.
+The original production rules below remain authoritative: no temporary Runner reskin, no duplicated Runner gameplay values, and no activation bypass. Character Select may show the locked preview, while live activation remains owned by the canonical access + production gates.
 
-## 1. Decisions intentionally not guessed
 
-The following visual choices require an explicit character-art decision before final production frames are generated:
+## 0. Current verified implementation — 2026-09-03
+
+Completed:
+
+- [x] Dedicated Shotgun body art exists under `assets/hero/shotgun/`.
+- [x] Idle set contains exactly **2** production frames.
+- [x] Run set contains exactly **3** production frames.
+- [x] Weapon remains independent at `assets/weapons/shotgun.svg`; it is not baked into body frames.
+- [x] `shotgun-production-art.js` owns the art manifest and authored grip/muzzle geometry.
+- [x] `shotgun-runtime-composition.js` and `shotgun-aim-alignment.js` own composition/aim contracts.
+- [x] `shotgun-production-presentation.js` provides character-driven C5/D1 presentation without `if shotgun` branches in the phase files.
+- [x] Character Select can render a locked Shotgun preview from canonical art metadata.
+- [x] Playable activation is still blocked.
+
+Still pending and intentionally outside the completed art gate:
+
+- [ ] Approve a canonical **character gameplay definition** (HP, movement speed, passive decision, physics/locomotion values where they differ).
+- [ ] Register that definition only after its values are approved; do not copy Runner values as a shortcut.
+- [ ] Run the real Production gameplay/full-run validation and record evidence in the Shotgun production gate.
+- [ ] Only then change character availability from locked to selectable.
+
+## 1. Historical art decisions (now resolved by the accepted production set)
+
+The following visual choices were the original pre-generation decision gate. They are now represented by the accepted production assets and should not be silently redesigned during gameplay integration:
 
 - Character visual concept / silhouette
 - Face/head treatment
