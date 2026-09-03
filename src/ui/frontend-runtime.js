@@ -3,8 +3,8 @@ import { SCREEN_IDS } from './screen-registry.js?v=2';
 import { showMainMenu } from './main-menu-screen.js?v=4';
 import { showSettingsScreen } from './settings-screen.js?v=1';
 import { showProgressionScreen } from './progression-screen.js?v=3';
-import { chooseCharacter } from './character-select-screen.js?v=4';
-import { resolveFirstSelectableCharacter } from './character-select-model.js?v=3';
+import { chooseCharacter } from './character-select-screen.js?v=5';
+import { resolveFirstSelectableCharacter } from './character-select-model.js?v=4';
 import { resolveCharacterAccess } from '../characters/character-access.js?v=1';
 import { consumeNextBootScreen, consumeRunRestartCharacterId } from './frontend-intent.js?v=2';
 

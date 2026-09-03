@@ -7,6 +7,7 @@ import {
 function toSelection(access) {
   return Object.freeze({
     characterId: access.characterId,
+    displayName: access.entry.displayName,
     selectable: access.selectable,
     availability: access.availability,
     productionAvailability: access.productionAvailability,

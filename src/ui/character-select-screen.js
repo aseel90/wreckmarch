@@ -1,4 +1,4 @@
-import { listCharacterSelectOptions, resolveCharacterSelection } from './character-select-model.js?v=3';
+import { listCharacterSelectOptions, resolveCharacterSelection } from './character-select-model.js?v=4';
 
 const STYLESHEET_ID = 'wm-frontend-shell-styles';
 
