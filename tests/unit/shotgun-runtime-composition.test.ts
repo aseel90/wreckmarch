@@ -173,6 +173,6 @@ describe('WS14-C inactive Shotgun Phaser composition', () => {
     expect(() => composition.setPosition(Number.POSITIVE_INFINITY, 0)).toThrow('position must be finite');
     expect(() => composition.advanceLocomotion(-1, { frameDurationMs: 100 })).toThrow('delta must be a finite non-negative number');
     expect(() => composition.advanceLocomotion(1, { frameDurationMs: 0 })).toThrow('frame duration must be a finite positive number');
-    expect(() => composition.advanceLocomotion(1, { motion: 'fly', frameDurationMs: 100 })).toThrow('Unsupported Shotgun motion');
+    expect(() => composition.advanceLocomotion(1, { motion: 'fly', frameDurationMs: 100 } as any)).toThrow('Unsupported Shotgun motion');
   });
 });
