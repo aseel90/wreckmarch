@@ -26,6 +26,8 @@ describe('Wrecker locomotion raster runtime', () => {
   it('mirrors Runner raster decoding and keeps SVG decoding out of the live body path', () => {
     const source = read('src/characters/shotgun-locomotion-art.js');
     const presenter = read('src/characters/shotgun-production-presentation.js');
+    const characterPresenter = read('src/characters/character-runtime-presentation.js');
+    const html = read('index.html');
     expect(source).toContain('data:image/png;base64,');
     expect(source).toContain('scene.textures.createCanvas');
     expect(source).toContain('scene.load.text');
@@ -33,5 +35,8 @@ describe('Wrecker locomotion raster runtime', () => {
     expect(presenter).toContain('loadShotgunLocomotionArt(scene)');
     expect(presenter).not.toContain('queueShotgunRuntimeAssets(scene');
     expect(presenter).not.toContain('fetch(');
+    expect(characterPresenter).toContain('./shotgun-production-presentation.js?v=2&wrecker=1');
+    expect(html).toContain('./src/phase-c5-runtime.js?v=10&u7=1&wrecker=1');
+    expect(html).toContain('./src/phase-d1-runtime.js?v=29&u5=3&wrecker=1');
   });
 });
