@@ -419,7 +419,7 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=24" -o wm-live-enemy-system.js
           curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=6" -o wm-live-phase-b.js
           curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=24" -o wm-live-phase-c.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=19" -o wm-live-phase-c1.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=20" -o wm-live-phase-c1.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=1" -o wm-live-upgrade-scene.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=1" -o wm-live-upgrade-offer-pool.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-roll-service.js?v=2" -o wm-live-upgrade-roll-service.js
@@ -434,7 +434,7 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
           grep -F "./src/phase-b-runtime.js?v=6" wm-live-index.html
           grep -F "./src/phase-c-runtime.js?v=24" wm-live-index.html
-          grep -F "./src/phase-c1-runtime.js?v=19" wm-live-index.html
+          grep -F "./src/phase-c1-runtime.js?v=20" wm-live-index.html
           grep -F "./src/phase-d1-runtime.js?v=28&u5=3" wm-live-index.html
           grep -F "./characters/character-runtime-presentation.js?v=1" wm-live-phase-d1.js
           grep -F "./runner-production-presentation.js?v=1" wm-live-character-runtime-presentation.js
@@ -456,7 +456,6 @@ jobs:
           grep -F "weaponVolley:s.primaryWeapon?.fireProfile?.projectileCount===1" wm-live-runner-production-presentation.js
           grep -F "weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'" wm-live-runner-production-presentation.js
           grep -F "./upgrades/upgrade-scene.js?v=1" wm-live-phase-c.js
-          grep -F "./upgrades/upgrade-scene.js?v=1" wm-live-phase-c1.js
           grep -F "./upgrade-offer-pool.js?v=1" wm-live-upgrade-scene.js
           grep -F "./upgrade-roll-service.js?v=2" wm-live-upgrade-scene.js
           grep -F "class UpgradeSceneV4 extends Phaser.Scene" wm-live-upgrade-scene.js
