@@ -25,14 +25,17 @@ describe('WS14-C Shotgun hold / aim alignment', () => {
   it('keeps the authored hand marker within sub-pixel distance of the canonical right-facing grip', () => {
     expect(Math.abs(SHOTGUN_AIM_ALIGNMENT.authoredGripMarker.x - SHOTGUN_AIM_ALIGNMENT.bodyGrip.right.x)).toBeLessThan(0.3);
     expect(Math.abs(SHOTGUN_AIM_ALIGNMENT.authoredGripMarker.y - SHOTGUN_AIM_ALIGNMENT.bodyGrip.right.y)).toBeLessThan(0.3);
+    expect(SHOTGUN_PRODUCTION_ART.body.authoredGripMarker).toEqual(SHOTGUN_AIM_ALIGNMENT.authoredGripMarker);
   });
 
-  it('pins every idle/run frame to one stable weapon-hold marker', () => {
+  it('keeps every approved idle/run wrapper body-only on the canonical canvas', () => {
     for (const path of bodyPaths) {
       const svg = read(path);
-      expect(svg).toContain('data-grip-x="77" data-grip-y="81"');
-      expect(svg).toContain('<circle cx="77" cy="81" r="6"');
-      expect(svg).not.toMatch(/shotgun-weapon|muzzle-marker|<image\b/i);
+      expect(svg).toContain('width="128" height="148" viewBox="0 0 128 148"');
+      expect(svg).toContain('data-source="approved-wrecker-raster"');
+      expect(svg).toContain('id="shotgun-body"');
+      expect(svg).toMatch(/<image\b/i);
+      expect(svg).not.toMatch(/shotgun-weapon|muzzle-marker/i);
     }
   });
 
