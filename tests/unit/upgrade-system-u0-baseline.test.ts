@@ -45,7 +45,7 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     const cardPresentation = read('src/upgrades/upgrade-card-presentation.js');
     const companionRuntime = read('src/companion-runtime-v3.js');
 
-    expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(phaseC).not.toContain('createActiveUpgradeOfferChoices');
     expect(upgradeScene).toContain('createActiveUpgradeOfferChoices(this)');
     expect(phaseC1).not.toContain('createActiveUpgradeOfferChoices');
     expect(offerPool).toContain("offer('heavy-rivets', 'HERO'");
@@ -103,7 +103,7 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(companionRuntime).not.toContain('s.__companionUpgradeRulesPatched=true');
     expect(upgradeRuntime).toContain('applyMixedRegisteredUpgrade');
     expect(upgradeRuntime).toContain('createUpgradeMechanicalTransaction');
-    expect(phaseC).toContain("rollUpgradeChoices(createUpgradePool(this), { count: 3 })");
+    expect(phaseC).not.toContain('rollUpgradeChoices');
     expect(upgradeScene).toContain("rollUpgradeChoices(createActiveUpgradeOfferChoices(this), { count: 3 })");
     expect(phaseC1).not.toContain('rollUpgradeChoices');
     expect(phaseC).not.toContain('function weightedChoices');
