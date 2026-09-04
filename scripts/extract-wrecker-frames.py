@@ -9,8 +9,10 @@ SRC_DIR = ROOT / 'assets' / 'hero' / 'shotgun'
 OUT_DIR = SRC_DIR / 'generated-wrecker'
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-RUN_SRC = SRC_DIR / 'Gemini_Generated_Image_cky2bmcky2bmcky2.jfif'
-IDLE_SRC = SRC_DIR / 'Gemini_Generated_Image_o8s2kto8s2kto8s2.jfif'
+# Source-sheet identity is determined by the actual approved sheet layout:
+# cky2 = 2912x1440, two-character idle sheet; o8s2 = 4640x928, five-character run sheet.
+IDLE_SRC = SRC_DIR / 'Gemini_Generated_Image_cky2bmcky2bmcky2.jfif'
+RUN_SRC = SRC_DIR / 'Gemini_Generated_Image_o8s2kto8s2kto8s2.jfif'
 CANVAS = (128, 148)
 FOOTLINE = 140
 
@@ -42,14 +44,13 @@ def isolate_character(cell_rgb):
     candidates = []
     for idx in range(1, n):
         x, y, cw, ch, area = stats[idx]
-        # Real character is tall and substantial; floor shadow is low and flat.
         score = area * (1.0 + min(ch / max(1, h), 0.8))
         if ch > h * 0.25 and cw > w * 0.08:
             candidates.append((score, idx))
     idx = max(candidates)[1] if candidates else 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
     body = (labels == idx).astype(np.uint8) * 255
 
-    # Preserve fine edge pixels adjacent to the selected body, but not detached shadow.
+    # Preserve fine edge pixels adjacent to the selected body, but not detached floor shadow.
     dilated = cv2.dilate(body, kernel, iterations=1)
     body = cv2.bitwise_and(fg, dilated)
     ys, xs = np.where(body > 0)
@@ -81,7 +82,6 @@ def process(path, count, prefix):
     spans = equal_cells(src.width, count)
     records = []
     for i, (x0, x1) in enumerate(spans):
-        # small inward trim avoids sharing antialias/noise with neighbor cells
         pad = max(0, round((x1 - x0) * 0.01))
         cell = arr[:, x0 + pad:x1 - pad]
         isolated, seg = isolate_character(cell)
