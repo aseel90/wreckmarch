@@ -1,6 +1,8 @@
 from pathlib import Path
-from PIL import Image
+import json
+import cv2
 import numpy as np
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / 'assets' / 'hero' / 'shotgun'
@@ -13,119 +15,101 @@ CANVAS = (128, 148)
 FOOTLINE = 140
 
 
-def checker_distance(rgb):
-    # Gemini checkerboards are near-neutral light greys. Distance to neutral grey
-    # plus saturation separates character pixels from the checker pattern.
-    arr = rgb.astype(np.int16)
-    mx = arr.max(axis=2)
-    mn = arr.min(axis=2)
-    sat = mx - mn
-    lum = arr.mean(axis=2)
-    neutral_bg = (sat < 16) & (lum > 150)
-    return ~neutral_bg
+def equal_cells(width, count):
+    edges = np.linspace(0, width, count + 1).round().astype(int)
+    return [(int(edges[i]), int(edges[i + 1])) for i in range(count)]
 
 
-def largest_components(mask, expected):
-    # Project to x and find broad character bands; robust to disconnected limbs.
-    col = mask.sum(axis=0)
-    active = col > max(3, mask.shape[0] * 0.015)
-    spans = []
-    start = None
-    for i, v in enumerate(active):
-        if v and start is None:
-            start = i
-        elif not v and start is not None:
-            spans.append([start, i - 1])
-            start = None
-    if start is not None:
-        spans.append([start, len(active) - 1])
+def isolate_character(cell_rgb):
+    """GrabCut one character from its checkerboard cell and keep only its body component."""
+    bgr = cv2.cvtColor(cell_rgb, cv2.COLOR_RGB2BGR)
+    h, w = bgr.shape[:2]
+    mask = np.zeros((h, w), np.uint8)
+    mx = max(2, round(w * 0.025))
+    my = max(2, round(h * 0.02))
+    rect = (mx, my, max(1, w - 2 * mx), max(1, h - 2 * my))
+    bgd = np.zeros((1, 65), np.float64)
+    fgd = np.zeros((1, 65), np.float64)
+    cv2.grabCut(bgr, mask, rect, bgd, fgd, 5, cv2.GC_INIT_WITH_RECT)
+    fg = np.where((mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
 
-    # Merge nearby spans belonging to one character.
-    merged = []
-    gap_limit = max(12, mask.shape[1] // (expected * 12))
-    for s in spans:
-        if not merged or s[0] - merged[-1][1] > gap_limit:
-            merged.append(s)
-        else:
-            merged[-1][1] = s[1]
+    # Join antialiased body details, then discard detached floor/shadow/noise components.
+    kernel = np.ones((3, 3), np.uint8)
+    fg = cv2.morphologyEx(fg, cv2.MORPH_CLOSE, kernel, iterations=1)
+    n, labels, stats, _ = cv2.connectedComponentsWithStats(fg, connectivity=8)
+    if n <= 1:
+        raise RuntimeError('No foreground component detected')
+    candidates = []
+    for idx in range(1, n):
+        x, y, cw, ch, area = stats[idx]
+        # Real character is tall and substantial; floor shadow is low and flat.
+        score = area * (1.0 + min(ch / max(1, h), 0.8))
+        if ch > h * 0.25 and cw > w * 0.08:
+            candidates.append((score, idx))
+    idx = max(candidates)[1] if candidates else 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+    body = (labels == idx).astype(np.uint8) * 255
 
-    # If segmentation is noisy, fall back to equal horizontal cells.
-    if len(merged) != expected:
-        w = mask.shape[1]
-        cell = w / expected
-        merged = [[round(i * cell), round((i + 1) * cell) - 1] for i in range(expected)]
-    return merged
+    # Preserve fine edge pixels adjacent to the selected body, but not detached shadow.
+    dilated = cv2.dilate(body, kernel, iterations=1)
+    body = cv2.bitwise_and(fg, dilated)
+    ys, xs = np.where(body > 0)
+    if not len(xs):
+        raise RuntimeError('Foreground body became empty')
+    x0, x1 = max(0, xs.min() - 2), min(w - 1, xs.max() + 2)
+    y0, y1 = max(0, ys.min() - 2), min(h - 1, ys.max() + 2)
 
-
-def crop_character(src, x0, x1, remove_shadow=False):
-    rgb = np.array(src.convert('RGB'))
-    local = rgb[:, x0:x1 + 1]
-    fg = checker_distance(local)
-
-    # Remove the faint horizontal/generated floor shadow only in run art.
-    # Keep dark boot pixels by limiting cleanup to low-saturation near-floor pixels.
-    if remove_shadow:
-        h = local.shape[0]
-        yy = np.arange(h)[:, None]
-        arr = local.astype(np.int16)
-        sat = arr.max(axis=2) - arr.min(axis=2)
-        lum = arr.mean(axis=2)
-        floor_shadow = (yy > h * 0.88) & (sat < 24) & (lum > 70) & (lum < 185)
-        fg &= ~floor_shadow
-
-    ys, xs = np.where(fg)
-    if len(xs) == 0:
-        raise RuntimeError('No foreground detected')
-    # trim outliers from JPEG noise
-    left, right = np.percentile(xs, [0.15, 99.85]).astype(int)
-    top, bottom = np.percentile(ys, [0.15, 99.85]).astype(int)
-    left = max(0, left - 3); right = min(local.shape[1] - 1, right + 3)
-    top = max(0, top - 3); bottom = min(local.shape[0] - 1, bottom + 3)
-
-    crop = local[top:bottom + 1, left:right + 1]
-    alpha_mask = fg[top:bottom + 1, left:right + 1]
-    # Feather only one pixel at boundary; preserve crisp art.
-    alpha = (alpha_mask.astype(np.uint8) * 255)
-    rgba = np.dstack([crop, alpha])
-    return Image.fromarray(rgba, 'RGBA')
+    rgba = np.dstack([cell_rgb, body])[y0:y1 + 1, x0:x1 + 1]
+    return Image.fromarray(rgba, 'RGBA'), {'bbox': [int(x0), int(y0), int(x1), int(y1)], 'sourceCell': [w, h]}
 
 
 def fit_to_canvas(img):
-    # Preserve proportions. Target body envelope ~104x132 inside frozen 128x148 canvas.
     max_w, max_h = 108, 132
     scale = min(max_w / img.width, max_h / img.height)
-    nw = max(1, round(img.width * scale)); nh = max(1, round(img.height * scale))
+    nw = max(1, round(img.width * scale))
+    nh = max(1, round(img.height * scale))
     resized = img.resize((nw, nh), Image.Resampling.LANCZOS)
     canvas = Image.new('RGBA', CANVAS, (0, 0, 0, 0))
     x = (CANVAS[0] - nw) // 2
     y = FOOTLINE - nh
     canvas.alpha_composite(resized, (x, y))
-    return canvas
+    return canvas, {'outputBody': [nw, nh], 'offset': [x, y]}
 
 
-def process(path, count, prefix, remove_shadow=False):
+def process(path, count, prefix):
     src = Image.open(path).convert('RGB')
-    mask = checker_distance(np.array(src))
-    spans = largest_components(mask, count)
+    arr = np.array(src)
+    spans = equal_cells(src.width, count)
+    records = []
     for i, (x0, x1) in enumerate(spans):
-        frame = fit_to_canvas(crop_character(src, x0, x1, remove_shadow=remove_shadow))
-        frame.save(OUT_DIR / f'{prefix}-{i}.png', optimize=True)
-    return spans, src.size
+        # small inward trim avoids sharing antialias/noise with neighbor cells
+        pad = max(0, round((x1 - x0) * 0.01))
+        cell = arr[:, x0 + pad:x1 - pad]
+        isolated, seg = isolate_character(cell)
+        frame, fit = fit_to_canvas(isolated)
+        out = OUT_DIR / f'{prefix}-{i}.png'
+        frame.save(out, optimize=True)
+        records.append({'frame': f'{prefix}-{i}', 'cellX': [x0 + pad, x1 - pad], **seg, **fit})
+    return {'source': path.name, 'sourceSize': list(src.size), 'frames': records}
 
 
 def make_preview():
-    names = ['idle-0','idle-1'] + [f'run-{i}' for i in range(5)]
+    names = ['idle-0', 'idle-1'] + [f'run-{i}' for i in range(5)]
     preview = Image.new('RGBA', (CANVAS[0] * len(names), CANVAS[1]), (38, 38, 38, 255))
     for i, name in enumerate(names):
-        im = Image.open(OUT_DIR / f'{name}.png').convert('RGBA')
-        preview.alpha_composite(im, (i * CANVAS[0], 0))
+        preview.alpha_composite(Image.open(OUT_DIR / f'{name}.png').convert('RGBA'), (i * CANVAS[0], 0))
     preview.save(OUT_DIR / 'preview.png', optimize=True)
 
 
 if __name__ == '__main__':
     if not RUN_SRC.exists() or not IDLE_SRC.exists():
-        raise SystemExit(f'Missing source art: {RUN_SRC} or {IDLE_SRC}')
-    idle_spans, idle_size = process(IDLE_SRC, 2, 'idle', remove_shadow=False)
-    run_spans, run_size = process(RUN_SRC, 5, 'run', remove_shadow=True)
+        raise SystemExit('Missing approved high-resolution Wrecker source art on this branch')
+    meta = {
+        'idle': process(IDLE_SRC, 2, 'idle'),
+        'run': process(RUN_SRC, 5, 'run'),
+        'canvas': list(CANVAS),
+        'footLineY': FOOTLINE,
+        'shadowPolicy': 'detached floor/shadow components are discarded before fitting',
+    }
     make_preview()
-    print({'idle_source': idle_size, 'idle_spans': idle_spans, 'run_source': run_size, 'run_spans': run_spans})
+    (OUT_DIR / 'extraction-meta.json').write_text(json.dumps(meta, indent=2), encoding='utf-8')
+    print(json.dumps(meta, indent=2))
