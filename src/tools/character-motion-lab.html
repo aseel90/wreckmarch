@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>WRECKMARCH — Wrecker Motion Lab</title>
+  <style>
+    :root{color-scheme:dark;background:#0b0d0f;color:#ece7dc;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;padding:18px;background:radial-gradient(circle at 50% 0,#24211b 0,#111315 38%,#090a0b 100%);min-height:100vh}
+    main{max-width:1100px;margin:auto}h1{margin:0;font-size:clamp(22px,4vw,38px);letter-spacing:.08em}p{color:#bdb7aa;line-height:1.45}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px}.toolbar button{min-height:44px;padding:0 16px;border:1px solid #5e584d;background:#1b1d1f;color:#f2ede2;border-radius:8px;font-weight:700}.toolbar button[aria-pressed="true"]{background:#3a3327}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{border:1px solid #343536;background:#111315;border-radius:12px;overflow:hidden}.head{padding:12px 14px;border-bottom:1px solid #303234}.head strong{display:block}.head span{display:block;color:#9e998e;font-size:13px;margin-top:4px}.stage{position:relative;background:linear-gradient(#17191b 0 67%,#25211a 67% 70%,#101112 70%);aspect-ratio:4/3}.stage canvas{width:100%;height:100%;display:block}.badge{position:absolute;left:10px;top:10px;z-index:2;font-size:11px;padding:5px 7px;border-radius:999px;background:#0b0d0fcc;border:1px solid #48443b;color:#d9d3c6}
+    .note{margin-top:16px;padding:12px 14px;border-left:3px solid #6e675b;background:#121416;color:#c8c2b6;font-size:14px}
+    @media(max-width:850px){.grid{grid-template-columns:1fr}.stage{aspect-ratio:16/10}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>WRECKER MOTION LAB</h1>
+  <p>Three isolated Canvas paths. They use the current approved Wrecker art and do not touch gameplay.</p>
+  <div class="toolbar">
+    <button id="run" type="button" aria-pressed="true">RUN</button>
+    <button id="idle" type="button" aria-pressed="false">IDLE</button>
+    <button id="fire" type="button">FIRE</button>
+  </div>
+  <div class="grid">
+    <section class="card"><div class="head"><strong>A — Procedural Canvas Rig</strong><span>100% drawn in Canvas; maximum motion freedom, lower art fidelity.</span></div><div class="stage"><span class="badge">procedural</span><canvas id="vector" width="480" height="360"></canvas></div></section>
+    <section class="card"><div class="head"><strong>B — Approved Art / Motion</strong><span>Exact Wrecker body preserved; Canvas adds weight, grounding and locomotion.</span></div><div class="stage"><span class="badge">approved body</span><canvas id="hybrid" width="480" height="360"></canvas></div></section>
+    <section class="card"><div class="head"><strong>C — Combat Composite</strong><span>Approved body + separate shotgun + recoil + muzzle flash + dust.</span></div><div class="stage"><span class="badge">production direction</span><canvas id="combat" width="480" height="360"></canvas></div></section>
+  </div>
+  <div class="note">The important comparison is not frame count. Watch body scale, foot contact, perceived weight, weapon stability and whether the character identity stays unchanged while moving.</div>
+</main>
+<script>
+(() => {
+  const root = document.documentElement;
+  const canvases = ['vector','hybrid','combat'].map(id => document.getElementById(id));
+  const ctxs = canvases.map(c => c.getContext('2d'));
+  const body = new Image(); const gun = new Image();
+  body.src='../../assets/hero/shotgun/idle-0.svg';
+  gun.src='../../assets/weapons/shotgun.svg';
+  let mode='run', t=0, recoil=0, last=performance.now(), raf=0;
+  const runBtn=document.getElementById('run'), idleBtn=document.getElementById('idle'), fireBtn=document.getElementById('fire');
+  function setMode(next){mode=next;runBtn.setAttribute('aria-pressed',String(next==='run'));idleBtn.setAttribute('aria-pressed',String(next==='idle'));}
+  runBtn.addEventListener('click',()=>setMode('run')); idleBtn.addEventListener('click',()=>setMode('idle')); fireBtn.addEventListener('click',()=>{recoil=1;});
+  function clear(c,x){c.clearRect(0,0,480,360);c.fillStyle='rgba(0,0,0,.32)';c.beginPath();c.ellipse(240,292,88,16,0,0,Math.PI*2);c.fill();}
+  function limb(c,x,y,len,w,a,fill){c.save();c.translate(x,y);c.rotate(a);c.fillStyle=fill;c.strokeStyle='#151515';c.lineWidth=4;c.beginPath();c.roundRect(-w/2,0,w,len,w*.35);c.fill();c.stroke();c.restore();}
+  function vectorWrecker(c,time){
+    const moving=mode==='run', phase=moving?time*7:time*1.7, bob=moving?Math.abs(Math.sin(phase))*5:Math.sin(phase)*2;
+    const swing=moving?Math.sin(phase)*.72:.08*Math.sin(phase); const x=240,y=264-bob;
+    c.save();c.translate(x,y);c.rotate(moving?-.055:0);
+    limb(c,-24,-69,58,18,swing,'#665b49'); limb(c,24,-69,58,18,-swing,'#7a6b52');
+    limb(c,-22,-20,62,21,-swing*.78,'#574d3d'); limb(c,22,-20,62,21,swing*.78,'#6b5d47');
+    c.fillStyle='#2e302f';c.strokeStyle='#0d0e0e';c.lineWidth=5;c.beginPath();c.roundRect(-46,-122,92,104,22);c.fill();c.stroke();
+    c.fillStyle='#b4632c';c.beginPath();c.roundRect(-40,-115,80,52,16);c.fill();c.stroke();
+    c.fillStyle='#414342';c.beginPath();c.arc(0,-147,35,0,Math.PI*2);c.fill();c.stroke();
+    c.fillStyle='#b96a31';c.beginPath();c.moveTo(-31,-159);c.lineTo(-46,-174);c.lineTo(-26,-170);c.moveTo(31,-159);c.lineTo(46,-174);c.lineTo(26,-170);c.strokeStyle='#b96a31';c.lineWidth=9;c.stroke();
+    c.shadowBlur=12;c.shadowColor='#72eaff';c.fillStyle='#8ff4ff';c.fillRect(-18,-151,12,4);c.fillRect(6,-151,12,4);c.shadowBlur=0;
+    c.fillStyle='#b06a32';c.beginPath();c.arc(-47,-92,20,0,Math.PI*2);c.arc(47,-92,20,0,Math.PI*2);c.fill();c.strokeStyle='#171717';c.lineWidth=4;c.stroke();
+    c.restore();
+  }
+  function drawRaster(c,time,combat){
+    const moving=mode==='run', p=moving?time*7:time*1.5, bob=moving?Math.abs(Math.sin(p))*7:Math.sin(p)*2.2, lean=moving?-.045+.018*Math.sin(p):.008*Math.sin(p);
+    const sx=moving?1+.012*Math.cos(p*2):1, sy=moving?1-.018*Math.cos(p*2):1;
+    c.save();c.translate(240,278-bob);c.rotate(lean);c.scale(sx,sy);
+    if(body.complete&&body.naturalWidth){c.drawImage(body,-64,-148,128,148)}else{c.fillStyle='#aaa';c.textAlign='center';c.fillText('loading art…',0,-70)}
+    if(combat&&gun.complete&&gun.naturalWidth){
+      const kick=recoil*15;c.save();c.translate(18-kick,-84);c.rotate(-.12-recoil*.05);c.drawImage(gun,-18,-22,102,43);c.restore();
+      if(recoil>.55){c.save();c.translate(91-kick,-94);c.rotate(-.12);c.fillStyle='rgba(255,211,104,.95)';c.beginPath();c.moveTo(0,0);c.lineTo(42,-12);c.lineTo(25,1);c.lineTo(42,13);c.closePath();c.fill();c.restore();}
+    }
+    c.restore();
+    if(moving){c.fillStyle='rgba(178,151,108,.18)';for(let i=0;i<4;i++){const q=(time*80+i*37)%105;c.beginPath();c.arc(205-q,294-i*3,3+i*.6,0,Math.PI*2);c.fill();}}
+  }
+  function frame(now){
+    const dt=Math.min(.04,(now-last)/1000);last=now;t+=dt;recoil=Math.max(0,recoil-dt*4.4);
+    ctxs.forEach(clear); vectorWrecker(ctxs[0],t); drawRaster(ctxs[1],t,false); drawRaster(ctxs[2],t,true);
+    raf=requestAnimationFrame(frame);
+  }
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){mode='idle';}
+  raf=requestAnimationFrame(frame);
+  addEventListener('pagehide',()=>cancelAnimationFrame(raf),{once:true});
+})();
+</script>
+</body>
+</html>
