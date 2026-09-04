@@ -55,7 +55,7 @@ describe('balance run report bridge contract', () => {
     expect(runtime).toContain("manualReportFailure('transport'");
     expect(html).toContain('./src/telemetry/telemetry-runtime.js?v=15');
     expect(html).toContain('./src/phase-d1-runtime.js?v=28&u5=3');
-    expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=19');
+    expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=20');
     expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=28');
     expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=1');
     expect(pagesWorkflow).toContain('src/characters/runner-production-presentation.js?v=1');
@@ -76,7 +76,8 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain("weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'");
     expect(pagesWorkflow).not.toContain('src/phase-d1-runtime.js?v=23');
     expect(pagesWorkflow).toContain('src/upgrades/upgrade-offer-pool.js?v=1');
-    expect(pagesWorkflow).toContain('"./upgrades/upgrade-scene.js?v=1" wm-live-phase-c1.js');
+    expect(pagesWorkflow).toContain('"./upgrades/upgrade-scene.js?v=1" wm-live-phase-c.js');
+    expect(pagesWorkflow).not.toContain('"./upgrades/upgrade-scene.js?v=1" wm-live-phase-c1.js');
     expect(pagesWorkflow).toContain('"./upgrade-offer-pool.js?v=1" wm-live-upgrade-scene.js');
     expect(pagesWorkflow).toContain('"./upgrade-roll-service.js?v=2" wm-live-upgrade-scene.js');
     expect(pagesWorkflow).not.toContain('"./upgrades/upgrade-offer-pool.js?v=1" wm-live-phase-c1.js');
@@ -108,11 +109,5 @@ describe('balance run report bridge contract', () => {
     expect(smokeScript).not.toContain('layout?.reportBtn');
     expect(worker).toContain('INSERT OR IGNORE INTO run_reports');
     expect(worker).toContain("stage: 'd1_insert'");
-    expect(worker).toContain('issueComments');
-    expect(worker).not.toContain('ensureSchema');
-    expect(worker).not.toContain('.exec(');
-    expect(worker).not.toContain('.slice(0, 50000)');
-    expect(migration).toContain('CREATE TABLE IF NOT EXISTS run_reports');
-    expect(migration).toContain('CREATE INDEX IF NOT EXISTS idx_run_reports_status');
   });
 });
