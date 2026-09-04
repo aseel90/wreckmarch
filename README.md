@@ -571,40 +571,28 @@ The browser build should always be easy to test from a phone.
 
 ## 22. Current Core Implementation Priority
 
-The first prototype already proved touch movement, basic combat, Scrap collection, the Scrap Runner, Scrap Rat, Fortress visuals, browser deployment, debug mode, and smoke testing.
+The Hero-owned combat redesign, large-world baseline, Combat & Build Balance WS1–WS23, responsive frontend remediation, and Upgrade System 2.0 are now closed production baselines. The Shotgun WS14-C **art foundation is also complete**: dedicated 2-idle/3-run body art, separate Shotgun weapon art, runtime composition/presentation and locked Character Select preview already exist.
 
-The next milestone is a **core redesign**, not more content.
+**Current next major production track: finish the Shotgun production gate — canonical character gameplay definition, then full activation validation.**
 
-### Required next build
+Required order:
 
-- Start with Hero only.
-- Remove Fortress HP and Fortress fail state.
-- Enemies target Hero only.
-- Hero has a compact HP bar above the character.
-- Hero owns the starting auto-attack.
-- Scrap becomes the top XP/Level progress bar.
-- Filling the bar opens 3 weighted random upgrade cards.
-- Expand the world beyond one viewport and add smooth camera follow.
-- Add `CALL THE RIG` only after the Hero-only loop feels good.
+1. Approve the Shotgun **character gameplay definition** (HP, movement speed, passive and any differing physics/locomotion values). Do not copy Runner values as a shortcut and do not hide weapon power inside character stats.
+2. Register that definition through the canonical CharacterRegistry/CharacterSystem path while keeping Shotgun production-locked until every activation requirement is ready; no ad-hoc `if shotgunCharacter` runtime branches.
+3. Complete deterministic Runner-vs-Shotgun regression, mobile browser/Live checks and the required real Production/D1 full-run evidence.
+4. Only after `shotgun-production-gate.js` has no blockers may availability change from locked preview to selectable.
+5. Run WS15-B short-range enemy matchup review after activation.
+6. Only then may `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md` pass its R0 Character Production gate and become the next large expansion roadmap.
 
-### Success test
+Do **not** reopen Upgrade System 2.0, Combat & Build Balance scalar tuning, or responsive remediation without a new reproducible regression or explicitly approved scope change.
 
-Within the first 60 seconds:
-
-1. Movement and dodging feel good on mobile.
-2. The player clearly understands that the Hero is the survival objective.
-3. Several Scrap pickups produce at least one satisfying level-up choice.
-4. The world feels larger than the phone screen.
-5. No escort frustration exists.
-6. If `CALL THE RIG` appears and is chosen, the Fortress feels like a reward.
-
-For the complete phased plan, use [`GAMEPLAY_REDESIGN_PLAN.md`](GAMEPLAY_REDESIGN_PLAN.md).
+For documentation authority and current-vs-historical classification, use [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
 ---
 
 ## 23. Development Tracking
 
-All future development batches must update [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md). That file is the source of truth for:
+All future development batches must update [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md). Use [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md) to distinguish active contracts from closed historical roadmaps. `IMPLEMENTATION_STATUS.md` is the source of truth for:
 
 - What is actually implemented.
 - What is prototype-quality.
