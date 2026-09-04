@@ -1,5 +1,5 @@
 /* WRECKMARCH Phase C.5 — character-driven presentation + crisp HD cards + visible road network */
-import { installCharacterPresentationPhase } from './characters/character-runtime-presentation.js?v=3';
+import { installCharacterPresentationPhase } from './characters/character-runtime-presentation.js?v=2&wrecker=1';
 const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const CARD_IDS=['heavy-rivets','overclock','long-barrel','twin-riveter','fleet-feet','scrap-magnet','armor-plate','call-rig','rig-overdrive','twin-cannon'];
