@@ -81,6 +81,11 @@ function createScene() {
 
 beforeEach(() => {
   (globalThis as any).Phaser = { Math: { Vector2 } };
+  vi.stubGlobal('fetch', vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    text: async () => '<svg><image href="data:image/png;base64,aGVsbG8=" /></svg>'
+  })));
 });
 
 describe('locked Shotgun production presentation adapters', () => {
@@ -145,7 +150,7 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(fixture.scene.primaryWeapon.fireProfile).toEqual(weaponDefinition.fireProfile);
   });
 
-  it('loads missing Wrecker textures only through the canonical image loader', async () => {
+  it('decodes embedded Wrecker PNG rasters before queueing missing body textures', async () => {
     const fixture = createScene();
     const image = vi.fn();
     const svg = vi.fn();
@@ -162,7 +167,11 @@ describe('locked Shotgun production presentation adapters', () => {
 
     await installShotgunC5Presentation(fixture.scene);
 
+    expect(fetch).toHaveBeenCalledTimes(7);
     expect(image).toHaveBeenCalledTimes(8);
+    const queuedSources = image.mock.calls.map(call => call[1]);
+    expect(queuedSources.slice(0, 7).every(source => String(source).startsWith('data:image/png;base64,'))).toBe(true);
+    expect(queuedSources[7]).toBe(SHOTGUN_RUNTIME_PRESENTATION.weapon.path);
     expect(svg).not.toHaveBeenCalled();
   });
 
