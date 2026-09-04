@@ -51,6 +51,18 @@ export function resolveShotgunPresentationPose(heroX, heroY, aimRadians = 0) {
   });
 }
 
+async function resolveShotgunBrowserAssetSource(asset) {
+  if (!asset?.path?.endsWith?.('.svg') || asset.key === SHOTGUN_RUNTIME_PRESENTATION.weapon.key) {
+    return asset.path;
+  }
+  const response = await fetch(asset.path, { cache: 'no-store' });
+  if (!response.ok) throw Error(`Shotgun body wrapper fetch failed: ${asset.key} (${response.status})`);
+  const svg = await response.text();
+  const match = svg.match(/href=["'](data:image\/png;base64,[^"']+)["']/i);
+  if (!match?.[1]) throw Error(`Shotgun body wrapper is missing embedded PNG raster: ${asset.key}`);
+  return match[1];
+}
+
 async function ensureShotgunRuntimeAssets(scene) {
   const assets = listShotgunRuntimeAssets();
   const missing = assets.filter(asset => !scene?.textures?.exists?.(asset.key));
@@ -58,6 +70,11 @@ async function ensureShotgunRuntimeAssets(scene) {
   if (!scene?.load?.image || !scene?.load?.once || !scene?.load?.start) {
     throw Error('Shotgun production presentation requires Phaser image-loader boundaries');
   }
+
+  const browserSources = await Promise.all(missing.map(async asset => ({
+    ...asset,
+    path: await resolveShotgunBrowserAssetSource(asset)
+  })));
 
   await new Promise((resolve, reject) => {
     let settled = false;
@@ -74,7 +91,7 @@ async function ensureShotgunRuntimeAssets(scene) {
       settled = true;
       resolve();
     });
-    queueShotgunRuntimeAssets(scene, missing);
+    queueShotgunRuntimeAssets(scene, browserSources);
     scene.load.start();
   });
   return SHOTGUN_RUNTIME_PRESENTATION;
