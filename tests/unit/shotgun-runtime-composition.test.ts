@@ -52,7 +52,7 @@ function sceneStub() {
   };
 }
 
-describe('WS14-C inactive Shotgun Phaser composition', () => {
+describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
   it('composes separate body and weapon layers from the canonical runtime presentation', () => {
     const { scene, body, weapon, container } = sceneStub();
     const composition = createShotgunRuntimeComposition(scene as any, { x: 120, y: 90 });
@@ -143,11 +143,11 @@ describe('WS14-C inactive Shotgun Phaser composition', () => {
     expect(weapon.setAngle).toHaveBeenLastCalledWith(-20);
   });
 
-  it('allows only a locked preview registry entry while keeping Shotgun outside live gameplay owners', () => {
+  it('allows a locked gameplay definition while keeping Shotgun outside live selection owners', () => {
     expect(SHOTGUN_RUNTIME_COMPOSITION.activation).toEqual({
       playableOnMain: false,
       previewRegistryEntryAllowed: true,
-      playableRegistryDefinitionAllowed: false
+      playableRegistryDefinitionAllowed: true
     });
     expect(getCharacterEntry('shotgun')).toMatchObject({ id: 'shotgun', availability: 'locked', definition: { id: 'shotgun' } });
     expect(isCharacterSelectable('shotgun')).toBe(false);
