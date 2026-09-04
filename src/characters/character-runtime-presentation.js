@@ -47,10 +47,16 @@ function ensureCharacterSystem(scene, definition) {
   const validationActive = scene?.__characterProductionValidation?.characterId === definition.id
     && isCharacterProductionValidationActive(definition.id);
   let system = scene.characterSystem;
-  if (!system || system.characterId !== definition.id) {
+  if (!system) {
     system = validationActive
       ? new CharacterSystem(scene, definition.id, { productionValidationDefinition: definition })
       : new CharacterSystem(scene, definition.id);
+  } else if (system.characterId !== definition.id) {
+    if (validationActive) {
+      system = new CharacterSystem(scene, definition.id, { productionValidationDefinition: definition });
+    } else {
+      system.select(definition.id);
+    }
   }
   scene.characterSystem = system;
   return system;
