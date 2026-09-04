@@ -1,5 +1,5 @@
 /* WRECKMARCH Phase C.5 — character-driven presentation + HD cards + visible road network */
-import { installCharacterPresentationPhase } from './characters/character-runtime-presentation.js?v=3';
+import { installCharacterPresentationPhase } from './characters/character-runtime-presentation.js?v=4';
 const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function getScene(timeout=10000){const t=performance.now();while(performance.now()-t<timeout){const g=window.Phaser?.GAMES?.find(Boolean)||window.Phaser?.GAMES?.[0],s=g?.scene?.getScene?.('Wreckmarch');if(s?.sys?.isActive?.()&&s.hero&&s.weaponV3Gun&&s.textures?.exists?.('c3-atlas')&&s.textures?.exists?.('c4-road')&&window.__WM_PHASE_C4__)return s;await wait(50)}throw Error('Phase C.5 scene timeout')}
