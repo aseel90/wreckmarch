@@ -83,7 +83,7 @@ describe('Weapon / Projectile ownership integration', () => {
     const upgradeScene = read('src/upgrades/upgrade-scene.js');
     const offerPool = read('src/upgrades/upgrade-offer-pool.js');
     expect(offerPool).toContain("offer('explosive-rivet', 'HERO'");
-    expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(phaseC).not.toContain('createActiveUpgradeOfferChoices');
     expect(upgradeScene).toContain('createActiveUpgradeOfferChoices(this)');
     expect(phaseC1).not.toContain('createActiveUpgradeOfferChoices');
     expect(phaseC).not.toContain("createRegisteredUpgradeChoice(scene, 'explosive-rivet'");

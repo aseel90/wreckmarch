@@ -100,7 +100,7 @@ describe('Upgrade System 2.0 Armor Plate migration', () => {
     const upgradeScene = fs.readFileSync(new URL('../../src/upgrades/upgrade-scene.js', import.meta.url), 'utf8');
     const offerPool = fs.readFileSync(new URL('../../src/upgrades/upgrade-offer-pool.js', import.meta.url), 'utf8');
 
-    expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(phaseC).not.toContain('createActiveUpgradeOfferChoices');
     expect(upgradeScene).toContain('createActiveUpgradeOfferChoices(this)');
     expect(phaseC1).not.toContain('createActiveUpgradeOfferChoices');
     expect(offerPool).toContain("offer('armor-plate', 'UTILITY'");
