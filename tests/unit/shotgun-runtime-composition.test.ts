@@ -149,7 +149,7 @@ describe('WS14-C inactive Shotgun Phaser composition', () => {
       previewRegistryEntryAllowed: true,
       playableRegistryDefinitionAllowed: false
     });
-    expect(getCharacterEntry('shotgun')).toMatchObject({ id: 'shotgun', availability: 'locked', definition: null });
+    expect(getCharacterEntry('shotgun')).toMatchObject({ id: 'shotgun', availability: 'locked', definition: { id: 'shotgun' } });
     expect(isCharacterSelectable('shotgun')).toBe(false);
     expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
     expect(read('index.html')).not.toContain('shotgun-runtime-composition');

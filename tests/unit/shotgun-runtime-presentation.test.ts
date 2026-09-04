@@ -61,7 +61,7 @@ describe('WS14-C inactive Shotgun runtime presentation boundary', () => {
       playableRegistryDefinitionAllowed: false,
       gameplayDefinitionReady: false
     });
-    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: null });
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: { id: 'shotgun' } });
     expect(isCharacterSelectable('shotgun')).toBe(false);
     expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
     expect(read('index.html')).not.toContain('shotgun-runtime-presentation');
