@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 const ROOT = resolve(import.meta.dirname, '../..');
 const read = (path: string) => readFileSync(resolve(ROOT, path), 'utf8');
 
-// U7 regression contract: phase runtimes may consume, but must not own, upgrade scene lifecycle or card UI.
+// U7 regression contract: Phase C installs the canonical upgrade scene; later phase runtimes must not reinstall or own it.
 describe('U7 canonical Upgrade Scene ownership', () => {
   it('keeps scene lifecycle under src/upgrades and retires legacy Phase C/C1/C2/C3/C3.1/C5 owners', () => {
     const canonical = read('src/upgrades/upgrade-scene.js');
@@ -39,8 +39,7 @@ describe('U7 canonical Upgrade Scene ownership', () => {
     expect(c).not.toContain('openUpgradeCards = function');
     expect(c).not.toContain('closeUpgradeCards = function');
 
-    expect(c1).toContain("import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';");
-    expect(c1).toContain('await installUpgradeScene(scene);');
+    expect(c1).not.toContain('installUpgradeScene');
     for (const legacy of [c1, c2, c3, c31, c5]) {
       expect(legacy).not.toMatch(/class UpgradeScene(?:V2|V3|V4)? extends Phaser\.Scene/);
       expect(legacy).not.toContain('.launch =');
