@@ -1,6 +1,5 @@
 import { RUN_BALANCE } from './balance/run-balance.js?v=6';
-import { createActiveUpgradeOfferChoices } from './upgrades/upgrade-offer-pool.js?v=1';
-import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
+import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';
 import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=2';
 import { getScrapXpNeeded } from './balance/progression-balance.js?v=1';
 
@@ -199,66 +198,6 @@ function installProgressHud(scene) {
   scene.refreshProgressHud();
 }
 
-function createUpgradePool(scene) {
-  return createActiveUpgradeOfferChoices(scene);
-}
-
-function makeCard(scene, y, upgrade, index) {
-  const card = scene.add.container(W / 2, y).setDepth(4200).setScrollFactor(0);
-  const bg = scene.add.rectangle(0, 0, 430, 142, 0x151b22, .98).setStrokeStyle(2, index === 0 ? 0xd0a862 : 0x56636f, .95).setInteractive({ useHandCursor: true });
-  const category = scene.add.text(-190, -50, upgrade.category, { fontFamily: 'Arial Black, Arial', fontSize: '11px', color: upgrade.category === 'FORTRESS' ? '#55d8e6' : '#d8b06d' }).setOrigin(0, .5);
-  const title = scene.add.text(-190, -20, upgrade.title, { fontFamily: 'Arial Black, Arial', fontSize: '20px', color: '#f0f2f4' }).setOrigin(0, .5);
-  const desc = scene.add.text(-190, 18, upgrade.desc, { fontFamily: 'Arial, sans-serif', fontSize: '14px', color: '#aeb8c2', wordWrap: { width: 360 } }).setOrigin(0, 0);
-  card.add([bg, category, title, desc]);
-  bg.on('pointerdown', (_p, _x, _y, event) => {
-    event?.stopPropagation?.();
-    if (!scene.upgradeOpen) return;
-    upgrade.apply();
-    scene.closeUpgradeCards();
-  });
-  return card;
-}
-
-function installUpgradeCards(scene) {
-  scene.upgradeUi = [];
-  scene.openUpgradeCards = function() {
-    if (this.upgradeOpen || this.gameOver) return;
-    const choices = rollUpgradeChoices(createUpgradePool(this), { count: 3 });
-    if (!choices.length) return;
-    this.upgradeOpen = true;
-    this.physics.pause();
-    this.spawnEvent.paused = true;
-    this.waveEvent.paused = true;
-    this.joy.active = false;
-    this.joy.id = null;
-    this.joyBase.setPosition(92, H - 118).setAlpha(.2);
-    this.joyKnob.setPosition(92, H - 118).setAlpha(.2);
-
-    const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x070a0e, .88).setDepth(4100).setScrollFactor(0);
-    const label = this.add.text(W / 2, 150, `LEVEL ${this.level}`, { fontFamily: 'Arial Black, Arial', fontSize: '14px', color: '#61d9e6' }).setOrigin(.5).setDepth(4201).setScrollFactor(0);
-    const title = this.add.text(W / 2, 186, 'CHOOSE AN UPGRADE', { fontFamily: 'Arial Black, Arial', fontSize: '25px', color: '#f0d09b' }).setOrigin(.5).setDepth(4201).setScrollFactor(0);
-    this.upgradeUi = [shade, label, title];
-    [300, 465, 630].forEach((y, i) => { if (choices[i]) this.upgradeUi.push(makeCard(this, y, choices[i], i)); });
-  };
-
-  scene.closeUpgradeCards = function() {
-    this.upgradeUi.forEach(obj => obj?.destroy?.(true));
-    this.upgradeUi.length = 0;
-    this.upgradeOpen = false;
-    if (!this.gameOver) {
-      this.physics.resume();
-      this.spawnEvent.paused = false;
-      this.waveEvent.paused = false;
-    }
-    this.joyBase.setAlpha(.38);
-    this.joyKnob.setAlpha(.4);
-    if (this.pendingLevelUps > 0) {
-      this.pendingLevelUps -= 1;
-      this.time.delayedCall(80, () => this.openUpgradeCards());
-    }
-  };
-}
-
 function installScrapProgression(scene) {
   scene.magnetRadius = 135;
   scene.lastScrapTotalForXp = scene.scrap || 0;
@@ -334,7 +273,7 @@ export async function applyPhaseC() {
   installEnemyScaleAndHitboxes(scene);
   installWeaponRig(scene);
   installProgressHud(scene);
-  installUpgradeCards(scene);
+  await installUpgradeScene(scene);
   installScrapProgression(scene);
   installHitboxDebug(scene);
   installUpdateCoordinator(scene);
