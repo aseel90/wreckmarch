@@ -16,7 +16,7 @@ import {
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
-describe('WS14-C inactive Shotgun runtime presentation boundary', () => {
+describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
   it('owns stable unique texture keys for exactly the approved five body frames plus separate weapon', () => {
     const assets = listShotgunRuntimeAssets();
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.idle).toHaveLength(2);
@@ -53,15 +53,15 @@ describe('WS14-C inactive Shotgun runtime presentation boundary', () => {
     expect(() => queueShotgunRuntimeAssets({} as any)).toThrow('Phaser-like scene.load.svg boundary');
   });
 
-  it('remains impossible to select on main while a locked preview registry entry is allowed', () => {
+  it('allows a canonical definition while keeping main selection locked', () => {
     expect(SHOTGUN_RUNTIME_PRESENTATION.status).toBe('inactive-runtime-boundary');
     expect(SHOTGUN_RUNTIME_PRESENTATION.activation).toEqual({
       playableOnMain: false,
       previewRegistryEntryAllowed: true,
-      playableRegistryDefinitionAllowed: false,
-      gameplayDefinitionReady: false
+      playableRegistryDefinitionAllowed: true,
+      gameplayDefinitionReady: true
     });
-    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: null });
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: { id: 'shotgun' } });
     expect(isCharacterSelectable('shotgun')).toBe(false);
     expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
     expect(read('index.html')).not.toContain('shotgun-runtime-presentation');

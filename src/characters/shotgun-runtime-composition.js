@@ -1,7 +1,7 @@
-/* WRECKMARCH WS14-C — inactive Phaser composition for Shotgun presentation.
+/* WRECKMARCH WS14-C/WS14-E — locked Phaser composition for Shotgun presentation.
  * Owns body/weapon layering, locomotion frame selection and relative aim only.
- * It intentionally has no input, combat, projectile or playable-character ownership.
- * A locked frontend preview registry entry is allowed, but a playable runtime definition is not.
+ * It intentionally has no input, combat, projectile or selection ownership.
+ * A locked gameplay definition may be registered; live selection remains gated elsewhere.
  */
 import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js';
 
@@ -17,7 +17,7 @@ export const SHOTGUN_RUNTIME_COMPOSITION = Object.freeze({
   activation: Object.freeze({
     playableOnMain: false,
     previewRegistryEntryAllowed: true,
-    playableRegistryDefinitionAllowed: false
+    playableRegistryDefinitionAllowed: true
   })
 });
 
@@ -87,11 +87,6 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
     return api;
   }
 
-  /**
-   * Advance the existing body frames using caller-owned timing.
-   * @param {number} deltaMs
-   * @param {{ motion?: 'idle' | 'run', frameDurationMs: number }} options
-   */
   function advanceLocomotion(deltaMs, options) {
     const nextMotion = options?.motion ?? motion;
     const frameDurationMs = options?.frameDurationMs;

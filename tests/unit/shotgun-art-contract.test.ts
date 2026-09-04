@@ -36,7 +36,7 @@ describe('WS14-C Shotgun production art contract', () => {
   it('remains an art gate only and cannot silently activate the character', () => {
     expect(SHOTGUN_ART_CONTRACT.weaponLayer.separateFromBody).toBe(true);
     expect(SHOTGUN_ART_CONTRACT.activation.playableOnMain).toBe(false);
-    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: null });
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: { id: 'shotgun' } });
     expect(isCharacterSelectable('shotgun')).toBe(false);
     expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
 

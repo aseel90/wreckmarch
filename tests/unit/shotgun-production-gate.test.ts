@@ -6,6 +6,7 @@ import {
   evaluateShotgunProductionGate
 } from '../../src/characters/shotgun-production-gate.js';
 import { getCharacterEntry, isCharacterSelectable } from '../../src/characters/character-registry.js';
+import { SHOTGUN_CHARACTER } from '../../src/characters/definitions/shotgun.js';
 import { resolveShotgunPresentationPose } from '../../src/characters/shotgun-production-presentation.js';
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
@@ -24,15 +25,12 @@ describe('canonical Shotgun production gate', () => {
     });
   });
 
-  it('keeps activation blocked only on unfinished character gameplay and real-run approval', () => {
+  it('keeps activation blocked only on real-run approval after the character definition lands', () => {
     const gate = evaluateShotgunProductionGate();
     expect(gate.readyForActivation).toBe(false);
-    expect(gate.blockers).toEqual([
-      'characterDefinition',
-      'fullRunValidation'
-    ]);
+    expect(gate.blockers).toEqual(['fullRunValidation']);
     expect(gate.requirements).toMatchObject({
-      characterDefinition: false,
+      characterDefinition: true,
       fullRunValidation: false
     });
     expect(SHOTGUN_FULL_RUN_VALIDATION).toEqual({ status: 'pending', evidence: null });
@@ -45,7 +43,7 @@ describe('canonical Shotgun production gate', () => {
     expect(isCharacterSelectable('shotgun')).toBe(false);
     expect(getCharacterEntry('shotgun')).toMatchObject({
       availability: 'locked',
-      definition: null,
+      definition: SHOTGUN_CHARACTER,
       lockReason: 'production-gate'
     });
   });

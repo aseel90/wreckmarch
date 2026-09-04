@@ -114,7 +114,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(setup.activation).toEqual({
       playableOnMain: false,
       previewRegistryEntryAllowed: true,
-      playableRegistryDefinitionAllowed: false
+      playableRegistryDefinitionAllowed: true
     });
 
     const canvas = page.locator('#shotgun-phaser-gate canvas');
@@ -170,21 +170,14 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
 
     await page.evaluate(() => {
       const gate = (window as any).__shotgunPhaserGate;
-      gate.advance(0, 'run', 100);
+      gate.setState('run', 0, 'right', -15);
       gate.advance(200, 'run', 100);
     });
     await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
     const advancedRun = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
     expect(advancedRun.bodyKey).toBe('shotgun-body-run-2');
-    expect(advancedRun.bodyFlipX).toBe(true);
-    expect(advancedRun.weaponAngle).toBe(-20);
-
-    await page.evaluate(() => {
-      const gate = (window as any).__shotgunPhaserGate;
-      gate?.composition?.destroy?.();
-      gate?.game?.destroy?.(true);
-      delete (window as any).__shotgunPhaserGate;
-      document.getElementById('shotgun-phaser-gate')?.remove();
-    });
+    expect(advancedRun.bodyFlipX).toBe(false);
+    expect(advancedRun.weaponFlipX).toBe(false);
+    expect(advancedRun.weaponAngle).toBe(-15);
   });
 });

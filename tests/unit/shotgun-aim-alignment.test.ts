@@ -50,7 +50,7 @@ describe('WS14-C Shotgun hold / aim alignment', () => {
     expect(left.grip.x).toBeCloseTo(SHOTGUN_ART_CONTRACT.canvas.width - right.grip.x, 8);
     expect(left.grip.y).toBeCloseTo(right.grip.y, 8);
     expect(SHOTGUN_AIM_ALIGNMENT.activation.playableOnMain).toBe(false);
-    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: null });
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: { id: 'shotgun' } });
     expect(isCharacterSelectable('shotgun')).toBe(false);
     expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
   });

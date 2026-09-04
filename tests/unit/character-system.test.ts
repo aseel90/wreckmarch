@@ -28,13 +28,17 @@ describe('CharacterSystem', () => {
     expect(() => getCharacterDefinition('missing')).toThrow('Unknown character: missing');
   });
 
-  it('exposes locked Shotgun preview data without creating a playable runtime definition', () => {
+  it('exposes a canonical locked Shotgun definition without creating a selectable runtime', () => {
     expect(listCharacterEntries().map(character => [character.id, character.availability])).toEqual([
       ['runner', CHARACTER_AVAILABILITY.SELECTABLE],
       ['shotgun', CHARACTER_AVAILABILITY.LOCKED],
     ]);
     const shotgun = getCharacterEntry('shotgun');
-    expect(shotgun.definition).toBeNull();
+    expect(shotgun.definition).toMatchObject({
+      id: 'shotgun',
+      stats: { maxHp: 110, moveSpeed: 255 },
+      startingWeapon: { id: 'shotgun' },
+    });
     expect(shotgun.preview).toMatchObject({
       bodyAsset: 'assets/hero/shotgun/idle-0.svg',
       weaponAsset: 'assets/weapons/shotgun.svg',
