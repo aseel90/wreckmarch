@@ -3,79 +3,166 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>WRECKMARCH — Wrecker Motion Lab</title>
+  <title>WRECKMARCH — Wrecker Rig Bake Lab</title>
   <style>
-    :root{color-scheme:dark;background:#0b0d0f;color:#ece7dc;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    *{box-sizing:border-box}body{margin:0;padding:18px;background:radial-gradient(circle at 50% 0,#24211b 0,#111315 38%,#090a0b 100%);min-height:100vh}
-    main{max-width:1100px;margin:auto}h1{margin:0;font-size:clamp(22px,4vw,38px);letter-spacing:.08em}p{color:#bdb7aa;line-height:1.45}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px}.toolbar button{min-height:44px;padding:0 16px;border:1px solid #5e584d;background:#1b1d1f;color:#f2ede2;border-radius:8px;font-weight:700}.toolbar button[aria-pressed="true"]{background:#3a3327}
-    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{border:1px solid #343536;background:#111315;border-radius:12px;overflow:hidden}.head{padding:12px 14px;border-bottom:1px solid #303234}.head strong{display:block}.head span{display:block;color:#9e998e;font-size:13px;margin-top:4px}.stage{position:relative;background:linear-gradient(#17191b 0 67%,#25211a 67% 70%,#101112 70%);aspect-ratio:4/3}.stage canvas{width:100%;height:100%;display:block}.badge{position:absolute;left:10px;top:10px;z-index:2;font-size:11px;padding:5px 7px;border-radius:999px;background:#0b0d0fcc;border:1px solid #48443b;color:#d9d3c6}
-    .note{margin-top:16px;padding:12px 14px;border-left:3px solid #6e675b;background:#121416;color:#c8c2b6;font-size:14px}
-    @media(max-width:850px){.grid{grid-template-columns:1fr}.stage{aspect-ratio:16/10}}
+    :root{color-scheme:dark;background:#090b0d;color:#ece7dc;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:16px;background:radial-gradient(circle at 50% 0,#252118 0,#101214 38%,#08090a 100%)}
+    main{max-width:1160px;margin:auto}h1{margin:0;font-size:clamp(22px,4vw,38px);letter-spacing:.08em}p{color:#bdb7aa;line-height:1.45}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px}.toolbar button{min-height:44px;padding:0 16px;border:1px solid #5e584d;background:#1b1d1f;color:#f2ede2;border-radius:8px;font-weight:800}.toolbar button[aria-pressed="true"]{background:#4a3d29;border-color:#8d7650}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{border:1px solid #343536;background:#111315;border-radius:12px;overflow:hidden}.head{padding:12px 14px;border-bottom:1px solid #303234}.head strong{display:block}.head span{display:block;color:#9e998e;font-size:13px;margin-top:4px;line-height:1.35}
+    .stage{position:relative;overflow:hidden;background:linear-gradient(#17191b 0 66%,#332a1d 66% 69%,#101112 69%);aspect-ratio:4/3}.stage svg{width:100%;height:100%;display:block}.badge{position:absolute;left:10px;top:10px;z-index:2;font-size:11px;padding:5px 7px;border-radius:999px;background:#0b0d0fdd;border:1px solid #48443b;color:#d9d3c6}
+    .legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.legend div{background:#121416;border:1px solid #2e3031;border-radius:8px;padding:9px 10px;font-size:12px;color:#bfb8ab}.legend b{color:#efe7d8;display:block;margin-bottom:3px}
+    .note{margin-top:16px;padding:12px 14px;border-left:3px solid #8b7049;background:#121416;color:#c8c2b6;font-size:14px;line-height:1.45}
+    .good{color:#b9d79a}.warn{color:#e0bd7a}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}.stage{aspect-ratio:16/10}.legend{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
 <main>
-  <h1>WRECKER MOTION LAB</h1>
-  <p>Three isolated Canvas paths. They use the current approved Wrecker art and do not touch gameplay.</p>
+  <h1>WRECKER — RIG → BAKE LAB</h1>
+  <p>This test removes Canvas character drawing completely. It preserves the approved Wrecker raster, locks the upper body as one piece, rigs only the legs, then previews the same motion as a smooth rig and as a 6-pose baked run cycle.</p>
   <div class="toolbar">
     <button id="run" type="button" aria-pressed="true">RUN</button>
     <button id="idle" type="button" aria-pressed="false">IDLE</button>
     <button id="fire" type="button">FIRE</button>
+    <button id="slow" type="button" aria-pressed="false">SLOW 0.5×</button>
   </div>
+
   <div class="grid">
-    <section class="card"><div class="head"><strong>A — Procedural Canvas Rig</strong><span>100% drawn in Canvas; maximum motion freedom, lower art fidelity.</span></div><div class="stage"><span class="badge">procedural</span><canvas id="vector" width="480" height="360"></canvas></div></section>
-    <section class="card"><div class="head"><strong>B — Approved Art / Motion</strong><span>Exact Wrecker body preserved; Canvas adds weight, grounding and locomotion.</span></div><div class="stage"><span class="badge">approved body</span><canvas id="hybrid" width="480" height="360"></canvas></div></section>
-    <section class="card"><div class="head"><strong>C — Combat Composite</strong><span>Approved body + separate shotgun + recoil + muzzle flash + dust.</span></div><div class="stage"><span class="badge">production direction</span><canvas id="combat" width="480" height="360"></canvas></div></section>
+    <section class="card">
+      <div class="head"><strong>A — Layered Art Rig</strong><span>Approved art only. Upper body stays intact; lower body uses overlapping raster pieces. No procedural drawing.</span></div>
+      <div class="stage"><span class="badge">smooth rig • no canvas</span><svg id="rigSmooth" viewBox="0 0 480 360" aria-label="Smooth layered Wrecker rig"></svg></div>
+    </section>
+    <section class="card">
+      <div class="head"><strong>B — 6-Pose Bake Preview</strong><span>The same rig sampled into six discrete poses, approximating the final sprite-sheet playback.</span></div>
+      <div class="stage"><span class="badge">6 poses • sprite-sheet feel</span><svg id="rigBaked" viewBox="0 0 480 360" aria-label="Six pose baked Wrecker preview"></svg></div>
+    </section>
+    <section class="card">
+      <div class="head"><strong>C — Production Composite</strong><span>6-pose baked body + separate shotgun + recoil + muzzle flash. This is the production-direction preview.</span></div>
+      <div class="stage"><span class="badge">baked body + weapon layer</span><svg id="rigCombat" viewBox="0 0 480 360" aria-label="Production composite Wrecker preview"></svg></div>
+    </section>
   </div>
-  <div class="note">The important comparison is not frame count. Watch body scale, foot contact, perceived weight, weapon stability and whether the character identity stays unchanged while moving.</div>
+
+  <div class="legend">
+    <div><b>Identity</b>Same exact approved Wrecker raster is reused in every pose.</div>
+    <div><b>Stability</b>Upper body, helmet, chest shells and hand silhouette never get AI-redrawn.</div>
+    <div><b>Target</b>If panel B/C looks good, we bake these poses to a normal PNG sprite sheet for Phaser.</div>
+  </div>
+  <div class="note"><span class="good">What to judge:</span> body scale, foot contact, weight and whether the run reads cleanly. <span class="warn">Do not judge this as final animation timing yet</span>; this page is only to decide whether the layered-art → baked-sheet method is visually worth continuing.</div>
 </main>
 <script>
 (() => {
-  const root = document.documentElement;
-  const canvases = ['vector','hybrid','combat'].map(id => document.getElementById(id));
-  const ctxs = canvases.map(c => c.getContext('2d'));
-  const body = new Image(); const gun = new Image();
-  body.src='../../assets/hero/shotgun/idle-0.svg';
-  gun.src='../../assets/weapons/shotgun.svg';
-  let mode='run', t=0, recoil=0, last=performance.now(), raf=0;
-  const runBtn=document.getElementById('run'), idleBtn=document.getElementById('idle'), fireBtn=document.getElementById('fire');
-  function setMode(next){mode=next;runBtn.setAttribute('aria-pressed',String(next==='run'));idleBtn.setAttribute('aria-pressed',String(next==='idle'));}
-  runBtn.addEventListener('click',()=>setMode('run')); idleBtn.addEventListener('click',()=>setMode('idle')); fireBtn.addEventListener('click',()=>{recoil=1;});
-  function clear(c,x){c.clearRect(0,0,480,360);c.fillStyle='rgba(0,0,0,.32)';c.beginPath();c.ellipse(240,292,88,16,0,0,Math.PI*2);c.fill();}
-  function limb(c,x,y,len,w,a,fill){c.save();c.translate(x,y);c.rotate(a);c.fillStyle=fill;c.strokeStyle='#151515';c.lineWidth=4;c.beginPath();c.roundRect(-w/2,0,w,len,w*.35);c.fill();c.stroke();c.restore();}
-  function vectorWrecker(c,time){
-    const moving=mode==='run', phase=moving?time*7:time*1.7, bob=moving?Math.abs(Math.sin(phase))*5:Math.sin(phase)*2;
-    const swing=moving?Math.sin(phase)*.72:.08*Math.sin(phase); const x=240,y=264-bob;
-    c.save();c.translate(x,y);c.rotate(moving?-.055:0);
-    limb(c,-24,-69,58,18,swing,'#665b49'); limb(c,24,-69,58,18,-swing,'#7a6b52');
-    limb(c,-22,-20,62,21,-swing*.78,'#574d3d'); limb(c,22,-20,62,21,swing*.78,'#6b5d47');
-    c.fillStyle='#2e302f';c.strokeStyle='#0d0e0e';c.lineWidth=5;c.beginPath();c.roundRect(-46,-122,92,104,22);c.fill();c.stroke();
-    c.fillStyle='#b4632c';c.beginPath();c.roundRect(-40,-115,80,52,16);c.fill();c.stroke();
-    c.fillStyle='#414342';c.beginPath();c.arc(0,-147,35,0,Math.PI*2);c.fill();c.stroke();
-    c.fillStyle='#b96a31';c.beginPath();c.moveTo(-31,-159);c.lineTo(-46,-174);c.lineTo(-26,-170);c.moveTo(31,-159);c.lineTo(46,-174);c.lineTo(26,-170);c.strokeStyle='#b96a31';c.lineWidth=9;c.stroke();
-    c.shadowBlur=12;c.shadowColor='#72eaff';c.fillStyle='#8ff4ff';c.fillRect(-18,-151,12,4);c.fillRect(6,-151,12,4);c.shadowBlur=0;
-    c.fillStyle='#b06a32';c.beginPath();c.arc(-47,-92,20,0,Math.PI*2);c.arc(47,-92,20,0,Math.PI*2);c.fill();c.strokeStyle='#171717';c.lineWidth=4;c.stroke();
-    c.restore();
-  }
-  function drawRaster(c,time,combat){
-    const moving=mode==='run', p=moving?time*7:time*1.5, bob=moving?Math.abs(Math.sin(p))*7:Math.sin(p)*2.2, lean=moving?-.045+.018*Math.sin(p):.008*Math.sin(p);
-    const sx=moving?1+.012*Math.cos(p*2):1, sy=moving?1-.018*Math.cos(p*2):1;
-    c.save();c.translate(240,278-bob);c.rotate(lean);c.scale(sx,sy);
-    if(body.complete&&body.naturalWidth){c.drawImage(body,-64,-148,128,148)}else{c.fillStyle='#aaa';c.textAlign='center';c.fillText('loading art…',0,-70)}
-    if(combat&&gun.complete&&gun.naturalWidth){
-      const kick=recoil*15;c.save();c.translate(18-kick,-84);c.rotate(-.12-recoil*.05);c.drawImage(gun,-18,-22,102,43);c.restore();
-      if(recoil>.55){c.save();c.translate(91-kick,-94);c.rotate(-.12);c.fillStyle='rgba(255,211,104,.95)';c.beginPath();c.moveTo(0,0);c.lineTo(42,-12);c.lineTo(25,1);c.lineTo(42,13);c.closePath();c.fill();c.restore();}
+  const NS='http://www.w3.org/2000/svg';
+  const BODY='../../assets/hero/shotgun/idle-0.svg';
+  const GUN='../../assets/weapons/shotgun.svg';
+  const stages=[
+    {svg:document.getElementById('rigSmooth'), discrete:false, combat:false, id:'a'},
+    {svg:document.getElementById('rigBaked'), discrete:true, combat:false, id:'b'},
+    {svg:document.getElementById('rigCombat'), discrete:true, combat:true, id:'c'},
+  ];
+  const runBtn=document.getElementById('run');
+  const idleBtn=document.getElementById('idle');
+  const fireBtn=document.getElementById('fire');
+  const slowBtn=document.getElementById('slow');
+  let mode='run', recoil=0, slow=false, t=0, last=performance.now(), raf=0;
+
+  function el(tag,attrs={},parent){const n=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,String(v));if(parent)parent.appendChild(n);return n;}
+  function htmlPressed(){runBtn.setAttribute('aria-pressed',String(mode==='run'));idleBtn.setAttribute('aria-pressed',String(mode==='idle'));slowBtn.setAttribute('aria-pressed',String(slow));}
+  runBtn.addEventListener('click',()=>{mode='run';htmlPressed();});
+  idleBtn.addEventListener('click',()=>{mode='idle';htmlPressed();});
+  slowBtn.addEventListener('click',()=>{slow=!slow;htmlPressed();});
+  fireBtn.addEventListener('click',()=>{recoil=1;});
+
+  function build(stage){
+    const {svg,id}=stage;
+    const defs=el('defs',{},svg);
+    const clips={
+      upper:[8,0,120,111],
+      thighL:[27,82,43,43], shinL:[20,103,47,45],
+      thighR:[58,82,44,43], shinR:[64,103,49,45],
+    };
+    for(const [name,[x,y,w,h]] of Object.entries(clips)){
+      const cp=el('clipPath',{id:`${id}-${name}`},defs);el('rect',{x,y,width:w,height:h,rx:5},cp);
     }
-    c.restore();
-    if(moving){c.fillStyle='rgba(178,151,108,.18)';for(let i=0;i<4;i++){const q=(time*80+i*37)%105;c.beginPath();c.arc(205-q,294-i*3,3+i*.6,0,Math.PI*2);c.fill();}}
+    const shadow=el('ellipse',{cx:240,cy:294,rx:70,ry:12,fill:'rgba(0,0,0,.38)'},svg);
+    const rig=el('g',{transform:'translate(176 76) scale(1.55)'},svg);
+    const back=el('g',{},rig), upper=el('g',{},rig), front=el('g',{},rig);
+
+    function piece(parent,name,clip){
+      const g=el('g',{'data-piece':name},parent);
+      el('image',{href:BODY,x:0,y:0,width:128,height:148,'clip-path':`url(#${id}-${clip})`,preserveAspectRatio:'none'},g);
+      return g;
+    }
+    const p={
+      thighL:piece(back,'thighL','thighL'), shinL:piece(back,'shinL','shinL'),
+      thighR:piece(front,'thighR','thighR'), shinR:piece(front,'shinR','shinR'),
+      upper:piece(upper,'upper','upper'),
+    };
+
+    let weapon=null, flash=null;
+    if(stage.combat){
+      weapon=el('g',{'data-piece':'weapon'},upper);
+      el('image',{href:GUN,x:53,y:57,width:78,height:32,preserveAspectRatio:'xMidYMid meet'},weapon);
+      flash=el('g',{opacity:0,'data-piece':'flash'},upper);
+      const f=el('polygon',{points:'128,67 148,60 137,68 149,76 128,71',fill:'#ffd879'},flash);
+      f.setAttribute('filter','drop-shadow(0 0 3px #ff9b32)');
+    }
+    stage.nodes={shadow,rig,p,weapon,flash};
   }
+
+  stages.forEach(build);
+
+  function poseFor(time,discrete){
+    if(mode==='idle'){
+      const q=time*1.8;
+      return {phase:q,bob:Math.sin(q)*1.2,lean:Math.sin(q*.7)*.45,lHip:0,rHip:0,lKnee:0,rKnee:0,quantized:false};
+    }
+    let phase=(time*6.2)%(Math.PI*2);
+    if(discrete){const i=Math.floor((phase/(Math.PI*2))*6)%6;phase=(i/6)*Math.PI*2;}
+    const s=Math.sin(phase);
+    return {
+      phase,
+      bob:2.1+Math.abs(Math.sin(phase*2))*2.7,
+      lean:-3.4+Math.sin(phase*2)*.7,
+      lHip:18*s,
+      rHip:-18*s,
+      lKnee:-8-18*Math.max(0,-s)+7*Math.max(0,s),
+      rKnee:-8-18*Math.max(0,s)+7*Math.max(0,-s),
+      lFoot:5*Math.max(0,s),
+      rFoot:5*Math.max(0,-s),
+      quantized:discrete,
+    };
+  }
+
+  function apply(stage,time){
+    const {nodes,discrete,combat}=stage;
+    const o=poseFor(time,discrete);
+    const rootY=76-o.bob;
+    nodes.rig.setAttribute('transform',`translate(176 ${rootY.toFixed(2)}) scale(1.55) rotate(${o.lean.toFixed(2)} 64 95)`);
+    nodes.shadow.setAttribute('rx',String(66-Math.min(6,o.bob)));
+    nodes.shadow.setAttribute('opacity',String(.55-Math.min(.12,o.bob*.02)));
+
+    nodes.p.thighL.setAttribute('transform',`rotate(${o.lHip.toFixed(2)} 48 91)`);
+    nodes.p.thighR.setAttribute('transform',`rotate(${o.rHip.toFixed(2)} 80 91)`);
+    nodes.p.shinL.setAttribute('transform',`rotate(${(o.lHip*.42+o.lKnee).toFixed(2)} 45 111) translate(0 ${o.lFoot||0})`);
+    nodes.p.shinR.setAttribute('transform',`rotate(${(o.rHip*.42+o.rKnee).toFixed(2)} 82 111) translate(0 ${o.rFoot||0})`);
+
+    const breathe=mode==='idle'?Math.sin(time*1.8)*.006:Math.sin(o.phase*2)*.004;
+    nodes.p.upper.setAttribute('transform',`translate(0 ${mode==='idle'?(Math.sin(time*1.8)*-.5).toFixed(2):0}) scale(1 ${(1+breathe).toFixed(4)})`);
+
+    if(combat&&nodes.weapon){
+      const kick=recoil*5.8;
+      nodes.weapon.setAttribute('transform',`translate(${-kick.toFixed(2)} 0) rotate(${(-recoil*2.2).toFixed(2)} 71 74)`);
+      nodes.flash.setAttribute('opacity',recoil>.63?'1':'0');
+      nodes.flash.setAttribute('transform',`translate(${-kick.toFixed(2)} 0)`);
+    }
+  }
+
   function frame(now){
-    const dt=Math.min(.04,(now-last)/1000);last=now;t+=dt;recoil=Math.max(0,recoil-dt*4.4);
-    ctxs.forEach(clear); vectorWrecker(ctxs[0],t); drawRaster(ctxs[1],t,false); drawRaster(ctxs[2],t,true);
-    raf=requestAnimationFrame(frame);
+    const dt=Math.min(.04,(now-last)/1000);last=now;t+=dt*(slow?.5:1);recoil=Math.max(0,recoil-dt*5.2);
+    stages.forEach(s=>apply(s,t));raf=requestAnimationFrame(frame);
   }
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches){mode='idle';}
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){mode='idle';slow=true;htmlPressed();}
   raf=requestAnimationFrame(frame);
   addEventListener('pagehide',()=>cancelAnimationFrame(raf),{once:true});
 })();
