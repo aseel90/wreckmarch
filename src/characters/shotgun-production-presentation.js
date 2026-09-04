@@ -3,11 +3,8 @@
  * is safe while the character is locked: CharacterRegistry still blocks gameplay
  * selection until an approved character definition and full-run gate exist.
  */
-import {
-  SHOTGUN_RUNTIME_PRESENTATION,
-  listShotgunRuntimeAssets,
-  queueShotgunRuntimeAssets
-} from './shotgun-runtime-presentation.js?v=2';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=2';
+import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=1';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
   'weaponV3ArmA',
@@ -52,18 +49,17 @@ export function resolveShotgunPresentationPose(heroX, heroY, aimRadians = 0) {
 }
 
 async function ensureShotgunRuntimeAssets(scene) {
-  const assets = listShotgunRuntimeAssets();
-  const missing = assets.filter(asset => !scene?.textures?.exists?.(asset.key));
-  if (missing.length === 0) return SHOTGUN_RUNTIME_PRESENTATION;
+  await loadShotgunLocomotionArt(scene);
+  const weapon = SHOTGUN_RUNTIME_PRESENTATION.weapon;
+  if (scene?.textures?.exists?.(weapon.key)) return SHOTGUN_RUNTIME_PRESENTATION;
   if (!scene?.load?.image || !scene?.load?.once || !scene?.load?.start) {
     throw Error('Shotgun production presentation requires Phaser image-loader boundaries');
   }
 
   await new Promise((resolve, reject) => {
     let settled = false;
-    const missingKeys = new Set(missing.map(asset => asset.key));
     const fail = file => {
-      if (settled || !missingKeys.has(file?.key)) return;
+      if (settled || file?.key !== weapon.key) return;
       settled = true;
       reject(Error(`Shotgun production asset failed: ${file?.key || 'unknown'}`));
     };
@@ -74,7 +70,7 @@ async function ensureShotgunRuntimeAssets(scene) {
       settled = true;
       resolve();
     });
-    queueShotgunRuntimeAssets(scene, missing);
+    scene.load.image(weapon.key, weapon.path);
     scene.load.start();
   });
   return SHOTGUN_RUNTIME_PRESENTATION;
