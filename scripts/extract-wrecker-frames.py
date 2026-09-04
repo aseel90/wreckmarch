@@ -1,4 +1,5 @@
 from pathlib import Path
+import base64
 import json
 import cv2
 import numpy as np
@@ -27,7 +28,6 @@ def remove_floor_residue(body):
     h, w = body.shape
     bottom = np.zeros_like(body)
     bottom[int(h * 0.76):] = body[int(h * 0.76):]
-    # A boot sole is much shorter than one third of a source cell; floor lines are not.
     line_kernel = np.ones((1, max(31, w // 3)), np.uint8)
     floor = cv2.morphologyEx(bottom, cv2.MORPH_OPEN, line_kernel)
     if np.any(floor):
@@ -92,6 +92,20 @@ def fit_to_canvas(img):
     return canvas, {'outputBody': [nw, nh], 'offset': [x, y]}
 
 
+def write_svg_wrapper(frame_png, destination, source_sheet):
+    raw = frame_png.read_bytes()
+    encoded = base64.b64encode(raw).decode('ascii')
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="148" viewBox="0 0 128 148" '
+        'data-foot-line-y="140" data-shadow-free="true">\n'
+        f'  <image id="shotgun-body" data-source="approved-wrecker-raster" data-source-sheet="{source_sheet}" '
+        'x="0" y="0" width="128" height="148" preserveAspectRatio="none" '
+        f'href="data:image/png;base64,{encoded}"/>\n'
+        '</svg>\n'
+    )
+    destination.write_text(svg, encoding='utf-8')
+
+
 def process(path, count, prefix, strip_floor=False):
     src = Image.open(path).convert('RGB')
     arr = np.array(src)
@@ -102,8 +116,9 @@ def process(path, count, prefix, strip_floor=False):
         cell = arr[:, x0 + pad:x1 - pad]
         isolated, seg = isolate_character(cell, strip_floor=strip_floor)
         frame, fit = fit_to_canvas(isolated)
-        out = OUT_DIR / f'{prefix}-{i}.png'
-        frame.save(out, optimize=True)
+        out_png = OUT_DIR / f'{prefix}-{i}.png'
+        frame.save(out_png, optimize=True)
+        write_svg_wrapper(out_png, SRC_DIR / f'{prefix}-{i}.svg', path.name)
         records.append({'frame': f'{prefix}-{i}', 'cellX': [x0 + pad, x1 - pad], **seg, **fit})
     return {'source': path.name, 'sourceSize': list(src.size), 'frames': records}
 
