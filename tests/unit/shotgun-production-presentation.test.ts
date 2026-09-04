@@ -41,13 +41,7 @@ class DisplayObject {
 }
 
 const LEGACY_PARTS = [
-  'weaponV3ArmA',
-  'weaponV3ArmB',
-  'weaponV3HandA',
-  'weaponV3HandB',
-  'weaponArm',
-  'weaponRig',
-  'aimPose'
+  'weaponV3ArmA','weaponV3ArmB','weaponV3HandA','weaponV3HandB','weaponArm','weaponRig','aimPose'
 ] as const;
 
 function createScene() {
@@ -70,22 +64,11 @@ function createScene() {
     playTone: vi.fn()
   };
   for (const key of LEGACY_PARTS) scene[key] = new DisplayObject();
-  return {
-    scene,
-    hero,
-    weaponV3Gun,
-    getMuzzleResolver: () => muzzleResolver,
-    getFireFeedback: () => fireFeedback
-  };
+  return { scene, hero, weaponV3Gun, getMuzzleResolver: () => muzzleResolver, getFireFeedback: () => fireFeedback };
 }
 
 beforeEach(() => {
   (globalThis as any).Phaser = { Math: { Vector2 } };
-  vi.stubGlobal('fetch', vi.fn(async () => ({
-    ok: true,
-    status: 200,
-    text: async () => '<svg><image href="data:image/png;base64,aGVsbG8=" /></svg>'
-  })));
 });
 
 describe('locked Shotgun production presentation adapters', () => {
@@ -132,15 +115,9 @@ describe('locked Shotgun production presentation adapters', () => {
     fixture.scene.startingWeaponId = 'shotgun';
     fixture.scene.activeWeaponId = 'shotgun';
     fixture.scene.primaryWeapon = createWeaponRuntimeState('shotgun');
-    fixture.scene.characterSystem = {
-      characterId: 'shotgun',
-      weaponDefinition,
-      installProductionVisuals,
-      updateLocomotionVisuals
-    };
+    fixture.scene.characterSystem = { characterId: 'shotgun', weaponDefinition, installProductionVisuals, updateLocomotionVisuals };
     const baseMovement = vi.fn();
     fixture.scene.updateMovement = baseMovement;
-
     const result = await installShotgunD1Presentation(fixture.scene, definition);
     expect(Object.values(result.checks).every(Boolean)).toBe(true);
     expect(installProductionVisuals).toHaveBeenCalledOnce();
@@ -150,12 +127,12 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(fixture.scene.primaryWeapon.fireProfile).toEqual(weaponDefinition.fireProfile);
   });
 
-  it('decodes embedded Wrecker PNG rasters before queueing missing body textures', async () => {
+  it('loads only the separate weapon through Phaser image loading once Wrecker body canvases exist', async () => {
     const fixture = createScene();
     const image = vi.fn();
     const svg = vi.fn();
     const listeners = new Map<string, Function>();
-    fixture.scene.textures.exists = () => false;
+    fixture.scene.textures.exists = (key: string) => key !== SHOTGUN_RUNTIME_PRESENTATION.weapon.key;
     fixture.scene.load = {
       image,
       svg,
@@ -164,14 +141,9 @@ describe('locked Shotgun production presentation adapters', () => {
       once: vi.fn((event: string, fn: Function) => listeners.set(event, fn)),
       start: vi.fn(() => listeners.get('complete')?.())
     };
-
     await installShotgunC5Presentation(fixture.scene);
-
-    expect(fetch).toHaveBeenCalledTimes(7);
-    expect(image).toHaveBeenCalledTimes(8);
-    const queuedSources = image.mock.calls.map(call => call[1]);
-    expect(queuedSources.slice(0, 7).every(source => String(source).startsWith('data:image/png;base64,'))).toBe(true);
-    expect(queuedSources[7]).toBe(SHOTGUN_RUNTIME_PRESENTATION.weapon.path);
+    expect(image).toHaveBeenCalledOnce();
+    expect(image).toHaveBeenCalledWith(SHOTGUN_RUNTIME_PRESENTATION.weapon.key, SHOTGUN_RUNTIME_PRESENTATION.weapon.path);
     expect(svg).not.toHaveBeenCalled();
   });
 
