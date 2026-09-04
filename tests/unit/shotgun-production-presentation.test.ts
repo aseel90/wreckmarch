@@ -145,12 +145,12 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(fixture.scene.primaryWeapon.fireProfile).toEqual(weaponDefinition.fireProfile);
   });
 
-  it('loads missing Wrecker textures only through the canonical image loader', async () => {
+  it('loads only the separate weapon through Phaser image loading once Wrecker body canvases exist', async () => {
     const fixture = createScene();
     const image = vi.fn();
     const svg = vi.fn();
     const listeners = new Map<string, Function>();
-    fixture.scene.textures.exists = () => false;
+    fixture.scene.textures.exists = (key: string) => key !== SHOTGUN_RUNTIME_PRESENTATION.weapon.key;
     fixture.scene.load = {
       image,
       svg,
@@ -162,7 +162,11 @@ describe('locked Shotgun production presentation adapters', () => {
 
     await installShotgunC5Presentation(fixture.scene);
 
-    expect(image).toHaveBeenCalledTimes(8);
+    expect(image).toHaveBeenCalledOnce();
+    expect(image).toHaveBeenCalledWith(
+      SHOTGUN_RUNTIME_PRESENTATION.weapon.key,
+      SHOTGUN_RUNTIME_PRESENTATION.weapon.path
+    );
     expect(svg).not.toHaveBeenCalled();
   });
 
