@@ -913,7 +913,6 @@ This is the official production verification gate described in `TESTING_AND_DEPL
 
 ---
 
-
 # 21.2. Sharded Playwright E2E gate
 
 The canonical browser E2E architecture is defined in `TESTING_AND_DEPLOYMENT_POLICY.md`. It replaces the single-runner/multi-worker approach with isolated runner-level parallelism.
@@ -1036,11 +1035,11 @@ Latest verified gameplay commit for the core: `89926f8`.
 - [x] Verify displayed values against combat. — **Status:** ✅ DONE — character/weapon values come from `RunStatState.resolve()` and projectile-count/volley values come from `WeaponSystem.heroVolleyProfile()`; 844×390 E2E asserts displayed HP/damage/projectile-count against the same canonical runtime sources.
 
 ## Phase U7 — Balance and cleanup
-- [ ] Full 10-minute run tests. — **Status:** 🟡 POST-TUNING LIVE RUN PENDING — PR #253 passes deterministic RUN-0047/RUN-0048 600s-bound replay plus full Quality/Smoke/E2E, but one new full Production run on the tuned curve is still required.
-- [ ] Rarity/DPS/progression tuning. — **Status:** 🟡 IN PROGRESS — progression pacing is tuned and regression-locked in PR #253 / `bf0bdc97d26bc21f5a8eeaaedfa9e93334859894`; full 10-minute rarity-frequency validation and any remaining DPS evidence remain open.
-- [ ] Remove obsolete migration shims/duplicate upgrade patches. — **Status:** 🧹 POST-MIGRATION
-- [ ] Full regression suite. — **Status:** ⚪ NOT STARTED
-- [ ] Update this roadmap with final completed checkboxes. — **Status:** 🧹 POST-MIGRATION
+- [x] Full 10-minute run tests. — **Status:** ✅ PRODUCTION VERIFIED — final natural Production run `wm-51c5cbaa-211d-489b-b0c1-a3ad54a178cc` lasted 794.244s (13m14s), reached Wave 10 / Level 14, and completed the live >600s gameplay gate without upgrade-system regression.
+- [x] Rarity/DPS/progression tuning. — **Status:** ✅ PRODUCTION VERIFIED — final 794.244s run recorded 15 upgrade picks (9 Common / 5 Rare / 1 Epic), 120.125 average DPS / 269.655 peak DPS, Wave 10 pressure, and continued upgrade acquisition through 741.498s. Level 14 vs 15 picks is expected: 13 normal level-up picks plus the two guaranteed Elite WRECK CRATE rewards at 270s and 450s.
+- [x] Remove obsolete migration shims/duplicate upgrade patches. — **Status:** ✅ DONE — PR #323 completed the final U7 ownership audit and strengthened regression guards; no additional migration shim can be removed safely without changing an intentional canonical consumer contract.
+- [x] Full regression suite. — **Status:** ✅ GREEN — PR #323 passed Quality, Smoke, all three E2E shards, and aggregate E2E before merge; no open `ci-failure` remained at U7 closeout.
+- [x] Update this roadmap with final completed checkboxes. — **Status:** ✅ DONE — U7 closeout reconciled with merged cleanup/regression evidence and the final 794.244s Production run.
 
 ## Later — explicitly NOT part of current implementation
 - [ ] Synergy expansion. — **Status:** ⏸️ DEFERRED
@@ -1063,9 +1062,9 @@ Upgrade System 2.0 is complete only when:
 - [x] Rarity/levels/prerequisites work predictably for the **expanded** card pool. — **Status:** ✅ VERIFIED — WS17 locked rarity/power semantics, shared prerequisites/compatibility remain canonical, Triple has natural Production/D1 evidence, and U3 now preserves the Elite minimum-rarity guarantee without changing normal offer odds.
 - [x] Stats shown to the player match actual combat in the planned build/run-stats UI. — **Status:** ✅ U6 VERIFIED — the Pause `RUN BUILD` panel reads `RunStatState.resolve()` plus the live `WeaponSystem.heroVolleyProfile()` and is E2E-checked against the active scene.
 - [x] The expanded system remains performant and readable on mobile. — **Status:** ✅ VERIFIED — WS21 Production telemetry validates projectile/effect performance, U5 covers the three-card 844×390 presentation, and U6 validates the Pause build panel inside the same target mobile landscape viewport.
-- [ ] A full 10-minute run can be completed without upgrade-system regression after the new-card pool lands. — **Status:** 🟡 U7 POST-TUNING RUN PENDING — deterministic 600s progression replay passes after PR #253; a fresh full Production run on the tuned curve remains the live gameplay gate.
+- [x] A full 10-minute run can be completed without upgrade-system regression after the new-card pool lands. — **Status:** ✅ PRODUCTION VERIFIED — `wm-51c5cbaa-211d-489b-b0c1-a3ad54a178cc` survived 794.244s, reached Wave 10, recorded stable upgrade progression through 741.498s, and showed no upgrade-system regression.
 - [x] Obsolete upgrade-related duplicate ownership from the migrated current cards has been retired where safely possible. — **Status:** ✅ CORE VERIFIED
-- [ ] Full regression suite passes after U4–U7 are complete. — **Status:** ⚪ FINAL GATE
+- [x] Full regression suite passes after U4–U7 are complete. — **Status:** ✅ FINAL GATE PASSED — PR #323 completed Quality + Smoke + all E2E shards + aggregate E2E on the final U7 ownership graph, followed by the successful >600s Production gameplay run.
 - [x] This checklist reflects the real implementation state. — **Status:** ✅ restored after the accidental roadmap truncation
 
 ---
