@@ -97,22 +97,22 @@
           1847
         ],
         "bbox": [
-          21,
+          207,
           78,
-          888,
-          897
+          847,
+          890
         ],
         "sourceCell": [
           910,
           928
         ],
         "outputBody": [
-          108,
-          102
+          104,
+          132
         ],
         "offset": [
-          10,
-          38
+          12,
+          8
         ]
       },
       {
@@ -122,22 +122,22 @@
           2775
         ],
         "bbox": [
-          21,
+          143,
           50,
-          888,
-          897
+          752,
+          890
         ],
         "sourceCell": [
           910,
           928
         ],
         "outputBody": [
-          108,
-          106
+          96,
+          132
         ],
         "offset": [
-          10,
-          34
+          16,
+          8
         ]
       },
       {
@@ -172,22 +172,22 @@
           4631
         ],
         "bbox": [
-          21,
+          227,
           80,
-          888,
-          897
+          839,
+          878
         ],
         "sourceCell": [
           910,
           928
         ],
         "outputBody": [
-          108,
-          102
+          101,
+          132
         ],
         "offset": [
-          10,
-          38
+          13,
+          8
         ]
       }
     ]
@@ -197,5 +197,5 @@
     148
   ],
   "footLineY": 140,
-  "shadowPolicy": "detached floor/shadow components are discarded before fitting"
+  "shadowPolicy": "long thin floor/shadow residue is stripped from run alpha before fitting"
 }
