@@ -420,7 +420,9 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=6" -o wm-live-phase-b.js
           curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=24" -o wm-live-phase-c.js
           curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=19" -o wm-live-phase-c1.js
+          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=1" -o wm-live-upgrade-scene.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=1" -o wm-live-upgrade-offer-pool.js
+          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-roll-service.js?v=2" -o wm-live-upgrade-roll-service.js
           curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=28" -o wm-live-phase-d1.js
           curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=1" -o wm-live-character-runtime-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/runner-production-presentation.js?v=1" -o wm-live-runner-production-presentation.js
@@ -454,7 +456,11 @@ jobs:
           grep -F "weaponVolley:s.primaryWeapon?.fireProfile?.projectileCount===1" wm-live-runner-production-presentation.js
           grep -F "weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'" wm-live-runner-production-presentation.js
           grep -F "./upgrades/upgrade-offer-pool.js?v=1" wm-live-phase-c.js
-          grep -F "./upgrades/upgrade-offer-pool.js?v=1" wm-live-phase-c1.js
+          grep -F "./upgrades/upgrade-scene.js?v=1" wm-live-phase-c1.js
+          grep -F "./upgrade-offer-pool.js?v=1" wm-live-upgrade-scene.js
+          grep -F "./upgrade-roll-service.js?v=2" wm-live-upgrade-scene.js
+          grep -F "class UpgradeSceneV4 extends Phaser.Scene" wm-live-upgrade-scene.js
+          grep -F "gameScene.__upgradeSceneOwner = 'src/upgrades/upgrade-scene.js'" wm-live-upgrade-scene.js
           grep -F "offer('explosive-rivet', 'HERO'" wm-live-upgrade-offer-pool.js
           grep -F "offer('triple-riveter', 'EVOLUTION'" wm-live-upgrade-offer-pool.js
           grep -F "HUNTER_INITIAL: 'HUNTER_INITIAL'" wm-live-upgrade-offer-pool.js
@@ -501,7 +507,9 @@ jobs:
             wm-live-phase-b.js
             wm-live-phase-c.js
             wm-live-phase-c1.js
+            wm-live-upgrade-scene.js
             wm-live-upgrade-offer-pool.js
+            wm-live-upgrade-roll-service.js
             wm-live-phase-d1.js
             wm-live-character-runtime-presentation.js
             wm-live-runner-production-presentation.js
