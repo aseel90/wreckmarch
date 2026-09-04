@@ -15,6 +15,21 @@ test('locked Shotgun can complete the production stack only through the explicit
     const scene = game?.scene?.getScene?.('Wreckmarch');
     const registryPath = '/src/characters/character-registry.js?v=5';
     const registry = await import(registryPath);
+    const bodyTexture = scene?.textures?.get?.('shotgun-body-idle-0');
+    const source = bodyTexture?.getSourceImage?.() || bodyTexture?.source?.[0]?.image || null;
+    const bodyTextureCanvas = typeof HTMLCanvasElement !== 'undefined' && source instanceof HTMLCanvasElement;
+    let bodyHasVisiblePixels = false;
+    if (bodyTextureCanvas) {
+      const data = source.getContext('2d', { willReadFrequently: true })?.getImageData(0, 0, source.width, source.height)?.data;
+      if (data) {
+        for (let index = 3; index < data.length; index += 4) {
+          if (data[index] > 0) {
+            bodyHasVisiblePixels = true;
+            break;
+          }
+        }
+      }
+    }
     return {
       selected: (window as any).__WM_SELECTED_CHARACTER__ || null,
       shellScreen: (window as any).__WM_GAME_SHELL__?.currentScreenId || null,
@@ -29,6 +44,10 @@ test('locked Shotgun can complete the production stack only through the explicit
       heroSpeed: scene?.heroSpeed || null,
       c5Ok: scene?.__characterPresentationC5?.ok === true,
       d1Ok: scene?.__characterPresentationD1?.ok === true,
+      bodyTextureCanvas,
+      bodyTextureWidth: source?.width || null,
+      bodyTextureHeight: source?.height || null,
+      bodyHasVisiblePixels,
       registryAvailability: registry.getCharacterEntry('shotgun').availability,
       registrySelectable: registry.isCharacterSelectable('shotgun')
     };
@@ -48,6 +67,10 @@ test('locked Shotgun can complete the production stack only through the explicit
     heroSpeed: 255,
     c5Ok: true,
     d1Ok: true,
+    bodyTextureCanvas: true,
+    bodyTextureWidth: 128,
+    bodyTextureHeight: 148,
+    bodyHasVisiblePixels: true,
     registryAvailability: 'locked',
     registrySelectable: false
   });
