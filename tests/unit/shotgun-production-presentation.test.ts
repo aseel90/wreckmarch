@@ -145,6 +145,27 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(fixture.scene.primaryWeapon.fireProfile).toEqual(weaponDefinition.fireProfile);
   });
 
+  it('loads missing Wrecker textures only through the canonical image loader', async () => {
+    const fixture = createScene();
+    const image = vi.fn();
+    const svg = vi.fn();
+    const listeners = new Map<string, Function>();
+    fixture.scene.textures.exists = () => false;
+    fixture.scene.load = {
+      image,
+      svg,
+      on: vi.fn((event: string, fn: Function) => listeners.set(event, fn)),
+      off: vi.fn(),
+      once: vi.fn((event: string, fn: Function) => listeners.set(event, fn)),
+      start: vi.fn(() => listeners.get('complete')?.())
+    };
+
+    await installShotgunC5Presentation(fixture.scene);
+
+    expect(image).toHaveBeenCalledTimes(8);
+    expect(svg).not.toHaveBeenCalled();
+  });
+
   it('rejects a future character definition that drifts from canonical Shotgun frames', async () => {
     const fixture = createScene();
     fixture.scene.characterSystem = { characterId: 'shotgun' };
