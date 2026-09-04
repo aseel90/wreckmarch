@@ -19,8 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install pillow numpy
-      - name: Extract production frames
+      - run: pip install pillow numpy opencv-python-headless
+      - name: Extract production frames from approved source sheets
         run: python scripts/extract-wrecker-frames.py
       - name: Commit generated frames
         run: |
