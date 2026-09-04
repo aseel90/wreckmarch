@@ -46,6 +46,8 @@ describe('U7 canonical Upgrade Scene ownership', () => {
       expect(legacy).not.toContain('.launch =');
       expect(legacy).not.toContain('openUpgradeCards = function');
       expect(legacy).not.toContain('closeUpgradeCards = function');
+      expect(legacy).not.toContain('createActiveUpgradeOfferChoices');
+      expect(legacy).not.toContain('rollUpgradeChoices');
       expect(legacy).not.toContain("getScene('UpgradeSceneV3')");
     }
     expect(c2).not.toContain('c2-upgrade-art');
