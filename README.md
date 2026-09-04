@@ -571,17 +571,18 @@ The browser build should always be easy to test from a phone.
 
 ## 22. Current Core Implementation Priority
 
-The Hero-owned combat redesign, large-world baseline, Combat & Build Balance WS1–WS23, responsive frontend remediation, and Upgrade System 2.0 are now closed production baselines.
+The Hero-owned combat redesign, large-world baseline, Combat & Build Balance WS1–WS23, responsive frontend remediation, and Upgrade System 2.0 are now closed production baselines. The Shotgun WS14-C **art foundation is also complete**: dedicated 2-idle/3-run body art, separate Shotgun weapon art, runtime composition/presentation and locked Character Select preview already exist.
 
-**Current next major production track: WS14-C — Shotgun Character identity + production art.**
+**Current next major production track: finish the Shotgun production gate — canonical character gameplay definition, then full activation validation.**
 
 Required order:
 
-1. WS14-C — approve the Shotgun character gameplay/visual identity and production-ready art contract without reusing Runner art as a shipping placeholder.
-2. WS14-D — add the canonical character definition and selection/start-flow integration through `CharacterRegistry`; no ad-hoc `if shotgunCharacter` runtime branches.
-3. WS14-E — activate the character only after deterministic regression, mobile browser validation, Production/D1 telemetry and Runner-parity checks pass.
-4. WS15-B — rerun the short-range enemy matchup review only after the Shotgun character is actually active.
-5. Only then may `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md` pass its R0 Character Production gate and become the next large expansion roadmap.
+1. Approve the Shotgun **character gameplay definition** (HP, movement speed, passive and any differing physics/locomotion values). Do not copy Runner values as a shortcut and do not hide weapon power inside character stats.
+2. Register that definition through the canonical CharacterRegistry/CharacterSystem path while keeping Shotgun production-locked until every activation requirement is ready; no ad-hoc `if shotgunCharacter` runtime branches.
+3. Complete deterministic Runner-vs-Shotgun regression, mobile browser/Live checks and the required real Production/D1 full-run evidence.
+4. Only after `shotgun-production-gate.js` has no blockers may availability change from locked preview to selectable.
+5. Run WS15-B short-range enemy matchup review after activation.
+6. Only then may `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md` pass its R0 Character Production gate and become the next large expansion roadmap.
 
 Do **not** reopen Upgrade System 2.0, Combat & Build Balance scalar tuning, or responsive remediation without a new reproducible regression or explicitly approved scope change.
 
