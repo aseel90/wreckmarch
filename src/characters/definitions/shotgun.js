@@ -1,5 +1,7 @@
 /* WRECKMARCH WS14-E — canonical Shotgun playable-character definition */
-import { SHOTGUN_PRODUCTION_ART } from '../shotgun-production-art.js?v=1';
+import { SHOTGUN_RUNTIME_PRESENTATION } from '../shotgun-runtime-presentation.js?v=1';
+
+const presentation = SHOTGUN_RUNTIME_PRESENTATION;
 
 export const SHOTGUN_CHARACTER = Object.freeze({
   id: 'shotgun',
@@ -38,26 +40,26 @@ export const SHOTGUN_CHARACTER = Object.freeze({
     offsetY: 46
   }),
   bootstrap: Object.freeze({
-    texture: 'shotgun-idle-0',
-    animation: 'character-shotgun-idle',
-    scale: .78,
+    texture: presentation.body.idle[0].key,
+    animation: presentation.body.animationKeys.idle,
+    scale: presentation.body.render.scale,
     depth: 22
   }),
   render: Object.freeze({
-    originX: .5,
-    originY: .52,
-    scale: .78,
-    idleTexture: 'shotgun-idle-0'
+    originX: presentation.body.render.originX,
+    originY: presentation.body.render.originY,
+    scale: presentation.body.render.scale,
+    idleTexture: presentation.body.idle[0].key
   }),
   animations: Object.freeze({
     idle: Object.freeze({
-      key: 'character-shotgun-idle',
-      frames: Object.freeze(['shotgun-idle-0', 'shotgun-idle-1']),
+      key: presentation.body.animationKeys.idle,
+      frames: Object.freeze(presentation.body.idle.map(frame => frame.key)),
       frameRate: 2
     }),
     run: Object.freeze({
-      key: 'character-shotgun-run',
-      frames: Object.freeze(['shotgun-run-0', 'shotgun-run-1', 'shotgun-run-2']),
+      key: presentation.body.animationKeys.run,
+      frames: Object.freeze(presentation.body.run.map(frame => frame.key)),
       frameRate: 10
     })
   }),
@@ -72,8 +74,8 @@ export const SHOTGUN_CHARACTER = Object.freeze({
     maxTimeScale: 1.32
   }),
   weapon: Object.freeze({
-    socketOffsetX: SHOTGUN_PRODUCTION_ART.geometry.gripSocket.x,
-    socketOffsetY: SHOTGUN_PRODUCTION_ART.geometry.gripSocket.y,
+    socketOffsetX: presentation.body.gripSocket.offsetX,
+    socketOffsetY: presentation.body.gripSocket.offsetY,
     leftFacingMinIndex: 3,
     leftFacingMaxIndex: 5,
     muzzleReachStraight: 38,
