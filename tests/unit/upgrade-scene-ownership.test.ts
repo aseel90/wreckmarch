@@ -5,7 +5,8 @@ import { resolve } from 'node:path';
 const ROOT = resolve(import.meta.dirname, '../..');
 const read = (path: string) => readFileSync(resolve(ROOT, path), 'utf8');
 
-// U7 regression contract: phase runtimes may consume, but must not own, upgrade scene lifecycle or card UI.
+// U7 regression contract: phase runtimes may consume the canonical Upgrade Scene,
+// but must not own its lifecycle, offer selection, roll service, or card UI.
 describe('U7 canonical Upgrade Scene ownership', () => {
   it('keeps scene lifecycle under src/upgrades and retires legacy Phase C/C1/C2/C3/C3.1/C5 owners', () => {
     const canonical = read('src/upgrades/upgrade-scene.js');
@@ -46,6 +47,8 @@ describe('U7 canonical Upgrade Scene ownership', () => {
       expect(legacy).not.toContain('.launch =');
       expect(legacy).not.toContain('openUpgradeCards = function');
       expect(legacy).not.toContain('closeUpgradeCards = function');
+      expect(legacy).not.toContain('createActiveUpgradeOfferChoices');
+      expect(legacy).not.toContain('rollUpgradeChoices');
       expect(legacy).not.toContain("getScene('UpgradeSceneV3')");
     }
     expect(c2).not.toContain('c2-upgrade-art');
