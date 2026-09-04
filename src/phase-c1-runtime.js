@@ -1,6 +1,6 @@
 import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';
 
-/* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + canonical upgrade-scene owner */
+/* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim; canonical UpgradeScene is installed by Phase C */
 const W = 960;
 const H = 540;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -221,12 +221,14 @@ export async function applyPhaseC1() {
   reinstallLandscapeJoystick(scene);
   installTwoHandAim(scene);
   installLandscapeHud(scene);
-  await installUpgradeScene(scene);
+  if (typeof installUpgradeScene !== 'function' || scene.__upgradeSceneOwner !== 'src/upgrades/upgrade-scene.js') {
+    throw new Error('Phase C.1 requires canonical UpgradeScene installed by Phase C');
+  }
   refineLandscapeScale(scene);
   addOrientationSignal();
 
   window.__WM_PHASE_C1__ = true;
   document.documentElement.dataset.wreckmarchPhaseC1 = 'active';
-  window.__WM_LOG__?.('Phase C.1 active: landscape HUD + 8-way two-hand aim + canonical upgrade scene');
+  window.__WM_LOG__?.('Phase C.1 active: landscape HUD + 8-way two-hand aim; canonical upgrade scene verified');
   return true;
 }
