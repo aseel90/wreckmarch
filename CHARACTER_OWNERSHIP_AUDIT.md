@@ -2,8 +2,9 @@
 
 **Audit start:** 2026-09-03  
 **Baseline HEAD:** `a16d91241a9f0a744c013e00a84ad1270a0f342b`  
-**Mode:** READ-ONLY ARCHITECTURE AUDIT  
-**Entry condition:** Automated responsive frontend gate is verified. Post-fix real-device iOS re-check is still pending, so Character Ownership runtime changes remain blocked.
+**Mode:** AUDIT + REMEDIATION STATUS  
+**Reconciled:** 2026-09-04  
+**Entry condition:** Responsive frontend remediation and real-device/Live verification are closed. Character Access remediation has landed; Shotgun remains production-locked for gameplay-definition + full-run approval.
 
 ## 1. Current production-availability owner
 
@@ -20,24 +21,22 @@ Current verified state:
 
 ## 2. Current player-access path
 
-There is not yet a separate player-ownership gate.
+A separate effective-access boundary is now implemented.
 
-Today:
+Current canonical path:
 
-- `src/ui/character-select-model.js` derives `selectable` directly from `isCharacterSelectable()`.
-- `src/ui/frontend-runtime.js` uses the same production-only check for restart intent and first selectable character resolution.
-- `src/characters/selected-character-runtime.js` calls `getCharacterDefinition()` before scene mutation, which is a useful final production lock.
-- `src/characters/character-system.js` resolves the production definition and signature weapon again when constructing the character system.
+- `src/characters/character-ownership-store.js` owns the player-owned character set.
+- `src/characters/character-access.js` composes production readiness from `CharacterRegistry` with player ownership.
+- `src/ui/character-select-model.js` derives card/select state through `resolveCharacterAccess()` / `resolveFirstAccessibleCharacter()`.
+- `src/ui/frontend-runtime.js` uses the same effective-access path for first-character/autotest flow.
+- `src/characters/selected-character-runtime.js` revalidates effective access before scene mutation, then resolves the canonical production definition.
+- `src/characters/character-system.js` still resolves the production definition/signature weapon and remains free of persistence ownership.
 
-This means current access is effectively:
-
-`production selectable => player selectable`
-
-The future rule must become:
+Current effective access is:
 
 `production selectable AND player owned => effective player access`
 
-The production condition must always be evaluated first and must never be overridable by persistence, Scrip, debug state, or Workshop UI.
+The production condition is evaluated first and cannot be overridden by persistence, Scrip, debug state, or Workshop UI. Shotgun therefore remains inaccessible while `CharacterRegistry` keeps it production-locked, even if ownership state were corrupted or mocked.
 
 ## 3. Current persistent purchase ownership
 
@@ -52,15 +51,15 @@ The production condition must always be evaluated first and must never be overri
 
 This is already sufficient as a durable **purchase receipt source** for Workshop items, but it should not become the direct authority for whether a character may run.
 
-A future character entitlement may be derived from an explicit character-unlock catalog item or another canonical unlock source, but effective character access still needs a dedicated resolver that composes that entitlement with `CharacterRegistry` production availability.
+A future purchasable character entitlement may be derived from an explicit character-unlock catalog item or another canonical unlock source, but effective access is already composed through `character-access.js`; Workshop/purchase state must feed ownership without mutating `CharacterRegistry` production availability.
 
-## 4. Required Character Access resolver
+## 4. Character Access resolver — implemented
 
-The future owner should be a small pure boundary, conceptually:
+The canonical owner is `src/characters/character-access.js`, with the pure boundary:
 
 `resolveCharacterAccess(characterId, playerProfile)`
 
-It should return enough state for UI/runtime without modifying either production registry or progression persistence, for example:
+It returns enough state for UI/runtime without modifying either production registry or progression persistence, including:
 
 - production availability
 - production definition presence
@@ -76,15 +75,15 @@ Required invariants:
 4. Only `productionReady && playerOwned` may become effectively selectable when ownership is required.
 5. Unknown character ids remain hard failures rather than silently falling back to Runner.
 
-## 5. Entry points that must compose through Character Access
+## 5. Entry points that compose through Character Access
 
-When runtime implementation is eventually allowed, the effective-access resolver must be used at every player-controlled selection boundary:
+The effective-access resolver is now used at the player-controlled selection/runtime boundaries; keep these paths canonical:
 
-1. `character-select-model.js` — card status, lock reason and select action.
-2. `frontend-runtime.js` — restart-character intent must not bypass player ownership.
-3. `resolveFirstSelectableCharacter()` / autotest selection — must resolve effective access, not registry availability alone.
-4. `selected-character-runtime.js` — revalidate effective access before writing `scene.characterId`.
-5. Workshop character-unlock presentation — may expose eligibility but must never mutate production availability.
+1. `character-select-model.js` — card status, lock reason and select action use effective access.
+2. `frontend-runtime.js` — first-character/autotest flow resolves through the access-aware selection model.
+3. `resolveFirstSelectableCharacter()` resolves effective access, not registry availability alone.
+4. `selected-character-runtime.js` revalidates effective access before writing `scene.characterId`.
+5. Workshop character-unlock presentation may expose eligibility/ownership but must never mutate production availability.
 
 `CharacterSystem` should continue to resolve the canonical production definition. It is a production/runtime boundary, not the correct place to read localStorage or Workshop ownership.
 
@@ -135,17 +134,16 @@ For Shotgun specifically:
 - no Scrip balance, debug flag or localStorage edit may bypass the production gate
 - activation should happen only after the Shotgun-specific runtime/presentation path has full unit/E2E/Live coverage
 
-## 8. Recommended implementation order after real-device responsive acceptance
+## 8. Remaining implementation order after access remediation
 
-1. Add a pure Character Access resolver with no UI or purchase writes.
-2. Add unit tests for the four gate combinations: production ready/unready × player owned/unowned.
-3. Keep Runner behavior exactly unchanged and prove Shotgun remains locked even under mocked ownership.
-4. Wire Character Select to effective access.
-5. Wire restart/autotest/frontend boot paths to effective access.
-6. Revalidate effective access in selected-character scene binding.
-7. Do **not** add a purchasable character yet.
-8. Separately finish the Shotgun production runtime/composition gate.
-9. Only after Shotgun is production-ready, add any approved Workshop character-unlock entitlement and its purchase/E2E/Live coverage.
+1. Keep the implemented Character Access resolver + ownership store unchanged unless a real ownership bug is found.
+2. Preserve unit/E2E coverage for production-ready/unready × player-owned/unowned combinations and locked-Shotgun safety.
+3. Approve the Shotgun canonical **character gameplay definition** (HP, move speed, passive and any intentionally different locomotion/physics values).
+4. Register/integrate that definition while keeping Shotgun production-locked until the production gate is otherwise ready.
+5. Complete deterministic Runner-vs-Shotgun regression plus browser/Live validation.
+6. Complete the real Production/D1 full-run approval required by `shotgun-production-gate.js`.
+7. Only after the production gate has no blockers may Shotgun become selectable.
+8. Only after Shotgun is production-ready should any approved Workshop character-unlock entitlement/purchase flow become user-facing.
 
 ## 9. Tests that must remain green
 
@@ -162,15 +160,15 @@ New access tests should be additive rather than replacing these production-lock 
 
 ## 10. Current status
 
-- Responsive automated prerequisite: **verified**.
-- Responsive real-device iOS re-check: **pending; runtime ownership changes blocked**.
+- Responsive prerequisite / real-device closeout: **verified / closed**.
 - Production availability owner (`CharacterRegistry`): **verified**.
 - Locked Shotgun production boundary: **verified**.
-- Player ownership owner: **not implemented**.
-- Effective Character Access resolver: **not implemented**.
-- Frontend/restart paths currently use production availability only: **confirmed audit finding**.
-- Workshop persistent purchase receipt state: **available, but not a character-access authority**.
-- Runner/Rivet-specific late runtime composition: **confirmed across Phase B/C/C5/D1**.
-- Character Ownership runtime remediation: **not started**.
+- Player ownership owner (`character-ownership-store.js`): **implemented**.
+- Effective Character Access resolver (`character-access.js`): **implemented**.
+- Character Select / frontend / selected-character binding use effective access: **implemented**.
+- Workshop persistent purchase receipt state: **available, but still not a production-availability authority**.
+- Shotgun art/runtime composition + C5/D1 presenters: **implemented behind the lock**.
+- Shotgun production gate remaining blockers: **canonical character gameplay definition + real Production full-run approval**.
+- Character Ownership runtime remediation: **core access boundary complete; production activation remains intentionally locked**.
 
-No Character Ownership runtime change is claimed complete by this audit.
+Do not reopen the access architecture while finishing Shotgun activation; the next work belongs to the canonical character definition/production gate, not another ownership wrapper.
