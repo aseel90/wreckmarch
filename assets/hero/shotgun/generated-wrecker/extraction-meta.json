@@ -1,0 +1,201 @@
+{
+  "idle": {
+    "source": "Gemini_Generated_Image_o8s2kto8s2kto8s2.jfif",
+    "sourceSize": [
+      4640,
+      928
+    ],
+    "frames": [
+      {
+        "frame": "idle-0",
+        "cellX": [
+          23,
+          2297
+        ],
+        "bbox": [
+          55,
+          78,
+          2218,
+          897
+        ],
+        "sourceCell": [
+          2274,
+          928
+        ],
+        "outputBody": [
+          108,
+          41
+        ],
+        "offset": [
+          10,
+          99
+        ]
+      },
+      {
+        "frame": "idle-1",
+        "cellX": [
+          2343,
+          4617
+        ],
+        "bbox": [
+          55,
+          81,
+          2218,
+          897
+        ],
+        "sourceCell": [
+          2274,
+          928
+        ],
+        "outputBody": [
+          108,
+          41
+        ],
+        "offset": [
+          10,
+          99
+        ]
+      }
+    ]
+  },
+  "run": {
+    "source": "Gemini_Generated_Image_cky2bmcky2bmcky2.jfif",
+    "sourceSize": [
+      2912,
+      1440
+    ],
+    "frames": [
+      {
+        "frame": "run-0",
+        "cellX": [
+          6,
+          576
+        ],
+        "bbox": [
+          257,
+          182,
+          557,
+          1384
+        ],
+        "sourceCell": [
+          570,
+          1440
+        ],
+        "outputBody": [
+          33,
+          132
+        ],
+        "offset": [
+          47,
+          8
+        ]
+      },
+      {
+        "frame": "run-1",
+        "cellX": [
+          588,
+          1159
+        ],
+        "bbox": [
+          12,
+          80,
+          558,
+          1384
+        ],
+        "sourceCell": [
+          571,
+          1440
+        ],
+        "outputBody": [
+          55,
+          132
+        ],
+        "offset": [
+          36,
+          8
+        ]
+      },
+      {
+        "frame": "run-2",
+        "cellX": [
+          1171,
+          1741
+        ],
+        "bbox": [
+          13,
+          36,
+          556,
+          1401
+        ],
+        "sourceCell": [
+          570,
+          1440
+        ],
+        "outputBody": [
+          53,
+          132
+        ],
+        "offset": [
+          37,
+          8
+        ]
+      },
+      {
+        "frame": "run-3",
+        "cellX": [
+          1753,
+          2324
+        ],
+        "bbox": [
+          22,
+          93,
+          558,
+          1385
+        ],
+        "sourceCell": [
+          571,
+          1440
+        ],
+        "outputBody": [
+          55,
+          132
+        ],
+        "offset": [
+          36,
+          8
+        ]
+      },
+      {
+        "frame": "run-4",
+        "cellX": [
+          2336,
+          2906
+        ],
+        "bbox": [
+          12,
+          141,
+          345,
+          1385
+        ],
+        "sourceCell": [
+          570,
+          1440
+        ],
+        "outputBody": [
+          35,
+          132
+        ],
+        "offset": [
+          46,
+          8
+        ]
+      }
+    ]
+  },
+  "canvas": [
+    128,
+    148
+  ],
+  "footLineY": 140,
+  "shadowPolicy": "detached floor/shadow components are discarded before fitting"
+}
