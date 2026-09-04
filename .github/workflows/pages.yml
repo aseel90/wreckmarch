@@ -455,7 +455,7 @@ jobs:
           grep -F "source: 'weapon'" wm-live-weapon-system.js
           grep -F "weaponVolley:s.primaryWeapon?.fireProfile?.projectileCount===1" wm-live-runner-production-presentation.js
           grep -F "weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'" wm-live-runner-production-presentation.js
-          grep -F "./upgrades/upgrade-offer-pool.js?v=1" wm-live-phase-c.js
+          grep -F "./upgrades/upgrade-scene.js?v=1" wm-live-phase-c.js
           grep -F "./upgrades/upgrade-scene.js?v=1" wm-live-phase-c1.js
           grep -F "./upgrade-offer-pool.js?v=1" wm-live-upgrade-scene.js
           grep -F "./upgrade-roll-service.js?v=2" wm-live-upgrade-scene.js
