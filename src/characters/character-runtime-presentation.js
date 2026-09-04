@@ -3,7 +3,11 @@
  * boundary and never select a concrete character or signature weapon themselves.
  */
 import { getCharacterDefinition } from './character-registry.js?v=5';
-import { CharacterSystem } from './character-system.js?v=10';
+import { CharacterSystem } from './character-system.js?v=11';
+import {
+  getCharacterProductionValidationDefinition,
+  isCharacterProductionValidationActive
+} from './character-production-validation.js?v=1';
 import { installRunnerC5Presentation, installRunnerD1Presentation } from './runner-production-presentation.js?v=1';
 import { installShotgunC5Presentation, installShotgunD1Presentation } from './shotgun-production-presentation.js?v=1';
 
@@ -26,7 +30,11 @@ const PRESENTERS = new Map([
 function resolveBoundDefinition(scene) {
   const characterId = scene?.characterDefinition?.id || scene?.characterId;
   if (!characterId) throw Error('Gameplay scene has no bound character id');
-  const definition = getCharacterDefinition(characterId);
+  const validationActive = scene?.__characterProductionValidation?.characterId === characterId
+    && isCharacterProductionValidationActive(characterId);
+  const definition = validationActive
+    ? getCharacterProductionValidationDefinition(characterId)
+    : getCharacterDefinition(characterId);
   if (scene.characterDefinition?.id && scene.characterDefinition.id !== definition.id) {
     throw Error(`Character definition mismatch: ${scene.characterDefinition.id} != ${definition.id}`);
   }
@@ -36,8 +44,20 @@ function resolveBoundDefinition(scene) {
 }
 
 function ensureCharacterSystem(scene, definition) {
-  const system = scene.characterSystem || new CharacterSystem(scene, definition.id);
-  if (system.characterId !== definition.id) system.select(definition.id);
+  const validationActive = scene?.__characterProductionValidation?.characterId === definition.id
+    && isCharacterProductionValidationActive(definition.id);
+  let system = scene.characterSystem;
+  if (!system) {
+    system = validationActive
+      ? new CharacterSystem(scene, definition.id, { productionValidationDefinition: definition })
+      : new CharacterSystem(scene, definition.id);
+  } else if (system.characterId !== definition.id) {
+    if (validationActive) {
+      system = new CharacterSystem(scene, definition.id, { productionValidationDefinition: definition });
+    } else {
+      system.select(definition.id);
+    }
+  }
   scene.characterSystem = system;
   return system;
 }

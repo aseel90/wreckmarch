@@ -7,6 +7,10 @@ import { chooseCharacter } from './character-select-screen.js?v=5';
 import { resolveFirstSelectableCharacter } from './character-select-model.js?v=4';
 import { resolveCharacterAccess } from '../characters/character-access.js?v=1';
 import { consumeNextBootScreen, consumeRunRestartCharacterId } from './frontend-intent.js?v=2';
+import {
+  activateCharacterProductionValidation,
+  resolveCharacterProductionValidationRequest
+} from '../characters/character-production-validation.js?v=1';
 
 function isAutotestFlow() {
   return new URLSearchParams(globalThis.location?.search || '').get('autotest') === '1';
@@ -23,6 +27,12 @@ export async function runInitialFrontendFlow() {
   const autotest = isAutotestFlow();
   const shell = createGameShell({ initialScreen: SCREEN_IDS.BOOT });
   window.__WM_GAME_SHELL__ = shell;
+
+  const productionValidation = resolveCharacterProductionValidationRequest();
+  if (productionValidation) {
+    activateCharacterProductionValidation(productionValidation);
+    return acceptCharacter(shell, productionValidation.entry, ' (production validation)');
+  }
 
   const requestedBootTarget = consumeNextBootScreen();
   const restartCharacterId = consumeRunRestartCharacterId();

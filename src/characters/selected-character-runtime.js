@@ -1,14 +1,24 @@
 import { resolveCharacterAccess } from './character-access.js?v=1';
 import { getCharacterDefinition } from './character-registry.js?v=5';
+import {
+  getCharacterProductionValidationDefinition,
+  isCharacterProductionValidationActive
+} from './character-production-validation.js?v=1';
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function applySelectedCharacterToGame(game, characterId, timeoutMs = 5000, playerProfile) {
-  const access = resolveCharacterAccess(characterId, playerProfile);
-  if (!access.selectable) {
-    throw new Error(`Character is not selectable: ${characterId} (${access.lockReason})`);
+  const validationActive = isCharacterProductionValidationActive(characterId);
+  let definition;
+  if (validationActive) {
+    definition = getCharacterProductionValidationDefinition(characterId);
+  } else {
+    const access = resolveCharacterAccess(characterId, playerProfile);
+    if (!access.selectable) {
+      throw new Error(`Character is not selectable: ${characterId} (${access.lockReason})`);
+    }
+    definition = getCharacterDefinition(characterId);
   }
-  const definition = getCharacterDefinition(characterId);
   const start = performance.now();
 
   while (performance.now() - start < timeoutMs) {
@@ -16,7 +26,13 @@ export async function applySelectedCharacterToGame(game, characterId, timeoutMs 
     if (scene) {
       scene.characterId = definition.id;
       scene.characterDefinition = definition;
-      globalThis.__WM_LOG__?.(`Selected character bound to gameplay scene: ${definition.id}`);
+      if (validationActive) {
+        scene.__characterProductionValidation = Object.freeze({
+          characterId: definition.id,
+          mode: 'production-validation'
+        });
+      }
+      globalThis.__WM_LOG__?.(`Selected character bound to gameplay scene: ${definition.id}${validationActive ? ' (production validation)' : ''}`);
       return definition;
     }
     await wait(16);
