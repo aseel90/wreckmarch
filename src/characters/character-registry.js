@@ -75,6 +75,5 @@ export function listCharacterDefinitions() {
 }
 
 export function hasCharacterDefinition(characterId) {
-  const entry = ENTRIES.get(characterId);
-  return Boolean(entry?.definition);
+  return isCharacterSelectable(characterId);
 }
