@@ -1,0 +1,32 @@
+name: Wrecker Art Extract
+
+on:
+  push:
+    branches:
+      - shotgun/wrecker-production-art
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    if: ${{ !contains(github.event.head_commit.message, '[skip-wrecker-extract]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow numpy
+      - name: Extract production frames
+        run: python scripts/extract-wrecker-frames.py
+      - name: Commit generated frames
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/hero/shotgun/generated-wrecker
+          git diff --cached --quiet && exit 0
+          git commit -m "Generate Wrecker production frames [skip-wrecker-extract]"
+          git push
