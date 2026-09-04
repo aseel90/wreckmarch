@@ -22,7 +22,22 @@ def equal_cells(width, count):
     return [(int(edges[i]), int(edges[i + 1])) for i in range(count)]
 
 
-def isolate_character(cell_rgb):
+def remove_floor_residue(body):
+    """Strip long, thin horizontal floor/shadow residue without touching boots."""
+    h, w = body.shape
+    bottom = np.zeros_like(body)
+    bottom[int(h * 0.76):] = body[int(h * 0.76):]
+    # A boot sole is much shorter than one third of a source cell; floor lines are not.
+    line_kernel = np.ones((1, max(31, w // 3)), np.uint8)
+    floor = cv2.morphologyEx(bottom, cv2.MORPH_OPEN, line_kernel)
+    if np.any(floor):
+        floor = cv2.dilate(floor, np.ones((3, 3), np.uint8), iterations=1)
+        body = body.copy()
+        body[floor > 0] = 0
+    return body
+
+
+def isolate_character(cell_rgb, strip_floor=False):
     """GrabCut one character from its checkerboard cell and keep only its body component."""
     bgr = cv2.cvtColor(cell_rgb, cv2.COLOR_RGB2BGR)
     h, w = bgr.shape[:2]
@@ -35,7 +50,6 @@ def isolate_character(cell_rgb):
     cv2.grabCut(bgr, mask, rect, bgd, fgd, 5, cv2.GC_INIT_WITH_RECT)
     fg = np.where((mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
 
-    # Join antialiased body details, then discard detached floor/shadow/noise components.
     kernel = np.ones((3, 3), np.uint8)
     fg = cv2.morphologyEx(fg, cv2.MORPH_CLOSE, kernel, iterations=1)
     n, labels, stats, _ = cv2.connectedComponentsWithStats(fg, connectivity=8)
@@ -50,9 +64,11 @@ def isolate_character(cell_rgb):
     idx = max(candidates)[1] if candidates else 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
     body = (labels == idx).astype(np.uint8) * 255
 
-    # Preserve fine edge pixels adjacent to the selected body, but not detached floor shadow.
     dilated = cv2.dilate(body, kernel, iterations=1)
     body = cv2.bitwise_and(fg, dilated)
+    if strip_floor:
+        body = remove_floor_residue(body)
+
     ys, xs = np.where(body > 0)
     if not len(xs):
         raise RuntimeError('Foreground body became empty')
@@ -76,7 +92,7 @@ def fit_to_canvas(img):
     return canvas, {'outputBody': [nw, nh], 'offset': [x, y]}
 
 
-def process(path, count, prefix):
+def process(path, count, prefix, strip_floor=False):
     src = Image.open(path).convert('RGB')
     arr = np.array(src)
     spans = equal_cells(src.width, count)
@@ -84,7 +100,7 @@ def process(path, count, prefix):
     for i, (x0, x1) in enumerate(spans):
         pad = max(0, round((x1 - x0) * 0.01))
         cell = arr[:, x0 + pad:x1 - pad]
-        isolated, seg = isolate_character(cell)
+        isolated, seg = isolate_character(cell, strip_floor=strip_floor)
         frame, fit = fit_to_canvas(isolated)
         out = OUT_DIR / f'{prefix}-{i}.png'
         frame.save(out, optimize=True)
@@ -104,11 +120,11 @@ if __name__ == '__main__':
     if not RUN_SRC.exists() or not IDLE_SRC.exists():
         raise SystemExit('Missing approved high-resolution Wrecker source art on this branch')
     meta = {
-        'idle': process(IDLE_SRC, 2, 'idle'),
-        'run': process(RUN_SRC, 5, 'run'),
+        'idle': process(IDLE_SRC, 2, 'idle', strip_floor=False),
+        'run': process(RUN_SRC, 5, 'run', strip_floor=True),
         'canvas': list(CANVAS),
         'footLineY': FOOTLINE,
-        'shadowPolicy': 'detached floor/shadow components are discarded before fitting',
+        'shadowPolicy': 'long thin floor/shadow residue is stripped from run alpha before fitting',
     }
     make_preview()
     (OUT_DIR / 'extraction-meta.json').write_text(json.dumps(meta, indent=2), encoding='utf-8')
