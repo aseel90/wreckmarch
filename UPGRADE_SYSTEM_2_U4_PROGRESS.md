@@ -106,4 +106,4 @@ Current implementation values are provisional U4 test values, not locked U7 bala
 
 ## Future fixes / polish
 
-- [ ] Stabilize per-card rarity identity: the same upgrade card (observed example: Fleet Feet / speed card) should not randomly reappear as COMMON, EPIC, or LEGENDARY unless that card explicitly opts into a designed multi-rarity progression model. Keep this deferred until the U7 rarity/balance cleanup pass; do not block current U4 projectile-card implementation.
+- [x] Reconcile per-card rarity identity with the canonical WS17 model. — **Status:** ✅ RESOLVED / SUPERSEDED — WS17 intentionally stores rarity independently for each acquired numeric level, while discrete mechanics use fixed rarity unless they have a dedicated rarity-scaling owner. The earlier U4 concern is therefore not an open U7 task.
