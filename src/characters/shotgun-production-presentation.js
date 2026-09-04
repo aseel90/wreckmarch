@@ -5,8 +5,9 @@
  */
 import {
   SHOTGUN_RUNTIME_PRESENTATION,
-  listShotgunRuntimeAssets
-} from './shotgun-runtime-presentation.js?v=1';
+  listShotgunRuntimeAssets,
+  queueShotgunRuntimeAssets
+} from './shotgun-runtime-presentation.js?v=2';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
   'weaponV3ArmA',
@@ -54,8 +55,8 @@ async function ensureShotgunRuntimeAssets(scene) {
   const assets = listShotgunRuntimeAssets();
   const missing = assets.filter(asset => !scene?.textures?.exists?.(asset.key));
   if (missing.length === 0) return SHOTGUN_RUNTIME_PRESENTATION;
-  if (!scene?.load?.svg || !scene?.load?.once || !scene?.load?.start) {
-    throw Error('Shotgun production presentation requires Phaser loader boundaries');
+  if (!scene?.load?.image || !scene?.load?.once || !scene?.load?.start) {
+    throw Error('Shotgun production presentation requires Phaser image-loader boundaries');
   }
 
   await new Promise((resolve, reject) => {
@@ -73,7 +74,7 @@ async function ensureShotgunRuntimeAssets(scene) {
       settled = true;
       resolve();
     });
-    for (const asset of missing) scene.load.svg(asset.key, asset.path);
+    queueShotgunRuntimeAssets(scene, missing);
     scene.load.start();
   });
   return SHOTGUN_RUNTIME_PRESENTATION;

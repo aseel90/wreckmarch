@@ -423,8 +423,8 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=1" -o wm-live-upgrade-scene.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=1" -o wm-live-upgrade-offer-pool.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-roll-service.js?v=2" -o wm-live-upgrade-roll-service.js
-          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=28" -o wm-live-phase-d1.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=1" -o wm-live-character-runtime-presentation.js
+          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=29" -o wm-live-phase-d1.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=2" -o wm-live-character-runtime-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/runner-production-presentation.js?v=1" -o wm-live-runner-production-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=10" -o wm-live-character-system.js
           curl -fsSL --retry 5 "${BASE}src/combat/weapon-registry.js?v=2" -o wm-live-weapon-registry.js
@@ -435,8 +435,8 @@ jobs:
           grep -F "./src/phase-b-runtime.js?v=6" wm-live-index.html
           grep -F "./src/phase-c-runtime.js?v=24" wm-live-index.html
           grep -F "./src/phase-c1-runtime.js?v=19" wm-live-index.html
-          grep -F "./src/phase-d1-runtime.js?v=28&u5=3" wm-live-index.html
-          grep -F "./characters/character-runtime-presentation.js?v=1" wm-live-phase-d1.js
+          grep -F "./src/phase-d1-runtime.js?v=29&u5=3" wm-live-index.html
+          grep -F "./characters/character-runtime-presentation.js?v=2" wm-live-phase-d1.js
           grep -F "./runner-production-presentation.js?v=1" wm-live-character-runtime-presentation.js
           grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-b.js
           grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-c.js

@@ -55,11 +55,11 @@ export function listShotgunRuntimeAssets() {
   ]);
 }
 
-export function queueShotgunRuntimeAssets(scene) {
-  // Use Phaser's image loader for the approved SVG files instead of the SVG loader.
-  // The body SVGs contain an embedded PNG raster; letting the browser decode the SVG
-  // directly avoids WebKit/Safari dropping the nested <image> during SVG preprocessing.
+export function queueShotgunRuntimeAssets(scene, assets = listShotgunRuntimeAssets()) {
+  // One canonical loader owner for approved Wrecker textures. The body assets are SVG
+  // wrappers around approved PNG rasters, so Phaser must let the browser decode them as
+  // ordinary images. This avoids WebKit/Safari losing the nested raster in SVG parsing.
   if (!scene?.load?.image) throw Error('Shotgun runtime asset queue requires a Phaser-like scene.load.image boundary');
-  for (const asset of listShotgunRuntimeAssets()) scene.load.image(asset.key, asset.path);
+  for (const asset of assets) scene.load.image(asset.key, asset.path);
   return SHOTGUN_RUNTIME_PRESENTATION;
 }

@@ -50,6 +50,14 @@ describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
       expect(image).toHaveBeenNthCalledWith(index + 1, asset.key, asset.path);
     }
     expect(getCharacterEntry('shotgun')).toBe(before);
+
+    image.mockClear();
+    const subset = listShotgunRuntimeAssets().slice(0, 2);
+    queueShotgunRuntimeAssets({ load: { image } } as any, subset);
+    expect(image).toHaveBeenCalledTimes(2);
+    expect(image).toHaveBeenNthCalledWith(1, subset[0].key, subset[0].path);
+    expect(image).toHaveBeenNthCalledWith(2, subset[1].key, subset[1].path);
+
     expect(() => queueShotgunRuntimeAssets({} as any)).toThrow('Phaser-like scene.load.image boundary');
   });
 
