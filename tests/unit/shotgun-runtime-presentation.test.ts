@@ -40,17 +40,17 @@ describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.muzzleFromGrip).toBe(SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip);
   });
 
-  it('can queue presentation assets through one explicit owner without changing registry availability', () => {
-    const svg = vi.fn();
+  it('queues approved SVG textures through the browser image decoder without changing registry availability', () => {
+    const image = vi.fn();
     const before = getCharacterEntry('shotgun');
-    const result = queueShotgunRuntimeAssets({ load: { svg } } as any);
+    const result = queueShotgunRuntimeAssets({ load: { image } } as any);
     expect(result).toBe(SHOTGUN_RUNTIME_PRESENTATION);
-    expect(svg).toHaveBeenCalledTimes(8);
+    expect(image).toHaveBeenCalledTimes(8);
     for (const [index, asset] of listShotgunRuntimeAssets().entries()) {
-      expect(svg).toHaveBeenNthCalledWith(index + 1, asset.key, asset.path);
+      expect(image).toHaveBeenNthCalledWith(index + 1, asset.key, asset.path);
     }
     expect(getCharacterEntry('shotgun')).toBe(before);
-    expect(() => queueShotgunRuntimeAssets({} as any)).toThrow('Phaser-like scene.load.svg boundary');
+    expect(() => queueShotgunRuntimeAssets({} as any)).toThrow('Phaser-like scene.load.image boundary');
   });
 
   it('allows a canonical definition while keeping main selection locked', () => {
