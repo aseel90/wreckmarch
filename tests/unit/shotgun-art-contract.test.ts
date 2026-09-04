@@ -14,7 +14,7 @@ describe('WS14-C Shotgun production art contract', () => {
   it('freezes the exact measured production canvas and body alignment', () => {
     expect(SHOTGUN_ART_CONTRACT.canvas).toEqual({ width: 128, height: 148 });
     expect(SHOTGUN_ART_CONTRACT.body).toEqual({ maxWidth: 104, maxHeight: 132, footLineY: 140 });
-    expect(SHOTGUN_ART_CONTRACT.baseAnimationFrames).toEqual({ idle: 2, run: 3 });
+    expect(SHOTGUN_ART_CONTRACT.baseAnimationFrames).toEqual({ idle: 2, run: 5 });
   });
 
   it('matches the live Runner render origin, scale, and grip socket instead of inventing new geometry', () => {

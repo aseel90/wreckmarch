@@ -57,13 +57,13 @@ export function evaluateShotgunProductionGate() {
     runtimePresentation:
       SHOTGUN_RUNTIME_PRESENTATION.id === 'shotgun'
       && SHOTGUN_RUNTIME_PRESENTATION.body.idle.length === 2
-      && SHOTGUN_RUNTIME_PRESENTATION.body.run.length === 3
+      && SHOTGUN_RUNTIME_PRESENTATION.body.run.length === 5
       && SHOTGUN_RUNTIME_PRESENTATION.weapon.key === 'shotgun-weapon'
       && SHOTGUN_RUNTIME_PRESENTATION.activation.previewRegistryEntryAllowed === true,
     runtimeComposition:
       SHOTGUN_RUNTIME_COMPOSITION.id === 'shotgun-inactive-composition'
       && SHOTGUN_RUNTIME_COMPOSITION.motions.idle === 2
-      && SHOTGUN_RUNTIME_COMPOSITION.motions.run === 3
+      && SHOTGUN_RUNTIME_COMPOSITION.motions.run === 5
       && SHOTGUN_RUNTIME_COMPOSITION.activation.previewRegistryEntryAllowed === true,
     upgradeCompatibility: shotgunUpgradeCompatibilityReady(),
     characterDefinition: Boolean(entry.definition),

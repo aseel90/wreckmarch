@@ -115,7 +115,7 @@ test.describe('WS14-C Shotgun art composition gate', () => {
       return measurements;
     }, { cases, bodyX: BODY_STAGE_X, bodyY: BODY_STAGE_Y, weapon: SHOTGUN_PRODUCTION_ART.weapon });
 
-    expect(results).toHaveLength(30);
+    expect(results).toHaveLength(42);
     for (const result of results) {
       expect(result.bodyNatural).toEqual({ width: 128, height: 148 });
       expect(result.gunNatural).toEqual({ width: 96, height: 40 });
