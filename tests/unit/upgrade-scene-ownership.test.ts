@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 const ROOT = resolve(import.meta.dirname, '../..');
 const read = (path: string) => readFileSync(resolve(ROOT, path), 'utf8');
 
-// U7 regression contract: Phase C installs the canonical upgrade scene; later phase runtimes must not reinstall or own it.
+// U7 regression contract: Phase C installs the canonical Upgrade Scene; later phase runtimes must not reinstall it or regain offer-selection, roll-service, lifecycle, or card-UI ownership.
 describe('U7 canonical Upgrade Scene ownership', () => {
   it('keeps scene lifecycle under src/upgrades and retires legacy Phase C/C1/C2/C3/C3.1/C5 owners', () => {
     const canonical = read('src/upgrades/upgrade-scene.js');
@@ -45,6 +45,8 @@ describe('U7 canonical Upgrade Scene ownership', () => {
       expect(legacy).not.toContain('.launch =');
       expect(legacy).not.toContain('openUpgradeCards = function');
       expect(legacy).not.toContain('closeUpgradeCards = function');
+      expect(legacy).not.toContain('createActiveUpgradeOfferChoices');
+      expect(legacy).not.toContain('rollUpgradeChoices');
       expect(legacy).not.toContain("getScene('UpgradeSceneV3')");
     }
     expect(c2).not.toContain('c2-upgrade-art');
