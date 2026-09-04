@@ -110,7 +110,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(setup.bodySource).toEqual({ width: 128, height: 148 });
     expect(setup.weaponSource).toEqual({ width: 96, height: 40 });
     expect(setup.idleCount).toBe(2);
-    expect(setup.runCount).toBe(3);
+    expect(setup.runCount).toBe(5);
     expect(setup.activation).toEqual({
       playableOnMain: false,
       previewRegistryEntryAllowed: true,
@@ -125,7 +125,9 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
       ['idle', 1],
       ['run', 0],
       ['run', 1],
-      ['run', 2]
+      ['run', 2],
+      ['run', 3],
+      ['run', 4]
     ];
     const frameImages: string[] = [];
 
@@ -142,7 +144,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
       frameImages.push((await canvas.screenshot()).toString('base64'));
     }
 
-    expect(new Set(frameImages).size).toBe(5);
+    expect(new Set(frameImages).size).toBe(7);
 
     const rightImage = frameImages[0];
     await page.evaluate(() => {

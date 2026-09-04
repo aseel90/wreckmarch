@@ -17,12 +17,12 @@ import {
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
 describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
-  it('owns stable unique texture keys for exactly the approved five body frames plus separate weapon', () => {
+  it('owns stable unique texture keys for exactly the approved seven body frames plus separate weapon', () => {
     const assets = listShotgunRuntimeAssets();
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.idle).toHaveLength(2);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.body.run).toHaveLength(3);
-    expect(assets).toHaveLength(6);
-    expect(new Set(assets.map(asset => asset.key)).size).toBe(6);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.run).toHaveLength(5);
+    expect(assets).toHaveLength(8);
+    expect(new Set(assets.map(asset => asset.key)).size).toBe(8);
     expect(assets.map(asset => asset.path)).toEqual([
       ...SHOTGUN_PRODUCTION_ART.body.idle,
       ...SHOTGUN_PRODUCTION_ART.body.run,
@@ -45,7 +45,7 @@ describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
     const before = getCharacterEntry('shotgun');
     const result = queueShotgunRuntimeAssets({ load: { svg } } as any);
     expect(result).toBe(SHOTGUN_RUNTIME_PRESENTATION);
-    expect(svg).toHaveBeenCalledTimes(6);
+    expect(svg).toHaveBeenCalledTimes(8);
     for (const [index, asset] of listShotgunRuntimeAssets().entries()) {
       expect(svg).toHaveBeenNthCalledWith(index + 1, asset.key, asset.path);
     }

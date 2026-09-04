@@ -16,7 +16,9 @@ export const SHOTGUN_PRODUCTION_ART = Object.freeze({
     run: Object.freeze([
       'assets/hero/shotgun/run-0.svg',
       'assets/hero/shotgun/run-1.svg',
-      'assets/hero/shotgun/run-2.svg'
+      'assets/hero/shotgun/run-2.svg',
+      'assets/hero/shotgun/run-3.svg',
+      'assets/hero/shotgun/run-4.svg'
     ])
   }),
   weapon: Object.freeze({

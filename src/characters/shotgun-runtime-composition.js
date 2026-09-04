@@ -13,7 +13,7 @@ const MOTIONS = Object.freeze({
 export const SHOTGUN_RUNTIME_COMPOSITION = Object.freeze({
   id: 'shotgun-inactive-composition',
   status: 'inactive-phaser-composition',
-  motions: Object.freeze({ idle: 2, run: 3 }),
+  motions: Object.freeze({ idle: 2, run: 5 }),
   activation: Object.freeze({
     playableOnMain: false,
     previewRegistryEntryAllowed: true,

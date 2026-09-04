@@ -9,7 +9,7 @@ export const SHOTGUN_ART_CONTRACT = Object.freeze({
   render: Object.freeze({ originX: 0.5, originY: 0.52, scale: 0.78 }),
   gripSocket: Object.freeze({ offsetX: 10, offsetY: 3 }),
   facing: Object.freeze({ leftAimIndexMin: 3, leftAimIndexMax: 5 }),
-  baseAnimationFrames: Object.freeze({ idle: 2, run: 3 }),
+  baseAnimationFrames: Object.freeze({ idle: 2, run: 5 }),
   weaponLayer: Object.freeze({ separateFromBody: true }),
   activation: Object.freeze({ playableOnMain: false })
 });
