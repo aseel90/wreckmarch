@@ -1,7 +1,8 @@
 /* WRECKMARCH WS14-E — temporary production validation boundary for locked characters.
- * This does not change CharacterRegistry availability. It only permits an explicit
- * autotest URL to exercise a production-gated definition before final activation.
- * Remove this boundary when Shotgun full-run validation is approved.
+ * This does not change CharacterRegistry availability or canonical selectability.
+ * It only permits an explicit autotest URL to exercise a production-gated
+ * definition before final activation. Remove this boundary when Shotgun
+ * full-run validation is approved.
  */
 import { getCharacterEntry } from './character-registry.js?v=5';
 
