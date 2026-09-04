@@ -8,7 +8,7 @@ const dist = resolve(root, 'dist');
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 
-for (const file of ['index.html', 'style.css', '.nojekyll']) {
+for (const file of ['index.html', 'character-motion-lab.html', 'style.css', '.nojekyll']) {
   await cp(resolve(root, file), resolve(dist, file));
 }
 
