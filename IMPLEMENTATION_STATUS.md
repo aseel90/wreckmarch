@@ -2,9 +2,20 @@
 
 Persistent project implementation log. Update this file after every meaningful development batch.
 
-**Last updated:** 2026-09-03
+**Last updated:** 2026-09-04
 
 Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planned · ❌ superseded/removed
+
+## Current project state / active priority
+
+- ✅ Upgrade System 2.0 is closed on `main` through PR #326 / `298ea21f1c89ea553fe05feb1b733c01f8a7efbf`; the final natural Production run lasted 794.244s and passed the >600s gameplay gate.
+- ✅ Combat & Build Balance WS1–WS23 is a closed regression baseline. Do not restart scalar tuning from a single noisy run.
+- ✅ Responsive frontend remediation is closed; reopen only for a reproducible screen/layout regression.
+- ✅ Quality, Smoke, sharded Chromium E2E, aggregate E2E and post-merge Live Chromium are the required deployment gates.
+- 🟡 **Active next production track: WS14-C — Shotgun Character identity + production art.** WS14-D selection/definition and WS14-E activation remain blocked behind WS14-C.
+- ⬜ `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md` remains R0-gated until Character Ownership / character-production closes; repair/stability and Upgrade System 2.0 gates are already satisfied.
+
+Canonical documentation map: `DOCUMENTATION_INDEX.md`.
 
 ## Project / deployment
 
@@ -104,7 +115,7 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 
 ## Later roadmap — ordered future run/world expansion
 
-This expansion is **approved for later implementation only**. Do not start it before the current repair/stability, Character Ownership/character-production and active Upgrade System 2.0 work is closed.
+This expansion is **approved for later implementation only**. Repair/stability and Upgrade System 2.0 are now closed; do not activate the expansion until the remaining Character Ownership / character-production gate (WS14-C → WS14-D → WS14-E) is closed and CI/Live remains green.
 
 Canonical ordered roadmap: `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md`.
 
