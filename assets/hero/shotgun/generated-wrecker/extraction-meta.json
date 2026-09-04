@@ -1,64 +1,5 @@
 {
   "idle": {
-    "source": "Gemini_Generated_Image_o8s2kto8s2kto8s2.jfif",
-    "sourceSize": [
-      4640,
-      928
-    ],
-    "frames": [
-      {
-        "frame": "idle-0",
-        "cellX": [
-          23,
-          2297
-        ],
-        "bbox": [
-          55,
-          78,
-          2218,
-          897
-        ],
-        "sourceCell": [
-          2274,
-          928
-        ],
-        "outputBody": [
-          108,
-          41
-        ],
-        "offset": [
-          10,
-          99
-        ]
-      },
-      {
-        "frame": "idle-1",
-        "cellX": [
-          2343,
-          4617
-        ],
-        "bbox": [
-          55,
-          81,
-          2218,
-          897
-        ],
-        "sourceCell": [
-          2274,
-          928
-        ],
-        "outputBody": [
-          108,
-          41
-        ],
-        "offset": [
-          10,
-          99
-        ]
-      }
-    ]
-  },
-  "run": {
     "source": "Gemini_Generated_Image_cky2bmcky2bmcky2.jfif",
     "sourceSize": [
       2912,
@@ -66,128 +7,187 @@
     ],
     "frames": [
       {
-        "frame": "run-0",
+        "frame": "idle-0",
         "cellX": [
-          6,
-          576
+          15,
+          1441
         ],
         "bbox": [
-          257,
-          182,
-          557,
+          248,
+          80,
+          1158,
           1384
         ],
         "sourceCell": [
-          570,
+          1426,
           1440
         ],
         "outputBody": [
-          33,
+          92,
           132
         ],
         "offset": [
-          47,
+          18,
           8
+        ]
+      },
+      {
+        "frame": "idle-1",
+        "cellX": [
+          1471,
+          2897
+        ],
+        "bbox": [
+          304,
+          93,
+          1211,
+          1385
+        ],
+        "sourceCell": [
+          1426,
+          1440
+        ],
+        "outputBody": [
+          93,
+          132
+        ],
+        "offset": [
+          17,
+          8
+        ]
+      }
+    ]
+  },
+  "run": {
+    "source": "Gemini_Generated_Image_o8s2kto8s2kto8s2.jfif",
+    "sourceSize": [
+      4640,
+      928
+    ],
+    "frames": [
+      {
+        "frame": "run-0",
+        "cellX": [
+          9,
+          919
+        ],
+        "bbox": [
+          158,
+          64,
+          888,
+          854
+        ],
+        "sourceCell": [
+          910,
+          928
+        ],
+        "outputBody": [
+          108,
+          117
+        ],
+        "offset": [
+          10,
+          23
         ]
       },
       {
         "frame": "run-1",
         "cellX": [
-          588,
-          1159
+          937,
+          1847
         ],
         "bbox": [
-          12,
-          80,
-          558,
-          1384
+          21,
+          78,
+          888,
+          897
         ],
         "sourceCell": [
-          571,
-          1440
+          910,
+          928
         ],
         "outputBody": [
-          55,
-          132
+          108,
+          102
         ],
         "offset": [
-          36,
-          8
+          10,
+          38
         ]
       },
       {
         "frame": "run-2",
         "cellX": [
-          1171,
-          1741
+          1865,
+          2775
         ],
         "bbox": [
-          13,
-          36,
-          556,
-          1401
+          21,
+          50,
+          888,
+          897
         ],
         "sourceCell": [
-          570,
-          1440
+          910,
+          928
         ],
         "outputBody": [
-          53,
-          132
+          108,
+          106
         ],
         "offset": [
-          37,
-          8
+          10,
+          34
         ]
       },
       {
         "frame": "run-3",
         "cellX": [
-          1753,
-          2324
+          2793,
+          3703
         ],
         "bbox": [
-          22,
-          93,
-          558,
-          1385
+          90,
+          65,
+          804,
+          867
         ],
         "sourceCell": [
-          571,
-          1440
+          910,
+          928
         ],
         "outputBody": [
-          55,
-          132
+          108,
+          121
         ],
         "offset": [
-          36,
-          8
+          10,
+          19
         ]
       },
       {
         "frame": "run-4",
         "cellX": [
-          2336,
-          2906
+          3721,
+          4631
         ],
         "bbox": [
-          12,
-          141,
-          345,
-          1385
+          21,
+          80,
+          888,
+          897
         ],
         "sourceCell": [
-          570,
-          1440
+          910,
+          928
         ],
         "outputBody": [
-          35,
-          132
+          108,
+          102
         ],
         "offset": [
-          46,
-          8
+          10,
+          38
         ]
       }
     ]
