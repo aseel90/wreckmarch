@@ -18,9 +18,12 @@ describe('canonical Shotgun character definition', () => {
 
   it('registers a real definition while preserving the production lock', () => {
     const entry = getCharacterEntry('shotgun');
-    expect(entry.definition).toBe(SHOTGUN_CHARACTER);
-    expect(entry.availability).toBe('locked');
-    expect(entry.lockReason).toBe('production-gate');
+    expect(entry).toMatchObject({
+      id: 'shotgun',
+      availability: 'locked',
+      definition: SHOTGUN_CHARACTER,
+      lockReason: 'production-gate'
+    });
     expect(isCharacterSelectable('shotgun')).toBe(false);
   });
 
