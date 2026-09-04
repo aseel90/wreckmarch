@@ -1,20 +1,9 @@
-import { createActiveUpgradeOfferChoices } from './upgrades/upgrade-offer-pool.js?v=1';
-import { rollUpgradeChoices } from './upgrades/upgrade-roll-service.js?v=2';
+import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';
 
-/* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + dedicated UpgradeScene */
+/* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + canonical upgrade-scene owner */
 const W = 960;
 const H = 540;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-const ICON_IDS = [
-  'heavy-rivets', 'overclock', 'long-barrel', 'twin-riveter', 'fleet-feet',
-  'scrap-magnet', 'armor-plate', 'field-repair', 'impact-shield', 'call-rig', 'rig-overdrive', 'twin-cannon'
-];
-const CATEGORY_COLORS = {
-  HERO: 0xd98446,
-  UTILITY: 0x4fc8d8,
-  FORTRESS: 0xd4ad62,
-  EVOLUTION: 0x9d6be8
-};
 
 async function getScene(timeoutMs = 9000) {
   const started = performance.now();
@@ -194,161 +183,6 @@ function installLandscapeHud(scene) {
   scene.refreshProgressHud();
 }
 
-function c1UpgradePool(scene) {
-  return createActiveUpgradeOfferChoices(scene);
-}
-
-function categoryHex(category) {
-  return CATEGORY_COLORS[category] || CATEGORY_COLORS.HERO;
-}
-
-class UpgradeScene extends Phaser.Scene {
-  constructor() { super('UpgradeScene'); }
-
-  init(data) {
-    this.payload = data || {};
-    this.selectedIndex = 0;
-    this.cardViews = [];
-    this.locked = false;
-  }
-
-  preload() {
-    if (!this.textures.exists('upgrade-icon-atlas')) this.load.svg('upgrade-icon-atlas', './assets/ui/upgrade-icons.svg');
-  }
-
-  create() {
-    const { gameScene, choices = [], level = 1 } = this.payload;
-    this.gameScene = gameScene;
-    this.choices = choices;
-    this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
-
-    this.add.rectangle(W / 2, H / 2, W, H, 0x06090d, .90).setDepth(0);
-    this.add.text(W / 2, 38, `LEVEL ${level}`, {
-      fontFamily: 'Arial Black, Arial', fontSize: '14px', color: '#59d4e2'
-    }).setOrigin(.5).setDepth(3);
-    this.add.text(W / 2, 68, 'CHOOSE YOUR UPGRADE', {
-      fontFamily: 'Arial Black, Arial', fontSize: '25px', color: '#f0d09b'
-    }).setOrigin(.5).setDepth(3);
-    this.add.text(W / 2, 94, 'Build the run. Change the machine.', {
-      fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#7f8c98'
-    }).setOrigin(.5).setDepth(3);
-
-    const xs = [170, 480, 790];
-    choices.forEach((upgrade, i) => this.createCard(xs[i], 304, upgrade, i));
-    this.refreshSelection();
-
-    this.input.keyboard?.on('keydown-LEFT', () => this.moveSelection(-1));
-    this.input.keyboard?.on('keydown-RIGHT', () => this.moveSelection(1));
-    this.input.keyboard?.on('keydown-ENTER', () => this.choose(this.selectedIndex));
-    this.input.keyboard?.on('keydown-SPACE', () => this.choose(this.selectedIndex));
-    this.input.keyboard?.on('keydown-ONE', () => this.choose(0));
-    this.input.keyboard?.on('keydown-TWO', () => this.choose(1));
-    this.input.keyboard?.on('keydown-THREE', () => this.choose(2));
-  }
-
-  createCard(x, y, upgrade, index) {
-    const accent = categoryHex(upgrade.category);
-    const group = this.add.container(x, y).setDepth(5);
-    const shadow = this.add.rectangle(5, 8, 270, 306, 0x000000, .28).setOrigin(.5);
-    const bg = this.add.rectangle(0, 0, 270, 306, 0x151b22, .985)
-      .setStrokeStyle(2, accent, .72).setOrigin(.5);
-    const strip = this.add.rectangle(0, -147, 270, 12, accent, .9).setOrigin(.5);
-    const iconPlate = this.add.circle(0, -70, 55, 0x0d1218, 1).setStrokeStyle(2, accent, .45);
-    const iconLookupId = upgrade.id === 'triple-riveter' ? 'twin-riveter' : upgrade.id;
-    const iconIndex = Math.max(0, ICON_IDS.indexOf(iconLookupId));
-    const icon = this.add.image(0, -70, 'upgrade-icon-atlas')
-      .setCrop(iconIndex * 128, 0, 128, 128)
-      .setDisplaySize(92, 92);
-    const category = this.add.text(-112, -128, upgrade.category, {
-      fontFamily: 'Arial Black, Arial', fontSize: '11px', color: Phaser.Display.Color.IntegerToColor(accent).rgba
-    }).setOrigin(0, .5);
-    const title = this.add.text(0, 0, upgrade.title, {
-      fontFamily: 'Arial Black, Arial', fontSize: '18px', color: '#f1f4f6', align: 'center', wordWrap: { width: 235 }
-    }).setOrigin(.5);
-    const desc = this.add.text(0, 48, upgrade.desc, {
-      fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#aab5bf', align: 'center', wordWrap: { width: 224 }
-    }).setOrigin(.5, 0);
-    const level = this.gameScene?.upgradeLevels?.[upgrade.id] || 0;
-    const footer = this.add.text(0, 126, level > 0 ? `CURRENT  LV ${level}` : 'NEW UPGRADE', {
-      fontFamily: 'Arial Black, Arial', fontSize: '10px', color: '#75818d'
-    }).setOrigin(.5);
-
-    const hit = this.add.zone(0, 0, 270, 306).setOrigin(.5).setInteractive({ useHandCursor: true });
-    hit.on('pointerover', () => { this.selectedIndex = index; this.refreshSelection(); });
-    hit.on('pointerdown', (_pointer, _lx, _ly, event) => {
-      event?.stopPropagation?.();
-      this.choose(index);
-    });
-
-    group.add([shadow, bg, strip, iconPlate, icon, category, title, desc, footer, hit]);
-    this.cardViews.push({ group, bg, strip, accent });
-  }
-
-  moveSelection(delta) {
-    if (!this.choices.length || this.locked) return;
-    this.selectedIndex = (this.selectedIndex + delta + this.choices.length) % this.choices.length;
-    this.refreshSelection();
-  }
-
-  refreshSelection() {
-    this.cardViews.forEach((view, i) => {
-      const selected = i === this.selectedIndex;
-      view.group.setScale(selected ? 1.035 : 1);
-      view.bg.setStrokeStyle(selected ? 4 : 2, view.accent, selected ? 1 : .65);
-      view.strip.setAlpha(selected ? 1 : .82);
-    });
-  }
-
-  choose(index) {
-    if (this.locked || !this.choices[index]) return;
-    this.locked = true;
-    const choice = this.choices[index];
-    this.cameras.main.flash(85, 72, 202, 218, false);
-    choice.apply();
-    this.time.delayedCall(90, () => this.gameScene?.closeUpgradeCards?.());
-  }
-}
-
-function installLandscapeUpgradeScene(scene) {
-  if (!scene.game.scene.getScene('UpgradeScene')) {
-    scene.game.scene.add('UpgradeScene', UpgradeScene, false);
-  }
-
-  scene.openUpgradeCards = function() {
-    if (this.upgradeOpen || this.gameOver) return;
-    const choices = rollUpgradeChoices(c1UpgradePool(this), { count: 3 });
-    if (!choices.length) return;
-    this.upgradeOpen = true;
-    this.physics.pause();
-    if (this.spawnEvent) this.spawnEvent.paused = true;
-    if (this.waveEvent) this.waveEvent.paused = true;
-    this.joy.active = false;
-    this.joy.id = null;
-    this.hero.setVelocity(0, 0);
-    this.input.enabled = false;
-    this.scene.launch('UpgradeScene', { gameScene: this, choices, level: this.level });
-    this.scene.bringToTop('UpgradeScene');
-  };
-
-  scene.closeUpgradeCards = function() {
-    if (!this.upgradeOpen) return;
-    this.scene.stop('UpgradeScene');
-    this.upgradeOpen = false;
-    this.input.enabled = true;
-    if (!this.gameOver) {
-      this.physics.resume();
-      if (this.spawnEvent) this.spawnEvent.paused = false;
-      if (this.waveEvent) this.waveEvent.paused = false;
-    }
-    this.joyBase.setAlpha(.38);
-    this.joyKnob.setAlpha(.4);
-    if (this.pendingLevelUps > 0) {
-      this.pendingLevelUps -= 1;
-      this.time.delayedCall(100, () => this.openUpgradeCards());
-    }
-  };
-}
-
 function refineLandscapeScale(scene) {
   scene.hero.setScale(.70);
   scene.enemies.children.iterate(enemy => {
@@ -387,12 +221,12 @@ export async function applyPhaseC1() {
   reinstallLandscapeJoystick(scene);
   installTwoHandAim(scene);
   installLandscapeHud(scene);
-  installLandscapeUpgradeScene(scene);
+  await installUpgradeScene(scene);
   refineLandscapeScale(scene);
   addOrientationSignal();
 
   window.__WM_PHASE_C1__ = true;
   document.documentElement.dataset.wreckmarchPhaseC1 = 'active';
-  window.__WM_LOG__?.('Phase C.1 active: landscape HUD + 8-way two-hand aim + UpgradeScene cards');
+  window.__WM_LOG__?.('Phase C.1 active: landscape HUD + 8-way two-hand aim + canonical upgrade scene');
   return true;
 }

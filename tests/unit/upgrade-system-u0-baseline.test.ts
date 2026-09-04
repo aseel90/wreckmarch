@@ -33,6 +33,7 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
   it('tracks the U2 ownership boundary while cards migrate incrementally', () => {
     const phaseC = read('src/phase-c-runtime.js');
     const phaseC1 = read('src/phase-c1-runtime.js');
+    const upgradeScene = read('src/upgrades/upgrade-scene.js');
     const offerPool = read('src/upgrades/upgrade-offer-pool.js');
     const upgradeRuntime = read('src/upgrades/upgrade-runtime.js');
     const rollService = read('src/upgrades/upgrade-roll-service.js');
@@ -45,7 +46,8 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     const companionRuntime = read('src/companion-runtime-v3.js');
 
     expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
-    expect(phaseC1).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(upgradeScene).toContain('createActiveUpgradeOfferChoices(this)');
+    expect(phaseC1).not.toContain('createActiveUpgradeOfferChoices');
     expect(offerPool).toContain("offer('heavy-rivets', 'HERO'");
     expect(offerPool).toContain("offer('overclock', 'HERO'");
     expect(offerPool).toContain("offer('long-barrel', 'HERO'");
@@ -102,7 +104,8 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(upgradeRuntime).toContain('applyMixedRegisteredUpgrade');
     expect(upgradeRuntime).toContain('createUpgradeMechanicalTransaction');
     expect(phaseC).toContain("rollUpgradeChoices(createUpgradePool(this), { count: 3 })");
-    expect(phaseC1).toContain("rollUpgradeChoices(c1UpgradePool(this), { count: 3 })");
+    expect(upgradeScene).toContain("rollUpgradeChoices(createActiveUpgradeOfferChoices(this), { count: 3 })");
+    expect(phaseC1).not.toContain('rollUpgradeChoices');
     expect(phaseC).not.toContain('function weightedChoices');
     expect(phaseC1).not.toContain('function pickC1Choices');
     expect(rollService).toContain('export function rollUpgradeChoices');
@@ -113,7 +116,8 @@ describe('Upgrade System 2.0 U0 migration baseline', () => {
     expect(upgradeRuntime).toContain('upgradeRarityHistory');
     expect(twinDefinition).toContain("rarity: 'COMMON'");
     expect(rigDefinition).toContain("rarity: 'COMMON'");
-    expect(phaseC5).toContain('rarityText:rarity');
+    expect(phaseC5).not.toContain('class UpgradeSceneV4');
+    expect(upgradeScene).toContain('class UpgradeSceneV4 extends Phaser.Scene');
     expect(phaseD1).toContain('installUpgradeCardPresentation');
     expect(phaseD1).not.toContain('getUpgradeRarityRule');
     expect(cardPresentation).toContain('getUpgradeRarityRule');

@@ -51,10 +51,12 @@ describe('survivability utility cards', () => {
   it('wires both cards through the canonical active offer owner and keeps critical feedback in combat', () => {
     const phaseC = fs.readFileSync(new URL('../../src/phase-c-runtime.js', import.meta.url), 'utf8');
     const phaseC1 = fs.readFileSync(new URL('../../src/phase-c1-runtime.js', import.meta.url), 'utf8');
+    const upgradeScene = fs.readFileSync(new URL('../../src/upgrades/upgrade-scene.js', import.meta.url), 'utf8');
     const offerPool = fs.readFileSync(new URL('../../src/upgrades/upgrade-offer-pool.js', import.meta.url), 'utf8');
     const enemyCombat = fs.readFileSync(new URL('../../src/combat/enemy-combat-system.js', import.meta.url), 'utf8');
     expect(phaseC).toContain('createActiveUpgradeOfferChoices(scene)');
-    expect(phaseC1).toContain('createActiveUpgradeOfferChoices(scene)');
+    expect(upgradeScene).toContain('createActiveUpgradeOfferChoices(this)');
+    expect(phaseC1).not.toContain('createActiveUpgradeOfferChoices');
     expect(offerPool).toContain("offer('field-repair', 'UTILITY'");
     expect(offerPool).toContain("offer('impact-shield', 'UTILITY'");
     expect(offerPool).toContain('UPGRADE_OFFER_POOL_GROUPS.SURVIVABILITY_AUXILIARY');

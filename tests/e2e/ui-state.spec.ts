@@ -3,9 +3,29 @@ import { expect, test } from '@playwright/test';
 test.use({ viewport: { width: 960, height: 540 } });
 
 async function waitForGame(page: any) {
-  await page.goto('/?debug=1&autotest=1');
-  await expect(page.locator('canvas')).toBeVisible({ timeout: 20_000 });
-  await expect.poll(() => page.evaluate(() => document.body.classList.contains('visual-ready')), { timeout: 20_000 }).toBe(true);
+  const browserEvents: string[] = [];
+  page.on('console', (msg: any) => { if (msg.type() === 'error') browserEvents.push(`console:error: ${msg.text()}`); });
+  page.on('pageerror', (error: any) => browserEvents.push(`pageerror: ${error?.stack || error}`));
+  page.on('requestfailed', (request: any) => browserEvents.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
+  try {
+    await page.goto('/?debug=1&autotest=1');
+    await expect(page.locator('canvas')).toBeVisible({ timeout: 20_000 });
+    await expect.poll(() => page.evaluate(() => document.body.classList.contains('visual-ready')), { timeout: 20_000 }).toBe(true);
+  } catch (error: any) {
+    const state = await page.evaluate(() => ({
+      visualReady: document.body.classList.contains('visual-ready'),
+      bootError: document.body.classList.contains('boot-error'),
+      bootStatus: document.querySelector('#boot-status')?.textContent || null,
+      phaseC1: document.documentElement.dataset.wreckmarchPhaseC1 || null,
+      phaseC2: document.documentElement.dataset.wreckmarchPhaseC2 || null,
+      phaseC3: document.documentElement.dataset.wreckmarchPhaseC3 || null,
+      phaseC5: document.documentElement.dataset.wreckmarchPhaseC5 || null,
+      phaseD1: document.documentElement.dataset.wreckmarchPhaseD1 || null,
+      phaseE1: document.documentElement.dataset.wreckmarchPhaseE1 || null,
+      debugTail: document.querySelector('#log')?.textContent?.slice(-6000) || ''
+    }));
+    throw new Error(`waitForGame boot diagnostics: ${JSON.stringify({ state, browserEvents: browserEvents.slice(-30) })}\n${error?.stack || error}`);
+  }
 }
 
 test('upgrade overlay suppresses gameplay HUD and restores it after selection UI closes', async ({ page }) => {
