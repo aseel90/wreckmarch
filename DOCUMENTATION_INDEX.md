@@ -16,15 +16,15 @@ If documents appear to conflict, prefer the newer explicit closeout/current-stat
 
 ### WS14 Shotgun Character
 
-- `COMBAT_BUILD_BALANCE_ROADMAP.md` — **WS14-C ACTIVE NEXT**; completed scalar WS1–WS23 baselines remain frozen.
+- `COMBAT_BUILD_BALANCE_ROADMAP.md` — completed scalar WS1–WS23 baselines remain frozen; the staged Shotgun character track is the current return path.
 - `WS14_SHOTGUN_IDENTITY.md` — approved Shotgun weapon/character identity direction.
 - `WS14_B_DECISION_GATE.md` — closed numeric weapon-foundation decision.
-- `WS14_C_CHARACTER_ART_GATE.md` — **active acceptance checklist for character identity + production art**.
+- `WS14_C_CHARACTER_ART_GATE.md` — **art foundation complete**; records the accepted 2-idle/3-run body set, separate weapon art and locked-preview constraints.
 - `WS14_C_SHOTGUN_ART_CONTRACT.md` — art/socket/layering contract for the Shotgun character.
 - `CHARACTER_OWNERSHIP_AUDIT.md` — canonical CharacterRegistry / selection / availability / entitlement ownership guardrails.
 - `UPGRADE_SYSTEM_2_CHARACTER_WEAPON_POLICY.md` — compatibility boundary for character/weapon-specific upgrade behavior.
 
-Required order: **WS14-C → WS14-D → WS14-E → WS15-B**. The Shotgun must not become selectable before the activation gate passes.
+Current remaining order: **approve canonical Shotgun character gameplay definition → register/integrate while locked → real Production full-run approval → selectable activation → WS15-B**. `shotgun-production-gate.js` is the executable readiness boundary; the Shotgun must not become selectable while any blocker remains.
 
 ## 3. Active cross-cutting contracts
 
@@ -60,7 +60,7 @@ Final Production evidence: `wm-51c5cbaa-211d-489b-b0c1-a3ad54a178cc`, 794.244s, 
 - `WS22_DETERMINISTIC_INTERACTION_MATRIX.md`
 - `WS23_U4_BALANCE_REINTEGRATION_GATE.md`
 
-These remain regression boundaries while WS14 character production proceeds.
+These remain regression boundaries while the Shotgun character production gate proceeds.
 
 ### Responsive frontend remediation — ✅ CLOSED
 
@@ -89,7 +89,7 @@ Current R0 state:
 - Repair/stability: ✅ closed.
 - Upgrade System 2.0: ✅ closed.
 - Quality/E2E/Smoke/Live: ✅ green standing gate.
-- Character Ownership / character-production: ⬜ remaining blocker via WS14-C → D → E.
+- Shotgun character production/activation: ⬜ remaining R0 blocker; WS14-C art is complete, but gameplay definition and full-run approval still gate activation.
 
 Do not begin the large 25-minute world/encounter expansion merely because later content is attractive; activate R1 only after R0 is fully closed.
 
