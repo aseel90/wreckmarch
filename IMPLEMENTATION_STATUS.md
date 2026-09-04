@@ -12,8 +12,9 @@ Legend: ✅ implemented · 🟡 implemented but still needs polish · ⬜ planne
 - ✅ Combat & Build Balance WS1–WS23 is a closed regression baseline. Do not restart scalar tuning from a single noisy run.
 - ✅ Responsive frontend remediation is closed; reopen only for a reproducible screen/layout regression.
 - ✅ Quality, Smoke, sharded Chromium E2E, aggregate E2E and post-merge Live Chromium are the required deployment gates.
-- 🟡 **Active next production track: WS14-C — Shotgun Character identity + production art.** WS14-D selection/definition and WS14-E activation remain blocked behind WS14-C.
-- ⬜ `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md` remains R0-gated until Character Ownership / character-production closes; repair/stability and Upgrade System 2.0 gates are already satisfied.
+- ✅ Shotgun WS14-C art foundation is complete: dedicated 2-idle/3-run body art, independent weapon art, runtime composition/presentation and locked Character Select preview are implemented behind the production gate.
+- 🟡 **Active next production track: Shotgun character gameplay definition → full activation validation.** `shotgun-production-gate.js` currently leaves the canonical character definition and real Production full-run approval as the remaining activation blockers.
+- ⬜ `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md` remains R0-gated until Shotgun character production/activation closes; repair/stability and Upgrade System 2.0 gates are already satisfied.
 
 Canonical documentation map: `DOCUMENTATION_INDEX.md`.
 
@@ -115,7 +116,7 @@ Canonical documentation map: `DOCUMENTATION_INDEX.md`.
 
 ## Later roadmap — ordered future run/world expansion
 
-This expansion is **approved for later implementation only**. Repair/stability and Upgrade System 2.0 are now closed; do not activate the expansion until the remaining Character Ownership / character-production gate (WS14-C → WS14-D → WS14-E) is closed and CI/Live remains green.
+This expansion is **approved for later implementation only**. Repair/stability and Upgrade System 2.0 are now closed; do not activate the expansion until the remaining Shotgun character production/activation gate (gameplay definition → full-run approval → selectable activation) is closed and CI/Live remains green.
 
 Canonical ordered roadmap: `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md`.
 
