@@ -66,6 +66,8 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain('src/combat/definitions/rivet-gun.js?v=2');
     expect(pagesWorkflow).toContain('src/enemies/enemy-system.js?v=24');
     expect(pagesWorkflow).toContain('src/combat/weapon-system.js?v=8');
+    expect(pagesWorkflow).toContain('src/upgrades/upgrade-scene.js?v=1');
+    expect(pagesWorkflow).toContain('src/upgrades/upgrade-roll-service.js?v=2');
     expect(pagesWorkflow).toContain('projectileCount: 1');
     expect(pagesWorkflow).toContain('halfSpreadRadians: 0');
     expect(pagesWorkflow).toContain('volleyDamageMultiplier: 1');
@@ -74,6 +76,12 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain("weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'");
     expect(pagesWorkflow).not.toContain('src/phase-d1-runtime.js?v=23');
     expect(pagesWorkflow).toContain('src/upgrades/upgrade-offer-pool.js?v=1');
+    expect(pagesWorkflow).toContain('"./upgrades/upgrade-scene.js?v=1" wm-live-phase-c1.js');
+    expect(pagesWorkflow).toContain('"./upgrade-offer-pool.js?v=1" wm-live-upgrade-scene.js');
+    expect(pagesWorkflow).toContain('"./upgrade-roll-service.js?v=2" wm-live-upgrade-scene.js');
+    expect(pagesWorkflow).not.toContain('"./upgrades/upgrade-offer-pool.js?v=1" wm-live-phase-c1.js');
+    expect(pagesWorkflow).toContain("class UpgradeSceneV4 extends Phaser.Scene");
+    expect(pagesWorkflow).toContain("gameScene.__upgradeSceneOwner = 'src/upgrades/upgrade-scene.js'");
     expect(pagesWorkflow).toContain("offer('explosive-rivet', 'HERO'");
     expect(pagesWorkflow).toContain('upgrade-icon-explosive-rivet');
     expect(pagesWorkflow).toContain("offer('triple-riveter', 'EVOLUTION'");
