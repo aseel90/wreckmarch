@@ -71,6 +71,15 @@ export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
   })
 });
 
+export function getShotgunWeaponOriginForFacing(facing = 'right') {
+  if (facing !== 'right' && facing !== 'left') throw Error(`Unsupported Shotgun facing: ${facing}`);
+  const origin = SHOTGUN_RUNTIME_PRESENTATION.weapon.origin;
+  return Object.freeze({
+    x: facing === 'left' ? 1 - origin.x : origin.x,
+    y: origin.y
+  });
+}
+
 export function getShotgunHandOverlayKey(bodyTextureKey) {
   const frames = [...SHOTGUN_RUNTIME_PRESENTATION.body.idle, ...SHOTGUN_RUNTIME_PRESENTATION.body.run];
   return frames.find(frame => frame.key === bodyTextureKey)?.handOverlayKey || SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].handOverlayKey;
