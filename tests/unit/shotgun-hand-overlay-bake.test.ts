@@ -17,12 +17,12 @@ function contains(point: [number, number], polygon: readonly (readonly number[])
 describe('Wrecker baked front-hand overlay', () => {
   it('covers only the authored grip/support foreground region, never the head or legs', () => {
     expect(SHOTGUN_HAND_OVERLAY_MASKS.map(mask => mask.id)).toEqual(['rear-grip-hand', 'support-hand']);
-    expect(SHOTGUN_HAND_OVERLAY_MASKS.some(mask => contains([77, 81], mask.points))).toBe(true);
-    expect(SHOTGUN_HAND_OVERLAY_MASKS.some(mask => contains([100, 78], mask.points))).toBe(true);
+    expect(SHOTGUN_HAND_OVERLAY_MASKS.some(mask => contains([70, 75], mask.points))).toBe(true);
+    expect(SHOTGUN_HAND_OVERLAY_MASKS.some(mask => contains([93, 72], mask.points))).toBe(true);
     for (const mask of SHOTGUN_HAND_OVERLAY_MASKS) {
       expect(mask.points.length).toBeGreaterThanOrEqual(6);
-      expect(Math.max(...mask.points.map(point => point[1]))).toBeLessThan(100);
-      expect(Math.min(...mask.points.map(point => point[1]))).toBeGreaterThan(55);
+      expect(Math.max(...mask.points.map(point => point[1]))).toBeLessThan(90);
+      expect(Math.min(...mask.points.map(point => point[1]))).toBeGreaterThan(60);
     }
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.handOverlay.runtimeCrop).toBe(false);
     expect(SHOTGUN_RUNTIME_PRESENTATION.layers.runtimeCrop).toBe(false);

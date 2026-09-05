@@ -13,28 +13,29 @@ const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.m
 const bodyPaths = [...SHOTGUN_PRODUCTION_ART.body.idle];
 
 describe('WS14-C Shotgun two-hand hold alignment', () => {
-  it('derives the rear grip from the canonical hero socket instead of inventing a second runtime offset', () => {
-    const { width, height } = SHOTGUN_ART_CONTRACT.canvas;
-    const { originX, originY, scale } = SHOTGUN_ART_CONTRACT.render;
-    const { offsetX, offsetY } = SHOTGUN_ART_CONTRACT.gripSocket;
-    expect(SHOTGUN_AIM_ALIGNMENT.bodyGrip.right.x).toBeCloseTo((width * originX) + (offsetX / scale), 6);
-    expect(SHOTGUN_AIM_ALIGNMENT.bodyGrip.right.y).toBeCloseTo((height * originY) + (offsetY / scale), 6);
-    expect(SHOTGUN_AIM_ALIGNMENT.bodyGrip.left.x).toBeCloseTo(width - SHOTGUN_AIM_ALIGNMENT.bodyGrip.right.x, 6);
+  it('derives both hold contacts from authored visible hand markers with no duplicate runtime socket', () => {
+    expect(SHOTGUN_ART_CONTRACT).not.toHaveProperty('gripSocket');
+    expect(SHOTGUN_AIM_ALIGNMENT.bodyGrip.right).toEqual({ x: 70, y: 75 });
+    expect(SHOTGUN_AIM_ALIGNMENT.bodySupport.right).toEqual({ x: 93, y: 72 });
+    expect(SHOTGUN_AIM_ALIGNMENT.bodyGrip.left).toEqual({ x: 58, y: 75 });
+    expect(SHOTGUN_AIM_ALIGNMENT.bodySupport.left).toEqual({ x: 35, y: 72 });
   });
 
-  it('pins both authored hand markers to the fixed weapon grip/support pair', () => {
-    expect(Math.abs(SHOTGUN_AIM_ALIGNMENT.authoredGripMarker.x - SHOTGUN_AIM_ALIGNMENT.bodyGrip.right.x)).toBeLessThan(0.3);
-    expect(Math.abs(SHOTGUN_AIM_ALIGNMENT.authoredGripMarker.y - SHOTGUN_AIM_ALIGNMENT.bodyGrip.right.y)).toBeLessThan(0.3);
-    expect(SHOTGUN_PRODUCTION_ART.body.authoredGripMarker).toEqual(SHOTGUN_AIM_ALIGNMENT.authoredGripMarker);
-    expect(SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker).toEqual({ x: 100, y: 78 });
-    expect(SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker).toEqual(SHOTGUN_AIM_ALIGNMENT.authoredSupportMarker);
+  it('locks the real hand contact vector to the fixed weapon grip/support vector', () => {
+    expect(SHOTGUN_PRODUCTION_ART.body.authoredGripMarker).toEqual({ x: 70, y: 75 });
+    expect(SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker).toEqual({ x: 93, y: 72 });
+    expect(SHOTGUN_AIM_ALIGNMENT.authoredGripMarker).toEqual(SHOTGUN_PRODUCTION_ART.body.authoredGripMarker);
+    expect(SHOTGUN_AIM_ALIGNMENT.authoredSupportMarker).toEqual(SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker);
+    expect(SHOTGUN_AIM_ALIGNMENT.authoredHoldVector).toEqual({ x: 23, y: -3 });
     expect(SHOTGUN_AIM_ALIGNMENT.supportFromGrip).toEqual({ x: 23, y: -3 });
+    expect(SHOTGUN_AIM_ALIGNMENT.markerLockErrorPx).toBe(0);
     expect(SHOTGUN_AIM_ALIGNMENT.hold).toMatchObject({
       mode: 'two-hand-fixed',
       rotationRadians: 0,
       runtimeRotation: false,
       bodyRotationRadians: 0,
-      runtimeBodyRotation: false
+      runtimeBodyRotation: false,
+      contactSource: 'authored-visible-hands'
     });
   });
 
@@ -49,7 +50,7 @@ describe('WS14-C Shotgun two-hand hold alignment', () => {
     }
   });
 
-  it('maps both weapon hand points onto the body with sub-pixel error and no rotation', () => {
+  it('maps both weapon contacts onto the visible hand markers with sub-pixel error and no rotation', () => {
     for (const facing of ['right', 'left'] as const) {
       const placement = getShotgunWeaponPlacement(facing);
       expect(placement.weaponTopLeft.x + SHOTGUN_PRODUCTION_ART.weapon.grip.x).toBeCloseTo(placement.grip.x, 8);

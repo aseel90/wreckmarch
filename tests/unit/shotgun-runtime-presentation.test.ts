@@ -29,11 +29,14 @@ describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
   it('derives render and weapon geometry only from frozen canonical sources', () => {
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.canvas).toEqual(SHOTGUN_ART_CONTRACT.canvas);
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.render).toEqual(SHOTGUN_ART_CONTRACT.render);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.grip.right).toEqual({ x: 70, y: 75 });
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.support.right).toEqual({ x: 93, y: 72 });
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body).not.toHaveProperty('gripSocket');
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.origin).toEqual(SHOTGUN_AIM_ALIGNMENT.weaponOrigin);
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.support).toEqual(SHOTGUN_PRODUCTION_ART.weapon.support);
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip).toEqual(SHOTGUN_AIM_ALIGNMENT.supportFromGrip);
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.muzzleFromGrip).toEqual(SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.hold).toMatchObject({ mode: 'two-hand-fixed', runtimeRotation: false, runtimeBodyRotation: false });
+    expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.hold).toMatchObject({ mode: 'two-hand-fixed', runtimeRotation: false, runtimeBodyRotation: false, contactSource: 'authored-visible-hands' });
     expect(SHOTGUN_RUNTIME_PRESENTATION.layers).toEqual({
       mode: 'body-weapon-front-hands',
       bodyDepthOffset: 0,

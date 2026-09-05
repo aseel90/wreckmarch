@@ -25,6 +25,9 @@ describe('WS14-C Shotgun production art assets',()=>{
     }
     expect(SHOTGUN_PRODUCTION_ART.body.canvas).toEqual(SHOTGUN_ART_CONTRACT.canvas);
     expect(SHOTGUN_PRODUCTION_ART.body.footLineY).toBe(140);
+    expect(SHOTGUN_PRODUCTION_ART.body.authoredGripMarker).toEqual({ x: 70, y: 75 });
+    expect(SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker).toEqual({ x: 93, y: 72 });
+    expect(SHOTGUN_ART_CONTRACT).not.toHaveProperty('gripSocket');
   });
 
   it('keeps the shotgun separate with measured rear/support grip and muzzle markers',()=>{
