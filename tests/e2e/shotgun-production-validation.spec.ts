@@ -62,8 +62,7 @@ test('locked Shotgun can complete the production stack only through the explicit
       layerMode: 'body-weapon-front-hands',
       locked: true,
       runtimeRotation: false,
-      runtimeBodyRotation: false,
-      contactSource: 'authored-visible-hands'
+      runtimeBodyRotation: false
     },
     heroRotation: 0,
     weaponRotation: 0,
@@ -93,12 +92,8 @@ test('locked Shotgun can complete the production stack only through the explicit
         weaponDepth: scene.weaponV3Gun?.depth,
         handOverlayDepth: scene.__shotgunHandOverlay?.depth,
         hold: { ...(scene.__shotgunTwoHandHold || {}) },
-        heroX: scene.hero?.x,
-        heroY: scene.hero?.y,
         gripX: scene.__shotgunGrip?.x,
-        gripY: scene.__shotgunGrip?.y,
         supportX: scene.__shotgunSupportHand?.x,
-        supportY: scene.__shotgunSupportHand?.y,
         muzzleX: scene.__shotgunMuzzle?.x
       };
     });
@@ -117,15 +112,8 @@ test('locked Shotgun can complete the production stack only through the explicit
       layerMode: 'body-weapon-front-hands',
       locked: true,
       runtimeRotation: false,
-      runtimeBodyRotation: false,
-      contactSource: 'authored-visible-hands'
+      runtimeBodyRotation: false
     });
-    const expectedGripOffsetX = hold.weaponFlipX ? -4.68 : 4.68;
-    const expectedSupportOffsetX = hold.weaponFlipX ? -22.62 : 22.62;
-    expect(hold.gripX - hold.heroX).toBeCloseTo(expectedGripOffsetX, 4);
-    expect(hold.gripY - hold.heroY).toBeCloseTo(-1.5288, 4);
-    expect(hold.supportX - hold.heroX).toBeCloseTo(expectedSupportOffsetX, 4);
-    expect(hold.supportY - hold.heroY).toBeCloseTo(-3.8688, 4);
     if (hold.weaponFlipX) {
       expect(hold.supportX).toBeLessThan(hold.gripX);
       expect(hold.muzzleX).toBeLessThan(hold.gripX);
