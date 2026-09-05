@@ -10,6 +10,29 @@
 import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey, getShotgunWeaponOriginForFacing } from './shotgun-runtime-presentation.js?v=7';
 import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=4';
 
+export const WRECKER_SHOTGUN_PROJECTILE_VISUAL = Object.freeze({
+  textureKey: 'wrecker-shotgun-pellet',
+  width: 20,
+  height: 8,
+  depth: 34
+});
+
+function ensureWreckerShotgunProjectileTexture(scene) {
+  const profile = WRECKER_SHOTGUN_PROJECTILE_VISUAL;
+  if (scene?.textures?.exists?.(profile.textureKey)) return profile.textureKey;
+  const graphics = scene?.make?.graphics?.({ add: false });
+  if (!graphics) return 'bullet';
+  graphics.fillStyle(0xff7a35, .16).fillEllipse(7, 4, 14, 6);
+  graphics.fillStyle(0x4c3225, 1).fillRoundedRect(5, 1, 12, 6, 3);
+  graphics.fillStyle(0xc76b35, 1).fillRoundedRect(7, 1.5, 10, 5, 2.5);
+  graphics.fillStyle(0xffc66f, 1).fillRoundedRect(11, 2, 7, 4, 2);
+  graphics.fillStyle(0xfff2cf, 1).fillEllipse(17.5, 4, 4, 4);
+  graphics.fillStyle(0xff8a35, .5).fillTriangle(0, 4, 7, 1.6, 7, 6.4);
+  graphics.generateTexture(profile.textureKey, profile.width, profile.height);
+  graphics.destroy();
+  return profile.textureKey;
+}
+
 const HIDDEN_LEGACY_PARTS = Object.freeze([
   'weaponV3ArmA',
   'weaponV3ArmB',
@@ -203,22 +226,44 @@ function installShotgunAimLayer(scene) {
     const pose = resolveShotgunPresentationPose(scene.hero.x, scene.hero.y, scene.weaponAim);
     return new Phaser.Math.Vector2(pose.muzzle.x, pose.muzzle.y);
   });
-  scene.weaponSystem.setFireFeedback(({ visualAngle, muzzle }) => {
+  const projectileTexture = ensureWreckerShotgunProjectileTexture(scene);
+  scene.weaponSystem.setFireFeedback(({ visualAngle, muzzle, shots }) => {
     const angle = Number.isFinite(visualAngle) ? visualAngle : scene.visualAimAngle;
+    shots?.forEach?.(({ bullet }) => {
+      const vx = Number(bullet?.body?.velocity?.x) || Math.cos(angle);
+      const vy = Number(bullet?.body?.velocity?.y) || Math.sin(angle);
+      bullet?.setTexture?.(projectileTexture)?.setRotation?.(Math.atan2(vy, vx))?.setDepth?.(WRECKER_SHOTGUN_PROJECTILE_VISUAL.depth);
+      if (bullet) bullet.__wreckerProjectileVisual = 'shotgun-pellet-v1';
+    });
     const flash = scene.add.image(muzzle.x, muzzle.y, 'flash')
       .setDepth(33)
       .setRotation(angle)
-      .setScale(.34)
-      .setAlpha(.92);
+      .setScale(.46)
+      .setAlpha(.96);
+    const core = scene.add.image(muzzle.x, muzzle.y, 'flash')
+      .setDepth(34)
+      .setRotation(angle)
+      .setScale(.19)
+      .setAlpha(1);
     scene.tweens.add({
       targets: flash,
       alpha: 0,
-      scale: .08,
-      duration: 48,
+      scale: .10,
+      duration: 62,
+      ease: 'Quad.easeOut',
       onComplete: () => flash.destroy()
     });
-    scene.cameras?.main?.shake?.(38, .0011);
+    scene.tweens.add({
+      targets: core,
+      alpha: 0,
+      scale: .04,
+      duration: 28,
+      ease: 'Quad.easeOut',
+      onComplete: () => core.destroy()
+    });
+    scene.cameras?.main?.shake?.(42, .00135);
     scene.playTone?.(118, .038, 'square', .016, -55);
+    scene.playTone?.(245, .018, 'triangle', .006, -110);
   });
   scene.updateWeaponPose();
 }
