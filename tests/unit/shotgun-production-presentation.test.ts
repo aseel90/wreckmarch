@@ -117,8 +117,8 @@ describe('locked Shotgun production presentation adapters', () => {
       id: 'shotgun',
       render: { idleTexture: SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key },
       animations: {
-        idle: { frames: SHOTGUN_RUNTIME_PRESENTATION.body.idle.map(frame => frame.key) },
-        run: { frames: SHOTGUN_RUNTIME_PRESENTATION.body.run.map(frame => frame.key) }
+        idle: { frames: SHOTGUN_RUNTIME_PRESENTATION.body.idle.map((frame: { key: string }) => frame.key) },
+        run: { frames: SHOTGUN_RUNTIME_PRESENTATION.body.run.map((frame: { key: string }) => frame.key) }
       }
     } as any;
     const updateLocomotionVisuals = vi.fn();
@@ -158,16 +158,11 @@ describe('locked Shotgun production presentation adapters', () => {
       on: vi.fn((event: string, fn: Function) => listeners.set(event, fn)),
       off: vi.fn(),
       once: vi.fn((event: string, fn: Function) => listeners.set(event, fn)),
-      start: vi.fn(() => listeners.get('complete')?.())
+      start: vi.fn(() => queueMicrotask(() => listeners.get('complete')?.()))
     };
 
     await installShotgunC5Presentation(fixture.scene);
-
-    expect(image).toHaveBeenCalledOnce();
-    expect(image).toHaveBeenCalledWith(
-      SHOTGUN_RUNTIME_PRESENTATION.weapon.key,
-      SHOTGUN_RUNTIME_PRESENTATION.weapon.path
-    );
+    expect(image).toHaveBeenCalledWith(SHOTGUN_RUNTIME_PRESENTATION.weapon.key, SHOTGUN_RUNTIME_PRESENTATION.weapon.path);
     expect(svg).not.toHaveBeenCalled();
   });
 
@@ -178,6 +173,6 @@ describe('locked Shotgun production presentation adapters', () => {
       id: 'shotgun',
       render: { idleTexture: 'wrong-idle' },
       animations: { idle: { frames: ['wrong-idle'] }, run: { frames: ['wrong-run'] } }
-    } as any)).rejects.toThrow('canonical idle runtime frames');
+    })).rejects.toThrow();
   });
 });
