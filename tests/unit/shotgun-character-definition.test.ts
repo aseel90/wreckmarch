@@ -4,9 +4,10 @@ import { getCharacterEntry, isCharacterSelectable } from '../../src/characters/c
 import { evaluateShotgunProductionGate } from '../../src/characters/shotgun-production-gate.js';
 
 
-describe('canonical Shotgun character definition', () => {
+describe('canonical Wrecker character definition', () => {
   it('owns the approved V1 character baseline without duplicating weapon balance', () => {
     expect(SHOTGUN_CHARACTER.id).toBe('shotgun');
+    expect(SHOTGUN_CHARACTER.displayName).toBe('Wrecker');
     expect(SHOTGUN_CHARACTER.stats).toEqual({ maxHp: 110, moveSpeed: 255 });
     expect(SHOTGUN_CHARACTER.startingWeapon).toEqual({ id: 'shotgun' });
     expect(SHOTGUN_CHARACTER.passive).toEqual({ id: 'shotgun-baseline', enabled: false });

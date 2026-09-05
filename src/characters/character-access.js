@@ -4,7 +4,7 @@ import {
   getCharacterEntry,
   isCharacterSelectable,
   listCharacterEntries,
-} from './character-registry.js?v=5';
+} from './character-registry.js?v=6';
 import { characterOwnershipStore } from './character-ownership-store.js?v=1';
 
 export const CHARACTER_ACCESS_LOCK_REASONS = Object.freeze({
