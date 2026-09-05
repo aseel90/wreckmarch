@@ -4,8 +4,8 @@
  * character locked until the production gate and real-run validation are complete.
  */
 import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=2';
-import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=2';
-import { SHOTGUN_AIM_ALIGNMENT } from './shotgun-aim-alignment.js?v=1';
+import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=3';
+import { SHOTGUN_AIM_ALIGNMENT } from './shotgun-aim-alignment.js?v=2';
 
 const bodyIdle = SHOTGUN_PRODUCTION_ART.body.idle.map((path, index) => Object.freeze({
   key: `shotgun-body-idle-${index}`,
@@ -27,6 +27,8 @@ export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
     canvas: SHOTGUN_ART_CONTRACT.canvas,
     render: SHOTGUN_ART_CONTRACT.render,
     gripSocket: SHOTGUN_ART_CONTRACT.gripSocket,
+    grip: SHOTGUN_AIM_ALIGNMENT.bodyGrip,
+    support: SHOTGUN_AIM_ALIGNMENT.bodySupport,
     idle: Object.freeze(bodyIdle),
     run: Object.freeze(bodyRun),
     runBakeSource: SHOTGUN_PRODUCTION_ART.body.runBake.source,
@@ -40,9 +42,12 @@ export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
     path: SHOTGUN_PRODUCTION_ART.weapon.path,
     canvas: SHOTGUN_PRODUCTION_ART.weapon.canvas,
     grip: SHOTGUN_PRODUCTION_ART.weapon.grip,
+    support: SHOTGUN_PRODUCTION_ART.weapon.support,
     muzzle: SHOTGUN_PRODUCTION_ART.weapon.muzzle,
     origin: SHOTGUN_AIM_ALIGNMENT.weaponOrigin,
-    muzzleFromGrip: SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip
+    supportFromGrip: SHOTGUN_AIM_ALIGNMENT.supportFromGrip,
+    muzzleFromGrip: SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip,
+    hold: SHOTGUN_AIM_ALIGNMENT.hold
   }),
   activation: Object.freeze({
     playableOnMain: false,

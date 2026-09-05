@@ -28,7 +28,10 @@ describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.canvas).toEqual(SHOTGUN_ART_CONTRACT.canvas);
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.render).toEqual(SHOTGUN_ART_CONTRACT.render);
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.origin).toEqual(SHOTGUN_AIM_ALIGNMENT.weaponOrigin);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.support).toEqual(SHOTGUN_PRODUCTION_ART.weapon.support);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip).toEqual(SHOTGUN_AIM_ALIGNMENT.supportFromGrip);
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.muzzleFromGrip).toEqual(SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.hold).toMatchObject({ mode: 'two-hand-fixed', runtimeRotation: false });
   });
 
   it('queues only external source assets, never generated run frames', () => {

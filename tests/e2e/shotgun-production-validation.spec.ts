@@ -29,6 +29,10 @@ test('locked Shotgun can complete the production stack only through the explicit
       heroSpeed: scene?.heroSpeed || null,
       c5Ok: scene?.__characterPresentationC5?.ok === true,
       d1Ok: scene?.__characterPresentationD1?.ok === true,
+      twoHandHold: scene?.__shotgunTwoHandHold || null,
+      weaponRotation: scene?.weaponV3Gun?.rotation ?? null,
+      weaponDepth: scene?.weaponV3Gun?.depth ?? null,
+      heroDepth: scene?.hero?.depth ?? null,
       registryAvailability: registry.getCharacterEntry('shotgun').availability,
       registrySelectable: registry.isCharacterSelectable('shotgun')
     };
@@ -48,7 +52,45 @@ test('locked Shotgun can complete the production stack only through the explicit
     heroSpeed: 255,
     c5Ok: true,
     d1Ok: true,
+    twoHandHold: { mode: 'two-hand-fixed', locked: true, runtimeRotation: false },
+    weaponRotation: 0,
     registryAvailability: 'locked',
     registrySelectable: false
   });
+  expect(Number(state.weaponDepth)).toBeLessThan(Number(state.heroDepth));
+
+  const wrappedHolds = await page.evaluate(() => {
+    const scene = (window as any).__WM_GAME__?.scene?.getScene?.('Wreckmarch');
+    const inputs = [-Math.PI * 6, -Math.PI, -0.75, 0, 0.75, Math.PI, Math.PI * 6];
+    return inputs.map(requested => {
+      scene.weaponAim = requested;
+      scene.updateWeaponPose();
+      return {
+        requested,
+        rotation: scene.weaponV3Gun?.rotation,
+        weaponFlipX: scene.weaponV3Gun?.flipX,
+        heroFlipX: scene.hero?.flipX,
+        weaponDepth: scene.weaponV3Gun?.depth,
+        heroDepth: scene.hero?.depth,
+        hold: { ...(scene.__shotgunTwoHandHold || {}) },
+        gripX: scene.__shotgunGrip?.x,
+        supportX: scene.__shotgunSupportHand?.x,
+        muzzleX: scene.__shotgunMuzzle?.x
+      };
+    });
+  });
+
+  for (const hold of wrappedHolds) {
+    expect(hold.rotation).toBe(0);
+    expect(hold.weaponDepth).toBeLessThan(hold.heroDepth);
+    expect(hold.weaponFlipX).toBe(hold.heroFlipX);
+    expect(hold.hold).toMatchObject({ mode: 'two-hand-fixed', locked: true, runtimeRotation: false });
+    if (hold.weaponFlipX) {
+      expect(hold.supportX).toBeLessThan(hold.gripX);
+      expect(hold.muzzleX).toBeLessThan(hold.gripX);
+    } else {
+      expect(hold.supportX).toBeGreaterThan(hold.gripX);
+      expect(hold.muzzleX).toBeGreaterThan(hold.gripX);
+    }
+  }
 });

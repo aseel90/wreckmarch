@@ -30,19 +30,20 @@ function sceneStub() {
   const container = {
     x: 0,
     y: 0,
-    setPosition: vi.fn(function(this:any,x:number,y:number){this.x=x;this.y=y;return this;})
+    setPosition: vi.fn(function(this:any,x:number,y:number){this.x=x;this.y=y;return this;}),
+    destroy: vi.fn()
   };
   const image = vi.fn((x:number,y:number,key:string) => {
     const target = image.mock.calls.length === 1 ? body : weapon;
     target.x=x; target.y=y; target.texture={key};
     return target;
   });
-  const scene = { add: { image, container: vi.fn((x:number,y:number) => {container.x=x;container.y=y;return container;}) } };
+  const scene = { add: { image, container: vi.fn((x:number,y:number,_children:any[]) => {container.x=x;container.y=y;return container;}) } };
   return { scene, body, weapon, container };
 }
 
 describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
-  it('creates one body and one separate weapon inside one anchored container', () => {
+  it('creates one body and one separate weapon with the weapon rendered behind the baked hands', () => {
     const { scene, body, weapon, container } = sceneStub();
     const composition = createShotgunRuntimeComposition(scene as any, { x: 120, y: 90 });
 
@@ -53,7 +54,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
       SHOTGUN_ART_CONTRACT.gripSocket.offsetY,
       SHOTGUN_RUNTIME_PRESENTATION.weapon.key
     );
-    expect(scene.add.container).toHaveBeenCalledWith(120, 90, [body, weapon]);
+    expect(scene.add.container).toHaveBeenCalledWith(120, 90, [weapon, body]);
     expect(body.setOrigin).toHaveBeenCalledWith(SHOTGUN_ART_CONTRACT.render.originX, SHOTGUN_ART_CONTRACT.render.originY);
     expect(body.setScale).toHaveBeenCalledWith(SHOTGUN_ART_CONTRACT.render.scale);
     expect(weapon.setOrigin).toHaveBeenCalledWith(
@@ -62,6 +63,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     );
     expect(weapon.setScale).toHaveBeenCalledWith(SHOTGUN_ART_CONTRACT.render.scale);
     expect(composition.container).toBe(container);
+    expect(SHOTGUN_RUNTIME_COMPOSITION.hold).toMatchObject({ mode: 'two-hand-fixed', runtimeRotation: false });
   });
 
   it('selects all approved idle/run textures without changing body canvas or scale ownership', () => {
@@ -85,7 +87,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.render).toEqual(SHOTGUN_ART_CONTRACT.render);
   });
 
-  it('mirrors body and separate weapon around the canonical grip while preserving relative aim semantics', () => {
+  it('mirrors the complete two-hand hold and ignores aim rotation inputs', () => {
     const { scene, body, weapon } = sceneStub();
     const composition = createShotgunRuntimeComposition(scene as any, { aimDegrees: -20 });
 
@@ -93,20 +95,23 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     expect(weapon.setFlipX).toHaveBeenLastCalledWith(false);
     expect(weapon.x).toBe(SHOTGUN_ART_CONTRACT.gripSocket.offsetX);
     expect(weapon.y).toBe(SHOTGUN_ART_CONTRACT.gripSocket.offsetY);
-    expect(weapon.setAngle).toHaveBeenLastCalledWith(-20);
+    expect(weapon.setAngle).toHaveBeenLastCalledWith(0);
 
     composition.setFacing('left');
     expect(body.setFlipX).toHaveBeenLastCalledWith(true);
     expect(weapon.setFlipX).toHaveBeenLastCalledWith(true);
     expect(weapon.x).toBe(-SHOTGUN_ART_CONTRACT.gripSocket.offsetX);
     expect(weapon.y).toBe(SHOTGUN_ART_CONTRACT.gripSocket.offsetY);
-    expect(weapon.setAngle).toHaveBeenLastCalledWith(20);
+    expect(weapon.setAngle).toHaveBeenLastCalledWith(0);
 
-    composition.setAimDegrees(15);
-    expect(weapon.setAngle).toHaveBeenLastCalledWith(-15);
+    for (const requested of [-720, -180, -15, 0, 15, 180, 720]) {
+      composition.setAimDegrees(requested);
+      expect(composition.aimDegrees).toBe(requested);
+      expect(weapon.setAngle).toHaveBeenLastCalledWith(0);
+    }
   });
 
-  it('advances deterministic idle/run cycles without owning cadence or disturbing aim/facing', () => {
+  it('advances deterministic idle/run cycles without disturbing the fixed hold/facing', () => {
     const { scene, body, weapon } = sceneStub();
     const composition = createShotgunRuntimeComposition(scene as any, { facing: 'left', aimDegrees: 20 });
 
@@ -132,7 +137,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
 
     expect(body.setFlipX).toHaveBeenLastCalledWith(true);
     expect(weapon.setFlipX).toHaveBeenLastCalledWith(true);
-    expect(weapon.setAngle).toHaveBeenLastCalledWith(-20);
+    expect(weapon.setAngle).toHaveBeenLastCalledWith(0);
   });
 
   it('allows a locked gameplay definition while keeping Shotgun outside live selection owners', () => {
