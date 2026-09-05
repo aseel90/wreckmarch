@@ -23,7 +23,7 @@ function fixedMuzzle(facing: 'right' | 'left') {
 }
 
 test.describe('WS14-C Shotgun canonical three-layer composition gate', () => {
-  test('renders the fixed shotgun through the authored visible hand contacts with no runtime crop or rotation', async ({ page }) => {
+  test('renders body -> weapon -> baked front hands with no runtime crop or rotation', async ({ page }) => {
     await page.goto('/');
     await page.setViewportSize({ width: 844, height: 390 });
 
@@ -125,7 +125,7 @@ test.describe('WS14-C Shotgun canonical three-layer composition gate', () => {
           handsRect: { width: handsRect.width, height: handsRect.height },
           stageRect: { width: stageRect.width, height: stageRect.height },
           gripAlpha: alphaAt(70, 75),
-          supportAlpha: alphaAt(93, 72),
+          supportAlpha: alphaAt(103, 78),
           headAlpha: alphaAt(64, 36),
           legAlpha: alphaAt(64, 126)
         });
