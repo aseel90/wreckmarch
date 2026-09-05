@@ -57,10 +57,10 @@ describe('balance run report bridge contract', () => {
     expect(html).toContain('./src/phase-d1-runtime.js?v=29&u5=3');
     expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=19');
     expect(pagesWorkflow).toContain('src/phase-c5-runtime.js?v=10');
-    expect(pagesWorkflow).toContain('./src/phase-c5-runtime.js?v=10&u7=1&wrecker=9');
+    expect(pagesWorkflow).toContain('./src/phase-c5-runtime.js?v=10&u7=1&wrecker=10');
     expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=29');
-    expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=8&wrecker=9');
-    expect(pagesWorkflow).toContain('src/characters/shotgun-production-presentation.js?v=8&wrecker=9');
+    expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=9&wrecker=10');
+    expect(pagesWorkflow).toContain('src/characters/shotgun-production-presentation.js?v=9&wrecker=10');
     expect(pagesWorkflow).toContain('src/characters/shotgun-runtime-presentation.js?v=7');
     expect(pagesWorkflow).toContain('__shotgunTwoHandHold');
     expect(pagesWorkflow).toContain('two-hand-fixed');
@@ -78,6 +78,10 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain('wrecker-shotgun-pellet');
     expect(pagesWorkflow).toContain('shots?.forEach?.(({ bullet })');
     expect(pagesWorkflow).toContain('setRotation?.(Math.atan2(vy, vx))');
+    expect(pagesWorkflow).toContain('WRECKER_SHOTGUN_MUZZLE_AIM');
+    expect(pagesWorkflow).toContain('maxVerticalTravelPx: 6');
+    expect(pagesWorkflow).toContain('Math.sin(angle) * WRECKER_SHOTGUN_MUZZLE_AIM.maxVerticalTravelPx');
+    expect(pagesWorkflow).toContain('const muzzle = resolveWreckerShotgunMuzzle(weaponMuzzle, requestedAngle)');
     expect(pagesWorkflow).toContain('const BODY_REAR_GRIP = Object.freeze({ x: 70, y: 75 })');
     expect(pagesWorkflow).toContain('const BODY_SUPPORT_GRIP = Object.freeze({ x: 103, y: 78 })');
     expect(pagesWorkflow).toContain('const WEAPON_SUPPORT_GRIP = Object.freeze({ x: 51, y: 25 })');
