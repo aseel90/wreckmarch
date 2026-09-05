@@ -2,7 +2,7 @@
  * Owns the canonical body -> weapon -> front-hands layer order, locomotion frame
  * selection and fixed two-hand hold only. It intentionally owns no gameplay input.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=5';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=6';
 
 const MOTIONS = Object.freeze({
   idle: SHOTGUN_RUNTIME_PRESENTATION.body.idle,
@@ -52,7 +52,12 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
 
   const presentation = SHOTGUN_RUNTIME_PRESENTATION;
   const render = presentation.body.render;
-  const gripSocket = presentation.body.gripSocket;
+  const canvas = presentation.body.canvas;
+  const rightGrip = presentation.body.grip.right;
+  const gripOffset = Object.freeze({
+    x: (rightGrip.x - (canvas.width * render.originX)) * render.scale,
+    y: (rightGrip.y - (canvas.height * render.originY)) * render.scale
+  });
   let motion = options.motion ?? 'idle';
   let frameIndex = options.frameIndex ?? 0;
   let facing = requireFacing(options.facing ?? 'right');
@@ -64,7 +69,7 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
   body.setOrigin(render.originX, render.originY);
   body.setScale(render.scale);
 
-  const weapon = scene.add.image(gripSocket.offsetX, gripSocket.offsetY, presentation.weapon.key);
+  const weapon = scene.add.image(gripOffset.x, gripOffset.y, presentation.weapon.key);
   weapon.setOrigin(presentation.weapon.origin.x, presentation.weapon.origin.y);
   weapon.setScale(render.scale);
 
@@ -79,8 +84,8 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
     body.setFlipX(left);
     weapon.setFlipX(left);
     hands.setFlipX(left);
-    weapon.x = left ? -gripSocket.offsetX : gripSocket.offsetX;
-    weapon.y = gripSocket.offsetY;
+    weapon.x = left ? -gripOffset.x : gripOffset.x;
+    weapon.y = gripOffset.y;
     weapon.setAngle(0);
   }
 

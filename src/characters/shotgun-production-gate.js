@@ -7,14 +7,14 @@ import {
   getCharacterEntry,
   isCharacterSelectable
 } from './character-registry.js?v=5';
-import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=5&wrecker=6';
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=5';
-import { SHOTGUN_RUNTIME_COMPOSITION } from './shotgun-runtime-composition.js?v=4';
+import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=6&wrecker=7';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=6';
+import { SHOTGUN_RUNTIME_COMPOSITION } from './shotgun-runtime-composition.js?v=5';
 import { getWeaponDefinition } from '../combat/weapon-registry.js?v=2';
 import { getUpgradeDefinition } from '../upgrades/upgrade-catalog.js?v=14';
 import { meetsUpgradeCompatibility } from '../upgrades/upgrade-compatibility.js?v=1';
 
-export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v4';
+export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v5';
 
 export const SHOTGUN_FULL_RUN_VALIDATION = Object.freeze({
   status: 'pending',
@@ -63,6 +63,7 @@ export function evaluateShotgunProductionGate() {
       && SHOTGUN_RUNTIME_PRESENTATION.weapon.hold?.mode === 'two-hand-fixed'
       && SHOTGUN_RUNTIME_PRESENTATION.weapon.hold?.runtimeRotation === false
       && SHOTGUN_RUNTIME_PRESENTATION.weapon.hold?.runtimeBodyRotation === false
+      && SHOTGUN_RUNTIME_PRESENTATION.weapon.hold?.contactSource === 'authored-visible-hands'
       && SHOTGUN_RUNTIME_PRESENTATION.layers?.mode === 'body-weapon-front-hands'
       && SHOTGUN_RUNTIME_PRESENTATION.layers?.weaponDepthOffset > SHOTGUN_RUNTIME_PRESENTATION.layers?.bodyDepthOffset
       && SHOTGUN_RUNTIME_PRESENTATION.layers?.handOverlayDepthOffset > SHOTGUN_RUNTIME_PRESENTATION.layers?.weaponDepthOffset
