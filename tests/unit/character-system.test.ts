@@ -68,12 +68,10 @@ describe('CharacterSystem', () => {
     expect(scene.resolvedRunStats.character.maxHp).toBe(100);
   });
 
-
   it('resets current HP exactly once when production presentation changes the playable character identity', () => {
     const scene: any = {
       heroHp: 100,
       heroMaxHp: 100,
-      characterSystem: { characterId: 'runner' },
       hero: {
         body: { setCircle() {} },
         stop() { return this; },
