@@ -68,7 +68,7 @@ test('canonical Results persist debug run records without awarding Workshop Scri
   await expect(page.locator('[data-milestone-id="scrap-hand"]')).toHaveAttribute('data-complete', 'false');
   await expect(page.locator('[data-milestone-id="stay-moving"]')).toHaveAttribute('data-complete', 'false');
   await expect(page.locator('.wm-progression-roster')).toContainText('Runner');
-  await expect(page.locator('.wm-progression-roster')).toContainText('Shotgun');
+  await expect(page.locator('.wm-progression-roster')).toContainText('Wrecker');
   await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
 });
 
