@@ -50,12 +50,14 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     const composition = createShotgunRuntimeComposition(scene as any, { x: 120, y: 90 });
 
     expect(scene.add.image).toHaveBeenNthCalledWith(1, 0, 0, SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key);
-    expect(scene.add.image).toHaveBeenNthCalledWith(
-      2,
-      SHOTGUN_ART_CONTRACT.gripSocket.offsetX,
-      SHOTGUN_ART_CONTRACT.gripSocket.offsetY,
-      SHOTGUN_RUNTIME_PRESENTATION.weapon.key
-    );
+    const render = SHOTGUN_ART_CONTRACT.render;
+    const canvas = SHOTGUN_ART_CONTRACT.canvas;
+    const grip = SHOTGUN_RUNTIME_PRESENTATION.body.grip.right;
+    const gripOffset = {
+      x: (grip.x - (canvas.width * render.originX)) * render.scale,
+      y: (grip.y - (canvas.height * render.originY)) * render.scale
+    };
+    expect(scene.add.image).toHaveBeenNthCalledWith(2, gripOffset.x, gripOffset.y, SHOTGUN_RUNTIME_PRESENTATION.weapon.key);
     expect(scene.add.image).toHaveBeenNthCalledWith(3, 0, 0, SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].handOverlayKey);
     expect(scene.add.container).toHaveBeenCalledWith(120, 90, [body, weapon, hands]);
     expect(body.setOrigin).toHaveBeenCalledWith(SHOTGUN_ART_CONTRACT.render.originX, SHOTGUN_ART_CONTRACT.render.originY);
@@ -69,7 +71,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     expect(hands.setScale).toHaveBeenCalledWith(SHOTGUN_ART_CONTRACT.render.scale);
     expect(composition.container).toBe(container);
     expect(composition.hands).toBe(hands);
-    expect(SHOTGUN_RUNTIME_COMPOSITION.hold).toMatchObject({ mode: 'two-hand-fixed', runtimeRotation: false, runtimeBodyRotation: false });
+    expect(SHOTGUN_RUNTIME_COMPOSITION.hold).toMatchObject({ mode: 'two-hand-fixed', runtimeRotation: false, runtimeBodyRotation: false, contactSource: 'authored-visible-hands' });
     expect(SHOTGUN_RUNTIME_COMPOSITION.layers).toMatchObject({ mode: 'body-weapon-front-hands', runtimeCrop: false });
   });
 
@@ -103,16 +105,16 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     expect(body.setFlipX).toHaveBeenLastCalledWith(false);
     expect(weapon.setFlipX).toHaveBeenLastCalledWith(false);
     expect(hands.setFlipX).toHaveBeenLastCalledWith(false);
-    expect(weapon.x).toBe(SHOTGUN_ART_CONTRACT.gripSocket.offsetX);
-    expect(weapon.y).toBe(SHOTGUN_ART_CONTRACT.gripSocket.offsetY);
+    expect(weapon.x).toBeCloseTo((70 - 64) * SHOTGUN_ART_CONTRACT.render.scale, 8);
+    expect(weapon.y).toBeCloseTo((75 - (148 * SHOTGUN_ART_CONTRACT.render.originY)) * SHOTGUN_ART_CONTRACT.render.scale, 8);
     expect(weapon.setAngle).toHaveBeenLastCalledWith(0);
 
     composition.setFacing('left');
     expect(body.setFlipX).toHaveBeenLastCalledWith(true);
     expect(weapon.setFlipX).toHaveBeenLastCalledWith(true);
     expect(hands.setFlipX).toHaveBeenLastCalledWith(true);
-    expect(weapon.x).toBe(-SHOTGUN_ART_CONTRACT.gripSocket.offsetX);
-    expect(weapon.y).toBe(SHOTGUN_ART_CONTRACT.gripSocket.offsetY);
+    expect(weapon.x).toBeCloseTo(-((70 - 64) * SHOTGUN_ART_CONTRACT.render.scale), 8);
+    expect(weapon.y).toBeCloseTo((75 - (148 * SHOTGUN_ART_CONTRACT.render.originY)) * SHOTGUN_ART_CONTRACT.render.scale, 8);
     expect(weapon.setAngle).toHaveBeenLastCalledWith(0);
 
     for (const requested of [-720, -180, -15, 0, 15, 180, 720]) {
