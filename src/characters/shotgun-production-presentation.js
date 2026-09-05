@@ -9,7 +9,7 @@ import {
   installShotgunLayeredLocomotion,
   setShotgunLayeredFacing,
   updateShotgunLayeredLocomotion
-} from './shotgun-layered-locomotion.js?v=2';
+} from './shotgun-layered-locomotion.js?v=1&wrecker=2';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
   'weaponV3ArmA',
