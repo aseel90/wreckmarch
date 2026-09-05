@@ -4,7 +4,7 @@ import { SHOTGUN_ART_CONTRACT } from '../../src/characters/shotgun-art-contract.
 import { SHOTGUN_PRODUCTION_ART } from '../../src/characters/shotgun-production-art.js';
 import { SHOTGUN_AIM_ALIGNMENT } from '../../src/characters/shotgun-aim-alignment.js';
 import { getCharacterEntry, getCharacterDefinition, isCharacterSelectable } from '../../src/characters/character-registry.js';
-import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey, listShotgunRuntimeAssets, queueShotgunRuntimeAssets } from '../../src/characters/shotgun-runtime-presentation.js';
+import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey, getShotgunWeaponOriginForFacing, listShotgunRuntimeAssets, queueShotgunRuntimeAssets } from '../../src/characters/shotgun-runtime-presentation.js';
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
@@ -30,6 +30,10 @@ describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.canvas).toEqual(SHOTGUN_ART_CONTRACT.canvas);
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.render).toEqual(SHOTGUN_ART_CONTRACT.render);
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.origin).toEqual(SHOTGUN_AIM_ALIGNMENT.weaponOrigin);
+    expect(getShotgunWeaponOriginForFacing('right')).toEqual({ x: 18 / 96, y: 22 / 40 });
+    expect(getShotgunWeaponOriginForFacing('left')).toEqual({ x: 1 - (18 / 96), y: 22 / 40 });
+    expect(getShotgunWeaponOriginForFacing('right').x + getShotgunWeaponOriginForFacing('left').x).toBeCloseTo(1, 10);
+    expect(() => getShotgunWeaponOriginForFacing('up' as any)).toThrow('Unsupported Shotgun facing');
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.support).toEqual(SHOTGUN_PRODUCTION_ART.weapon.support);
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip).toEqual(SHOTGUN_AIM_ALIGNMENT.supportFromGrip);
     expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.muzzleFromGrip).toEqual(SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip);
