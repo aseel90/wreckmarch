@@ -2,7 +2,7 @@
 import { EnemyFactory } from './enemy-factory.js?v=7';
 import { SpawnSystem } from './spawn-system.js?v=1';
 import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=7';
-import { CombatSystem } from '../combat/combat-system.js?v=14';
+import { CombatSystem } from '../combat/combat-system.js?v=15';
 import { ProjectileSystem } from '../combat/projectile-system.js?v=5';
 import { WeaponSystem } from '../combat/weapon-system.js?v=8';
 
@@ -17,14 +17,12 @@ function installCombatSystem(scene) {
   scene.__playerDamageFoundationReady = true;
   scene.__combatSystemReady = true;
 }
-
 function installWeaponProjectileSystems(scene) {
   scene.projectileSystem = new ProjectileSystem(scene);
   scene.weaponSystem = new WeaponSystem(scene, { projectileSystem: scene.projectileSystem });
   scene.__projectileSystemReady = true;
   scene.__weaponSystemReady = true;
 }
-
 async function getScene(timeoutMs = 9000) {
   const start = performance.now();
   while (performance.now() - start < timeoutMs) {
@@ -35,27 +33,18 @@ async function getScene(timeoutMs = 9000) {
   }
   throw new Error('Timed out waiting for Wreckmarch scene for Enemy Foundation');
 }
-
 export async function installEnemyFoundation() {
   const scene = await getScene();
   if (scene.__enemyFoundationReady) return scene;
-
   scene.enemyFactory = new EnemyFactory(scene);
   scene.spawnSystem = new SpawnSystem(scene, { factory: scene.enemyFactory });
   scene.enemyBehaviorSystem = new EnemyBehaviorSystem(scene);
   installCombatSystem(scene);
   installWeaponProjectileSystems(scene);
-
   scene.__legacySpawnEnemy = scene.spawnEnemy.bind(scene);
-  scene.spawnEnemy = function(elite = false) {
-    return this.spawnSystem.spawn('scrap-rat', { elite });
-  };
-
+  scene.spawnEnemy = function(elite = false) { return this.spawnSystem.spawn('scrap-rat', { elite }); };
   scene.__legacyUpdateEnemies = scene.updateEnemies.bind(scene);
-  scene.updateEnemies = function() {
-    return this.enemyBehaviorSystem.updateAll(this.enemies, this.hero);
-  };
-
+  scene.updateEnemies = function() { return this.enemyBehaviorSystem.updateAll(this.enemies, this.hero); };
   scene.__enemyFoundationReady = true;
   scene.__enemyBehaviorFoundationReady = true;
   window.__WM_ENEMY_FOUNDATION__ = true;
