@@ -12,6 +12,7 @@ const STEP_MS = 115;
 const MAX_DT_MS = 40;
 const LOWER_START_RATIO = .55;
 const TORSO_END_RATIO = .72;
+const AUTHORING_RIG_WIDTH = 210;
 
 const STEP_POSES = Object.freeze([
   Object.freeze({ torsoX: -1, torsoY: 0, torsoDeg: -.5, leftX: -4, leftY: 2, leftDeg: 2.6, rightX: 2, rightY: -1, rightDeg: -1.4 }),
@@ -178,7 +179,12 @@ export function installShotgunLayeredLocomotion(scene) {
     stepClockMs: 0,
     lastTime: null,
     lastMoving: false,
-    baseScale: render.scale
+    baseScale: render.scale,
+    // The approved lab poses were authored on a 210px-wide rig. Runtime Wrecker is
+    // ~100px wide, so pose translations must be scaled with the sprite instead of
+    // copied as world pixels. Copying them 1:1 pulled the cropped legs away from the
+    // torso on the real game canvas.
+    motionScale: (canvas.width * render.scale) / AUTHORING_RIG_WIDTH
   };
   const aimFacing = Math.cos(Number(scene.weaponAim) || 0) < 0 ? 'left' : 'right';
   setShotgunLayeredFacing(scene, aimFacing);
@@ -225,18 +231,28 @@ export function updateShotgunLayeredLocomotion(scene, time = 0) {
   });
   const sign = state.facing === 'left' ? -1 : 1;
   const scale = state.baseScale;
-  const bob = motion.bodyBob;
+  const motionScale = Number(state.motionScale) || 1;
+  const bob = motion.bodyBob * motionScale;
 
   state.torso
-    .setPosition?.(hero.x + motion.torsoX * sign, hero.y + bob + motion.torsoY)
+    .setPosition?.(
+      hero.x + motion.torsoX * motionScale * sign,
+      hero.y + bob + motion.torsoY * motionScale
+    )
     .setRotation?.(motion.bodyRotation + motion.torsoRotation * sign)
     .setScale?.(scale, scale * motion.torsoScaleY);
   state.legLeft
-    .setPosition?.(hero.x + motion.leftX * sign, hero.y + bob + motion.leftY)
+    .setPosition?.(
+      hero.x + motion.leftX * motionScale * sign,
+      hero.y + bob + motion.leftY * motionScale
+    )
     .setRotation?.(motion.leftRotation * sign)
     .setScale?.(scale);
   state.legRight
-    .setPosition?.(hero.x + motion.rightX * sign, hero.y + bob + motion.rightY)
+    .setPosition?.(
+      hero.x + motion.rightX * motionScale * sign,
+      hero.y + bob + motion.rightY * motionScale
+    )
     .setRotation?.(motion.rightRotation * sign)
     .setScale?.(scale);
 
