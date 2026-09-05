@@ -17,6 +17,10 @@ export const WRECKER_SHOTGUN_PROJECTILE_VISUAL = Object.freeze({
   depth: 34
 });
 
+export const WRECKER_SHOTGUN_MUZZLE_AIM = Object.freeze({
+  maxVerticalTravelPx: 6
+});
+
 function ensureWreckerShotgunProjectileTexture(scene) {
   const profile = WRECKER_SHOTGUN_PROJECTILE_VISUAL;
   if (scene?.textures?.exists?.(profile.textureKey)) return profile.textureKey;
@@ -49,6 +53,14 @@ function normalizeAngle(angle) {
   return Math.atan2(Math.sin(value), Math.cos(value));
 }
 
+export function resolveWreckerShotgunMuzzle(baseMuzzle, aimRadians = 0) {
+  const angle = normalizeAngle(aimRadians);
+  return Object.freeze({
+    x: Number(baseMuzzle?.x) || 0,
+    y: (Number(baseMuzzle?.y) || 0) + (Math.sin(angle) * WRECKER_SHOTGUN_MUZZLE_AIM.maxVerticalTravelPx)
+  });
+}
+
 function bodyPointToWorld(presentation, heroX, heroY, point) {
   const canvas = presentation.body.canvas;
   const render = presentation.body.render;
@@ -74,13 +86,14 @@ export function resolveShotgunPresentationPose(heroX, heroY, aimRadians = 0) {
     x: grip.x + (supportLocal.x * scale * sign),
     y: grip.y + (supportLocal.y * scale)
   });
-  const muzzle = Object.freeze({
+  const weaponMuzzle = Object.freeze({
     x: grip.x + (muzzleLocal.x * scale * sign),
     y: grip.y + (muzzleLocal.y * scale)
   });
+  const muzzle = resolveWreckerShotgunMuzzle(weaponMuzzle, requestedAngle);
   const twoHandError = Math.hypot(weaponSupport.x - supportHand.x, weaponSupport.y - supportHand.y);
   const tolerance = presentation.weapon.hold.supportTolerancePx * scale;
-  const barrelAngle = Math.atan2(muzzle.y - grip.y, muzzle.x - grip.x);
+  const barrelAngle = Math.atan2(weaponMuzzle.y - grip.y, weaponMuzzle.x - grip.x);
 
   return Object.freeze({
     requestedAngle,
@@ -89,6 +102,7 @@ export function resolveShotgunPresentationPose(heroX, heroY, aimRadians = 0) {
     grip,
     supportHand,
     weaponSupport,
+    weaponMuzzle,
     muzzle,
     weaponOrigin,
     weaponRotation: presentation.weapon.hold.rotationRadians,
