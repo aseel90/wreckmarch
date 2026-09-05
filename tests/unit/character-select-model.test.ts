@@ -13,7 +13,7 @@ type CharacterSelectOption = {
 };
 
 describe('Character Select canonical model', () => {
-  it('renders effective access without creating a Shotgun runtime definition', () => {
+  it('renders Wrecker from canonical character access without creating screen-specific identity logic', () => {
     expect(listCharacterSelectOptions().map((option: CharacterSelectOption) => [option.id, option.displayName, option.availability])).toEqual([
       ['runner', 'Runner', 'selectable'],
       ['shotgun', 'Wrecker', 'locked'],
