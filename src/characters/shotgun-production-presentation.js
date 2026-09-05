@@ -7,7 +7,7 @@
  * foreground overlay. This keeps the gun visible over the torso while both hands
  * visibly close over it, without reintroducing runtime limb crops or a body-part rig.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey } from './shotgun-runtime-presentation.js?v=6';
+import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey, getShotgunWeaponOriginForFacing } from './shotgun-runtime-presentation.js?v=7';
 import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=4';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
@@ -42,6 +42,7 @@ export function resolveShotgunPresentationPose(heroX, heroY, aimRadians = 0) {
   const facing = Math.cos(requestedAngle) < 0 ? 'left' : 'right';
   const left = facing === 'left';
   const grip = bodyPointToWorld(presentation, heroX, heroY, presentation.body.grip[facing]);
+  const weaponOrigin = getShotgunWeaponOriginForFacing(facing);
   const supportHand = bodyPointToWorld(presentation, heroX, heroY, presentation.body.support[facing]);
   const supportLocal = presentation.weapon.supportFromGrip;
   const muzzleLocal = presentation.weapon.muzzleFromGrip;
@@ -66,6 +67,7 @@ export function resolveShotgunPresentationPose(heroX, heroY, aimRadians = 0) {
     supportHand,
     weaponSupport,
     muzzle,
+    weaponOrigin,
     weaponRotation: presentation.weapon.hold.rotationRadians,
     bodyRotation: presentation.weapon.hold.bodyRotationRadians,
     weaponFlipX: left,
@@ -175,6 +177,7 @@ function installShotgunAimLayer(scene) {
       .setRotation(pose.bodyRotation);
     this.weaponV3Gun
       .setPosition(pose.grip.x, pose.grip.y)
+      .setOrigin(pose.weaponOrigin.x, pose.weaponOrigin.y)
       .setRotation(pose.weaponRotation)
       .setDepth(heroDepth + presentation.layers.weaponDepthOffset)
       .setFlipX(pose.weaponFlipX);
