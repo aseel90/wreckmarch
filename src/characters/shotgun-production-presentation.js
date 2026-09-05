@@ -3,13 +3,8 @@
  * is safe while the character is locked: CharacterRegistry still blocks gameplay
  * selection until an approved character definition and full-run gate exist.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=2';
-import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=1';
-import {
-  installShotgunLayeredLocomotion,
-  setShotgunLayeredFacing,
-  updateShotgunLayeredLocomotion
-} from './shotgun-layered-locomotion.js?v=1&wrecker=3';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=3';
+import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=2';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
   'weaponV3ArmA',
@@ -109,14 +104,14 @@ function installShotgunAimLayer(scene) {
     .setTexture(presentation.body.idle[0].key)
     .setOrigin(render.originX, render.originY)
     .setScale(render.scale)
-    .setRotation(0);
+    .setRotation(0)
+    .setVisible(true);
 
   scene.__shotgunGrip = new Phaser.Math.Vector2();
   scene.__shotgunMuzzle = new Phaser.Math.Vector2();
   scene.updateWeaponPose = function updateShotgunWeaponPose() {
     const pose = resolveShotgunPresentationPose(this.hero.x, this.hero.y, this.weaponAim);
     this.hero.setFlipX(pose.facing === 'left');
-    setShotgunLayeredFacing(this, pose.facing);
     this.weaponV3Gun
       .setPosition(pose.grip.x, pose.grip.y)
       .setRotation(pose.angle)
@@ -175,13 +170,9 @@ function c5Checks(scene) {
     shotgunBody: scene.hero?.texture?.key === SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key,
     shotgunWeapon: scene.weaponV3Gun?.texture?.key === SHOTGUN_RUNTIME_PRESENTATION.weapon.key,
     separateWeaponLayer: scene.weaponModule === scene.weaponV3Gun && scene.weaponV3Gun !== scene.hero,
+    noRuntimeLimbSplit: !scene.__shotgunLayeredLocomotion,
     noLegacyHands: HIDDEN_LEGACY_PARTS.every(key => !scene[key] || scene[key].visible === false),
-    muzzleAligned: Number.isFinite(scene.__shotgunMuzzle?.x) && Number.isFinite(scene.__shotgunMuzzle?.y),
-    layeredLocomotion: Boolean(
-      scene.__shotgunLayeredLocomotion?.torso
-      && scene.__shotgunLayeredLocomotion?.legLeft
-      && scene.__shotgunLayeredLocomotion?.legRight
-    )
+    muzzleAligned: Number.isFinite(scene.__shotgunMuzzle?.x) && Number.isFinite(scene.__shotgunMuzzle?.y)
   };
 }
 
@@ -211,8 +202,6 @@ function d1Checks(scene) {
 export async function installShotgunC5Presentation(scene) {
   await ensureShotgunRuntimeAssets(scene);
   installShotgunAimLayer(scene);
-  installShotgunLayeredLocomotion(scene);
-  scene.updateWeaponPose();
   return { checks: c5Checks(scene) };
 }
 
@@ -224,13 +213,11 @@ export async function installShotgunD1Presentation(scene, definition) {
   }
   scene.characterSystem.installProductionVisuals();
   installShotgunAimLayer(scene);
-  installShotgunLayeredLocomotion(scene);
-  scene.updateWeaponPose();
   const previousUpdateMovement = scene.updateMovement?.bind(scene);
   if (previousUpdateMovement && !scene.__shotgunLocomotionWrapped) {
     scene.updateMovement = function updateShotgunMovement(time) {
       previousUpdateMovement(time);
-      updateShotgunLayeredLocomotion(this, time);
+      this.characterSystem.updateLocomotionVisuals();
     };
     scene.__shotgunLocomotionWrapped = true;
   }

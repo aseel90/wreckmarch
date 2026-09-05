@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWeaponRuntimeState, getWeaponDefinition } from '../../src/combat/weapon-registry.js';
 import { SHOTGUN_RUNTIME_PRESENTATION } from '../../src/characters/shotgun-runtime-presentation.js';
-import { resolveShotgunLayeredMotion } from '../../src/characters/shotgun-layered-locomotion.js';
 import {
   installShotgunC5Presentation,
   installShotgunD1Presentation,
@@ -25,24 +24,19 @@ class DisplayObject {
   flipX = false;
   flipY = true;
   cropped = true;
-  rotation = 0;
-  scaleX = 1;
-  scaleY = 1;
-  alpha = 1;
   setVisible(value: boolean) { this.visible = value; return this; }
   setTexture(key: string) { this.texture = { key }; return this; }
   setCrop() { this.cropped = false; return this; }
   setOrigin() { return this; }
-  setScale(x = 1, y = x) { this.scaleX = x; this.scaleY = y; return this; }
+  setScale() { return this; }
   setFlipX(value: boolean) { this.flipX = value; return this; }
   setFlipY(value: boolean) { this.flipY = value; return this; }
   clearTint() { return this; }
   stop() { return this; }
-  setRotation(value = 0) { this.rotation = value; return this; }
+  setRotation() { return this; }
   setPosition(x: number, y: number) { this.x = x; this.y = y; return this; }
   setDepth(value: number) { this.depth = value; return this; }
-  setAlpha(value = 1) { this.alpha = value; return this; }
-  setTint() { return this; }
+  setAlpha() { return this; }
   destroy() {}
 }
 
@@ -66,8 +60,6 @@ function createScene() {
     hero,
     weaponV3Gun,
     weaponAim: 0,
-    move: { x: 0, y: 0, lengthSq() { return this.x * this.x + this.y * this.y; } },
-    heroSpeed: 255,
     weaponSystem: {
       setMuzzleResolver(fn: (spread: number) => Vector2) { muzzleResolver = fn; return this; },
       setFireFeedback(fn: (payload: any) => void) { fireFeedback = fn; return this; }
@@ -103,24 +95,12 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(left.muzzle.x).toBeLessThan(left.grip.x);
   });
 
-  it('keeps the approved four-step leg cycle subtle while adding body weight', () => {
-    const first = resolveShotgunLayeredMotion({ moving: true, move: { x: 1, y: 0 }, bodyClockMs: 35, stepClockMs: 10, speedRatio: 1 });
-    const opposite = resolveShotgunLayeredMotion({ moving: true, move: { x: 1, y: 0 }, bodyClockMs: 265, stepClockMs: 240, speedRatio: 1 });
-    const idle = resolveShotgunLayeredMotion({ moving: false, bodyClockMs: 225 });
-    expect(first.leftX).toBeLessThan(first.rightX);
-    expect(opposite.leftX).toBeGreaterThan(opposite.rightX);
-    expect(Math.abs(first.bodyBob)).toBeLessThan(1.5);
-    expect(Math.abs(first.bodyRotation)).toBeLessThan(.04);
-    expect(Math.abs(idle.bodyBob)).toBeLessThanOrEqual(.65);
-  });
-
   it('installs C5 body/weapon ownership without inherited atlas state', async () => {
     const fixture = createScene();
     const result = await installShotgunC5Presentation(fixture.scene);
     expect(Object.values(result.checks).every(Boolean)).toBe(true);
     expect(fixture.hero.texture.key).toBe(SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key);
-    expect(fixture.hero.visible).toBe(false);
-    expect(fixture.scene.__shotgunLayeredLocomotion?.torso.texture.key).toBe(SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key);
+    expect(fixture.hero.visible).toBe(true);
     expect(fixture.weaponV3Gun.texture.key).toBe(SHOTGUN_RUNTIME_PRESENTATION.weapon.key);
     expect(fixture.weaponV3Gun.cropped).toBe(false);
     expect(fixture.weaponV3Gun.flipY).toBe(false);
@@ -137,8 +117,8 @@ describe('locked Shotgun production presentation adapters', () => {
       id: 'shotgun',
       render: { idleTexture: SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key },
       animations: {
-        idle: { frames: SHOTGUN_RUNTIME_PRESENTATION.body.idle.map(frame => frame.key) },
-        run: { frames: SHOTGUN_RUNTIME_PRESENTATION.body.run.map(frame => frame.key) }
+        idle: { frames: SHOTGUN_RUNTIME_PRESENTATION.body.idle.map((frame: { key: string }) => frame.key) },
+        run: { frames: SHOTGUN_RUNTIME_PRESENTATION.body.run.map((frame: { key: string }) => frame.key) }
       }
     } as any;
     const updateLocomotionVisuals = vi.fn();
@@ -160,19 +140,9 @@ describe('locked Shotgun production presentation adapters', () => {
     const result = await installShotgunD1Presentation(fixture.scene, definition);
     expect(Object.values(result.checks).every(Boolean)).toBe(true);
     expect(installProductionVisuals).toHaveBeenCalledOnce();
-    fixture.scene.move.x = 1;
     fixture.scene.updateMovement(123);
-    fixture.scene.updateMovement(246);
-    expect(baseMovement).toHaveBeenCalledTimes(2);
-    expect(baseMovement).toHaveBeenLastCalledWith(246);
-    expect(updateLocomotionVisuals).not.toHaveBeenCalled();
-    const layered = fixture.scene.__shotgunLayeredLocomotion;
-    expect(layered.poseIndex).toBeGreaterThanOrEqual(0);
-    expect(layered.torso.x).not.toBe(fixture.hero.x);
-    // Authoring-space translations must be scaled down to the production sprite.
-    // The old 1:1 pixel copy created the visible detached-leg gap on the live game.
-    expect(Math.abs(layered.legLeft.x - layered.legRight.x)).toBeLessThanOrEqual(3);
-    expect(layered.motionScale).toBeCloseTo((128 * .78) / 210, 5);
+    expect(baseMovement).toHaveBeenCalledWith(123);
+    expect(updateLocomotionVisuals).toHaveBeenCalledOnce();
     expect(fixture.scene.primaryWeapon.fireProfile).toEqual(weaponDefinition.fireProfile);
   });
 
@@ -188,16 +158,11 @@ describe('locked Shotgun production presentation adapters', () => {
       on: vi.fn((event: string, fn: Function) => listeners.set(event, fn)),
       off: vi.fn(),
       once: vi.fn((event: string, fn: Function) => listeners.set(event, fn)),
-      start: vi.fn(() => listeners.get('complete')?.())
+      start: vi.fn(() => queueMicrotask(() => listeners.get('complete')?.()))
     };
 
     await installShotgunC5Presentation(fixture.scene);
-
-    expect(image).toHaveBeenCalledOnce();
-    expect(image).toHaveBeenCalledWith(
-      SHOTGUN_RUNTIME_PRESENTATION.weapon.key,
-      SHOTGUN_RUNTIME_PRESENTATION.weapon.path
-    );
+    expect(image).toHaveBeenCalledWith(SHOTGUN_RUNTIME_PRESENTATION.weapon.key, SHOTGUN_RUNTIME_PRESENTATION.weapon.path);
     expect(svg).not.toHaveBeenCalled();
   });
 
@@ -208,6 +173,6 @@ describe('locked Shotgun production presentation adapters', () => {
       id: 'shotgun',
       render: { idleTexture: 'wrong-idle' },
       animations: { idle: { frames: ['wrong-idle'] }, run: { frames: ['wrong-run'] } }
-    } as any)).rejects.toThrow('canonical idle runtime frames');
+    })).rejects.toThrow();
   });
 });

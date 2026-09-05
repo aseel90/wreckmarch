@@ -7,14 +7,14 @@ import {
   getCharacterEntry,
   isCharacterSelectable
 } from './character-registry.js?v=5';
-import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=1';
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=1';
-import { SHOTGUN_RUNTIME_COMPOSITION } from './shotgun-runtime-composition.js?v=1';
+import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=3&wrecker=4';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=3';
+import { SHOTGUN_RUNTIME_COMPOSITION } from './shotgun-runtime-composition.js?v=2';
 import { getWeaponDefinition } from '../combat/weapon-registry.js?v=2';
 import { getUpgradeDefinition } from '../upgrades/upgrade-catalog.js?v=14';
 import { meetsUpgradeCompatibility } from '../upgrades/upgrade-compatibility.js?v=1';
 
-export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v1';
+export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v2';
 
 export const SHOTGUN_FULL_RUN_VALIDATION = Object.freeze({
   status: 'pending',
@@ -57,13 +57,14 @@ export function evaluateShotgunProductionGate() {
     runtimePresentation:
       SHOTGUN_RUNTIME_PRESENTATION.id === 'shotgun'
       && SHOTGUN_RUNTIME_PRESENTATION.body.idle.length === 2
-      && SHOTGUN_RUNTIME_PRESENTATION.body.run.length === 5
+      && SHOTGUN_RUNTIME_PRESENTATION.body.run.length === 4
+      && SHOTGUN_RUNTIME_PRESENTATION.body.run.every(frame => frame.generated === true)
       && SHOTGUN_RUNTIME_PRESENTATION.weapon.key === 'shotgun-weapon'
       && SHOTGUN_RUNTIME_PRESENTATION.activation.previewRegistryEntryAllowed === true,
     runtimeComposition:
       SHOTGUN_RUNTIME_COMPOSITION.id === 'shotgun-inactive-composition'
       && SHOTGUN_RUNTIME_COMPOSITION.motions.idle === 2
-      && SHOTGUN_RUNTIME_COMPOSITION.motions.run === 5
+      && SHOTGUN_RUNTIME_COMPOSITION.motions.run === 4
       && SHOTGUN_RUNTIME_COMPOSITION.activation.previewRegistryEntryAllowed === true,
     upgradeCompatibility: shotgunUpgradeCompatibilityReady(),
     characterDefinition: Boolean(entry.definition),

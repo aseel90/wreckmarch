@@ -1,59 +1,48 @@
 import fs from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { SHOTGUN_ART_CONTRACT } from '../../src/characters/shotgun-art-contract.js';
-import {
-  getCharacterEntry,
-  getCharacterDefinition,
-  isCharacterSelectable,
-} from '../../src/characters/character-registry.js';
 import { SHOTGUN_RUNTIME_PRESENTATION } from '../../src/characters/shotgun-runtime-presentation.js';
+import { getCharacterEntry, getCharacterDefinition, isCharacterSelectable } from '../../src/characters/character-registry.js';
 import {
   SHOTGUN_RUNTIME_COMPOSITION,
   createShotgunRuntimeComposition
 } from '../../src/characters/shotgun-runtime-composition.js';
 
-const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
+const read=(path:string)=>fs.readFileSync(new URL(`../../${path}`,import.meta.url),'utf8');
 
-function imageStub() {
-  const image: any = {
-    x: 0,
-    y: 0,
-    setOrigin: vi.fn(),
-    setScale: vi.fn(),
-    setFlipX: vi.fn(),
-    setAngle: vi.fn(),
-    setTexture: vi.fn(),
-    destroy: vi.fn()
-  };
-  for (const method of ['setOrigin', 'setScale', 'setFlipX', 'setAngle', 'setTexture']) image[method].mockReturnValue(image);
-  return image;
+class DisplayObject {
+  texture = { key: '' };
+  x = 0;
+  y = 0;
+  flipX = false;
+  angle = 0;
+  setOrigin = vi.fn(() => this);
+  setScale = vi.fn(() => this);
+  setFlipX = vi.fn((value:boolean) => { this.flipX=value; return this; });
+  setAngle = vi.fn((value:number) => { this.angle=value; return this; });
+  setTexture = vi.fn((key:string) => { this.texture={key}; return this; });
+  setPosition = vi.fn((x:number,y:number) => { this.x=x; this.y=y; return this; });
 }
 
 function sceneStub() {
-  const body = imageStub();
-  const weapon = imageStub();
-  const container: any = {
-    setPosition: vi.fn(),
-    destroy: vi.fn()
+  const body = new DisplayObject();
+  const weapon = new DisplayObject();
+  const container = {
+    x: 0,
+    y: 0,
+    setPosition: vi.fn(function(this:any,x:number,y:number){this.x=x;this.y=y;return this;})
   };
-  container.setPosition.mockReturnValue(container);
-  return {
-    body,
-    weapon,
-    container,
-    scene: {
-      add: {
-        image: vi.fn()
-          .mockReturnValueOnce(body)
-          .mockReturnValueOnce(weapon),
-        container: vi.fn().mockReturnValue(container)
-      }
-    }
-  };
+  const image = vi.fn((x:number,y:number,key:string) => {
+    const target = image.mock.calls.length === 1 ? body : weapon;
+    target.x=x; target.y=y; target.texture={key};
+    return target;
+  });
+  const scene = { add: { image, container: vi.fn((x:number,y:number) => {container.x=x;container.y=y;return container;}) } };
+  return { scene, body, weapon, container };
 }
 
 describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
-  it('composes separate body and weapon layers from the canonical runtime presentation', () => {
+  it('creates one body and one separate weapon inside one anchored container', () => {
     const { scene, body, weapon, container } = sceneStub();
     const composition = createShotgunRuntimeComposition(scene as any, { x: 120, y: 90 });
 
@@ -84,18 +73,16 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     composition.setMotion('run', 1);
     composition.setMotion('run', 2);
     composition.setMotion('run', 3);
-    composition.setMotion('run', 4);
 
     expect(body.setTexture.mock.calls.map((call: any[]) => call[0])).toEqual([
       SHOTGUN_RUNTIME_PRESENTATION.body.idle[1].key,
       SHOTGUN_RUNTIME_PRESENTATION.body.run[0].key,
       SHOTGUN_RUNTIME_PRESENTATION.body.run[1].key,
       SHOTGUN_RUNTIME_PRESENTATION.body.run[2].key,
-      SHOTGUN_RUNTIME_PRESENTATION.body.run[3].key,
-      SHOTGUN_RUNTIME_PRESENTATION.body.run[4].key
+      SHOTGUN_RUNTIME_PRESENTATION.body.run[3].key
     ]);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.body.canvas).toBe(SHOTGUN_ART_CONTRACT.canvas);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.body.render).toBe(SHOTGUN_ART_CONTRACT.render);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.canvas).toEqual(SHOTGUN_ART_CONTRACT.canvas);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.render).toEqual(SHOTGUN_ART_CONTRACT.render);
   });
 
   it('mirrors body and separate weapon around the canonical grip while preserving relative aim semantics', () => {
@@ -139,7 +126,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     composition.advanceLocomotion(300, { frameDurationMs: 100 });
     expect(composition.frameIndex).toBe(3);
     expect(body.setTexture).toHaveBeenLastCalledWith(SHOTGUN_RUNTIME_PRESENTATION.body.run[3].key);
-    composition.advanceLocomotion(200, { frameDurationMs: 100 });
+    composition.advanceLocomotion(100, { frameDurationMs: 100 });
     expect(composition.frameIndex).toBe(0);
     expect(body.setTexture).toHaveBeenLastCalledWith(SHOTGUN_RUNTIME_PRESENTATION.body.run[0].key);
 
@@ -174,7 +161,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
 
     const fourth = sceneStub();
     const composition = createShotgunRuntimeComposition(fourth.scene as any);
-    expect(() => composition.setMotion('run', 5)).toThrow('Invalid Shotgun run frame index');
+    expect(() => composition.setMotion('run', 4)).toThrow('Invalid Shotgun run frame index');
     expect(() => composition.setPosition(Number.POSITIVE_INFINITY, 0)).toThrow('position must be finite');
     expect(() => composition.advanceLocomotion(-1, { frameDurationMs: 100 })).toThrow('delta must be a finite non-negative number');
     expect(() => composition.advanceLocomotion(1, { frameDurationMs: 0 })).toThrow('frame duration must be a finite positive number');

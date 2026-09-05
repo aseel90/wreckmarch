@@ -1,7 +1,10 @@
 /* WRECKMARCH WS14-C — inactive Shotgun production art manifest.
  * Locked frontend preview metadata may reference this manifest. Playable runtime activation remains gated.
+ * Run locomotion is baked from the approved idle raster into complete CanvasTextures.
  */
-import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js';
+import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=2';
+
+const IDLE_SOURCE = 'assets/hero/shotgun/idle-0.svg';
 
 export const SHOTGUN_PRODUCTION_ART = Object.freeze({
   status: 'art-only',
@@ -10,16 +13,14 @@ export const SHOTGUN_PRODUCTION_ART = Object.freeze({
     footLineY: SHOTGUN_ART_CONTRACT.body.footLineY,
     authoredGripMarker: Object.freeze({ x: 77, y: 81 }),
     idle: Object.freeze([
-      'assets/hero/shotgun/idle-0.svg',
+      IDLE_SOURCE,
       'assets/hero/shotgun/idle-1.svg'
     ]),
-    run: Object.freeze([
-      'assets/hero/shotgun/run-0.svg',
-      'assets/hero/shotgun/run-1.svg',
-      'assets/hero/shotgun/run-2.svg',
-      'assets/hero/shotgun/run-3.svg',
-      'assets/hero/shotgun/run-4.svg'
-    ])
+    runBake: Object.freeze({
+      source: IDLE_SOURCE,
+      method: 'full-frame-locomotion-v1',
+      poses: Object.freeze(['step-left', 'compress-left', 'step-right', 'compress-right'])
+    })
   }),
   weapon: Object.freeze({
     path: 'assets/weapons/shotgun.svg',
