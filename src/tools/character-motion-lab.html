@@ -1,4 +1,53 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>WRECKMARCH — Short-Step Motion Test</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WRECKMARCH — Short-Step Motion Test</title>
 <style>
-:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#090a0c;color:#f0eadf}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#2a2119 0,#101214 42%,#090a0c 100%);padding:16px}main{max-width:900px;margin:auto}h1{font-size:clamp(24px,5vw,40px);margin:0;letter-spacing:.06em}p{color:#bdb6aa;line-height:1.5}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}button{min-height:44px;border-radius:9px;border:1px solid #5b554b;background:#1a1d20;color:#f5efe4;padding:0 16px;font-weight:800}button.on{background:#51412d;border-color:#92734b}.stage{border:1px solid #353638;border-radius:16px;overflow:hidden;background:#111315;padding:20px;box-shadow:0 16px 42px #0008}.viewport{width:min(100%,520px);margin:auto;aspect-ratio:512/549;background-image:url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#090a0c;color:#f0eadf}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#2a2119 0,#101214 42%,#090a0c 100%);padding:16px}
+main{max-width:900px;margin:auto}h1{font-size:clamp(24px,5vw,40px);margin:0;letter-spacing:.06em}p{color:#bdb6aa;line-height:1.5;max-width:760px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}button{min-height:44px;border-radius:9px;border:1px solid #5b554b;background:#1a1d20;color:#f5efe4;padding:0 16px;font-weight:800}button.on{background:#51412d;border-color:#92734b}
+.stage{position:relative;height:min(68vh,620px);min-height:430px;border:1px solid #353638;border-radius:16px;overflow:hidden;background:linear-gradient(#151719,#0d0f10);box-shadow:0 16px 42px #0008}
+.floor{position:absolute;left:50%;bottom:12%;width:72%;height:20%;transform:translateX(-50%) perspective(500px) rotateX(67deg);border-radius:50%;background:radial-gradient(ellipse,#2b2824 0,#171716 50%,transparent 72%)}
+.rig{position:absolute;left:50%;bottom:16%;width:256px;height:296px;transform:translateX(-50%);transform-origin:50% 88%}
+.layer{position:absolute;inset:0;background:url('../../assets/hero/shotgun/idle-0.svg') center/contain no-repeat;transform-origin:50% 82%;will-change:transform}
+.torso{clip-path:polygon(0 0,100% 0,100% 72%,72% 72%,66% 64%,34% 64%,27% 72%,0 72%);z-index:3}
+.left-leg{clip-path:polygon(0 56%,52% 56%,52% 100%,0 100%);z-index:2;transform-origin:36% 65%}
+.right-leg{clip-path:polygon(48% 56%,100% 56%,100% 100%,48% 100%);z-index:1;transform-origin:65% 65%}
+.shadow{position:absolute;left:50%;bottom:13.5%;width:160px;height:32px;transform:translateX(-50%);border-radius:50%;background:#0009;filter:blur(3px);will-change:transform,opacity}
+.badge{position:absolute;left:12px;top:12px;padding:6px 9px;border-radius:999px;border:1px solid #514b42;background:#0d0f11dc;color:#ded6c8;font-size:11px;letter-spacing:.08em}
+.readout{position:absolute;right:12px;top:12px;min-width:112px;padding:9px 11px;border-radius:10px;border:1px solid #343536;background:#0d0f11dc;color:#aaa49a;font-size:12px;text-align:right}.readout b{display:block;color:#f0eadf;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.grid div{padding:12px;border:1px solid #303235;border-radius:10px;background:#121416;color:#bcb5a9;font-size:13px;line-height:1.4}.grid b{display:block;color:#eee7dc;margin-bottom:4px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.rig{width:205px;height:237px}.stage{min-height:390px}}
+</style>
+</head>
+<body>
+<main>
+<h1>WRECKER — SHORT-STEP TEST</h1>
+<p>This prototype tests the movement idea only: four short top-down / 3⁄4 steps, a nearly locked upper body, tiny hip weight shift, and no side-scroller stride.</p>
+<div class="toolbar"><button id="normal" class="on">NORMAL</button><button id="slow">SLOW</button><button id="freeze">FREEZE</button></div>
+<section class="stage">
+<div class="badge">TOP-DOWN 3/4 • 4 POSES</div><div class="readout"><span>POSE</span><b id="pose">1 / 4</b></div>
+<div class="floor"></div><div id="shadow" class="shadow"></div>
+<div id="rig" class="rig"><div id="rightLeg" class="layer right-leg"></div><div id="leftLeg" class="layer left-leg"></div><div id="torso" class="layer torso"></div></div>
+</section>
+<div class="grid"><div><b>Feet</b>Travel only a few pixels. The feet alternate under the body instead of stretching forward and backward.</div><div><b>Weight</b>The torso gets only 1–2 px of bob plus a very small lean so the character still feels heavy.</div><div><b>Purpose</b>If this motion direction feels right, the final version will use properly cut art parts rather than CSS clipping.</div></div>
+</main>
+<script>
+const torso=document.getElementById('torso'),left=document.getElementById('leftLeg'),right=document.getElementById('rightLeg'),rig=document.getElementById('rig'),shadow=document.getElementById('shadow'),pose=document.getElementById('pose');
+const buttons=[...document.querySelectorAll('button')];
+const frames=[
+ {t:'translate(-1px,0) rotate(-0.35deg)',l:'translate(-3px,2px) rotate(2.2deg)',r:'translate(2px,-1px) rotate(-1.2deg)',g:'translateX(-50%) rotate(-0.25deg)',s:'translateX(-50%) scaleX(.98)'},
+ {t:'translate(0,2px) rotate(0deg)',l:'translate(-1px,0) rotate(.4deg)',r:'translate(1px,0) rotate(-.4deg)',g:'translateX(-50%)',s:'translateX(-50%) scaleX(1.02)'},
+ {t:'translate(1px,0) rotate(.35deg)',l:'translate(2px,-1px) rotate(-1.2deg)',r:'translate(-3px,2px) rotate(2.2deg)',g:'translateX(-50%) rotate(.25deg)',s:'translateX(-50%) scaleX(.98)'},
+ {t:'translate(0,1px) rotate(0deg)',l:'translate(0,0) rotate(0deg)',r:'translate(0,0) rotate(0deg)',g:'translateX(-50%)',s:'translateX(-50%) scaleX(1.01)'}
+];
+let index=0,timer=null;
+function draw(){const f=frames[index];torso.style.transform=f.t;left.style.transform=f.l;right.style.transform=f.r;rig.style.transform=f.g;shadow.style.transform=f.s;pose.textContent=(index+1)+' / 4'}
+function run(ms){clearInterval(timer);timer=setInterval(()=>{index=(index+1)%frames.length;draw()},ms)}
+function select(id){buttons.forEach(b=>b.classList.toggle('on',b.id===id));if(id==='freeze'){clearInterval(timer)}else run(id==='slow'?230:115)}
+buttons.forEach(b=>b.onclick=()=>select(b.id));draw();run(115);
+</script>
+</body></html>
