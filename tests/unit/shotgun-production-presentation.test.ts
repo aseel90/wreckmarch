@@ -102,7 +102,7 @@ describe('locked Shotgun production presentation adapters', () => {
     }
   });
 
-  it('installs C5 with the weapon behind the baked hands and locked at zero runtime rotation', async () => {
+  it('installs C5 as body -> weapon -> baked front hands with zero body/weapon rotation', async () => {
     const fixture = createScene();
     const result = await installShotgunC5Presentation(fixture.scene);
     expect(Object.values(result.checks).every(Boolean)).toBe(true);
@@ -112,12 +112,18 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(fixture.weaponV3Gun.cropped).toBe(false);
     expect(fixture.weaponV3Gun.flipY).toBe(false);
     expect(fixture.weaponV3Gun.flipX).toBe(false);
+    expect(fixture.hero.rotation).toBe(0);
     expect(fixture.weaponV3Gun.rotation).toBe(0);
-    expect(fixture.weaponV3Gun.depth).toBeLessThan(fixture.hero.depth);
+    expect(fixture.scene.__shotgunHandOverlay.texture.key).toBe(SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].handOverlayKey);
+    expect(fixture.scene.__shotgunHandOverlay.rotation).toBe(0);
+    expect(fixture.hero.depth).toBeLessThan(fixture.weaponV3Gun.depth);
+    expect(fixture.weaponV3Gun.depth).toBeLessThan(fixture.scene.__shotgunHandOverlay.depth);
     expect(fixture.scene.__shotgunTwoHandHold).toMatchObject({
       mode: 'two-hand-fixed',
+      layerMode: 'body-weapon-front-hands',
       locked: true,
-      runtimeRotation: false
+      runtimeRotation: false,
+      runtimeBodyRotation: false
     });
     expect(LEGACY_PARTS.every(key => fixture.scene[key].visible === false)).toBe(true);
     const muzzle = fixture.getMuzzleResolver()?.(0);
@@ -137,6 +143,11 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(fixture.hero.flipX).toBe(true);
     expect(fixture.weaponV3Gun.flipX).toBe(true);
     expect(fixture.weaponV3Gun.rotation).toBe(0);
+    expect(fixture.hero.rotation).toBe(0);
+    expect(fixture.scene.__shotgunHandOverlay.flipX).toBe(true);
+    expect(fixture.scene.__shotgunHandOverlay.rotation).toBe(0);
+    expect(fixture.hero.depth).toBeLessThan(fixture.weaponV3Gun.depth);
+    expect(fixture.weaponV3Gun.depth).toBeLessThan(fixture.scene.__shotgunHandOverlay.depth);
     expect(fixture.scene.__shotgunSupportHand.x).toBeLessThan(fixture.scene.__shotgunGrip.x);
     expect(fixture.scene.__shotgunMuzzle.x).toBeLessThan(fixture.scene.__shotgunGrip.x);
     const leftMuzzleA = fixture.getMuzzleResolver()?.(-0.4);
@@ -174,9 +185,13 @@ describe('locked Shotgun production presentation adapters', () => {
     const result = await installShotgunD1Presentation(fixture.scene, definition);
     expect(Object.values(result.checks).every(Boolean)).toBe(true);
     expect(installProductionVisuals).toHaveBeenCalledOnce();
+    fixture.hero.rotation = 0.3;
+    fixture.scene.__shotgunHandOverlay.rotation = 0.3;
     fixture.scene.updateMovement(123);
     expect(baseMovement).toHaveBeenCalledWith(123);
     expect(updateLocomotionVisuals).toHaveBeenCalledOnce();
+    expect(fixture.hero.rotation).toBe(0);
+    expect(fixture.scene.__shotgunHandOverlay.rotation).toBe(0);
     expect(fixture.scene.primaryWeapon.fireProfile).toEqual(weaponDefinition.fireProfile);
   });
 
