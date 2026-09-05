@@ -166,8 +166,13 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(baseMovement).toHaveBeenCalledTimes(2);
     expect(baseMovement).toHaveBeenLastCalledWith(246);
     expect(updateLocomotionVisuals).not.toHaveBeenCalled();
-    expect(fixture.scene.__shotgunLayeredLocomotion.poseIndex).toBeGreaterThanOrEqual(0);
-    expect(fixture.scene.__shotgunLayeredLocomotion.torso.x).not.toBe(fixture.hero.x);
+    const layered = fixture.scene.__shotgunLayeredLocomotion;
+    expect(layered.poseIndex).toBeGreaterThanOrEqual(0);
+    expect(layered.torso.x).not.toBe(fixture.hero.x);
+    // Authoring-space translations must be scaled down to the production sprite.
+    // The old 1:1 pixel copy created the visible detached-leg gap on the live game.
+    expect(Math.abs(layered.legLeft.x - layered.legRight.x)).toBeLessThanOrEqual(3);
+    expect(layered.motionScale).toBeCloseTo((128 * .78) / 210, 5);
     expect(fixture.scene.primaryWeapon.fireProfile).toEqual(weaponDefinition.fireProfile);
   });
 
