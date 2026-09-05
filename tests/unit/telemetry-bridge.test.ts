@@ -57,7 +57,13 @@ describe('balance run report bridge contract', () => {
     expect(html).toContain('./src/phase-d1-runtime.js?v=29&u5=3');
     expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=19');
     expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=29');
-    expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=2');
+    expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=3&wrecker=4');
+    expect(pagesWorkflow).toContain('src/characters/shotgun-production-presentation.js?v=3&wrecker=4');
+    expect(pagesWorkflow).toContain('src/characters/shotgun-runtime-presentation.js?v=3');
+    expect(pagesWorkflow).toContain('src/characters/shotgun-locomotion-art.js?v=2');
+    expect(pagesWorkflow).toContain('src/characters/shotgun-baked-locomotion.js?v=1');
+    expect(pagesWorkflow).toContain('SHOTGUN_BAKED_RUN_POSES');
+    expect(pagesWorkflow).toContain('bakeShotgunRunTextures');
     expect(pagesWorkflow).toContain('src/characters/runner-production-presentation.js?v=1');
     expect(pagesWorkflow).toContain('src/phase-b-runtime.js?v=6');
     expect(pagesWorkflow).toContain('src/phase-c-runtime.js?v=24');
