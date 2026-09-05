@@ -5,7 +5,7 @@ import { UPGRADE_SCOPES } from '../upgrade-schema.js';
 export const PIERCING_RIVETS_UPGRADE = Object.freeze({
   id: 'piercing-rivets',
   name: 'PIERCING RIVETS',
-  description: 'Rivets pierce +1 additional enemy.',
+  description: 'Projectiles pierce +1 additional enemy.',
   rarity: 'COMMON',
   maxLevel: 3,
   scope: UPGRADE_SCOPES.WEAPON,
