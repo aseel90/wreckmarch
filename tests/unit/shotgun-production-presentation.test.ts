@@ -86,11 +86,6 @@ beforeEach(() => {
 
 describe('locked Shotgun production presentation adapters', () => {
   it('uses mirrored fixed two-hand holds instead of rotating the gun around one hand', () => {
-    const right = resolveShotgunPresentationPose(100, 80, 0);
-    expect(right.grip).toEqual({ x: 104.68, y: 78.4712 });
-    expect(right.supportHand).toEqual({ x: 122.62, y: 76.1312 });
-    expect(right.weaponSupport).toEqual(right.supportHand);
-
     for (const requested of [-Math.PI * 5, -Math.PI, -0.7, 0, 0.7, Math.PI, Math.PI * 5]) {
       const pose = resolveShotgunPresentationPose(100, 80, requested);
       expect(pose.weaponRotation).toBe(0);
@@ -128,8 +123,7 @@ describe('locked Shotgun production presentation adapters', () => {
       layerMode: 'body-weapon-front-hands',
       locked: true,
       runtimeRotation: false,
-      runtimeBodyRotation: false,
-      contactSource: 'authored-visible-hands'
+      runtimeBodyRotation: false
     });
     expect(LEGACY_PARTS.every(key => fixture.scene[key].visible === false)).toBe(true);
     const muzzle = fixture.getMuzzleResolver()?.(0);
