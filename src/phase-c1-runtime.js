@@ -1,4 +1,4 @@
-import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';
+import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=2';
 
 /* WRECKMARCH — Phase C.1: landscape HUD + 8-way two-hand aim + canonical upgrade-scene owner */
 const W = 960;
