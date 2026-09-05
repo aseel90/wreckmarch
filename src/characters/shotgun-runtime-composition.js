@@ -52,12 +52,7 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
 
   const presentation = SHOTGUN_RUNTIME_PRESENTATION;
   const render = presentation.body.render;
-  const canvas = presentation.body.canvas;
-  const rightGrip = presentation.body.grip.right;
-  const gripOffset = Object.freeze({
-    x: (rightGrip.x - (canvas.width * render.originX)) * render.scale,
-    y: (rightGrip.y - (canvas.height * render.originY)) * render.scale
-  });
+  const gripSocket = presentation.body.gripSocket;
   let motion = options.motion ?? 'idle';
   let frameIndex = options.frameIndex ?? 0;
   let facing = requireFacing(options.facing ?? 'right');
@@ -69,7 +64,7 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
   body.setOrigin(render.originX, render.originY);
   body.setScale(render.scale);
 
-  const weapon = scene.add.image(gripOffset.x, gripOffset.y, presentation.weapon.key);
+  const weapon = scene.add.image(gripSocket.offsetX, gripSocket.offsetY, presentation.weapon.key);
   weapon.setOrigin(presentation.weapon.origin.x, presentation.weapon.origin.y);
   weapon.setScale(render.scale);
 
@@ -84,8 +79,8 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
     body.setFlipX(left);
     weapon.setFlipX(left);
     hands.setFlipX(left);
-    weapon.x = left ? -gripOffset.x : gripOffset.x;
-    weapon.y = gripOffset.y;
+    weapon.x = left ? -gripSocket.offsetX : gripSocket.offsetX;
+    weapon.y = gripSocket.offsetY;
     weapon.setAngle(0);
   }
 

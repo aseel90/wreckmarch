@@ -164,8 +164,7 @@ function installShotgunAimLayer(scene) {
     locked: false,
     errorPx: Number.POSITIVE_INFINITY,
     runtimeRotation: presentation.weapon.hold.runtimeRotation,
-    runtimeBodyRotation: presentation.weapon.hold.runtimeBodyRotation,
-    contactSource: presentation.weapon.hold.contactSource
+    runtimeBodyRotation: presentation.weapon.hold.runtimeBodyRotation
   };
   scene.updateWeaponPose = function updateShotgunWeaponPose() {
     const pose = resolveShotgunPresentationPose(this.hero.x, this.hero.y, this.weaponAim);
@@ -261,7 +260,6 @@ function c5Checks(scene) {
       twoHandHold?.mode === 'two-hand-fixed'
       && twoHandHold?.runtimeRotation === false
       && twoHandHold?.runtimeBodyRotation === false
-      && twoHandHold?.contactSource === 'authored-visible-hands'
       && twoHandHold?.locked === true,
     bodyRotationLocked: Math.abs(Number(scene.hero?.rotation) || 0) < 1e-8,
     weaponRotationLocked: Math.abs(Number(scene.weaponV3Gun?.rotation) || 0) < 1e-8,
