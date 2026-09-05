@@ -1,5 +1,5 @@
 /* WRECKMARCH WS14-E — canonical Shotgun playable-character definition */
-import { SHOTGUN_RUNTIME_PRESENTATION } from '../shotgun-runtime-presentation.js?v=1';
+import { SHOTGUN_RUNTIME_PRESENTATION } from '../shotgun-runtime-presentation.js?v=3';
 
 const presentation = SHOTGUN_RUNTIME_PRESENTATION;
 
@@ -60,7 +60,7 @@ export const SHOTGUN_CHARACTER = Object.freeze({
     run: Object.freeze({
       key: presentation.body.animationKeys.run,
       frames: Object.freeze(presentation.body.run.map(frame => frame.key)),
-      frameRate: 10
+      frameRate: 9
     })
   }),
   locomotion: Object.freeze({

@@ -1,17 +1,20 @@
 /* WRECKMARCH — Wrecker production locomotion art.
- * Mirrors the Runner runtime path: raster payload -> Image -> Phaser Canvas Texture.
  * Approved SVG wrappers are read only as text containers; Safari never decodes them as SVG textures.
+ * Run frames are baked once as complete CanvasTextures from idle-0, then runtime animation
+ * swaps full-body frames only.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=2';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=3';
+import { bakeShotgunRunTextures } from './shotgun-baked-locomotion.js?v=1';
 
-const FRAME_DATA = Object.freeze([
-  ...SHOTGUN_RUNTIME_PRESENTATION.body.idle,
-  ...SHOTGUN_RUNTIME_PRESENTATION.body.run
-].map((frame, index) => Object.freeze({
-  key: frame.key,
-  path: frame.path,
-  cacheKey: `wrecker-body-source-${index}`
+const IDLE_DATA = Object.freeze(SHOTGUN_RUNTIME_PRESENTATION.body.idle.map((frame, index) => Object.freeze({
+  ...frame,
+  cacheKey: `wrecker-body-idle-source-${index}`
 })));
+const RUN_DATA = Object.freeze(SHOTGUN_RUNTIME_PRESENTATION.body.run);
+const BAKE_SOURCE = Object.freeze({
+  path: SHOTGUN_RUNTIME_PRESENTATION.body.runBakeSource,
+  cacheKey: 'wrecker-body-run-bake-source'
+});
 
 function extractPngBase64(svg, key) {
   const match = String(svg || '').match(/href=["']data:image\/png;base64,([^"']+)["']/i);
@@ -36,26 +39,34 @@ function installFrameTexture(scene, image, key) {
   if (scene.textures.exists(key)) scene.textures.remove(key);
   const texture = scene.textures.createCanvas(key, canvas.width, canvas.height);
   const ctx = texture.getContext();
+  ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
   texture.refresh();
 }
 
 export function listShotgunLocomotionData() {
-  return FRAME_DATA;
+  return Object.freeze([...IDLE_DATA, ...RUN_DATA]);
 }
 
 export function loadShotgunLocomotionArt(scene) {
-  const missing = FRAME_DATA.filter(frame => !scene?.textures?.exists?.(frame.key));
-  if (missing.length === 0) return Promise.resolve(SHOTGUN_RUNTIME_PRESENTATION);
+  const missingIdle = IDLE_DATA.filter(frame => !scene?.textures?.exists?.(frame.key));
+  const missingRun = RUN_DATA.filter(frame => !scene?.textures?.exists?.(frame.key));
+  if (missingIdle.length === 0 && missingRun.length === 0) return Promise.resolve(SHOTGUN_RUNTIME_PRESENTATION);
   if (!scene?.load?.text || !scene?.load?.once || !scene?.load?.start || !scene?.cache?.text) {
     return Promise.reject(new Error('Wrecker locomotion art requires Phaser text-loader and text-cache boundaries'));
   }
 
+  const sources = new Map();
+  for (const frame of missingIdle) sources.set(frame.path, { path: frame.path, cacheKey: frame.cacheKey });
+  if (missingRun.length) sources.set(BAKE_SOURCE.path, BAKE_SOURCE);
+  const sourceList = [...sources.values()];
+
   return new Promise((resolve, reject) => {
     let failed = false;
+    const sourceKeys = new Set(sourceList.map(source => source.cacheKey));
     const fail = file => {
-      if (failed || !missing.some(frame => frame.cacheKey === file?.key)) return;
+      if (failed || !sourceKeys.has(file?.key)) return;
       failed = true;
       reject(new Error(`Wrecker locomotion asset failed: ${file?.key || 'unknown'}`));
     };
@@ -65,19 +76,22 @@ export function loadShotgunLocomotionArt(scene) {
       scene.load.off?.('loaderror', fail);
       if (failed) return;
       try {
-        const images = await Promise.all(missing.map(async frame => {
-          const wrapper = scene.cache.text.get(frame.cacheKey) || '';
-          return imageFromBase64(extractPngBase64(wrapper, frame.key), frame.key);
+        const images = new Map();
+        await Promise.all(sourceList.map(async source => {
+          const wrapper = scene.cache.text.get(source.cacheKey) || '';
+          const image = await imageFromBase64(extractPngBase64(wrapper, source.cacheKey), source.cacheKey);
+          images.set(source.path, image);
         }));
-        images.forEach((image, index) => installFrameTexture(scene, image, missing[index].key));
-        missing.forEach(frame => scene.cache.text.remove(frame.cacheKey));
+        for (const frame of missingIdle) installFrameTexture(scene, images.get(frame.path), frame.key);
+        if (missingRun.length) bakeShotgunRunTextures(scene, images.get(BAKE_SOURCE.path), RUN_DATA);
+        sourceList.forEach(source => scene.cache.text.remove(source.cacheKey));
         resolve(SHOTGUN_RUNTIME_PRESENTATION);
       } catch (error) {
         reject(error);
       }
     });
 
-    for (const frame of missing) scene.load.text(frame.cacheKey, frame.path);
+    sourceList.forEach(source => scene.load.text(source.cacheKey, source.path));
     scene.load.start();
   });
 }

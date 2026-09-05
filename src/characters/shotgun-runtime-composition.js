@@ -3,7 +3,7 @@
  * It intentionally has no input, combat, projectile or selection ownership.
  * A locked gameplay definition may be registered; live selection remains gated elsewhere.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=3';
 
 const MOTIONS = Object.freeze({
   idle: SHOTGUN_RUNTIME_PRESENTATION.body.idle,
@@ -13,7 +13,7 @@ const MOTIONS = Object.freeze({
 export const SHOTGUN_RUNTIME_COMPOSITION = Object.freeze({
   id: 'shotgun-inactive-composition',
   status: 'inactive-phaser-composition',
-  motions: Object.freeze({ idle: 2, run: 5 }),
+  motions: Object.freeze({ idle: SHOTGUN_RUNTIME_PRESENTATION.body.idle.length, run: SHOTGUN_RUNTIME_PRESENTATION.body.run.length }),
   activation: Object.freeze({
     playableOnMain: false,
     previewRegistryEntryAllowed: true,
