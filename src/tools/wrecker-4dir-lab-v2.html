@@ -18,7 +18,7 @@ p{margin:8px 0 14px;color:#bcb5aa}.toolbar{display:flex;gap:8px;flex-wrap:wrap;m
 </head>
 <body>
 <main>
-<div class="head"><div><h1>WRECKER — 4 DIR MOTION V2</h1><p>هذه نسخة جديدة بمسار مستقل. الحركة تبدأ تلقائيًا حتى يظهر الفرق فورًا.</p></div><div class="version">V2 • 1db8364+</div></div>
+<div class="head"><div><h1>WRECKER — 4 DIR MOTION V2</h1><p>نفس حركة الأربع اتجاهات مع حركة جسم خفيفة لإظهار الوزن بدون مبالغة.</p></div><div class="version">V2 • BODY MOTION</div></div>
 <div class="toolbar"><button id="demo" class="on">AUTO DEMO</button><button id="manual">MANUAL</button><button id="slow">SLOW</button></div>
 <section id="stage" class="stage">
 <div class="axis-x"></div><div class="axis-y"></div><span class="corner c1">UP+LEFT</span><span class="corner c2">UP+RIGHT</span><span class="corner c3">DOWN+LEFT</span><span class="corner c4">DOWN+RIGHT</span>
@@ -31,21 +31,22 @@ p{margin:8px 0 14px;color:#bcb5aa}.toolbar{display:flex;gap:8px;flex-wrap:wrap;m
 const actor=document.getElementById('actor'),rig=document.getElementById('rig'),torso=document.getElementById('torso'),legL=document.getElementById('legL'),legR=document.getElementById('legR'),shadow=document.getElementById('shadow'),dirEl=document.getElementById('dir'),poseEl=document.getElementById('pose'),modeEl=document.getElementById('mode');
 const pad=[...document.querySelectorAll('.pad button')],held=new Set();
 const poses=[
- {t:'translate(-1px,0) rotate(-.5deg)',l:'translate(-4px,2px) rotate(2.6deg)',r:'translate(2px,-1px) rotate(-1.4deg)',g:'translateX(-50%) rotate(-.3deg)',s:'translateX(-50%) scaleX(.97)'},
- {t:'translate(0,2px)',l:'translate(-1px,0)',r:'translate(1px,0)',g:'translateX(-50%)',s:'translateX(-50%) scaleX(1.03)'},
- {t:'translate(1px,0) rotate(.5deg)',l:'translate(2px,-1px) rotate(-1.4deg)',r:'translate(-4px,2px) rotate(2.6deg)',g:'translateX(-50%) rotate(.3deg)',s:'translateX(-50%) scaleX(.97)'},
- {t:'translate(0,1px)',l:'translate(0,0)',r:'translate(0,0)',g:'translateX(-50%)',s:'translateX(-50%) scaleX(1.01)'}
+ {t:'translate(-1px,0) rotate(-.5deg)',l:'translate(-4px,2px) rotate(2.6deg)',r:'translate(2px,-1px) rotate(-1.4deg)',s:'.97'},
+ {t:'translate(0,2px)',l:'translate(-1px,0)',r:'translate(1px,0)',s:'1.03'},
+ {t:'translate(1px,0) rotate(.5deg)',l:'translate(2px,-1px) rotate(-1.4deg)',r:'translate(-4px,2px) rotate(2.6deg)',s:'.97'},
+ {t:'translate(0,1px)',l:'translate(0,0)',r:'translate(0,0)',s:'1.01'}
 ];
-let x=.28,y=.35,pose=0,last=performance.now(),poseClock=0,auto=true,slow=false,autoLeg=0;
+let x=.28,y=.35,pose=0,last=performance.now(),poseClock=0,auto=true,slow=false,autoLeg=0,bodyClock=0,lastDx=1,lastDy=0;
 const route=[{x:.72,y:.35,d:'RIGHT'},{x:.72,y:.68,d:'DOWN'},{x:.28,y:.68,d:'LEFT'},{x:.28,y:.35,d:'UP'}];
-function drawPose(){const p=poses[pose];torso.style.transform=p.t;legL.style.transform=p.l;legR.style.transform=p.r;rig.style.transform=p.g;shadow.style.transform=p.s;poseEl.textContent=(pose+1)+'/4'}
-function face(dx,dy){let d='IDLE';if(Math.abs(dx)>Math.abs(dy))d=dx<0?'LEFT':'RIGHT';else if(Math.abs(dy)>.01)d=dy<0?'UP':'DOWN';dirEl.textContent=d;if(d==='LEFT')actor.style.transform='translate(-50%,-50%) scaleX(-1)';else actor.style.transform='translate(-50%,-50%) scaleX(1)';if(d==='UP')rig.style.filter='brightness(.86)';else if(d==='DOWN')rig.style.filter='brightness(1.06)';else rig.style.filter='none'}
+function drawPose(){const p=poses[pose];torso.style.transform=p.t;legL.style.transform=p.l;legR.style.transform=p.r;poseEl.textContent=(pose+1)+'/4'}
+function face(dx,dy){lastDx=dx;lastDy=dy;let d='IDLE';if(Math.abs(dx)>Math.abs(dy))d=dx<0?'LEFT':'RIGHT';else if(Math.abs(dy)>.01)d=dy<0?'UP':'DOWN';dirEl.textContent=d;if(d==='LEFT')actor.style.transform='translate(-50%,-50%) scaleX(-1)';else actor.style.transform='translate(-50%,-50%) scaleX(1)';if(d==='UP')rig.style.filter='brightness(.86)';else if(d==='DOWN')rig.style.filter='brightness(1.06)';else rig.style.filter='none'}
+function applyBodyMotion(dt,moving){bodyClock+=dt*(slow?.48:1);const p=poses[pose];if(moving){const phase=bodyClock/115;const bob=Math.sin(phase*Math.PI)*1.45;const sway=Math.sin(phase*Math.PI*.5)*.65;const directionalLean=Math.max(-.75,Math.min(.75,lastDx*.55+lastDy*.22));rig.style.transform=`translateX(-50%) translateY(${bob.toFixed(2)}px) rotate(${(sway+directionalLean).toFixed(2)}deg)`;const breathe=1+Math.sin(phase*Math.PI)*.003;torso.style.transform=`${p.t} scaleY(${breathe.toFixed(4)})`;shadow.style.transform=`translateX(-50%) scaleX(${p.s}) scaleY(${(1-bob*.018).toFixed(3)})`}else{const idlePhase=bodyClock/900;const breathe=Math.sin(idlePhase*Math.PI*2);rig.style.transform=`translateX(-50%) translateY(${(breathe*.65).toFixed(2)}px) rotate(${(breathe*.12).toFixed(2)}deg)`;torso.style.transform=`${p.t} scaleY(${(1+breathe*.0025).toFixed(4)})`;shadow.style.transform='translateX(-50%) scaleX(1)'}}
 function setHeld(d,on){if(on)held.add(d);else held.delete(d);pad.forEach(b=>b.classList.toggle('active',held.has(b.dataset.dir)))}
 pad.forEach(b=>{const d=b.dataset.dir;b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);auto=false;document.getElementById('demo').classList.remove('on');document.getElementById('manual').classList.add('on');modeEl.textContent='MANUAL';setHeld(d,true)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,e=>{e.preventDefault();setHeld(d,false)}))});
 const keyMap={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};addEventListener('keydown',e=>{const d=keyMap[e.key];if(d){e.preventDefault();auto=false;modeEl.textContent='MANUAL';setHeld(d,true)}});addEventListener('keyup',e=>{const d=keyMap[e.key];if(d){e.preventDefault();setHeld(d,false)}});
 document.getElementById('demo').onclick=()=>{auto=true;modeEl.textContent='AUTO';document.getElementById('demo').classList.add('on');document.getElementById('manual').classList.remove('on')};document.getElementById('manual').onclick=()=>{auto=false;modeEl.textContent='MANUAL';document.getElementById('manual').classList.add('on');document.getElementById('demo').classList.remove('on')};document.getElementById('slow').onclick=e=>{slow=!slow;e.currentTarget.classList.toggle('on',slow)};
 function loop(now){const dt=Math.min(40,now-last);last=now;let dx=0,dy=0,moving=false;if(auto){const target=route[autoLeg],vx=target.x-x,vy=target.y-y,dist=Math.hypot(vx,vy);if(dist<.018){autoLeg=(autoLeg+1)%route.length}else{dx=vx/(dist||1);dy=vy/(dist||1);moving=true}}else{dx=(held.has('right')?1:0)-(held.has('left')?1:0);dy=(held.has('down')?1:0)-(held.has('up')?1:0);const len=Math.hypot(dx,dy);if(len){dx/=len;dy/=len;moving=true}}
-if(moving){const rate=.00024*(slow?.48:1);x=Math.max(.14,Math.min(.86,x+dx*rate*dt));y=Math.max(.18,Math.min(.80,y+dy*rate*dt));actor.style.left=(x*100)+'%';actor.style.top=(y*100)+'%';face(dx,dy);poseClock+=dt;if(poseClock>=(slow?230:115)){poseClock=0;pose=(pose+1)%4;drawPose()}}else{dirEl.textContent='IDLE'}requestAnimationFrame(loop)}
+if(moving){const rate=.00024*(slow?.48:1);x=Math.max(.14,Math.min(.86,x+dx*rate*dt));y=Math.max(.18,Math.min(.80,y+dy*rate*dt));actor.style.left=(x*100)+'%';actor.style.top=(y*100)+'%';face(dx,dy);poseClock+=dt;if(poseClock>=(slow?230:115)){poseClock=0;pose=(pose+1)%4;drawPose()}}else{dirEl.textContent='IDLE'}applyBodyMotion(dt,moving);requestAnimationFrame(loop)}
 drawPose();actor.style.left=(x*100)+'%';actor.style.top=(y*100)+'%';requestAnimationFrame(loop);
 </script>
 </body>
