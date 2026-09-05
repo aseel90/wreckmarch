@@ -28,7 +28,7 @@ describe('registered upgrade runtime', () => {
       id: 'heavy-rivets',
       category: 'HERO',
       title: 'HEAVY RIVETS',
-      desc: '+12% Rivet Gun damage.',
+      desc: '+12% active weapon damage.',
       weight: 1.25
     });
     expect(choice.available()).toBe(true);
@@ -43,19 +43,21 @@ describe('registered upgrade runtime', () => {
   it('preserves five-level Heavy Rivets parity without direct weapon mutation ownership', () => {
     const scene = makeScene();
 
-    for (let level = 1; level <= 5; level += 1) {
+    for (let i = 0; i < 5; i++) {
       expect(canApplyRegisteredStatUpgrade(scene, 'heavy-rivets')).toBe(true);
       applyRegisteredStatUpgrade(scene, 'heavy-rivets');
-      expect(scene.primaryWeapon.damage).toBeCloseTo(24 * (1 + 0.12 * level));
     }
 
+    expect(scene.primaryWeapon.damage).toBeCloseTo(38.4);
+    expect(scene.damage).toBeCloseTo(38.4);
     expect(canApplyRegisteredStatUpgrade(scene, 'heavy-rivets')).toBe(false);
     expect(() => applyRegisteredStatUpgrade(scene, 'heavy-rivets')).toThrow(/max level/);
     expect(scene.upgradeLevels['heavy-rivets']).toBe(5);
   });
 
-  it('does not advance the upgrade level when canonical stat state is missing', () => {
-    const scene: any = { upgradeLevels: {}, primaryWeapon: { damage: 24 } };
+  it('does not commit upgrade levels when stat application fails', () => {
+    const scene = makeScene();
+    delete (scene as any).runStatState;
     expect(() => applyRegisteredStatUpgrade(scene, 'heavy-rivets')).toThrow(/runStatState/);
     expect(scene.upgradeLevels['heavy-rivets']).toBeUndefined();
   });

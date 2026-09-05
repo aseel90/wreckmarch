@@ -40,7 +40,7 @@ describe('U7 canonical Upgrade Scene ownership', () => {
     expect(c).not.toContain('openUpgradeCards = function');
     expect(c).not.toContain('closeUpgradeCards = function');
 
-    expect(c1).toContain("import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=1';");
+    expect(c1).toContain("import { installUpgradeScene } from './upgrades/upgrade-scene.js?v=2';");
     expect(c1).toContain('await installUpgradeScene(scene);');
     for (const legacy of [c1, c2, c3, c31, c5]) {
       expect(legacy).not.toMatch(/class UpgradeScene(?:V2|V3|V4)? extends Phaser\.Scene/);
