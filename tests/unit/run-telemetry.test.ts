@@ -34,7 +34,7 @@ describe('RunTelemetry', () => {
     scene.characterDefinition = { id: 'shotgun', displayName: 'Wrecker' };
     scene.heroHp = 0;
     const t = new RunTelemetry(scene, { reportIdFactory: () => 'wm-wrecker-identity', now: () => 1000 });
-    const report: any = t.finalize('RUNNER DOWN');
+    const report: any = (t.finalize as (reason?: string | null) => any)('RUNNER DOWN');
     expect(report.character).toEqual({ id: 'shotgun', displayName: 'Wrecker' });
     expect(report.finishReason).toBe('WRECKER DOWN');
   });
