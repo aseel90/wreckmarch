@@ -4,16 +4,16 @@
  * baked from the same approved full-body raster into a transparent CanvasTexture.
  * Runtime renders: full body -> weapon -> this overlay. No body-part transforms exist.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=5';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=6';
 
 export const SHOTGUN_HAND_OVERLAY_MASKS = Object.freeze([
   Object.freeze({
     id: 'rear-grip-hand',
-    points: Object.freeze([[50,68],[83,68],[88,80],[84,95],[61,96],[49,84]])
+    points: Object.freeze([[55,66],[72,66],[78,70],[76,79],[68,83],[55,78]])
   }),
   Object.freeze({
     id: 'support-hand',
-    points: Object.freeze([[83,60],[111,60],[121,72],[118,88],[96,92],[84,82]])
+    points: Object.freeze([[91,69],[108,68],[116,73],[115,84],[106,88],[95,85],[91,79]])
   })
 ]);
 
