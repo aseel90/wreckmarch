@@ -9,7 +9,7 @@ import {
   isCharacterProductionValidationActive
 } from './character-production-validation.js?v=1';
 import { installRunnerC5Presentation, installRunnerD1Presentation } from './runner-production-presentation.js?v=1';
-import { installShotgunC5Presentation, installShotgunD1Presentation } from './shotgun-production-presentation.js?v=6&wrecker=7';
+import { installShotgunC5Presentation, installShotgunD1Presentation } from './shotgun-production-presentation.js?v=7&wrecker=8';
 
 const PRESENTATION_PHASES = Object.freeze({
   c5: 'c5',
