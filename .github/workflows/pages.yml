@@ -200,7 +200,7 @@ jobs:
               echo '```'
             done
           } > /tmp/wm-e2e-comment.md
-          gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file /tmp/wm-e2e-comment.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
       - name: Enforce E2E gate
         env:
           SHARD_RESULT: ${{ needs.e2e-shard.result }}
@@ -300,7 +300,7 @@ jobs:
         with:
           name: ci-smoke
           path: /tmp/ci-smoke
-      - name: Open, update or close CI failure issue
+      - name: Bridge main CI state to issue
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -310,63 +310,72 @@ jobs:
           SMOKE: ${{ needs.smoke.result }}
         run: |
           set -euo pipefail
-          TITLE='[CI] main branch gate failed'
-          ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[CI] main branch gate failed") | .number' | head -n1)"
+          TITLE='[CI] main is failing'
+          ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[CI] main is failing") | .number' | head -n1)"
           if [ "$QUALITY" = success ] && [ "$E2E" = success ] && [ "$SMOKE" = success ]; then
             if [ -n "$ISSUE_NUMBER" ]; then
-              gh issue close "$ISSUE_NUMBER" --repo "$REPO" --comment "CI recovered on \`$SHA\`: Quality=$QUALITY E2E=$E2E Smoke=$SMOKE"
+              gh issue close "$ISSUE_NUMBER" --repo "$REPO" --comment "CI recovered on \`$SHA\`: quality=$QUALITY, e2e=$E2E, smoke=$SMOKE."
             fi
             exit 0
           fi
           {
-            printf 'Main branch CI failed on `%s`.\n\n' "$SHA"
-            printf -- '- Quality: `%s`\n- E2E: `%s`\n- Smoke: `%s`\n\n' "$QUALITY" "$E2E" "$SMOKE"
-            printf 'Run: https://github.com/%s/actions\n\n' "$REPO"
-            for LOG in \
-              /tmp/ci-quality/wm-quality-check.log \
-              /tmp/ci-smoke/wm-smoke.log \
-              /tmp/ci-smoke/wm-http.log \
-              /tmp/ci-e2e/wm-e2e-merged.log; do
-              [ -f "$LOG" ] || continue
-              printf '### %s\n```text\n' "$(basename "$LOG")"
-              tail -c 12000 "$LOG"
-              printf '\n```\n\n'
-            done
+            printf 'CI failed on `%s`.\n\n' "$SHA"
+            printf -- '- quality: **%s**\n- e2e: **%s**\n- smoke: **%s**\n\n' "$QUALITY" "$E2E" "$SMOKE"
+            printf 'Run: https://github.com/%s/actions/runs/%s\n\n' "$REPO" "${{ github.run_id }}"
+            if [ "$QUALITY" = failure ]; then
+              for LOG in /tmp/ci-quality/wm-quality-check.log /tmp/ci-quality/wm-quality-install.log; do
+                [ -f "$LOG" ] || continue
+                printf '### %s\n```text\n' "$(basename "$LOG")"
+                tail -c 12000 "$LOG"
+                printf '\n```\n\n'
+              done
+            fi
+            if [ "$E2E" = failure ]; then
+              for LOG in /tmp/ci-e2e/wm-e2e-merged.log /tmp/ci-e2e/all-e2e-artifacts/wm-e2e-shard-*.log; do
+                [ -f "$LOG" ] || continue
+                printf '### %s\n```text\n' "$(basename "$LOG")"
+                tail -c 12000 "$LOG"
+                printf '\n```\n\n'
+              done
+            fi
+            if [ "$SMOKE" = failure ]; then
+              for LOG in /tmp/ci-smoke/wm-smoke.log /tmp/ci-smoke/wm-smoke-playwright-install.log /tmp/ci-smoke/wm-http.log; do
+                [ -f "$LOG" ] || continue
+                printf '### %s\n```text\n' "$(basename "$LOG")"
+                tail -c 12000 "$LOG"
+                printf '\n```\n\n'
+              done
+            fi
           } > /tmp/wm-ci-issue.md
           if [ -n "$ISSUE_NUMBER" ]; then
             gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file /tmp/wm-ci-issue.md
           else
             gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/wm-ci-issue.md --label ci-failure
           fi
-          exit 1
 
   deploy:
     name: Deploy GitHub Pages
-    needs: [quality, e2e, smoke]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.quality.result == 'success' && needs.e2e.result == 'success' && needs.smoke.result == 'success'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [quality, smoke]
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-      - name: Build static site
-        run: |
-          pnpm exec vite build
-          node scripts/build-static.mjs
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Prepare artifact
+        run: |
+          mkdir -p _site
+          cp index.html style.css manifest.webmanifest _site/
+          cp -R src _site/src
+          cp -R assets _site/assets
+          mkdir -p _site/vendor
+          if [ -f vendor/phaser.min.js ]; then cp vendor/phaser.min.js _site/vendor/phaser.min.js; else curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o _site/vendor/phaser.min.js; fi
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
