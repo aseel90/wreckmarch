@@ -3,9 +3,9 @@
  * The weapon is composited between the full body and a tiny baked two-hand overlay,
  * so hands can sit over the weapon without putting the weapon behind the whole torso.
  */
-import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=2';
-import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=3';
-import { SHOTGUN_AIM_ALIGNMENT } from './shotgun-aim-alignment.js?v=3';
+import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=3';
+import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=4';
+import { SHOTGUN_AIM_ALIGNMENT } from './shotgun-aim-alignment.js?v=4';
 
 const bodyIdle = SHOTGUN_PRODUCTION_ART.body.idle.map((path, index) => Object.freeze({
   key: `shotgun-body-idle-${index}`,

@@ -2,7 +2,7 @@
  * Locked frontend preview metadata may reference this manifest. Playable runtime activation remains gated.
  * Run locomotion is baked from the approved idle raster into complete CanvasTextures.
  */
-import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=2';
+import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=3';
 
 const IDLE_SOURCE = 'assets/hero/shotgun/idle-0.svg';
 
@@ -11,8 +11,8 @@ export const SHOTGUN_PRODUCTION_ART = Object.freeze({
   body: Object.freeze({
     canvas: SHOTGUN_ART_CONTRACT.canvas,
     footLineY: SHOTGUN_ART_CONTRACT.body.footLineY,
-    authoredGripMarker: Object.freeze({ x: 77, y: 81 }),
-    authoredSupportMarker: Object.freeze({ x: 100, y: 78 }),
+    authoredGripMarker: SHOTGUN_ART_CONTRACT.twoHandHold.bodyRearGrip,
+    authoredSupportMarker: SHOTGUN_ART_CONTRACT.twoHandHold.bodySupportGrip,
     idle: Object.freeze([
       IDLE_SOURCE,
       'assets/hero/shotgun/idle-1.svg'
@@ -26,9 +26,9 @@ export const SHOTGUN_PRODUCTION_ART = Object.freeze({
   weapon: Object.freeze({
     path: 'assets/weapons/shotgun.svg',
     canvas: Object.freeze({ width: 96, height: 40 }),
-    grip: Object.freeze({ x: 18, y: 22 }),
-    support: Object.freeze({ x: 41, y: 19 }),
-    muzzle: Object.freeze({ x: 90, y: 17 })
+    grip: SHOTGUN_ART_CONTRACT.twoHandHold.weaponRearGrip,
+    support: SHOTGUN_ART_CONTRACT.twoHandHold.weaponSupportGrip,
+    muzzle: SHOTGUN_ART_CONTRACT.twoHandHold.weaponMuzzle
   }),
   activation: Object.freeze({ playableOnMain: false })
 });

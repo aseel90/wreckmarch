@@ -7,8 +7,8 @@
  * foreground overlay. This keeps the gun visible over the torso while both hands
  * visibly close over it, without reintroducing runtime limb crops or a body-part rig.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey } from './shotgun-runtime-presentation.js?v=5';
-import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=3';
+import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey } from './shotgun-runtime-presentation.js?v=6';
+import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=4';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
   'weaponV3ArmA',

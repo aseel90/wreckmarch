@@ -1,30 +1,24 @@
 /* WRECKMARCH WS14-C — locked Wrecker two-hand weapon hold geometry.
  *
- * The approved Wrecker body is a full-body baked pose: both hands are part of the
- * same raster. Therefore production runtime must not rotate the shotgun around a
- * single grip point. The weapon is pinned to a rear grip + support-hand pair and
- * only mirrored with the full body when facing changes.
+ * The approved Wrecker body is a full-body baked pose. Production runtime never
+ * rotates the shotgun from aim input. Instead, the gun is pinned to two authored
+ * palm contacts and mirrored with the full body when facing changes.
  */
-import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=2';
-import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=3';
+import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=3';
+import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=4';
 
-const { width, height } = SHOTGUN_ART_CONTRACT.canvas;
-const { originX, originY, scale } = SHOTGUN_ART_CONTRACT.render;
-const { offsetX, offsetY } = SHOTGUN_ART_CONTRACT.gripSocket;
+const { width } = SHOTGUN_ART_CONTRACT.canvas;
 const weapon = SHOTGUN_PRODUCTION_ART.weapon;
-
-const localY = (height * originY) + (offsetY / scale);
-const localRightX = (width * originX) + (offsetX / scale);
-const localLeftX = width - localRightX;
+const authoredGrip = SHOTGUN_PRODUCTION_ART.body.authoredGripMarker;
 const authoredSupport = SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker;
 
 function mirrorBodyPoint(point) {
   return Object.freeze({ x: width - point.x, y: point.y });
 }
 
-const bodyGripRight = Object.freeze({ x: localRightX, y: localY });
-const bodyGripLeft = Object.freeze({ x: localLeftX, y: localY });
-const bodySupportRight = Object.freeze({ x: authoredSupport.x, y: authoredSupport.y });
+const bodyGripRight = authoredGrip;
+const bodyGripLeft = mirrorBodyPoint(bodyGripRight);
+const bodySupportRight = authoredSupport;
 const bodySupportLeft = mirrorBodyPoint(bodySupportRight);
 const supportFromGrip = Object.freeze({
   x: weapon.support.x - weapon.grip.x,
@@ -38,8 +32,8 @@ const muzzleFromGrip = Object.freeze({
 export const SHOTGUN_AIM_ALIGNMENT = Object.freeze({
   bodyGrip: Object.freeze({ right: bodyGripRight, left: bodyGripLeft }),
   bodySupport: Object.freeze({ right: bodySupportRight, left: bodySupportLeft }),
-  authoredGripMarker: SHOTGUN_PRODUCTION_ART.body.authoredGripMarker,
-  authoredSupportMarker: SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker,
+  authoredGripMarker: authoredGrip,
+  authoredSupportMarker: authoredSupport,
   weaponOrigin: Object.freeze({
     x: weapon.grip.x / weapon.canvas.width,
     y: weapon.grip.y / weapon.canvas.height

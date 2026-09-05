@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="96" height="40" viewBox="0 0 96 40" role="img" aria-label="Shotgun weapon production art">
-  <g id="shotgun-weapon" data-grip-x="18" data-grip-y="22" data-support-x="41" data-support-y="19" data-muzzle-x="90" data-muzzle-y="17">
+  <g id="shotgun-weapon" data-grip-x="18" data-grip-y="22" data-support-x="51" data-support-y="25" data-muzzle-x="90" data-muzzle-y="17">
     <path d="M12 19 L29 12 L37 14 L33 22 L20 29 L9 27 Z" fill="#6d4a31" stroke="#1b1b1a" stroke-width="3" stroke-linejoin="round"/>
     <path d="M28 13 L75 12 L88 15 L88 20 L36 22 L31 26 L25 24 Z" fill="#343a3c" stroke="#17191a" stroke-width="3" stroke-linejoin="round"/>
     <path d="M42 22 L58 22 L55 29 L40 29 Z" fill="#724d32" stroke="#1b1b1a" stroke-width="3"/>
     <path d="M73 11 L92 12 L94 17 L90 20 L73 19 Z" fill="#272c2d" stroke="#17191a" stroke-width="3"/>
     <path d="M16 21 L21 19 L23 24 L18 27 Z" fill="#b8865b" stroke="#17191a" stroke-width="2"/>
     <circle id="grip-marker" cx="18" cy="22" r="1" fill="#ff00ff" opacity="0"/>
-    <circle id="support-marker" cx="41" cy="19" r="1" fill="#00ff88" opacity="0"/>
+    <circle id="support-marker" cx="51" cy="25" r="1" fill="#00ff88" opacity="0"/>
     <circle id="muzzle-marker" cx="90" cy="17" r="1" fill="#00ffff" opacity="0"/>
   </g>
 </svg>

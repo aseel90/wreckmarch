@@ -125,7 +125,7 @@ test('locked Shotgun can complete the production stack only through the explicit
 
   const frameLayers = await page.evaluate(async () => {
     const scene = (window as any).__WM_GAME__?.scene?.getScene?.('Wreckmarch');
-    const presentationPath = '/src/characters/shotgun-runtime-presentation.js?v=5';
+    const presentationPath = '/src/characters/shotgun-runtime-presentation.js?v=6';
     const { SHOTGUN_RUNTIME_PRESENTATION } = await import(presentationPath);
     const frames = [...SHOTGUN_RUNTIME_PRESENTATION.body.idle, ...SHOTGUN_RUNTIME_PRESENTATION.body.run];
     const results = frames.map((frame: any) => {

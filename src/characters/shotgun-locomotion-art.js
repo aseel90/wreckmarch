@@ -3,9 +3,9 @@
  * Run frames are baked once as complete CanvasTextures from idle-0. Two tiny foreground-hand
  * overlays are baked from those same approved rasters so runtime never crops body parts.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=5';
-import { bakeShotgunRunTextures } from './shotgun-baked-locomotion.js?v=2';
-import { bakeShotgunHandOverlayTexture } from './shotgun-hand-overlay-bake.js?v=1';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=6';
+import { bakeShotgunRunTextures } from './shotgun-baked-locomotion.js?v=3';
+import { bakeShotgunHandOverlayTexture } from './shotgun-hand-overlay-bake.js?v=2';
 
 const IDLE_DATA = Object.freeze(SHOTGUN_RUNTIME_PRESENTATION.body.idle.map((frame, index) => Object.freeze({
   ...frame,

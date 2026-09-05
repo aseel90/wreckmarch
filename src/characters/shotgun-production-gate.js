@@ -7,14 +7,14 @@ import {
   getCharacterEntry,
   isCharacterSelectable
 } from './character-registry.js?v=5';
-import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=5&wrecker=6';
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=5';
-import { SHOTGUN_RUNTIME_COMPOSITION } from './shotgun-runtime-composition.js?v=4';
+import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=6&wrecker=7';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=6';
+import { SHOTGUN_RUNTIME_COMPOSITION } from './shotgun-runtime-composition.js?v=5';
 import { getWeaponDefinition } from '../combat/weapon-registry.js?v=2';
 import { getUpgradeDefinition } from '../upgrades/upgrade-catalog.js?v=14';
 import { meetsUpgradeCompatibility } from '../upgrades/upgrade-compatibility.js?v=1';
 
-export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v4';
+export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v5';
 
 export const SHOTGUN_FULL_RUN_VALIDATION = Object.freeze({
   status: 'pending',
@@ -69,8 +69,14 @@ export function evaluateShotgunProductionGate() {
       && SHOTGUN_RUNTIME_PRESENTATION.layers?.runtimeCrop === false
       && [...SHOTGUN_RUNTIME_PRESENTATION.body.idle, ...SHOTGUN_RUNTIME_PRESENTATION.body.run].every(frame => typeof frame.handOverlayKey === 'string')
       && SHOTGUN_RUNTIME_PRESENTATION.body.handOverlay?.runtimeCrop === false
-      && SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip?.x === 23
-      && SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip?.y === -3
+      && SHOTGUN_RUNTIME_PRESENTATION.body.grip?.right?.x === 70
+      && SHOTGUN_RUNTIME_PRESENTATION.body.grip?.right?.y === 75
+      && SHOTGUN_RUNTIME_PRESENTATION.body.support?.right?.x === 103
+      && SHOTGUN_RUNTIME_PRESENTATION.body.support?.right?.y === 78
+      && SHOTGUN_RUNTIME_PRESENTATION.weapon.support?.x === 51
+      && SHOTGUN_RUNTIME_PRESENTATION.weapon.support?.y === 25
+      && SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip?.x === 33
+      && SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip?.y === 3
       && SHOTGUN_RUNTIME_PRESENTATION.activation.previewRegistryEntryAllowed === true,
     runtimeComposition:
       SHOTGUN_RUNTIME_COMPOSITION.id === 'shotgun-inactive-composition'

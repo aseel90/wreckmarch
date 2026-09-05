@@ -124,8 +124,8 @@ test.describe('WS14-C Shotgun canonical three-layer composition gate', () => {
           gunRect: { width: gunRect.width, height: gunRect.height },
           handsRect: { width: handsRect.width, height: handsRect.height },
           stageRect: { width: stageRect.width, height: stageRect.height },
-          gripAlpha: alphaAt(77, 81),
-          supportAlpha: alphaAt(100, 78),
+          gripAlpha: alphaAt(70, 75),
+          supportAlpha: alphaAt(103, 78),
           headAlpha: alphaAt(64, 36),
           legAlpha: alphaAt(64, 126)
         });

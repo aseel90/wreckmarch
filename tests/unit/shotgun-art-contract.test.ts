@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { SHOTGUN_ART_CONTRACT } from '../../src/characters/shotgun-art-contract.js';
 import { getCharacterEntry, getCharacterDefinition, isCharacterSelectable } from '../../src/characters/character-registry.js';
-import { RUNNER_CHARACTER } from '../../src/characters/definitions/runner.js';
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
@@ -14,16 +13,17 @@ describe('WS14-C Shotgun production art contract', () => {
     expect(SHOTGUN_ART_CONTRACT.locomotion).toEqual({ productionMode: 'baked-full-body', runtimeLimbSplit: false });
   });
 
-  it('matches live Runner render geometry instead of inventing a second coordinate system', () => {
-    expect(SHOTGUN_ART_CONTRACT.render).toEqual({
-      originX: RUNNER_CHARACTER.render.originX,
-      originY: RUNNER_CHARACTER.render.originY,
-      scale: RUNNER_CHARACTER.render.scale
+  it('owns Wrecker-authored two-hand contacts instead of inheriting Runner weapon sockets', () => {
+    expect(SHOTGUN_ART_CONTRACT.render).toEqual({ originX: 0.5, originY: 0.52, scale: 0.78 });
+    expect(SHOTGUN_ART_CONTRACT.twoHandHold).toEqual({
+      bodyRearGrip: { x: 70, y: 75 },
+      bodySupportGrip: { x: 103, y: 78 },
+      weaponRearGrip: { x: 18, y: 22 },
+      weaponSupportGrip: { x: 51, y: 25 },
+      weaponMuzzle: { x: 90, y: 17 }
     });
-    expect(SHOTGUN_ART_CONTRACT.gripSocket).toEqual({
-      offsetX: RUNNER_CHARACTER.weapon.socketOffsetX,
-      offsetY: RUNNER_CHARACTER.weapon.socketOffsetY
-    });
+    expect(SHOTGUN_ART_CONTRACT.gripSocket.offsetX).toBeCloseTo(4.68, 8);
+    expect(SHOTGUN_ART_CONTRACT.gripSocket.offsetY).toBeCloseTo(-1.5288, 8);
   });
 
   it('keeps the weapon separate and the public character locked', () => {
