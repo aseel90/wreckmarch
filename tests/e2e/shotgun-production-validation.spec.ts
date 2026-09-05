@@ -62,7 +62,8 @@ test('locked Shotgun can complete the production stack only through the explicit
       layerMode: 'body-weapon-front-hands',
       locked: true,
       runtimeRotation: false,
-      runtimeBodyRotation: false
+      runtimeBodyRotation: false,
+      contactSource: 'authored-visible-hands'
     },
     heroRotation: 0,
     weaponRotation: 0,
@@ -92,8 +93,12 @@ test('locked Shotgun can complete the production stack only through the explicit
         weaponDepth: scene.weaponV3Gun?.depth,
         handOverlayDepth: scene.__shotgunHandOverlay?.depth,
         hold: { ...(scene.__shotgunTwoHandHold || {}) },
+        heroX: scene.hero?.x,
+        heroY: scene.hero?.y,
         gripX: scene.__shotgunGrip?.x,
+        gripY: scene.__shotgunGrip?.y,
         supportX: scene.__shotgunSupportHand?.x,
+        supportY: scene.__shotgunSupportHand?.y,
         muzzleX: scene.__shotgunMuzzle?.x
       };
     });
@@ -112,8 +117,15 @@ test('locked Shotgun can complete the production stack only through the explicit
       layerMode: 'body-weapon-front-hands',
       locked: true,
       runtimeRotation: false,
-      runtimeBodyRotation: false
+      runtimeBodyRotation: false,
+      contactSource: 'authored-visible-hands'
     });
+    const expectedGripOffsetX = hold.weaponFlipX ? -4.68 : 4.68;
+    const expectedSupportOffsetX = hold.weaponFlipX ? -22.62 : 22.62;
+    expect(hold.gripX - hold.heroX).toBeCloseTo(expectedGripOffsetX, 4);
+    expect(hold.gripY - hold.heroY).toBeCloseTo(-1.5288, 4);
+    expect(hold.supportX - hold.heroX).toBeCloseTo(expectedSupportOffsetX, 4);
+    expect(hold.supportY - hold.heroY).toBeCloseTo(-3.8688, 4);
     if (hold.weaponFlipX) {
       expect(hold.supportX).toBeLessThan(hold.gripX);
       expect(hold.muzzleX).toBeLessThan(hold.gripX);
@@ -125,7 +137,7 @@ test('locked Shotgun can complete the production stack only through the explicit
 
   const frameLayers = await page.evaluate(async () => {
     const scene = (window as any).__WM_GAME__?.scene?.getScene?.('Wreckmarch');
-    const presentationPath = '/src/characters/shotgun-runtime-presentation.js?v=5';
+    const presentationPath = '/src/characters/shotgun-runtime-presentation.js?v=6';
     const { SHOTGUN_RUNTIME_PRESENTATION } = await import(presentationPath);
     const frames = [...SHOTGUN_RUNTIME_PRESENTATION.body.idle, ...SHOTGUN_RUNTIME_PRESENTATION.body.run];
     const results = frames.map((frame: any) => {
