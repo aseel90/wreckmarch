@@ -34,7 +34,7 @@ describe('Wrecker baked full-body locomotion', () => {
     const image={ width: 128, height: 148 };
     bakeShotgunRunTextures(scene, image);
     expect(createCanvas).toHaveBeenCalledTimes(4);
-    expect(createCanvas.mock.calls.map((call:any[])=>call[0])).toEqual(SHOTGUN_RUNTIME_PRESENTATION.body.run.map(frame=>frame.key));
+    expect(createCanvas.mock.calls.map((call:any[])=>call[0])).toEqual(SHOTGUN_RUNTIME_PRESENTATION.body.run.map((frame: { key: string }) => frame.key));
     expect(contexts.every(ctx => ctx.drawImage.mock.calls.length >= 4)).toBe(true);
     expect((scene as any).add).toBeUndefined();
   });

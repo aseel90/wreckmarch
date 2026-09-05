@@ -13,14 +13,14 @@ describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
     const assets = listShotgunRuntimeAssets();
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.idle).toHaveLength(2);
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.run).toHaveLength(4);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.body.run.every(frame => frame.generated === true)).toBe(true);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.body.run.map(frame => frame.pose)).toEqual(SHOTGUN_PRODUCTION_ART.body.runBake.poses);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.run.every((frame: { generated: boolean }) => frame.generated === true)).toBe(true);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.run.map((frame: { pose: string }) => frame.pose)).toEqual(SHOTGUN_PRODUCTION_ART.body.runBake.poses);
     expect(assets).toHaveLength(3);
-    expect(assets.map(asset => asset.path)).toEqual([
+    expect(assets.map((asset: { path: string }) => asset.path)).toEqual([
       ...SHOTGUN_PRODUCTION_ART.body.idle,
       SHOTGUN_PRODUCTION_ART.weapon.path
     ]);
-    const allKeys=[...SHOTGUN_RUNTIME_PRESENTATION.body.idle,...SHOTGUN_RUNTIME_PRESENTATION.body.run,{key:SHOTGUN_RUNTIME_PRESENTATION.weapon.key}].map(x=>x.key);
+    const allKeys=[...SHOTGUN_RUNTIME_PRESENTATION.body.idle,...SHOTGUN_RUNTIME_PRESENTATION.body.run,{key:SHOTGUN_RUNTIME_PRESENTATION.weapon.key}].map((x: { key: string }) => x.key);
     expect(new Set(allKeys).size).toBe(7);
   });
 

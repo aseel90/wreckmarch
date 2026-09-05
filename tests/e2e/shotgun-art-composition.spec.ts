@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { SHOTGUN_PRODUCTION_ART } from '../../src/characters/shotgun-production-art.js';
 import { SHOTGUN_AIM_ALIGNMENT, getShotgunWeaponPlacement } from '../../src/characters/shotgun-aim-alignment.js';
 
-const frames = [...SHOTGUN_PRODUCTION_ART.body.idle, ...SHOTGUN_PRODUCTION_ART.body.run];
+const frames = [...SHOTGUN_PRODUCTION_ART.body.idle];
 const facings = ['right', 'left'] as const;
 const aimAngles = [-20, 0, 20] as const;
 
@@ -22,7 +22,7 @@ function rotatedMuzzle(facing: 'right' | 'left', angleDeg: number) {
 }
 
 test.describe('WS14-C Shotgun art composition gate', () => {
-  test('renders every idle/run frame with the separate shotgun across both facings and aim range', async ({ page }) => {
+  test('renders every authored body source with the separate shotgun across both facings and aim range', async ({ page }) => {
     await page.goto('/');
     await page.setViewportSize({ width: 844, height: 390 });
 
@@ -115,7 +115,7 @@ test.describe('WS14-C Shotgun art composition gate', () => {
       return measurements;
     }, { cases, bodyX: BODY_STAGE_X, bodyY: BODY_STAGE_Y, weapon: SHOTGUN_PRODUCTION_ART.weapon });
 
-    expect(results).toHaveLength(42);
+    expect(results).toHaveLength(12);
     for (const result of results) {
       expect(result.bodyNatural).toEqual({ width: 128, height: 148 });
       expect(result.gunNatural).toEqual({ width: 96, height: 40 });

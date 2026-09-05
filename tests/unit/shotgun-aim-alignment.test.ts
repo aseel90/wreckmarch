@@ -10,7 +10,7 @@ import {
 } from '../../src/characters/character-registry.js';
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
-const bodyPaths = [...SHOTGUN_PRODUCTION_ART.body.idle, ...SHOTGUN_PRODUCTION_ART.body.run];
+const bodyPaths = [...SHOTGUN_PRODUCTION_ART.body.idle];
 
 describe('WS14-C Shotgun hold / aim alignment', () => {
   it('derives the grip from the canonical hero socket instead of inventing a second runtime offset', () => {
@@ -28,7 +28,7 @@ describe('WS14-C Shotgun hold / aim alignment', () => {
     expect(SHOTGUN_PRODUCTION_ART.body.authoredGripMarker).toEqual(SHOTGUN_AIM_ALIGNMENT.authoredGripMarker);
   });
 
-  it('keeps every approved idle/run wrapper body-only on the canonical canvas', () => {
+  it('keeps every authored body wrapper body-only on the canonical canvas', () => {
     for (const path of bodyPaths) {
       const svg = read(path);
       expect(svg).toContain('width="128" height="148" viewBox="0 0 128 148"');

@@ -19,15 +19,15 @@ describe('Wrecker locomotion raster runtime', () => {
   it('exposes two source idle textures plus four generated full-body run textures', () => {
     const frames = listShotgunLocomotionData();
     expect(frames).toHaveLength(6);
-    expect(frames.map(frame => frame.key)).toEqual([
-      ...SHOTGUN_RUNTIME_PRESENTATION.body.idle.map(frame => frame.key),
-      ...SHOTGUN_RUNTIME_PRESENTATION.body.run.map(frame => frame.key)
+    expect(frames.map((frame: { key: string }) => frame.key)).toEqual([
+      ...SHOTGUN_RUNTIME_PRESENTATION.body.idle.map((frame: { key: string }) => frame.key),
+      ...SHOTGUN_RUNTIME_PRESENTATION.body.run.map((frame: { key: string }) => frame.key)
     ]);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.body.run.every(frame => frame.generated)).toBe(true);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.run.every((frame: { generated: boolean }) => frame.generated)).toBe(true);
   });
 
   it('keeps both source wrappers backed by exact 128x148 PNG rasters', () => {
-    for (const frame of SHOTGUN_RUNTIME_PRESENTATION.body.idle) {
+    for (const frame of SHOTGUN_RUNTIME_PRESENTATION.body.idle as readonly { path: string }[]) {
       const match = read(frame.path).match(/href=["']data:image\/png;base64,([^"']+)["']/i);
       expect(match?.[1]).toBeTruthy();
       const bytes = Buffer.from(match![1], 'base64');
@@ -72,7 +72,7 @@ describe('Wrecker locomotion raster runtime', () => {
 
     await loadShotgunLocomotionArt(scene);
 
-    expect(listShotgunLocomotionData().every(frame => textureKeys.has(frame.key))).toBe(true);
+    expect(listShotgunLocomotionData().every((frame: { key: string }) => textureKeys.has(frame.key))).toBe(true);
     expect(imageSources).toHaveLength(2);
     expect(createCanvas).toHaveBeenCalledTimes(6);
     expect(refresh).toHaveBeenCalledTimes(6);
