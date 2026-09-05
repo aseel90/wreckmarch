@@ -30,9 +30,14 @@ test('locked Shotgun can complete the production stack only through the explicit
       c5Ok: scene?.__characterPresentationC5?.ok === true,
       d1Ok: scene?.__characterPresentationD1?.ok === true,
       twoHandHold: scene?.__shotgunTwoHandHold || null,
+      heroRotation: scene?.hero?.rotation ?? null,
       weaponRotation: scene?.weaponV3Gun?.rotation ?? null,
-      weaponDepth: scene?.weaponV3Gun?.depth ?? null,
+      handOverlayRotation: scene?.__shotgunHandOverlay?.rotation ?? null,
       heroDepth: scene?.hero?.depth ?? null,
+      weaponDepth: scene?.weaponV3Gun?.depth ?? null,
+      handOverlayDepth: scene?.__shotgunHandOverlay?.depth ?? null,
+      heroTexture: scene?.hero?.texture?.key || null,
+      handOverlayTexture: scene?.__shotgunHandOverlay?.texture?.key || null,
       registryAvailability: registry.getCharacterEntry('shotgun').availability,
       registrySelectable: registry.isCharacterSelectable('shotgun')
     };
@@ -52,12 +57,22 @@ test('locked Shotgun can complete the production stack only through the explicit
     heroSpeed: 255,
     c5Ok: true,
     d1Ok: true,
-    twoHandHold: { mode: 'two-hand-fixed', locked: true, runtimeRotation: false },
+    twoHandHold: {
+      mode: 'two-hand-fixed',
+      layerMode: 'body-weapon-front-hands',
+      locked: true,
+      runtimeRotation: false,
+      runtimeBodyRotation: false
+    },
+    heroRotation: 0,
     weaponRotation: 0,
+    handOverlayRotation: 0,
     registryAvailability: 'locked',
     registrySelectable: false
   });
-  expect(Number(state.weaponDepth)).toBeLessThan(Number(state.heroDepth));
+  expect(Number(state.heroDepth)).toBeLessThan(Number(state.weaponDepth));
+  expect(Number(state.weaponDepth)).toBeLessThan(Number(state.handOverlayDepth));
+  expect(state.handOverlayTexture).toMatch(/^shotgun-hands-(idle|run)-\d$/);
 
   const wrappedHolds = await page.evaluate(() => {
     const scene = (window as any).__WM_GAME__?.scene?.getScene?.('Wreckmarch');
@@ -67,11 +82,15 @@ test('locked Shotgun can complete the production stack only through the explicit
       scene.updateWeaponPose();
       return {
         requested,
-        rotation: scene.weaponV3Gun?.rotation,
+        heroRotation: scene.hero?.rotation,
+        weaponRotation: scene.weaponV3Gun?.rotation,
+        handOverlayRotation: scene.__shotgunHandOverlay?.rotation,
         weaponFlipX: scene.weaponV3Gun?.flipX,
         heroFlipX: scene.hero?.flipX,
-        weaponDepth: scene.weaponV3Gun?.depth,
+        handOverlayFlipX: scene.__shotgunHandOverlay?.flipX,
         heroDepth: scene.hero?.depth,
+        weaponDepth: scene.weaponV3Gun?.depth,
+        handOverlayDepth: scene.__shotgunHandOverlay?.depth,
         hold: { ...(scene.__shotgunTwoHandHold || {}) },
         gripX: scene.__shotgunGrip?.x,
         supportX: scene.__shotgunSupportHand?.x,
@@ -81,10 +100,20 @@ test('locked Shotgun can complete the production stack only through the explicit
   });
 
   for (const hold of wrappedHolds) {
-    expect(hold.rotation).toBe(0);
-    expect(hold.weaponDepth).toBeLessThan(hold.heroDepth);
+    expect(hold.heroRotation).toBe(0);
+    expect(hold.weaponRotation).toBe(0);
+    expect(hold.handOverlayRotation).toBe(0);
+    expect(hold.heroDepth).toBeLessThan(hold.weaponDepth);
+    expect(hold.weaponDepth).toBeLessThan(hold.handOverlayDepth);
     expect(hold.weaponFlipX).toBe(hold.heroFlipX);
-    expect(hold.hold).toMatchObject({ mode: 'two-hand-fixed', locked: true, runtimeRotation: false });
+    expect(hold.handOverlayFlipX).toBe(hold.heroFlipX);
+    expect(hold.hold).toMatchObject({
+      mode: 'two-hand-fixed',
+      layerMode: 'body-weapon-front-hands',
+      locked: true,
+      runtimeRotation: false,
+      runtimeBodyRotation: false
+    });
     if (hold.weaponFlipX) {
       expect(hold.supportX).toBeLessThan(hold.gripX);
       expect(hold.muzzleX).toBeLessThan(hold.gripX);
@@ -92,5 +121,34 @@ test('locked Shotgun can complete the production stack only through the explicit
       expect(hold.supportX).toBeGreaterThan(hold.gripX);
       expect(hold.muzzleX).toBeGreaterThan(hold.gripX);
     }
+  }
+
+  const frameLayers = await page.evaluate(async () => {
+    const scene = (window as any).__WM_GAME__?.scene?.getScene?.('Wreckmarch');
+    const presentationPath = '/src/characters/shotgun-runtime-presentation.js?v=5';
+    const { SHOTGUN_RUNTIME_PRESENTATION } = await import(presentationPath);
+    const frames = [...SHOTGUN_RUNTIME_PRESENTATION.body.idle, ...SHOTGUN_RUNTIME_PRESENTATION.body.run];
+    const results = frames.map((frame: any) => {
+      scene.hero.setTexture(frame.key);
+      scene.updateWeaponPose();
+      return {
+        bodyKey: scene.hero.texture?.key,
+        expectedOverlayKey: frame.handOverlayKey,
+        overlayKey: scene.__shotgunHandOverlay?.texture?.key,
+        heroDepth: scene.hero?.depth,
+        weaponDepth: scene.weaponV3Gun?.depth,
+        overlayDepth: scene.__shotgunHandOverlay?.depth
+      };
+    });
+    scene.hero.setTexture(SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key);
+    scene.updateWeaponPose();
+    return results;
+  });
+
+  expect(frameLayers).toHaveLength(6);
+  for (const frame of frameLayers) {
+    expect(frame.overlayKey).toBe(frame.expectedOverlayKey);
+    expect(frame.heroDepth).toBeLessThan(frame.weaponDepth);
+    expect(frame.weaponDepth).toBeLessThan(frame.overlayDepth);
   }
 });

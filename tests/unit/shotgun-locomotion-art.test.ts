@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { SHOTGUN_RUNTIME_PRESENTATION } from '../../src/characters/shotgun-runtime-presentation.js';
-import { listShotgunLocomotionData, loadShotgunLocomotionArt } from '../../src/characters/shotgun-locomotion-art.js';
+import { listShotgunHandOverlayData, listShotgunLocomotionData, loadShotgunLocomotionArt } from '../../src/characters/shotgun-locomotion-art.js';
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
@@ -16,7 +16,7 @@ function contextStub(drawImage: any, clearRect: any) {
 }
 
 describe('Wrecker locomotion raster runtime', () => {
-  it('exposes two source idle textures plus four generated full-body run textures', () => {
+  it('exposes six full-body textures plus six baked hand-overlay textures', () => {
     const frames = listShotgunLocomotionData();
     expect(frames).toHaveLength(6);
     expect(frames.map((frame: { key: string }) => frame.key)).toEqual([
@@ -24,6 +24,9 @@ describe('Wrecker locomotion raster runtime', () => {
       ...SHOTGUN_RUNTIME_PRESENTATION.body.run.map((frame: { key: string }) => frame.key)
     ]);
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.run.every((frame: { generated: boolean }) => frame.generated)).toBe(true);
+    const overlays = listShotgunHandOverlayData();
+    expect(overlays).toHaveLength(6);
+    expect(new Set(overlays.map((frame: { key: string }) => frame.key)).size).toBe(6);
   });
 
   it('keeps both source wrappers backed by exact 128x148 PNG rasters', () => {
@@ -36,7 +39,7 @@ describe('Wrecker locomotion raster runtime', () => {
     }
   });
 
-  it('decodes source rasters once and creates six complete Phaser canvas textures', async () => {
+  it('decodes source rasters once and creates six body plus six hand-overlay Phaser canvas textures', async () => {
     const cache = new Map<string, string>();
     const textureKeys = new Set<string>();
     const imageSources: string[] = [];
@@ -73,9 +76,10 @@ describe('Wrecker locomotion raster runtime', () => {
     await loadShotgunLocomotionArt(scene);
 
     expect(listShotgunLocomotionData().every((frame: { key: string }) => textureKeys.has(frame.key))).toBe(true);
+    expect(listShotgunHandOverlayData().every((frame: { key: string }) => textureKeys.has(frame.key))).toBe(true);
     expect(imageSources).toHaveLength(2);
-    expect(createCanvas).toHaveBeenCalledTimes(6);
-    expect(refresh).toHaveBeenCalledTimes(6);
-    expect(drawImage.mock.calls.length).toBeGreaterThan(6);
+    expect(createCanvas).toHaveBeenCalledTimes(12);
+    expect(refresh).toHaveBeenCalledTimes(12);
+    expect(drawImage.mock.calls.length).toBeGreaterThan(12);
   });
 });

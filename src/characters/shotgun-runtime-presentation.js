@@ -1,19 +1,21 @@
 /* WRECKMARCH WS14-C/WS14-E — locked Shotgun runtime presentation boundary.
  * Body locomotion is full-frame baked art only; no runtime limb split is allowed.
- * A canonical gameplay definition may exist while CharacterRegistry keeps the
- * character locked until the production gate and real-run validation are complete.
+ * The weapon is composited between the full body and a tiny baked two-hand overlay,
+ * so hands can sit over the weapon without putting the weapon behind the whole torso.
  */
 import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=2';
 import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=3';
-import { SHOTGUN_AIM_ALIGNMENT } from './shotgun-aim-alignment.js?v=2';
+import { SHOTGUN_AIM_ALIGNMENT } from './shotgun-aim-alignment.js?v=3';
 
 const bodyIdle = SHOTGUN_PRODUCTION_ART.body.idle.map((path, index) => Object.freeze({
   key: `shotgun-body-idle-${index}`,
   path,
+  handOverlayKey: `shotgun-hands-idle-${index}`,
   generated: false
 }));
 const bodyRun = SHOTGUN_PRODUCTION_ART.body.runBake.poses.map((pose, index) => Object.freeze({
   key: `shotgun-body-run-${index}`,
+  handOverlayKey: `shotgun-hands-run-${index}`,
   pose,
   sourcePath: SHOTGUN_PRODUCTION_ART.body.runBake.source,
   bakeMethod: SHOTGUN_PRODUCTION_ART.body.runBake.method,
@@ -23,6 +25,13 @@ const bodyRun = SHOTGUN_PRODUCTION_ART.body.runBake.poses.map((pose, index) => O
 export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
   id: 'shotgun',
   status: 'inactive-runtime-boundary',
+  layers: Object.freeze({
+    mode: 'body-weapon-front-hands',
+    bodyDepthOffset: 0,
+    weaponDepthOffset: 0.1,
+    handOverlayDepthOffset: 0.2,
+    runtimeCrop: false
+  }),
   body: Object.freeze({
     canvas: SHOTGUN_ART_CONTRACT.canvas,
     render: SHOTGUN_ART_CONTRACT.render,
@@ -32,6 +41,11 @@ export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
     idle: Object.freeze(bodyIdle),
     run: Object.freeze(bodyRun),
     runBakeSource: SHOTGUN_PRODUCTION_ART.body.runBake.source,
+    handOverlay: Object.freeze({
+      mode: 'baked-two-hand-overlay',
+      source: 'same-body-raster',
+      runtimeCrop: false
+    }),
     animationKeys: Object.freeze({
       idle: 'character-shotgun-idle',
       run: 'character-shotgun-run'
@@ -56,6 +70,11 @@ export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
     gameplayDefinitionReady: true
   })
 });
+
+export function getShotgunHandOverlayKey(bodyTextureKey) {
+  const frames = [...SHOTGUN_RUNTIME_PRESENTATION.body.idle, ...SHOTGUN_RUNTIME_PRESENTATION.body.run];
+  return frames.find(frame => frame.key === bodyTextureKey)?.handOverlayKey || SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].handOverlayKey;
+}
 
 export function listShotgunRuntimeAssets() {
   return Object.freeze([

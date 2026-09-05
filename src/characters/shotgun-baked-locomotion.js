@@ -4,7 +4,7 @@
  * Wrecker raster and bakes four complete 128x148 run textures. Gameplay only swaps
  * those full-body textures; no torso/leg GameObjects or crop transforms survive.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=3';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=5';
 
 const LEFT_LEG = Object.freeze([[28,90],[61,90],[65,104],[62,141],[20,141],[22,112]]);
 const RIGHT_LEG = Object.freeze([[65,90],[96,90],[110,116],[110,141],[65,141],[63,103]]);

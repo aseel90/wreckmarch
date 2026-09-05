@@ -48,14 +48,15 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
                 aimDegrees: 0
               });
 
-              const assets = [
-                ...SHOTGUN_RUNTIME_PRESENTATION.body.idle,
-                ...SHOTGUN_RUNTIME_PRESENTATION.body.run,
-                SHOTGUN_RUNTIME_PRESENTATION.weapon
+              const bodyFrames = [...SHOTGUN_RUNTIME_PRESENTATION.body.idle, ...SHOTGUN_RUNTIME_PRESENTATION.body.run];
+              const assets = [...bodyFrames, SHOTGUN_RUNTIME_PRESENTATION.weapon];
+              const missing = [
+                ...assets.filter((asset: any) => !this.textures.exists(asset.key)).map((asset: any) => asset.key),
+                ...bodyFrames.filter((frame: any) => !this.textures.exists(frame.handOverlayKey)).map((frame: any) => frame.handOverlayKey)
               ];
-              const missing = assets.filter((asset: any) => !this.textures.exists(asset.key)).map((asset: any) => asset.key);
               const bodySource = this.textures.get(composition.body.texture.key).getSourceImage();
               const weaponSource = this.textures.get(composition.weapon.texture.key).getSourceImage();
+              const handsSource = this.textures.get(composition.hands.texture.key).getSourceImage();
 
               (window as any).__shotgunPhaserGate = {
                 game,
@@ -76,6 +77,10 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
                   weaponAngle: composition.weapon.angle,
                   weaponX: composition.weapon.x,
                   weaponY: composition.weapon.y,
+                  handsKey: composition.hands.texture.key,
+                  handsFlipX: composition.hands.flipX,
+                  childOrder: composition.container.list.map((child: any) => child === composition.body ? 'body' : child === composition.weapon ? 'weapon' : child === composition.hands ? 'hands' : 'other'),
+                  layers: SHOTGUN_RUNTIME_COMPOSITION.layers,
                   activation: SHOTGUN_RUNTIME_COMPOSITION.activation
                 })
               };
@@ -85,6 +90,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
                 missing,
                 bodySource: { width: bodySource.width, height: bodySource.height },
                 weaponSource: { width: weaponSource.width, height: weaponSource.height },
+                handsSource: { width: handsSource.width, height: handsSource.height },
                 idleCount: SHOTGUN_RUNTIME_PRESENTATION.body.idle.length,
                 runCount: SHOTGUN_RUNTIME_PRESENTATION.body.run.length,
                 activation: SHOTGUN_RUNTIME_COMPOSITION.activation
@@ -112,6 +118,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(setup.missing).toEqual([]);
     expect(setup.bodySource).toEqual({ width: 128, height: 148 });
     expect(setup.weaponSource).toEqual({ width: 96, height: 40 });
+    expect(setup.handsSource).toEqual({ width: 128, height: 148 });
     expect(setup.idleCount).toBe(2);
     expect(setup.runCount).toBe(4);
     expect(setup.activation).toEqual({
@@ -141,6 +148,9 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
       const snapshot = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
       expect(snapshot.bodyKey).toBe(`shotgun-body-${motion}-${frameIndex}`);
       expect(snapshot.weaponKey).toBe('shotgun-weapon');
+      expect(snapshot.handsKey).toBe(`shotgun-hands-${motion}-${frameIndex}`);
+      expect(snapshot.childOrder).toEqual(['body', 'weapon', 'hands']);
+      expect(snapshot.layers).toMatchObject({ mode: 'body-weapon-front-hands', runtimeCrop: false });
       expect(snapshot.bodyDisplayWidth).toBeCloseTo(128 * 0.78, 4);
       expect(snapshot.bodyDisplayHeight).toBeCloseTo(148 * 0.78, 4);
       frameImages.push((await canvas.screenshot()).toString('base64'));
@@ -156,6 +166,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     const mirrored = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
     expect(mirrored.bodyFlipX).toBe(true);
     expect(mirrored.weaponFlipX).toBe(true);
+    expect(mirrored.handsFlipX).toBe(true);
     expect(mirrored.weaponAngle).toBe(0);
     expect(mirrored.weaponX).toBeLessThan(0);
     expect((await canvas.screenshot()).toString('base64')).not.toBe(rightImage);
@@ -165,6 +176,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     });
     const wrappedAim = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
     expect(wrappedAim.weaponFlipX).toBe(true);
+    expect(wrappedAim.handsFlipX).toBe(true);
     expect(wrappedAim.weaponAngle).toBe(0);
 
     await page.evaluate(() => {
@@ -177,6 +189,8 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(advancedIdle.bodyKey).toBe('shotgun-body-idle-1');
     expect(advancedIdle.bodyFlipX).toBe(true);
     expect(advancedIdle.weaponFlipX).toBe(true);
+    expect(advancedIdle.handsKey).toBe('shotgun-hands-idle-1');
+    expect(advancedIdle.handsFlipX).toBe(true);
     expect(advancedIdle.weaponAngle).toBe(0);
 
     await page.evaluate(() => {
@@ -189,6 +203,8 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(advancedRun.bodyKey).toBe('shotgun-body-run-2');
     expect(advancedRun.bodyFlipX).toBe(false);
     expect(advancedRun.weaponFlipX).toBe(false);
+    expect(advancedRun.handsKey).toBe('shotgun-hands-run-2');
+    expect(advancedRun.handsFlipX).toBe(false);
     expect(advancedRun.weaponAngle).toBe(0);
   });
 });
