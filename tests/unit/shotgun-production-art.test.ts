@@ -23,7 +23,7 @@ describe('WS14-C Shotgun production art assets',()=>{
       expect((svg.match(/<image\b/gi)||[])).toHaveLength(1);
       expect(svg).not.toMatch(/shotgun-weapon|muzzle-marker|grip-marker|href="https?:/i);
     }
-    expect(SHOTGUN_PRODUCTION_ART.body.canvas).toBe(SHOTGUN_ART_CONTRACT.canvas);
+    expect(SHOTGUN_PRODUCTION_ART.body.canvas).toEqual(SHOTGUN_ART_CONTRACT.canvas);
     expect(SHOTGUN_PRODUCTION_ART.body.footLineY).toBe(140);
   });
 

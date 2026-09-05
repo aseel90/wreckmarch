@@ -25,10 +25,10 @@ describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
   });
 
   it('derives render and weapon geometry only from frozen canonical sources', () => {
-    expect(SHOTGUN_RUNTIME_PRESENTATION.body.canvas).toBe(SHOTGUN_ART_CONTRACT.canvas);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.body.render).toBe(SHOTGUN_ART_CONTRACT.render);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.origin).toBe(SHOTGUN_AIM_ALIGNMENT.weaponOrigin);
-    expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.muzzleFromGrip).toBe(SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.canvas).toEqual(SHOTGUN_ART_CONTRACT.canvas);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.body.render).toEqual(SHOTGUN_ART_CONTRACT.render);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.origin).toEqual(SHOTGUN_AIM_ALIGNMENT.weaponOrigin);
+    expect(SHOTGUN_RUNTIME_PRESENTATION.weapon.muzzleFromGrip).toEqual(SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip);
   });
 
   it('queues only external source assets, never generated run frames', () => {

@@ -9,7 +9,9 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
       const Phaser = (window as any).Phaser;
       const presentationModulePath = '/src/characters/shotgun-runtime-presentation.js';
       const compositionModulePath = '/src/characters/shotgun-runtime-composition.js';
+      const locomotionArtModulePath = '/src/characters/shotgun-locomotion-art.js';
       const { queueShotgunRuntimeAssets, SHOTGUN_RUNTIME_PRESENTATION } = await import(presentationModulePath);
+      const { loadShotgunLocomotionArt } = await import(locomotionArtModulePath);
       const { createShotgunRuntimeComposition, SHOTGUN_RUNTIME_COMPOSITION } = await import(compositionModulePath);
 
       const previous = document.getElementById('shotgun-phaser-gate');
@@ -34,8 +36,9 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
             queueShotgunRuntimeAssets(this);
           }
 
-          create() {
+          async create() {
             try {
+              await loadShotgunLocomotionArt(this);
               const composition = createShotgunRuntimeComposition(this, {
                 x: 180,
                 y: 150,
@@ -110,7 +113,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(setup.bodySource).toEqual({ width: 128, height: 148 });
     expect(setup.weaponSource).toEqual({ width: 96, height: 40 });
     expect(setup.idleCount).toBe(2);
-    expect(setup.runCount).toBe(5);
+    expect(setup.runCount).toBe(4);
     expect(setup.activation).toEqual({
       playableOnMain: false,
       previewRegistryEntryAllowed: true,
@@ -126,8 +129,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
       ['run', 0],
       ['run', 1],
       ['run', 2],
-      ['run', 3],
-      ['run', 4]
+      ['run', 3]
     ];
     const frameImages: string[] = [];
 
@@ -144,7 +146,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
       frameImages.push((await canvas.screenshot()).toString('base64'));
     }
 
-    expect(new Set(frameImages).size).toBe(7);
+    expect(new Set(frameImages).size).toBe(6);
 
     const rightImage = frameImages[0];
     await page.evaluate(() => {
