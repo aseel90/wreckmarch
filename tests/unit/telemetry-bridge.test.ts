@@ -57,9 +57,15 @@ describe('balance run report bridge contract', () => {
     expect(html).toContain('./src/phase-d1-runtime.js?v=29&u5=3');
     expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=19');
     expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=29');
-    expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=3&wrecker=4');
-    expect(pagesWorkflow).toContain('src/characters/shotgun-production-presentation.js?v=3&wrecker=4');
-    expect(pagesWorkflow).toContain('src/characters/shotgun-runtime-presentation.js?v=3');
+    expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=4&wrecker=5');
+    expect(pagesWorkflow).toContain('src/characters/shotgun-production-presentation.js?v=4&wrecker=5');
+    expect(pagesWorkflow).toContain('src/characters/shotgun-runtime-presentation.js?v=4');
+    expect(pagesWorkflow).toContain('__shotgunTwoHandHold');
+    expect(pagesWorkflow).toContain('two-hand-fixed');
+    expect(pagesWorkflow).toContain('runtimeRotation === false');
+    expect(pagesWorkflow).toContain('setRotation(pose.weaponRotation)');
+    expect(pagesWorkflow).toContain('weaponDepthOffset');
+    expect(pagesWorkflow).toContain('supportFromGrip');
     expect(pagesWorkflow).toContain('src/characters/shotgun-locomotion-art.js?v=2');
     expect(pagesWorkflow).toContain('src/characters/shotgun-baked-locomotion.js?v=1');
     expect(pagesWorkflow).toContain('SHOTGUN_BAKED_RUN_POSES');

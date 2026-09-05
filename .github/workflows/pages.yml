@@ -424,9 +424,9 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=1" -o wm-live-upgrade-offer-pool.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-roll-service.js?v=2" -o wm-live-upgrade-roll-service.js
           curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=29" -o wm-live-phase-d1.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=3&wrecker=4" -o wm-live-character-runtime-presentation.js
-          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-production-presentation.js?v=3&wrecker=4" -o wm-live-shotgun-production-presentation.js
-          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-runtime-presentation.js?v=3" -o wm-live-shotgun-runtime-presentation.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=4&wrecker=5" -o wm-live-character-runtime-presentation.js
+          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-production-presentation.js?v=4&wrecker=5" -o wm-live-shotgun-production-presentation.js
+          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-runtime-presentation.js?v=4" -o wm-live-shotgun-runtime-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-locomotion-art.js?v=2" -o wm-live-shotgun-locomotion-art.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-baked-locomotion.js?v=1" -o wm-live-shotgun-baked-locomotion.js
           curl -fsSL --retry 5 "${BASE}src/characters/runner-production-presentation.js?v=1" -o wm-live-runner-production-presentation.js
@@ -439,10 +439,16 @@ jobs:
           grep -F "./src/phase-b-runtime.js?v=6" wm-live-index.html
           grep -F "./src/phase-c-runtime.js?v=24" wm-live-index.html
           grep -F "./src/phase-c1-runtime.js?v=19" wm-live-index.html
-          grep -F "./src/phase-d1-runtime.js?v=29&u5=3&wrecker=4" wm-live-index.html
-          grep -F "./characters/character-runtime-presentation.js?v=3&wrecker=4" wm-live-phase-d1.js
-          grep -F "./shotgun-production-presentation.js?v=3&wrecker=4" wm-live-character-runtime-presentation.js
-          grep -F "./shotgun-runtime-presentation.js?v=3" wm-live-shotgun-production-presentation.js
+          grep -F "./src/phase-d1-runtime.js?v=29&u5=3&wrecker=5" wm-live-index.html
+          grep -F "./characters/character-runtime-presentation.js?v=4&wrecker=5" wm-live-phase-d1.js
+          grep -F "./shotgun-production-presentation.js?v=4&wrecker=5" wm-live-character-runtime-presentation.js
+          grep -F "./shotgun-runtime-presentation.js?v=4" wm-live-shotgun-production-presentation.js
+          grep -F "__shotgunTwoHandHold" wm-live-shotgun-production-presentation.js
+          grep -F "two-hand-fixed" wm-live-shotgun-production-presentation.js
+          grep -F "runtimeRotation === false" wm-live-shotgun-production-presentation.js
+          grep -F "setRotation(pose.weaponRotation)" wm-live-shotgun-production-presentation.js
+          grep -F "weaponDepthOffset" wm-live-shotgun-production-presentation.js
+          grep -F "supportFromGrip" wm-live-shotgun-runtime-presentation.js
           grep -F "./shotgun-locomotion-art.js?v=2" wm-live-shotgun-production-presentation.js
           grep -F "./shotgun-baked-locomotion.js?v=1" wm-live-shotgun-locomotion-art.js
           grep -F "SHOTGUN_BAKED_RUN_POSES" wm-live-shotgun-baked-locomotion.js
