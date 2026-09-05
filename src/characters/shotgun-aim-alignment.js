@@ -7,8 +7,7 @@
 import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=3';
 import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=4';
 
-const { width, height } = SHOTGUN_ART_CONTRACT.canvas;
-const { originX, originY, scale } = SHOTGUN_ART_CONTRACT.render;
+const { width } = SHOTGUN_ART_CONTRACT.canvas;
 const weapon = SHOTGUN_PRODUCTION_ART.weapon;
 const authoredGrip = SHOTGUN_PRODUCTION_ART.body.authoredGripMarker;
 const authoredSupport = SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker;
@@ -21,10 +20,6 @@ const bodyGripRight = authoredGrip;
 const bodyGripLeft = mirrorBodyPoint(bodyGripRight);
 const bodySupportRight = authoredSupport;
 const bodySupportLeft = mirrorBodyPoint(bodySupportRight);
-const gripOffset = Object.freeze({
-  x: (bodyGripRight.x - (width * originX)) * scale,
-  y: (bodyGripRight.y - (height * originY)) * scale
-});
 const supportFromGrip = Object.freeze({
   x: weapon.support.x - weapon.grip.x,
   y: weapon.support.y - weapon.grip.y
@@ -39,7 +34,6 @@ export const SHOTGUN_AIM_ALIGNMENT = Object.freeze({
   bodySupport: Object.freeze({ right: bodySupportRight, left: bodySupportLeft }),
   authoredGripMarker: authoredGrip,
   authoredSupportMarker: authoredSupport,
-  gripOffset,
   weaponOrigin: Object.freeze({
     x: weapon.grip.x / weapon.canvas.width,
     y: weapon.grip.y / weapon.canvas.height

@@ -13,13 +13,14 @@ const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.m
 const bodyPaths = [...SHOTGUN_PRODUCTION_ART.body.idle];
 
 describe('WS14-C Shotgun two-hand hold alignment', () => {
-  it('derives the runtime grip offset from the authored Wrecker palm contact', () => {
+  it('keeps the authored Wrecker palm socket owned by the art contract', () => {
     const { width, height } = SHOTGUN_ART_CONTRACT.canvas;
     const { originX, originY, scale } = SHOTGUN_ART_CONTRACT.render;
     expect(SHOTGUN_AIM_ALIGNMENT.bodyGrip.right).toEqual({ x: 70, y: 75 });
-    expect(SHOTGUN_AIM_ALIGNMENT.gripOffset.x).toBeCloseTo((70 - (width * originX)) * scale, 8);
-    expect(SHOTGUN_AIM_ALIGNMENT.gripOffset.y).toBeCloseTo((75 - (height * originY)) * scale, 8);
+    expect(SHOTGUN_ART_CONTRACT.gripSocket.offsetX).toBeCloseTo((70 - (width * originX)) * scale, 8);
+    expect(SHOTGUN_ART_CONTRACT.gripSocket.offsetY).toBeCloseTo((75 - (height * originY)) * scale, 8);
     expect(SHOTGUN_AIM_ALIGNMENT.bodyGrip.left.x).toBeCloseTo(width - 70, 8);
+    expect(SHOTGUN_AIM_ALIGNMENT).not.toHaveProperty('gripOffset');
   });
 
   it('pins both authored hand markers to the fixed weapon grip/support pair', () => {
