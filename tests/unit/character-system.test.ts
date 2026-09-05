@@ -68,6 +68,37 @@ describe('CharacterSystem', () => {
     expect(scene.resolvedRunStats.character.maxHp).toBe(100);
   });
 
+
+  it('resets current HP exactly once when production presentation changes the playable character identity', () => {
+    const scene: any = {
+      heroHp: 100,
+      heroMaxHp: 100,
+      characterSystem: { characterId: 'runner' },
+      hero: {
+        body: { setCircle() {} },
+        stop() { return this; },
+        setTexture() { return this; },
+        setOrigin() { return this; },
+        setScale() { return this; },
+        setFlipX() { return this; },
+        play() { return this; },
+      },
+      anims: { exists: () => false, create() {} },
+    };
+    const shotgun = getCharacterEntry('shotgun').definition;
+    const system = new CharacterSystem(scene, 'shotgun', { productionValidationDefinition: shotgun });
+    scene.characterSystem = system;
+
+    system.installProductionVisuals();
+    expect(scene.heroMaxHp).toBe(110);
+    expect(scene.heroHp).toBe(110);
+
+    scene.heroHp = 73;
+    system.installProductionVisuals();
+    expect(scene.heroMaxHp).toBe(110);
+    expect(scene.heroHp).toBe(73);
+  });
+
   it('owns Runner weapon socket and muzzle geometry', () => {
     const scene = makeScene();
     const system = new CharacterSystem(scene, 'runner');
