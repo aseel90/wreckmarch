@@ -16,7 +16,9 @@ class DisplayObject {
   y = 0;
   flipX = false;
   angle = 0;
-  setOrigin = vi.fn(() => this);
+  originX = 0.5;
+  originY = 0.5;
+  setOrigin = vi.fn((x:number, y:number) => { this.originX=x; this.originY=y; return this; });
   setScale = vi.fn(() => this);
   setFlipX = vi.fn((value:boolean) => { this.flipX=value; return this; });
   setAngle = vi.fn((value:number) => { this.angle=value; return this; });
@@ -60,7 +62,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     expect(scene.add.container).toHaveBeenCalledWith(120, 90, [body, weapon, hands]);
     expect(body.setOrigin).toHaveBeenCalledWith(SHOTGUN_ART_CONTRACT.render.originX, SHOTGUN_ART_CONTRACT.render.originY);
     expect(body.setScale).toHaveBeenCalledWith(SHOTGUN_ART_CONTRACT.render.scale);
-    expect(weapon.setOrigin).toHaveBeenCalledWith(
+    expect(weapon.setOrigin).toHaveBeenLastCalledWith(
       SHOTGUN_RUNTIME_PRESENTATION.weapon.origin.x,
       SHOTGUN_RUNTIME_PRESENTATION.weapon.origin.y
     );
@@ -102,6 +104,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
 
     expect(body.setFlipX).toHaveBeenLastCalledWith(false);
     expect(weapon.setFlipX).toHaveBeenLastCalledWith(false);
+    expect(weapon.setOrigin).toHaveBeenLastCalledWith(18 / 96, 22 / 40);
     expect(hands.setFlipX).toHaveBeenLastCalledWith(false);
     expect(weapon.x).toBe(SHOTGUN_ART_CONTRACT.gripSocket.offsetX);
     expect(weapon.y).toBe(SHOTGUN_ART_CONTRACT.gripSocket.offsetY);
@@ -110,6 +113,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     composition.setFacing('left');
     expect(body.setFlipX).toHaveBeenLastCalledWith(true);
     expect(weapon.setFlipX).toHaveBeenLastCalledWith(true);
+    expect(weapon.setOrigin).toHaveBeenLastCalledWith(1 - (18 / 96), 22 / 40);
     expect(hands.setFlipX).toHaveBeenLastCalledWith(true);
     expect(weapon.x).toBe(-SHOTGUN_ART_CONTRACT.gripSocket.offsetX);
     expect(weapon.y).toBe(SHOTGUN_ART_CONTRACT.gripSocket.offsetY);
@@ -152,6 +156,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
 
     expect(body.setFlipX).toHaveBeenLastCalledWith(true);
     expect(weapon.setFlipX).toHaveBeenLastCalledWith(true);
+    expect(weapon.setOrigin).toHaveBeenLastCalledWith(1 - (18 / 96), 22 / 40);
     expect(hands.setFlipX).toHaveBeenLastCalledWith(true);
     expect(weapon.setAngle).toHaveBeenLastCalledWith(0);
   });
