@@ -84,15 +84,13 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     composition.setMotion('run', 1);
     composition.setMotion('run', 2);
     composition.setMotion('run', 3);
-    composition.setMotion('run', 4);
 
     expect(body.setTexture.mock.calls.map((call: any[]) => call[0])).toEqual([
       SHOTGUN_RUNTIME_PRESENTATION.body.idle[1].key,
       SHOTGUN_RUNTIME_PRESENTATION.body.run[0].key,
       SHOTGUN_RUNTIME_PRESENTATION.body.run[1].key,
       SHOTGUN_RUNTIME_PRESENTATION.body.run[2].key,
-      SHOTGUN_RUNTIME_PRESENTATION.body.run[3].key,
-      SHOTGUN_RUNTIME_PRESENTATION.body.run[4].key
+      SHOTGUN_RUNTIME_PRESENTATION.body.run[3].key
     ]);
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.canvas).toBe(SHOTGUN_ART_CONTRACT.canvas);
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.render).toBe(SHOTGUN_ART_CONTRACT.render);
@@ -139,7 +137,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     composition.advanceLocomotion(300, { frameDurationMs: 100 });
     expect(composition.frameIndex).toBe(3);
     expect(body.setTexture).toHaveBeenLastCalledWith(SHOTGUN_RUNTIME_PRESENTATION.body.run[3].key);
-    composition.advanceLocomotion(200, { frameDurationMs: 100 });
+    composition.advanceLocomotion(100, { frameDurationMs: 100 });
     expect(composition.frameIndex).toBe(0);
     expect(body.setTexture).toHaveBeenLastCalledWith(SHOTGUN_RUNTIME_PRESENTATION.body.run[0].key);
 
@@ -174,7 +172,7 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
 
     const fourth = sceneStub();
     const composition = createShotgunRuntimeComposition(fourth.scene as any);
-    expect(() => composition.setMotion('run', 5)).toThrow('Invalid Shotgun run frame index');
+    expect(() => composition.setMotion('run', 4)).toThrow('Invalid Shotgun run frame index');
     expect(() => composition.setPosition(Number.POSITIVE_INFINITY, 0)).toThrow('position must be finite');
     expect(() => composition.advanceLocomotion(-1, { frameDurationMs: 100 })).toThrow('delta must be a finite non-negative number');
     expect(() => composition.advanceLocomotion(1, { frameDurationMs: 0 })).toThrow('frame duration must be a finite positive number');
