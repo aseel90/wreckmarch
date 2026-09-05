@@ -1,5 +1,7 @@
 # Workstream 14 — Shotgun Character Combat Identity
 
+> **Canonical naming contract:** the player-facing character name is **Wrecker**. The internal character ID and weapon/archetype identifiers remain `shotgun`; do not rename those technical IDs as part of presentation naming.
+
 Status: ✅ WS14-A/B COMPLETE / CHARACTER ACTIVATION STILL GATED
 
 This workstream defines the next playable combat archetype without turning it into Runner-with-more-projectiles. The Shotgun weapon A1 numeric package is now frozen and merged. Character-level gameplay values such as HP, movement speed and any passive remain intentionally unapproved until the character production-definition gate is decided; they must not be copied from Runner or guessed.

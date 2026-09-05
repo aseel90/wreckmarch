@@ -1,11 +1,11 @@
-/* WRECKMARCH WS14-E — canonical Shotgun playable-character definition */
+/* WRECKMARCH WS14-E — canonical Wrecker playable-character definition (internal id: shotgun) */
 import { SHOTGUN_RUNTIME_PRESENTATION } from '../shotgun-runtime-presentation.js?v=3';
 
 const presentation = SHOTGUN_RUNTIME_PRESENTATION;
 
 export const SHOTGUN_CHARACTER = Object.freeze({
   id: 'shotgun',
-  displayName: 'Shotgun',
+  displayName: 'Wrecker',
   stats: Object.freeze({
     maxHp: 110,
     moveSpeed: 255
