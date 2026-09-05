@@ -1,6 +1,11 @@
 /* WRECKMARCH — live player damage boundary */
 import { DEFAULT_PLAYER_COMBAT_PROFILE, resolvePlayerContactHit } from './player-damage-rules.js?v=3';
 
+function characterDownReason(scene) {
+  const displayName = String(scene?.characterDefinition?.displayName || 'Runner').trim() || 'Runner';
+  return `${displayName.toUpperCase()} DOWN`;
+}
+
 export class PlayerDamageSystem {
   /** @param {any} scene */
   constructor(scene) {
@@ -116,14 +121,15 @@ export class PlayerDamageSystem {
     }
 
     if (result.killed) {
+      const downReason = characterDownReason(scene);
       // Finalize telemetry at the authoritative lethal-damage boundary before any game-over runtime can pause or replace endRun.
       try {
         const telemetry = scene.runTelemetry;
-        if (telemetry && !telemetry.finalized) telemetry.finalize('RUNNER DOWN');
+        if (telemetry && !telemetry.finalized) telemetry.finalize(downReason);
       } catch (error) {
         globalThis.__WM_LOG__?.(`Run Telemetry lethal finalize failed: ${error?.message || error}`);
       }
-      scene.endRun('RUNNER DOWN');
+      scene.endRun(downReason);
     }
     return result;
   }
