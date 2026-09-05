@@ -24,6 +24,7 @@ class DisplayObject {
   flipX = false;
   flipY = true;
   cropped = true;
+  rotation = 99;
   setVisible(value: boolean) { this.visible = value; return this; }
   setTexture(key: string) { this.texture = { key }; return this; }
   setCrop() { this.cropped = false; return this; }
@@ -33,7 +34,7 @@ class DisplayObject {
   setFlipY(value: boolean) { this.flipY = value; return this; }
   clearTint() { return this; }
   stop() { return this; }
-  setRotation() { return this; }
+  setRotation(value = 0) { this.rotation = value; return this; }
   setPosition(x: number, y: number) { this.x = x; this.y = y; return this; }
   setDepth(value: number) { this.depth = value; return this; }
   setAlpha() { return this; }
@@ -84,18 +85,24 @@ beforeEach(() => {
 });
 
 describe('locked Shotgun production presentation adapters', () => {
-  it('derives bidirectional grip and muzzle geometry from the canonical art contract', () => {
-    const right = resolveShotgunPresentationPose(100, 80, 0);
-    const left = resolveShotgunPresentationPose(100, 80, Math.PI);
-    expect(right.facing).toBe('right');
-    expect(left.facing).toBe('left');
-    expect(right.grip.x).toBeGreaterThan(100);
-    expect(left.grip.x).toBeLessThan(100);
-    expect(right.muzzle.x).toBeGreaterThan(right.grip.x);
-    expect(left.muzzle.x).toBeLessThan(left.grip.x);
+  it('uses mirrored fixed two-hand holds instead of rotating the gun around one hand', () => {
+    for (const requested of [-Math.PI * 5, -Math.PI, -0.7, 0, 0.7, Math.PI, Math.PI * 5]) {
+      const pose = resolveShotgunPresentationPose(100, 80, requested);
+      expect(pose.weaponRotation).toBe(0);
+      expect(pose.holdMode).toBe('two-hand-fixed');
+      expect(pose.twoHandLocked).toBe(true);
+      expect(pose.twoHandError).toBeLessThan(0.25);
+      if (pose.facing === 'right') {
+        expect(pose.muzzle.x).toBeGreaterThan(pose.grip.x);
+        expect(pose.weaponFlipX).toBe(false);
+      } else {
+        expect(pose.muzzle.x).toBeLessThan(pose.grip.x);
+        expect(pose.weaponFlipX).toBe(true);
+      }
+    }
   });
 
-  it('installs C5 body/weapon ownership without inherited atlas state', async () => {
+  it('installs C5 with the weapon behind the baked hands and locked at zero runtime rotation', async () => {
     const fixture = createScene();
     const result = await installShotgunC5Presentation(fixture.scene);
     expect(Object.values(result.checks).every(Boolean)).toBe(true);
@@ -104,10 +111,37 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(fixture.weaponV3Gun.texture.key).toBe(SHOTGUN_RUNTIME_PRESENTATION.weapon.key);
     expect(fixture.weaponV3Gun.cropped).toBe(false);
     expect(fixture.weaponV3Gun.flipY).toBe(false);
+    expect(fixture.weaponV3Gun.flipX).toBe(false);
+    expect(fixture.weaponV3Gun.rotation).toBe(0);
+    expect(fixture.weaponV3Gun.depth).toBeLessThan(fixture.hero.depth);
+    expect(fixture.scene.__shotgunTwoHandHold).toMatchObject({
+      mode: 'two-hand-fixed',
+      locked: true,
+      runtimeRotation: false
+    });
     expect(LEGACY_PARTS.every(key => fixture.scene[key].visible === false)).toBe(true);
     const muzzle = fixture.getMuzzleResolver()?.(0);
     expect(muzzle?.x).toBeGreaterThan(fixture.hero.x);
     expect(fixture.getFireFeedback()).toBeTypeOf('function');
+  });
+
+  it('mirrors the entire hold left/right without allowing aim input or spread to rotate/relocate the gun', async () => {
+    const fixture = createScene();
+    await installShotgunC5Presentation(fixture.scene);
+    const rightMuzzleA = fixture.getMuzzleResolver()?.(-0.3);
+    const rightMuzzleB = fixture.getMuzzleResolver()?.(0.3);
+    expect(rightMuzzleA).toEqual(rightMuzzleB);
+
+    fixture.scene.weaponAim = Math.PI;
+    fixture.scene.updateWeaponPose();
+    expect(fixture.hero.flipX).toBe(true);
+    expect(fixture.weaponV3Gun.flipX).toBe(true);
+    expect(fixture.weaponV3Gun.rotation).toBe(0);
+    expect(fixture.scene.__shotgunSupportHand.x).toBeLessThan(fixture.scene.__shotgunGrip.x);
+    expect(fixture.scene.__shotgunMuzzle.x).toBeLessThan(fixture.scene.__shotgunGrip.x);
+    const leftMuzzleA = fixture.getMuzzleResolver()?.(-0.4);
+    const leftMuzzleB = fixture.getMuzzleResolver()?.(0.4);
+    expect(leftMuzzleA).toEqual(leftMuzzleB);
   });
 
   it('installs D1 locomotion and preserves the canonical Shotgun weapon identity', async () => {

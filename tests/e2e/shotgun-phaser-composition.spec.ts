@@ -156,9 +156,16 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     const mirrored = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
     expect(mirrored.bodyFlipX).toBe(true);
     expect(mirrored.weaponFlipX).toBe(true);
-    expect(mirrored.weaponAngle).toBe(-20);
+    expect(mirrored.weaponAngle).toBe(0);
     expect(mirrored.weaponX).toBeLessThan(0);
     expect((await canvas.screenshot()).toString('base64')).not.toBe(rightImage);
+
+    await page.evaluate(() => {
+      (window as any).__shotgunPhaserGate.setState('idle', 0, 'left', 720);
+    });
+    const wrappedAim = await page.evaluate(() => (window as any).__shotgunPhaserGate.snapshot());
+    expect(wrappedAim.weaponFlipX).toBe(true);
+    expect(wrappedAim.weaponAngle).toBe(0);
 
     await page.evaluate(() => {
       const gate = (window as any).__shotgunPhaserGate;
@@ -170,7 +177,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(advancedIdle.bodyKey).toBe('shotgun-body-idle-1');
     expect(advancedIdle.bodyFlipX).toBe(true);
     expect(advancedIdle.weaponFlipX).toBe(true);
-    expect(advancedIdle.weaponAngle).toBe(-20);
+    expect(advancedIdle.weaponAngle).toBe(0);
 
     await page.evaluate(() => {
       const gate = (window as any).__shotgunPhaserGate;
@@ -182,6 +189,6 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(advancedRun.bodyKey).toBe('shotgun-body-run-2');
     expect(advancedRun.bodyFlipX).toBe(false);
     expect(advancedRun.weaponFlipX).toBe(false);
-    expect(advancedRun.weaponAngle).toBe(-15);
+    expect(advancedRun.weaponAngle).toBe(0);
   });
 });
