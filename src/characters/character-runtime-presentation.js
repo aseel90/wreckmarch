@@ -9,7 +9,7 @@ import {
   isCharacterProductionValidationActive
 } from './character-production-validation.js?v=1';
 import { installRunnerC5Presentation, installRunnerD1Presentation } from './runner-production-presentation.js?v=1';
-import { installShotgunC5Presentation, installShotgunD1Presentation } from './shotgun-production-presentation.js?v=2&wrecker=3';
+import { installShotgunC5Presentation, installShotgunD1Presentation } from './shotgun-production-presentation.js?v=3&wrecker=4';
 
 const PRESENTATION_PHASES = Object.freeze({
   c5: 'c5',
@@ -27,63 +27,53 @@ const PRESENTERS = new Map([
   })]
 ]);
 
-function resolveBoundDefinition(scene) {
-  const characterId = scene?.characterDefinition?.id || scene?.characterId;
-  if (!characterId) throw Error('Gameplay scene has no bound character id');
-  const validationActive = scene?.__characterProductionValidation?.characterId === characterId
-    && isCharacterProductionValidationActive(characterId);
-  const definition = validationActive
-    ? getCharacterProductionValidationDefinition(characterId)
-    : getCharacterDefinition(characterId);
-  if (scene.characterDefinition?.id && scene.characterDefinition.id !== definition.id) {
-    throw Error(`Character definition mismatch: ${scene.characterDefinition.id} != ${definition.id}`);
+function requirePhase(phase) {
+  const normalized = String(phase || '').toLowerCase();
+  if (!Object.values(PRESENTATION_PHASES).includes(normalized)) {
+    throw Error(`Unsupported character presentation phase: ${phase}`);
   }
-  scene.characterId = definition.id;
-  scene.characterDefinition = definition;
-  return definition;
+  return normalized;
+}
+
+function resolveDefinition(scene) {
+  if (isCharacterProductionValidationActive('shotgun')) {
+    const validation = getCharacterProductionValidationDefinition('shotgun');
+    if (validation) return validation;
+  }
+  return scene?.characterDefinition || getCharacterDefinition(scene?.characterId || 'runner');
 }
 
 function ensureCharacterSystem(scene, definition) {
-  const validationActive = scene?.__characterProductionValidation?.characterId === definition.id
-    && isCharacterProductionValidationActive(definition.id);
-  let system = scene.characterSystem;
-  if (!system) {
-    system = validationActive
-      ? new CharacterSystem(scene, definition.id, { productionValidationDefinition: definition })
-      : new CharacterSystem(scene, definition.id);
-  } else if (system.characterId !== definition.id) {
-    if (validationActive) {
-      system = new CharacterSystem(scene, definition.id, { productionValidationDefinition: definition });
-    } else {
-      system.select(definition.id);
-    }
-  }
-  scene.characterSystem = system;
-  return system;
-}
-
-export function hasCharacterRuntimePresentation(characterId, phase) {
-  return Boolean(PRESENTERS.get(characterId)?.[phase]);
+  if (scene?.characterSystem?.characterId === definition.id) return scene.characterSystem;
+  scene.characterSystem = new CharacterSystem(scene, definition);
+  return scene.characterSystem;
 }
 
 export async function installCharacterPresentationPhase(scene, phase) {
-  if (!Object.prototype.hasOwnProperty.call(PRESENTATION_PHASES, phase)) {
-    throw Error(`Unknown character presentation phase: ${phase}`);
-  }
-  const definition = resolveBoundDefinition(scene);
-  const presenter = PRESENTERS.get(definition.id);
-  const install = presenter?.[phase];
-  if (!install) throw Error(`No ${phase} production presentation registered for character: ${definition.id}`);
-  if (phase === PRESENTATION_PHASES.d1) ensureCharacterSystem(scene, definition);
-  const result = await install(scene, definition);
+  const normalizedPhase = requirePhase(phase);
+  const definition = resolveDefinition(scene);
+  if (!definition?.id) throw Error('Character presentation requires a canonical definition');
+  const presenter = PRESENTERS.get(definition.id)?.[normalizedPhase];
+  if (!presenter) throw Error(`No ${normalizedPhase} presentation registered for character: ${definition.id}`);
+
+  scene.characterId = definition.id;
+  scene.characterDefinition = definition;
+  const system = ensureCharacterSystem(scene, definition);
+  if (normalizedPhase === 'd1' && !scene.__characterSystemReady) system.installProductionVisuals();
+  const result = await presenter(scene, definition);
   const checks = Object.freeze({ ...(result?.checks || {}) });
-  const marker = Object.freeze({
+  const ok = Object.values(checks).every(Boolean);
+  const payload = Object.freeze({
+    phase: normalizedPhase,
     characterId: definition.id,
-    phase,
-    ok: Object.keys(checks).length > 0 && Object.values(checks).every(Boolean),
-    checks
+    checks,
+    ok
   });
-  if (phase === PRESENTATION_PHASES.c5) scene.__characterPresentationC5 = marker;
-  if (phase === PRESENTATION_PHASES.d1) scene.__characterPresentationD1 = marker;
-  return marker;
+  if (normalizedPhase === 'c5') scene.__characterPresentationC5 = payload;
+  if (normalizedPhase === 'd1') scene.__characterPresentationD1 = payload;
+  return payload;
+}
+
+export function listRegisteredCharacterPresentations() {
+  return Object.freeze([...PRESENTERS.keys()]);
 }
