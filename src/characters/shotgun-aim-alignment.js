@@ -50,8 +50,9 @@ export const SHOTGUN_AIM_ALIGNMENT = Object.freeze({
     mode: 'two-hand-fixed',
     rotationRadians: 0,
     runtimeRotation: false,
-    supportTolerancePx: 0.3,
-    weaponDepthOffset: -0.25
+    bodyRotationRadians: 0,
+    runtimeBodyRotation: false,
+    supportTolerancePx: 0.3
   }),
   activation: Object.freeze({ playableOnMain: false })
 });

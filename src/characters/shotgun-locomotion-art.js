@@ -1,10 +1,11 @@
 /* WRECKMARCH — Wrecker production locomotion art.
  * Approved SVG wrappers are read only as text containers; Safari never decodes them as SVG textures.
- * Run frames are baked once as complete CanvasTextures from idle-0, then runtime animation
- * swaps full-body frames only.
+ * Run frames are baked once as complete CanvasTextures from idle-0. Two tiny foreground-hand
+ * overlays are baked from those same approved rasters so runtime never crops body parts.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=3';
-import { bakeShotgunRunTextures } from './shotgun-baked-locomotion.js?v=1';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=5';
+import { bakeShotgunRunTextures } from './shotgun-baked-locomotion.js?v=2';
+import { bakeShotgunHandOverlayTexture } from './shotgun-hand-overlay-bake.js?v=1';
 
 const IDLE_DATA = Object.freeze(SHOTGUN_RUNTIME_PRESENTATION.body.idle.map((frame, index) => Object.freeze({
   ...frame,
@@ -49,17 +50,30 @@ export function listShotgunLocomotionData() {
   return Object.freeze([...IDLE_DATA, ...RUN_DATA]);
 }
 
+export function listShotgunHandOverlayData() {
+  return Object.freeze(
+    [...IDLE_DATA, ...RUN_DATA].map(frame => Object.freeze({ bodyKey: frame.key, key: frame.handOverlayKey }))
+  );
+}
+
 export function loadShotgunLocomotionArt(scene) {
-  const missingIdle = IDLE_DATA.filter(frame => !scene?.textures?.exists?.(frame.key));
-  const missingRun = RUN_DATA.filter(frame => !scene?.textures?.exists?.(frame.key));
-  if (missingIdle.length === 0 && missingRun.length === 0) return Promise.resolve(SHOTGUN_RUNTIME_PRESENTATION);
+  const missingIdleBody = IDLE_DATA.filter(frame => !scene?.textures?.exists?.(frame.key));
+  const missingIdleHands = IDLE_DATA.filter(frame => !scene?.textures?.exists?.(frame.handOverlayKey));
+  const missingRunBody = RUN_DATA.filter(frame => !scene?.textures?.exists?.(frame.key));
+  const missingRunHands = RUN_DATA.filter(frame => !scene?.textures?.exists?.(frame.handOverlayKey));
+  if (missingIdleBody.length === 0 && missingIdleHands.length === 0 && missingRunBody.length === 0 && missingRunHands.length === 0) {
+    return Promise.resolve(SHOTGUN_RUNTIME_PRESENTATION);
+  }
   if (!scene?.load?.text || !scene?.load?.once || !scene?.load?.start || !scene?.cache?.text) {
     return Promise.reject(new Error('Wrecker locomotion art requires Phaser text-loader and text-cache boundaries'));
   }
 
+  const missingIdleKeys = new Set([...missingIdleBody, ...missingIdleHands].map(frame => frame.key));
   const sources = new Map();
-  for (const frame of missingIdle) sources.set(frame.path, { path: frame.path, cacheKey: frame.cacheKey });
-  if (missingRun.length) sources.set(BAKE_SOURCE.path, BAKE_SOURCE);
+  for (const frame of IDLE_DATA) {
+    if (missingIdleKeys.has(frame.key)) sources.set(frame.path, { path: frame.path, cacheKey: frame.cacheKey });
+  }
+  if (missingRunBody.length || missingRunHands.length) sources.set(BAKE_SOURCE.path, BAKE_SOURCE);
   const sourceList = [...sources.values()];
 
   return new Promise((resolve, reject) => {
@@ -82,8 +96,21 @@ export function loadShotgunLocomotionArt(scene) {
           const image = await imageFromBase64(extractPngBase64(wrapper, source.cacheKey), source.cacheKey);
           images.set(source.path, image);
         }));
-        for (const frame of missingIdle) installFrameTexture(scene, images.get(frame.path), frame.key);
-        if (missingRun.length) bakeShotgunRunTextures(scene, images.get(BAKE_SOURCE.path), RUN_DATA);
+
+        const missingIdleBodyKeys = new Set(missingIdleBody.map(frame => frame.key));
+        const missingIdleHandKeys = new Set(missingIdleHands.map(frame => frame.key));
+        for (const frame of IDLE_DATA) {
+          const image = images.get(frame.path);
+          if (missingIdleBodyKeys.has(frame.key)) installFrameTexture(scene, image, frame.key);
+          if (missingIdleHandKeys.has(frame.key)) bakeShotgunHandOverlayTexture(scene, image, frame.handOverlayKey);
+        }
+
+        if (missingRunBody.length) bakeShotgunRunTextures(scene, images.get(BAKE_SOURCE.path), RUN_DATA);
+        if (missingRunHands.length) {
+          const image = images.get(BAKE_SOURCE.path);
+          for (const frame of missingRunHands) bakeShotgunHandOverlayTexture(scene, image, frame.handOverlayKey);
+        }
+
         sourceList.forEach(source => scene.cache.text.remove(source.cacheKey));
         resolve(SHOTGUN_RUNTIME_PRESENTATION);
       } catch (error) {
