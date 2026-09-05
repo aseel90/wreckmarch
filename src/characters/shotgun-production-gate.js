@@ -63,15 +63,20 @@ export function evaluateShotgunProductionGate() {
       && SHOTGUN_RUNTIME_PRESENTATION.weapon.hold?.mode === 'two-hand-fixed'
       && SHOTGUN_RUNTIME_PRESENTATION.weapon.hold?.runtimeRotation === false
       && SHOTGUN_RUNTIME_PRESENTATION.weapon.hold?.runtimeBodyRotation === false
-      && SHOTGUN_RUNTIME_PRESENTATION.weapon.hold?.contactSource === 'authored-visible-hands'
       && SHOTGUN_RUNTIME_PRESENTATION.layers?.mode === 'body-weapon-front-hands'
       && SHOTGUN_RUNTIME_PRESENTATION.layers?.weaponDepthOffset > SHOTGUN_RUNTIME_PRESENTATION.layers?.bodyDepthOffset
       && SHOTGUN_RUNTIME_PRESENTATION.layers?.handOverlayDepthOffset > SHOTGUN_RUNTIME_PRESENTATION.layers?.weaponDepthOffset
       && SHOTGUN_RUNTIME_PRESENTATION.layers?.runtimeCrop === false
       && [...SHOTGUN_RUNTIME_PRESENTATION.body.idle, ...SHOTGUN_RUNTIME_PRESENTATION.body.run].every(frame => typeof frame.handOverlayKey === 'string')
       && SHOTGUN_RUNTIME_PRESENTATION.body.handOverlay?.runtimeCrop === false
-      && SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip?.x === 23
-      && SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip?.y === -3
+      && SHOTGUN_RUNTIME_PRESENTATION.body.grip?.right?.x === 70
+      && SHOTGUN_RUNTIME_PRESENTATION.body.grip?.right?.y === 75
+      && SHOTGUN_RUNTIME_PRESENTATION.body.support?.right?.x === 103
+      && SHOTGUN_RUNTIME_PRESENTATION.body.support?.right?.y === 78
+      && SHOTGUN_RUNTIME_PRESENTATION.weapon.support?.x === 51
+      && SHOTGUN_RUNTIME_PRESENTATION.weapon.support?.y === 25
+      && SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip?.x === 33
+      && SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip?.y === 3
       && SHOTGUN_RUNTIME_PRESENTATION.activation.previewRegistryEntryAllowed === true,
     runtimeComposition:
       SHOTGUN_RUNTIME_COMPOSITION.id === 'shotgun-inactive-composition'
