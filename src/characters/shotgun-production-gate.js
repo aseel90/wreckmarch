@@ -7,14 +7,14 @@ import {
   getCharacterEntry,
   isCharacterSelectable
 } from './character-registry.js?v=5';
-import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=8&wrecker=9';
+import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=9&wrecker=10';
 import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=7';
 import { SHOTGUN_RUNTIME_COMPOSITION } from './shotgun-runtime-composition.js?v=6';
 import { getWeaponDefinition } from '../combat/weapon-registry.js?v=2';
 import { getUpgradeDefinition } from '../upgrades/upgrade-catalog.js?v=14';
 import { meetsUpgradeCompatibility } from '../upgrades/upgrade-compatibility.js?v=1';
 
-export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v7';
+export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v8';
 
 export const SHOTGUN_FULL_RUN_VALIDATION = Object.freeze({
   status: 'pending',
