@@ -1,9 +1,9 @@
 /* WRECKMARCH WS14-C/WS14-E — locked Phaser composition for Shotgun presentation.
- * Owns body/weapon layering, locomotion frame selection and relative aim only.
+ * Owns body/weapon layering, locomotion frame selection and fixed two-hand hold only.
  * It intentionally has no input, combat, projectile or selection ownership.
  * A locked gameplay definition may be registered; live selection remains gated elsewhere.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=3';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=4';
 
 const MOTIONS = Object.freeze({
   idle: SHOTGUN_RUNTIME_PRESENTATION.body.idle,
@@ -14,6 +14,7 @@ export const SHOTGUN_RUNTIME_COMPOSITION = Object.freeze({
   id: 'shotgun-inactive-composition',
   status: 'inactive-phaser-composition',
   motions: Object.freeze({ idle: SHOTGUN_RUNTIME_PRESENTATION.body.idle.length, run: SHOTGUN_RUNTIME_PRESENTATION.body.run.length }),
+  hold: SHOTGUN_RUNTIME_PRESENTATION.weapon.hold,
   activation: Object.freeze({
     playableOnMain: false,
     previewRegistryEntryAllowed: true,
@@ -67,15 +68,16 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
   weapon.setOrigin(presentation.weapon.origin.x, presentation.weapon.origin.y);
   weapon.setScale(render.scale);
 
-  const container = scene.add.container(options.x ?? 0, options.y ?? 0, [body, weapon]);
+  // Weapon is intentionally rendered first so the baked hands/arms sit over it.
+  const container = scene.add.container(options.x ?? 0, options.y ?? 0, [weapon, body]);
 
-  function applyFacingAndAim() {
+  function applyFacingAndHold() {
     const left = facing === 'left';
     body.setFlipX(left);
     weapon.setFlipX(left);
     weapon.x = left ? -gripSocket.offsetX : gripSocket.offsetX;
     weapon.y = gripSocket.offsetY;
-    weapon.setAngle(left ? -aimDegrees : aimDegrees);
+    weapon.setAngle(0);
   }
 
   function setMotion(nextMotion, nextFrameIndex = 0) {
@@ -116,13 +118,15 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
 
   function setFacing(nextFacing) {
     facing = requireFacing(nextFacing);
-    applyFacingAndAim();
+    applyFacingAndHold();
     return api;
   }
 
   function setAimDegrees(nextAimDegrees) {
+    // Aim input remains observable for validation, but the baked two-hand pose never
+    // rotates the weapon around one hand. Future authored aim poses can replace this.
     aimDegrees = requireAimDegrees(nextAimDegrees);
-    applyFacingAndAim();
+    applyFacingAndHold();
     return api;
   }
 
@@ -153,6 +157,6 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
     destroy
   };
 
-  applyFacingAndAim();
+  applyFacingAndHold();
   return api;
 }

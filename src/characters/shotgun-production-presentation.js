@@ -3,7 +3,7 @@
  * is safe while the character is locked: CharacterRegistry still blocks gameplay
  * selection until an approved character definition and full-run gate exist.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=3';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=4';
 import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=2';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
@@ -22,29 +22,52 @@ function normalizeAngle(angle) {
   return Math.atan2(Math.sin(value), Math.cos(value));
 }
 
+function bodyPointToWorld(presentation, heroX, heroY, point) {
+  const canvas = presentation.body.canvas;
+  const render = presentation.body.render;
+  return Object.freeze({
+    x: Number(heroX) + ((point.x - (canvas.width * render.originX)) * render.scale),
+    y: Number(heroY) + ((point.y - (canvas.height * render.originY)) * render.scale)
+  });
+}
+
 export function resolveShotgunPresentationPose(heroX, heroY, aimRadians = 0) {
-  const angle = normalizeAngle(aimRadians);
+  const requestedAngle = normalizeAngle(aimRadians);
   const presentation = SHOTGUN_RUNTIME_PRESENTATION;
   const scale = presentation.body.render.scale;
-  const left = Math.cos(angle) < 0;
-  const grip = presentation.body.gripSocket;
-  const gripX = Number(heroX) + (left ? -grip.offsetX : grip.offsetX);
-  const gripY = Number(heroY) + grip.offsetY;
+  const facing = Math.cos(requestedAngle) < 0 ? 'left' : 'right';
+  const left = facing === 'left';
+  const grip = bodyPointToWorld(presentation, heroX, heroY, presentation.body.grip[facing]);
+  const supportHand = bodyPointToWorld(presentation, heroX, heroY, presentation.body.support[facing]);
+  const supportLocal = presentation.weapon.supportFromGrip;
   const muzzleLocal = presentation.weapon.muzzleFromGrip;
-  const dx = muzzleLocal.x * scale;
-  const dy = muzzleLocal.y * scale;
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
+  const sign = left ? -1 : 1;
+  const weaponSupport = Object.freeze({
+    x: grip.x + (supportLocal.x * scale * sign),
+    y: grip.y + (supportLocal.y * scale)
+  });
+  const muzzle = Object.freeze({
+    x: grip.x + (muzzleLocal.x * scale * sign),
+    y: grip.y + (muzzleLocal.y * scale)
+  });
+  const twoHandError = Math.hypot(weaponSupport.x - supportHand.x, weaponSupport.y - supportHand.y);
+  const tolerance = presentation.weapon.hold.supportTolerancePx * scale;
+  const barrelAngle = Math.atan2(muzzle.y - grip.y, muzzle.x - grip.x);
 
   return Object.freeze({
-    angle,
-    facing: left ? 'left' : 'right',
-    grip: Object.freeze({ x: gripX, y: gripY }),
-    muzzle: Object.freeze({
-      x: gripX + (dx * cos) - (dy * sin),
-      y: gripY + (dx * sin) + (dy * cos)
-    }),
-    weaponDepthOffset: sin < 0 ? -1 : 1
+    requestedAngle,
+    angle: barrelAngle,
+    facing,
+    grip,
+    supportHand,
+    weaponSupport,
+    muzzle,
+    weaponRotation: presentation.weapon.hold.rotationRadians,
+    weaponFlipX: left,
+    weaponDepthOffset: presentation.weapon.hold.weaponDepthOffset,
+    twoHandError,
+    twoHandLocked: twoHandError <= tolerance,
+    holdMode: presentation.weapon.hold.mode
   });
 }
 
@@ -108,28 +131,42 @@ function installShotgunAimLayer(scene) {
     .setVisible(true);
 
   scene.__shotgunGrip = new Phaser.Math.Vector2();
+  scene.__shotgunSupportHand = new Phaser.Math.Vector2();
+  scene.__shotgunWeaponSupport = new Phaser.Math.Vector2();
   scene.__shotgunMuzzle = new Phaser.Math.Vector2();
+  scene.__shotgunTwoHandHold = {
+    mode: presentation.weapon.hold.mode,
+    locked: false,
+    errorPx: Number.POSITIVE_INFINITY,
+    runtimeRotation: presentation.weapon.hold.runtimeRotation
+  };
   scene.updateWeaponPose = function updateShotgunWeaponPose() {
     const pose = resolveShotgunPresentationPose(this.hero.x, this.hero.y, this.weaponAim);
     this.hero.setFlipX(pose.facing === 'left');
     this.weaponV3Gun
       .setPosition(pose.grip.x, pose.grip.y)
-      .setRotation(pose.angle)
+      .setRotation(pose.weaponRotation)
       .setDepth((this.hero.depth || 30) + pose.weaponDepthOffset)
-      .setFlipX(false);
+      .setFlipX(pose.weaponFlipX);
     this.__shotgunGrip.set(pose.grip.x, pose.grip.y);
+    this.__shotgunSupportHand.set(pose.supportHand.x, pose.supportHand.y);
+    this.__shotgunWeaponSupport.set(pose.weaponSupport.x, pose.weaponSupport.y);
     this.__shotgunMuzzle.set(pose.muzzle.x, pose.muzzle.y);
+    this.__shotgunTwoHandHold.locked = pose.twoHandLocked;
+    this.__shotgunTwoHandHold.errorPx = pose.twoHandError;
     this.visualAimAngle = pose.angle;
     this.__c4Grip?.copy?.(this.__shotgunGrip);
     this.__c4Muzzle?.copy?.(this.__shotgunMuzzle);
   };
 
-  scene.weaponSystem.setMuzzleResolver(spread => {
-    const pose = resolveShotgunPresentationPose(scene.hero.x, scene.hero.y, scene.weaponAim + spread);
+  // Shotgun pellets may spread in trajectory, but all pellets originate from the
+  // same fixed barrel muzzle. Spread must never rotate or relocate the body-held gun.
+  scene.weaponSystem.setMuzzleResolver(() => {
+    const pose = resolveShotgunPresentationPose(scene.hero.x, scene.hero.y, scene.weaponAim);
     return new Phaser.Math.Vector2(pose.muzzle.x, pose.muzzle.y);
   });
   scene.weaponSystem.setFireFeedback(({ visualAngle, muzzle }) => {
-    const angle = Number.isFinite(visualAngle) ? visualAngle : scene.weaponAim;
+    const angle = Number.isFinite(visualAngle) ? visualAngle : scene.visualAimAngle;
     const flash = scene.add.image(muzzle.x, muzzle.y, 'flash')
       .setDepth(33)
       .setRotation(angle)
@@ -166,12 +203,20 @@ function validateDefinitionPresentation(definition) {
 }
 
 function c5Checks(scene) {
+  const twoHandHold = scene.__shotgunTwoHandHold;
+  const heroDepth = Number.isFinite(Number(scene.hero?.depth)) ? Number(scene.hero.depth) : 30;
   return {
     shotgunBody: scene.hero?.texture?.key === SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key,
     shotgunWeapon: scene.weaponV3Gun?.texture?.key === SHOTGUN_RUNTIME_PRESENTATION.weapon.key,
     separateWeaponLayer: scene.weaponModule === scene.weaponV3Gun && scene.weaponV3Gun !== scene.hero,
     noRuntimeLimbSplit: !scene.__shotgunLayeredLocomotion,
     noLegacyHands: HIDDEN_LEGACY_PARTS.every(key => !scene[key] || scene[key].visible === false),
+    twoHandWeaponLock:
+      twoHandHold?.mode === 'two-hand-fixed'
+      && twoHandHold?.runtimeRotation === false
+      && twoHandHold?.locked === true,
+    weaponBehindBakedHands: Number(scene.weaponV3Gun?.depth) < heroDepth,
+    weaponRotationLocked: Math.abs(Number(scene.weaponV3Gun?.rotation) || 0) < 1e-8,
     muzzleAligned: Number.isFinite(scene.__shotgunMuzzle?.x) && Number.isFinite(scene.__shotgunMuzzle?.y)
   };
 }
