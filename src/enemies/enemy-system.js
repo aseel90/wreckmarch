@@ -2,7 +2,7 @@
 import { EnemyFactory } from './enemy-factory.js?v=7';
 import { SpawnSystem } from './spawn-system.js?v=1';
 import { EnemyBehaviorSystem } from './enemy-behavior-system.js?v=7';
-import { CombatSystem } from '../combat/combat-system.js?v=14';
+import { CombatSystem } from '../combat/combat-system.js?v=15';
 import { ProjectileSystem } from '../combat/projectile-system.js?v=5';
 import { WeaponSystem } from '../combat/weapon-system.js?v=8';
 

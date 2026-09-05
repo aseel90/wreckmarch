@@ -1,5 +1,5 @@
 import { mirrorResolvedRunStats } from '../stats/run-stat-state.js?v=4';
-import { getUpgradeDefinition } from './upgrade-catalog.js?v=14';
+import { getUpgradeDefinition } from './upgrade-catalog.js?v=15';
 import { applyUpgradeMechanicalEffect, canApplyUpgradeMechanicalEffect, createUpgradeMechanicalTransaction, hasUpgradeMechanicalEffect } from './upgrade-mechanical-effects.js?v=7';
 import { assertUpgradeRequirements, meetsUpgradeRequirements } from './upgrade-requirements.js?v=1';
 import { assertUpgradeCompatibility, meetsUpgradeCompatibility } from './upgrade-compatibility.js?v=1';

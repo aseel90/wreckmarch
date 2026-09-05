@@ -1,4 +1,4 @@
-import { createActiveUpgradeOfferChoices } from './upgrade-offer-pool.js?v=1';
+import { createActiveUpgradeOfferChoices } from './upgrade-offer-pool.js?v=2';
 import { rollUpgradeChoices } from './upgrade-roll-service.js?v=2';
 
 // U7 canonical owner for upgrade selection scene lifecycle; phase runtimes must not wrap it.

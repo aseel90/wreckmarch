@@ -1,6 +1,6 @@
 /* WRECKMARCH — authoritative live combat boundary */
 import { EnemyCombatSystem } from './enemy-combat-system.js?v=9';
-import { PlayerDamageSystem } from './player-damage-system.js?v=5';
+import { PlayerDamageSystem } from './player-damage-system.js?v=6';
 
 export class CombatSystem {
   /** @param {any} scene */

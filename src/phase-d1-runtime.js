@@ -1,5 +1,5 @@
 /* WRECKMARCH Phase D.1 — character-driven production presentation + premium PNG cards + real roads + vehicle scale */
-import { installCharacterPresentationPhase } from './characters/character-runtime-presentation.js?v=9&wrecker=10';
+import { installCharacterPresentationPhase } from './characters/character-runtime-presentation.js?v=11&wrecker=11';
 import { installUpgradeCardPresentation } from './upgrades/upgrade-card-presentation.js?v=3';
 // Live Pages keeps this direct dependency sentinel while U5 presentation ownership migrates out of D1.
 import './upgrades/upgrade-card-art.js?v=7';

@@ -33,9 +33,11 @@ describe('live PlayerDamageSystem integration', () => {
   });
 
   it('finalizes telemetry at the lethal-damage boundary before endRun', () => {
-    const finalizeAt = playerDamage.indexOf("telemetry.finalize('RUNNER DOWN')");
-    const endRunAt = playerDamage.indexOf("scene.endRun('RUNNER DOWN')");
-    expect(finalizeAt).toBeGreaterThan(-1);
+    const reasonAt = playerDamage.indexOf('const downReason = characterDownReason(scene)');
+    const finalizeAt = playerDamage.indexOf('telemetry.finalize(downReason)');
+    const endRunAt = playerDamage.indexOf('scene.endRun(downReason)');
+    expect(reasonAt).toBeGreaterThan(-1);
+    expect(finalizeAt).toBeGreaterThan(reasonAt);
     expect(endRunAt).toBeGreaterThan(finalizeAt);
     expect(playerDamage).toContain('if (telemetry && !telemetry.finalized)');
   });

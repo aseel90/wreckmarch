@@ -27,6 +27,18 @@ describe('RunTelemetry', () => {
     expect(report.combat.criticalDamageDealt).toBe(30);
   });
 
+
+  it('records canonical character identity and normalizes a stale Runner death label for Wrecker', () => {
+    const scene = baseScene();
+    scene.characterId = 'shotgun';
+    scene.characterDefinition = { id: 'shotgun', displayName: 'Wrecker' };
+    scene.heroHp = 0;
+    const t = new RunTelemetry(scene, { reportIdFactory: () => 'wm-wrecker-identity', now: () => 1000 });
+    const report: any = (t.finalize as (reason?: string | null) => any)('RUNNER DOWN');
+    expect(report.character).toEqual({ id: 'shotgun', displayName: 'Wrecker' });
+    expect(report.finishReason).toBe('WRECKER DOWN');
+  });
+
   it('observes gameplay state without becoming a combat owner', () => {
     const scene = baseScene();
     const submit = vi.fn(async () => ({ submitted: true }));

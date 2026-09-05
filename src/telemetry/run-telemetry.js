@@ -8,6 +8,16 @@ const n = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value
 const round = (value, digits = 3) => Number(n(value).toFixed(digits));
 const safeClone = value => { try { return JSON.parse(JSON.stringify(value)); } catch { return null; } };
 
+function resolveCharacterIdentity(scene) {
+  const id = String(scene?.characterDefinition?.id || scene?.characterId || 'runner');
+  const displayName = String(scene?.characterDefinition?.displayName || (id === 'runner' ? 'Runner' : id));
+  return Object.freeze({ id, displayName });
+}
+
+function characterDownReason(identity) {
+  return `${String(identity?.displayName || 'Runner').toUpperCase()} DOWN`;
+}
+
 function createReportId() {
   if (globalThis.crypto?.randomUUID) return `wm-${globalThis.crypto.randomUUID()}`;
   return `wm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
@@ -52,10 +62,12 @@ export class RunTelemetry {
     this.previousHeroHp = n(scene?.heroHp);
     this.previousLastShot = n(scene?.lastShot, -1);
     this.previousUpgradeLevels = { ...(scene?.upgradeLevels || {}) };
+    this.characterIdentity = resolveCharacterIdentity(scene);
     this.report = {
       schemaVersion: 1,
       reportId: this.reportId,
       startedAt: new Date(this.startedAtMs).toISOString(),
+      character: { ...this.characterIdentity },
       finishReason: null,
       run: { durationSeconds: 0, finalWave: 1, level: 1, scrap: 0, hp: 0, maxHp: 0 },
       waves: [],
@@ -273,7 +285,12 @@ export class RunTelemetry {
   finalize(reason = null) {
     if (this.finalized) return this.report;
     this.update(0);
-    this.report.finishReason = String(reason || (n(this.scene?.heroHp) <= 0 ? 'RUNNER DOWN' : 'RUN ENDED'));
+    const suppliedReason = String(reason || '').trim();
+    const dead = n(this.scene?.heroHp) <= 0;
+    const normalizedReason = dead && /^RUNNER DOWN$/i.test(suppliedReason) && this.characterIdentity.id !== 'runner'
+      ? characterDownReason(this.characterIdentity)
+      : suppliedReason;
+    this.report.finishReason = normalizedReason || (dead ? characterDownReason(this.characterIdentity) : 'RUN ENDED');
     this.report.finishedAt = new Date(this.now()).toISOString();
     const duration = Math.max(.001, n(this.report.run.durationSeconds));
     const combat = this.report.combat;

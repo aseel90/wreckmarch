@@ -23,8 +23,8 @@ describe('WS19 armor semantics production ownership', () => {
     const enemy = read('src/enemies/enemy-system.js');
     const index = read('index.html');
 
-    expect(combat).toContain("./player-damage-system.js?v=5");
-    expect(enemy).toContain("../combat/combat-system.js?v=14");
-    expect(index).toContain("./src/enemies/enemy-system.js?v=28");
+    expect(combat).toContain("./player-damage-system.js?v=6");
+    expect(enemy).toContain("../combat/combat-system.js?v=15");
+    expect(index).toContain("./src/enemies/enemy-system.js?v=29");
   });
 });
