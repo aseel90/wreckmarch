@@ -2,9 +2,13 @@
  * This module owns only Shotgun body/weapon presentation for C5/D1. Registration
  * is safe while the character is locked: CharacterRegistry still blocks gameplay
  * selection until an approved character definition and full-run gate exist.
+ *
+ * Canonical render order is: full baked body -> separate shotgun -> baked two-hand
+ * foreground overlay. This keeps the gun visible over the torso while both hands
+ * visibly close over it, without reintroducing runtime limb crops or a body-part rig.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=4';
-import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=2';
+import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey } from './shotgun-runtime-presentation.js?v=5';
+import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=3';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
   'weaponV3ArmA',
@@ -63,11 +67,12 @@ export function resolveShotgunPresentationPose(heroX, heroY, aimRadians = 0) {
     weaponSupport,
     muzzle,
     weaponRotation: presentation.weapon.hold.rotationRadians,
+    bodyRotation: presentation.weapon.hold.bodyRotationRadians,
     weaponFlipX: left,
-    weaponDepthOffset: presentation.weapon.hold.weaponDepthOffset,
     twoHandError,
     twoHandLocked: twoHandError <= tolerance,
-    holdMode: presentation.weapon.hold.mode
+    holdMode: presentation.weapon.hold.mode,
+    layerMode: presentation.layers.mode
   });
 }
 
@@ -103,6 +108,24 @@ function hideLegacyWeaponParts(scene) {
   for (const key of HIDDEN_LEGACY_PARTS) scene[key]?.setVisible?.(false);
 }
 
+function ensureShotgunHandOverlay(scene) {
+  const presentation = SHOTGUN_RUNTIME_PRESENTATION;
+  const render = presentation.body.render;
+  const initialKey = presentation.body.idle[0].handOverlayKey;
+  const overlay = scene.__shotgunHandOverlay || scene.add.image(scene.hero.x, scene.hero.y, initialKey);
+  scene.__shotgunHandOverlay = overlay;
+  overlay
+    .setVisible(true)
+    .setTexture(initialKey)
+    .setOrigin(render.originX, render.originY)
+    .setScale(render.scale)
+    .setFlipX(false)
+    .setFlipY(false)
+    .setRotation(0)
+    .clearTint?.();
+  return overlay;
+}
+
 function installShotgunAimLayer(scene) {
   if (!scene?.hero || !scene?.weaponV3Gun || !scene?.weaponSystem) {
     throw Error('Shotgun production presentation requires hero, weaponV3Gun and WeaponSystem');
@@ -127,8 +150,9 @@ function installShotgunAimLayer(scene) {
     .setTexture(presentation.body.idle[0].key)
     .setOrigin(render.originX, render.originY)
     .setScale(render.scale)
-    .setRotation(0)
+    .setRotation(presentation.weapon.hold.bodyRotationRadians)
     .setVisible(true);
+  const handOverlay = ensureShotgunHandOverlay(scene);
 
   scene.__shotgunGrip = new Phaser.Math.Vector2();
   scene.__shotgunSupportHand = new Phaser.Math.Vector2();
@@ -136,18 +160,31 @@ function installShotgunAimLayer(scene) {
   scene.__shotgunMuzzle = new Phaser.Math.Vector2();
   scene.__shotgunTwoHandHold = {
     mode: presentation.weapon.hold.mode,
+    layerMode: presentation.layers.mode,
     locked: false,
     errorPx: Number.POSITIVE_INFINITY,
-    runtimeRotation: presentation.weapon.hold.runtimeRotation
+    runtimeRotation: presentation.weapon.hold.runtimeRotation,
+    runtimeBodyRotation: presentation.weapon.hold.runtimeBodyRotation
   };
   scene.updateWeaponPose = function updateShotgunWeaponPose() {
     const pose = resolveShotgunPresentationPose(this.hero.x, this.hero.y, this.weaponAim);
-    this.hero.setFlipX(pose.facing === 'left');
+    const heroDepth = Number.isFinite(Number(this.hero.depth)) ? Number(this.hero.depth) : 30;
+    const overlayKey = getShotgunHandOverlayKey(this.hero.texture?.key);
+    this.hero
+      .setFlipX(pose.facing === 'left')
+      .setRotation(pose.bodyRotation);
     this.weaponV3Gun
       .setPosition(pose.grip.x, pose.grip.y)
       .setRotation(pose.weaponRotation)
-      .setDepth((this.hero.depth || 30) + pose.weaponDepthOffset)
+      .setDepth(heroDepth + presentation.layers.weaponDepthOffset)
       .setFlipX(pose.weaponFlipX);
+    handOverlay
+      .setPosition(this.hero.x, this.hero.y)
+      .setTexture(overlayKey)
+      .setFlipX(pose.weaponFlipX)
+      .setRotation(pose.bodyRotation)
+      .setDepth(heroDepth + presentation.layers.handOverlayDepthOffset)
+      .setVisible(true);
     this.__shotgunGrip.set(pose.grip.x, pose.grip.y);
     this.__shotgunSupportHand.set(pose.supportHand.x, pose.supportHand.y);
     this.__shotgunWeaponSupport.set(pose.weaponSupport.x, pose.weaponSupport.y);
@@ -159,8 +196,6 @@ function installShotgunAimLayer(scene) {
     this.__c4Muzzle?.copy?.(this.__shotgunMuzzle);
   };
 
-  // Shotgun pellets may spread in trajectory, but all pellets originate from the
-  // same fixed barrel muzzle. Spread must never rotate or relocate the body-held gun.
   scene.weaponSystem.setMuzzleResolver(() => {
     const pose = resolveShotgunPresentationPose(scene.hero.x, scene.hero.y, scene.weaponAim);
     return new Phaser.Math.Vector2(pose.muzzle.x, pose.muzzle.y);
@@ -205,18 +240,30 @@ function validateDefinitionPresentation(definition) {
 function c5Checks(scene) {
   const twoHandHold = scene.__shotgunTwoHandHold;
   const heroDepth = Number.isFinite(Number(scene.hero?.depth)) ? Number(scene.hero.depth) : 30;
+  const weaponDepth = Number(scene.weaponV3Gun?.depth);
+  const overlayDepth = Number(scene.__shotgunHandOverlay?.depth);
+  const expectedOverlayKey = getShotgunHandOverlayKey(scene.hero?.texture?.key);
   return {
     shotgunBody: scene.hero?.texture?.key === SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].key,
     shotgunWeapon: scene.weaponV3Gun?.texture?.key === SHOTGUN_RUNTIME_PRESENTATION.weapon.key,
     separateWeaponLayer: scene.weaponModule === scene.weaponV3Gun && scene.weaponV3Gun !== scene.hero,
+    bakedHandOverlay:
+      scene.__shotgunHandOverlay?.texture?.key === expectedOverlayKey
+      && SHOTGUN_RUNTIME_PRESENTATION.body.handOverlay.runtimeCrop === false,
+    canonicalLayerStack:
+      twoHandHold?.layerMode === 'body-weapon-front-hands'
+      && heroDepth < weaponDepth
+      && weaponDepth < overlayDepth,
     noRuntimeLimbSplit: !scene.__shotgunLayeredLocomotion,
     noLegacyHands: HIDDEN_LEGACY_PARTS.every(key => !scene[key] || scene[key].visible === false),
     twoHandWeaponLock:
       twoHandHold?.mode === 'two-hand-fixed'
       && twoHandHold?.runtimeRotation === false
+      && twoHandHold?.runtimeBodyRotation === false
       && twoHandHold?.locked === true,
-    weaponBehindBakedHands: Number(scene.weaponV3Gun?.depth) < heroDepth,
+    bodyRotationLocked: Math.abs(Number(scene.hero?.rotation) || 0) < 1e-8,
     weaponRotationLocked: Math.abs(Number(scene.weaponV3Gun?.rotation) || 0) < 1e-8,
+    handOverlayRotationLocked: Math.abs(Number(scene.__shotgunHandOverlay?.rotation) || 0) < 1e-8,
     muzzleAligned: Number.isFinite(scene.__shotgunMuzzle?.x) && Number.isFinite(scene.__shotgunMuzzle?.y)
   };
 }
@@ -263,6 +310,9 @@ export async function installShotgunD1Presentation(scene, definition) {
     scene.updateMovement = function updateShotgunMovement(time) {
       previousUpdateMovement(time);
       this.characterSystem.updateLocomotionVisuals();
+      // Re-apply the canonical hold after locomotion so movement lean/flip can never
+      // leave body, weapon, or baked hand overlay in different transforms for a frame.
+      this.updateWeaponPose?.();
     };
     scene.__shotgunLocomotionWrapped = true;
   }
