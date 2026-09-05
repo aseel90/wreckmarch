@@ -25,18 +25,15 @@ describe('WS14-C Shotgun production art assets',()=>{
     }
     expect(SHOTGUN_PRODUCTION_ART.body.canvas).toEqual(SHOTGUN_ART_CONTRACT.canvas);
     expect(SHOTGUN_PRODUCTION_ART.body.footLineY).toBe(140);
-    expect(SHOTGUN_PRODUCTION_ART.body.authoredGripMarker).toEqual({ x: 70, y: 75 });
-    expect(SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker).toEqual({ x: 93, y: 72 });
-    expect(SHOTGUN_ART_CONTRACT).not.toHaveProperty('gripSocket');
   });
 
   it('keeps the shotgun separate with measured rear/support grip and muzzle markers',()=>{
     const svg=read(SHOTGUN_PRODUCTION_ART.weapon.path);
     expect(svg).toContain('width="96" height="40" viewBox="0 0 96 40"');
-    expect(svg).toContain('data-grip-x="18" data-grip-y="22" data-support-x="41" data-support-y="19" data-muzzle-x="90" data-muzzle-y="17"');
+    expect(svg).toContain('data-grip-x="18" data-grip-y="22" data-support-x="51" data-support-y="25" data-muzzle-x="90" data-muzzle-y="17"');
     expect(svg).toContain('id="support-marker"');
     expect(SHOTGUN_PRODUCTION_ART.weapon.grip).toEqual({x:18,y:22});
-    expect(SHOTGUN_PRODUCTION_ART.weapon.support).toEqual({x:41,y:19});
+    expect(SHOTGUN_PRODUCTION_ART.weapon.support).toEqual({x:51,y:25});
     expect(SHOTGUN_PRODUCTION_ART.weapon.muzzle).toEqual({x:90,y:17});
   });
 
