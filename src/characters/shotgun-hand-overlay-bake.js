@@ -9,11 +9,11 @@ import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?
 export const SHOTGUN_HAND_OVERLAY_MASKS = Object.freeze([
   Object.freeze({
     id: 'rear-grip-hand',
-    points: Object.freeze([[55,66],[72,66],[78,70],[76,79],[68,83],[55,78]])
+    points: Object.freeze([[60,69],[70,68],[77,71],[80,76],[77,82],[66,83],[59,78]])
   }),
   Object.freeze({
     id: 'support-hand',
-    points: Object.freeze([[91,69],[108,68],[116,73],[115,84],[106,88],[95,85],[91,79]])
+    points: Object.freeze([[95,70],[105,69],[113,72],[117,77],[115,83],[108,87],[99,86],[93,80]])
   })
 ]);
 

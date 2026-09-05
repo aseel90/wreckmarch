@@ -1,13 +1,14 @@
 /* WRECKMARCH WS14-C — locked Wrecker two-hand weapon hold geometry.
  *
- * The approved Wrecker body is a full-body baked pose. The two authored contact
- * markers below are the actual visible rear-grip and support-hand contact points
- * in that raster; runtime never invents a second socket or rotates toward aim.
+ * The approved Wrecker body is a full-body baked pose. Production runtime never
+ * rotates the shotgun from aim input. Instead, the gun is pinned to two authored
+ * palm contacts and mirrored with the full body when facing changes.
  */
 import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=3';
 import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=4';
 
-const { width } = SHOTGUN_ART_CONTRACT.canvas;
+const { width, height } = SHOTGUN_ART_CONTRACT.canvas;
+const { originX, originY, scale } = SHOTGUN_ART_CONTRACT.render;
 const weapon = SHOTGUN_PRODUCTION_ART.weapon;
 const authoredGrip = SHOTGUN_PRODUCTION_ART.body.authoredGripMarker;
 const authoredSupport = SHOTGUN_PRODUCTION_ART.body.authoredSupportMarker;
@@ -16,26 +17,18 @@ function mirrorBodyPoint(point) {
   return Object.freeze({ x: width - point.x, y: point.y });
 }
 
-const bodyGripRight = Object.freeze({ x: authoredGrip.x, y: authoredGrip.y });
+const bodyGripRight = authoredGrip;
 const bodyGripLeft = mirrorBodyPoint(bodyGripRight);
-const bodySupportRight = Object.freeze({ x: authoredSupport.x, y: authoredSupport.y });
+const bodySupportRight = authoredSupport;
 const bodySupportLeft = mirrorBodyPoint(bodySupportRight);
+const gripOffset = Object.freeze({
+  x: (bodyGripRight.x - (width * originX)) * scale,
+  y: (bodyGripRight.y - (height * originY)) * scale
+});
 const supportFromGrip = Object.freeze({
   x: weapon.support.x - weapon.grip.x,
   y: weapon.support.y - weapon.grip.y
 });
-const authoredHoldVector = Object.freeze({
-  x: bodySupportRight.x - bodyGripRight.x,
-  y: bodySupportRight.y - bodyGripRight.y
-});
-const markerLockErrorPx = Math.hypot(
-  authoredHoldVector.x - supportFromGrip.x,
-  authoredHoldVector.y - supportFromGrip.y
-);
-if (markerLockErrorPx > 0.01) {
-  throw Error(`Wrecker authored two-hand contacts drifted from weapon markers: ${markerLockErrorPx.toFixed(3)}px`);
-}
-
 const muzzleFromGrip = Object.freeze({
   x: weapon.muzzle.x - weapon.grip.x,
   y: weapon.muzzle.y - weapon.grip.y
@@ -44,10 +37,9 @@ const muzzleFromGrip = Object.freeze({
 export const SHOTGUN_AIM_ALIGNMENT = Object.freeze({
   bodyGrip: Object.freeze({ right: bodyGripRight, left: bodyGripLeft }),
   bodySupport: Object.freeze({ right: bodySupportRight, left: bodySupportLeft }),
-  authoredGripMarker: bodyGripRight,
-  authoredSupportMarker: bodySupportRight,
-  authoredHoldVector,
-  markerLockErrorPx,
+  authoredGripMarker: authoredGrip,
+  authoredSupportMarker: authoredSupport,
+  gripOffset,
   weaponOrigin: Object.freeze({
     x: weapon.grip.x / weapon.canvas.width,
     y: weapon.grip.y / weapon.canvas.height
@@ -60,7 +52,6 @@ export const SHOTGUN_AIM_ALIGNMENT = Object.freeze({
     runtimeRotation: false,
     bodyRotationRadians: 0,
     runtimeBodyRotation: false,
-    contactSource: 'authored-visible-hands',
     supportTolerancePx: 0.3
   }),
   activation: Object.freeze({ playableOnMain: false })

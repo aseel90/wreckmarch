@@ -11,8 +11,8 @@ export const SHOTGUN_PRODUCTION_ART = Object.freeze({
   body: Object.freeze({
     canvas: SHOTGUN_ART_CONTRACT.canvas,
     footLineY: SHOTGUN_ART_CONTRACT.body.footLineY,
-    authoredGripMarker: Object.freeze({ x: 70, y: 75 }),
-    authoredSupportMarker: Object.freeze({ x: 93, y: 72 }),
+    authoredGripMarker: SHOTGUN_ART_CONTRACT.twoHandHold.bodyRearGrip,
+    authoredSupportMarker: SHOTGUN_ART_CONTRACT.twoHandHold.bodySupportGrip,
     idle: Object.freeze([
       IDLE_SOURCE,
       'assets/hero/shotgun/idle-1.svg'
@@ -26,9 +26,9 @@ export const SHOTGUN_PRODUCTION_ART = Object.freeze({
   weapon: Object.freeze({
     path: 'assets/weapons/shotgun.svg',
     canvas: Object.freeze({ width: 96, height: 40 }),
-    grip: Object.freeze({ x: 18, y: 22 }),
-    support: Object.freeze({ x: 41, y: 19 }),
-    muzzle: Object.freeze({ x: 90, y: 17 })
+    grip: SHOTGUN_ART_CONTRACT.twoHandHold.weaponRearGrip,
+    support: SHOTGUN_ART_CONTRACT.twoHandHold.weaponSupportGrip,
+    muzzle: SHOTGUN_ART_CONTRACT.twoHandHold.weaponMuzzle
   }),
   activation: Object.freeze({ playableOnMain: false })
 });
