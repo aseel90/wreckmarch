@@ -3,7 +3,7 @@
  * boundary and never select a concrete character or signature weapon themselves.
  */
 import { getCharacterDefinition } from './character-registry.js?v=5';
-import { CharacterSystem } from './character-system.js?v=12';
+import { CharacterSystem } from './character-system.js?v=13';
 import {
   getCharacterProductionValidationDefinition,
   isCharacterProductionValidationActive
