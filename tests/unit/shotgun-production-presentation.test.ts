@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWeaponRuntimeState, getWeaponDefinition } from '../../src/combat/weapon-registry.js';
 import { SHOTGUN_RUNTIME_PRESENTATION } from '../../src/characters/shotgun-runtime-presentation.js';
 import {
+  WRECKER_SHOTGUN_MUZZLE_AIM,
   installShotgunC5Presentation,
   installShotgunD1Presentation,
-  resolveShotgunPresentationPose
+  resolveShotgunPresentationPose,
+  resolveWreckerShotgunMuzzle
 } from '../../src/characters/shotgun-production-presentation.js';
 
 class Vector2 {
@@ -107,6 +109,38 @@ describe('locked Shotgun production presentation adapters', () => {
     }
   });
 
+  it('moves only the fire muzzle vertically with aim while keeping the weapon hold fixed', () => {
+    const right = resolveShotgunPresentationPose(100, 80, 0);
+    const up = resolveShotgunPresentationPose(100, 80, -Math.PI / 2);
+    const down = resolveShotgunPresentationPose(100, 80, Math.PI / 2);
+    const left = resolveShotgunPresentationPose(100, 80, Math.PI);
+
+    expect(right.muzzle).toEqual(right.weaponMuzzle);
+    expect(left.muzzle.x).toBeCloseTo(left.weaponMuzzle.x, 10);
+    expect(left.muzzle.y).toBeCloseTo(left.weaponMuzzle.y, 10);
+
+    expect(up.weaponMuzzle).toEqual(right.weaponMuzzle);
+    expect(down.weaponMuzzle).toEqual(right.weaponMuzzle);
+    expect(up.muzzle.x).toBeCloseTo(right.weaponMuzzle.x, 10);
+    expect(down.muzzle.x).toBeCloseTo(right.weaponMuzzle.x, 10);
+    expect(up.muzzle.y).toBeCloseTo(right.weaponMuzzle.y - WRECKER_SHOTGUN_MUZZLE_AIM.maxVerticalTravelPx, 10);
+    expect(down.muzzle.y).toBeCloseTo(right.weaponMuzzle.y + WRECKER_SHOTGUN_MUZZLE_AIM.maxVerticalTravelPx, 10);
+
+    expect(up.grip).toEqual(right.grip);
+    expect(down.grip).toEqual(right.grip);
+    expect(up.weaponSupport).toEqual(right.weaponSupport);
+    expect(down.weaponSupport).toEqual(right.weaponSupport);
+    expect(up.weaponRotation).toBe(0);
+    expect(down.weaponRotation).toBe(0);
+
+    const diagonal = resolveWreckerShotgunMuzzle(right.weaponMuzzle, -Math.PI / 4);
+    expect(diagonal.x).toBeCloseTo(right.weaponMuzzle.x, 10);
+    expect(diagonal.y).toBeCloseTo(
+      right.weaponMuzzle.y - (WRECKER_SHOTGUN_MUZZLE_AIM.maxVerticalTravelPx / Math.sqrt(2)),
+      10
+    );
+  });
+
   it('installs C5 as body -> weapon -> baked front hands with zero body/weapon rotation', async () => {
     const fixture = createScene();
     const result = await installShotgunC5Presentation(fixture.scene);
@@ -144,6 +178,19 @@ describe('locked Shotgun production presentation adapters', () => {
     const rightMuzzleA = fixture.getMuzzleResolver()?.(-0.3);
     const rightMuzzleB = fixture.getMuzzleResolver()?.(0.3);
     expect(rightMuzzleA).toEqual(rightMuzzleB);
+    const horizontalY = rightMuzzleA?.y;
+
+    fixture.scene.weaponAim = -Math.PI / 2;
+    fixture.scene.updateWeaponPose();
+    const upMuzzle = fixture.getMuzzleResolver()?.(0);
+    expect(upMuzzle?.y).toBeCloseTo((horizontalY ?? 0) - WRECKER_SHOTGUN_MUZZLE_AIM.maxVerticalTravelPx, 10);
+    expect(fixture.weaponV3Gun.rotation).toBe(0);
+
+    fixture.scene.weaponAim = Math.PI / 2;
+    fixture.scene.updateWeaponPose();
+    const downMuzzle = fixture.getMuzzleResolver()?.(0);
+    expect(downMuzzle?.y).toBeCloseTo((horizontalY ?? 0) + WRECKER_SHOTGUN_MUZZLE_AIM.maxVerticalTravelPx, 10);
+    expect(fixture.weaponV3Gun.rotation).toBe(0);
 
     fixture.scene.weaponAim = Math.PI;
     fixture.scene.updateWeaponPose();
