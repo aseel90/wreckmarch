@@ -90,16 +90,46 @@ export function resolveShotgunLayeredMotion({
   });
 }
 
+export function resolveShotgunCropOrigin({
+  canvasWidth,
+  canvasHeight,
+  cropX,
+  cropY,
+  cropWidth,
+  cropHeight,
+  originX,
+  originY
+}) {
+  const anchorX = Number(canvasWidth) * Number(originX);
+  const anchorY = Number(canvasHeight) * Number(originY);
+  return Object.freeze({
+    x: (anchorX - Number(cropX)) / Number(cropWidth),
+    y: (anchorY - Number(cropY)) / Number(cropHeight)
+  });
+}
+
 function requireImageBoundary(scene) {
   if (!scene?.hero || !scene?.add?.image) {
     throw Error('Shotgun layered locomotion requires hero and scene.add.image');
   }
 }
 
-function configureLayer(image, { x, y, key, originX, originY, scale, depth, crop }) {
+function configureLayer(image, { x, y, key, originX, originY, scale, depth, crop, canvas }) {
+  const cropOrigin = crop && canvas
+    ? resolveShotgunCropOrigin({
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+        cropX: crop[0],
+        cropY: crop[1],
+        cropWidth: crop[2],
+        cropHeight: crop[3],
+        originX,
+        originY
+      })
+    : null;
   image
     .setTexture?.(key)
-    .setOrigin?.(originX, originY)
+    .setOrigin?.(cropOrigin?.x ?? originX, cropOrigin?.y ?? originY)
     .setScale?.(scale)
     .setDepth?.(depth)
     .setFlipX?.(false)
@@ -146,6 +176,7 @@ export function installShotgunLayeredLocomotion(scene) {
     originY: render.originY,
     scale: render.scale,
     depth: depth - .04,
+    canvas,
     crop: [Math.max(0, half - overlap), lowerStart, half + overlap, canvas.height - lowerStart]
   });
   const legLeft = configureLayer(scene.add.image(hero.x, hero.y, key), {
@@ -156,6 +187,7 @@ export function installShotgunLayeredLocomotion(scene) {
     originY: render.originY,
     scale: render.scale,
     depth: depth - .02,
+    canvas,
     crop: [0, lowerStart, half + overlap, canvas.height - lowerStart]
   });
   const torso = configureLayer(scene.add.image(hero.x, hero.y, key), {
@@ -166,6 +198,7 @@ export function installShotgunLayeredLocomotion(scene) {
     originY: render.originY,
     scale: render.scale,
     depth,
+    canvas,
     crop: [0, 0, canvas.width, torsoEnd]
   });
 
