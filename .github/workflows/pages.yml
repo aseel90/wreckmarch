@@ -416,16 +416,18 @@ jobs:
           curl -fsSL --retry 5 "${BASE}?build=${SHA}" -o wm-live-index.html
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-loader-canonical-v2.js" -o wm-live-mobile-hud-loader.js
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=canonical-hud-20260903-responsive-v2" -o wm-live-mobile-hud.js
-          curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=24" -o wm-live-enemy-system.js
+          curl -fsSL --retry 5 "${BASE}src/telemetry/telemetry-runtime.js?v=16" -o wm-live-telemetry-runtime.js
+          curl -fsSL --retry 5 "${BASE}src/telemetry/run-telemetry.js?v=7" -o wm-live-run-telemetry.js
+          curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=29" -o wm-live-enemy-system.js
           curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=6" -o wm-live-phase-b.js
           curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=24" -o wm-live-phase-c.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=19" -o wm-live-phase-c1.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c5-runtime.js?v=10" -o wm-live-phase-c5.js
-          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=1" -o wm-live-upgrade-scene.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=20&u7=1" -o wm-live-phase-c1.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c5-runtime.js?v=11&u7=1&wrecker=11" -o wm-live-phase-c5.js
+          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=2" -o wm-live-upgrade-scene.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=1" -o wm-live-upgrade-offer-pool.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-roll-service.js?v=2" -o wm-live-upgrade-roll-service.js
-          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=29" -o wm-live-phase-d1.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=9&wrecker=10" -o wm-live-character-runtime-presentation.js
+          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=30&u5=3&wrecker=11" -o wm-live-phase-d1.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=11&wrecker=11" -o wm-live-character-runtime-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-production-presentation.js?v=9&wrecker=10" -o wm-live-shotgun-production-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-runtime-presentation.js?v=7" -o wm-live-shotgun-runtime-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-aim-alignment.js?v=4" -o wm-live-shotgun-aim-alignment.js
@@ -436,19 +438,24 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-baked-locomotion.js?v=3" -o wm-live-shotgun-baked-locomotion.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-hand-overlay-bake.js?v=2" -o wm-live-shotgun-hand-overlay-bake.js
           curl -fsSL --retry 5 "${BASE}src/characters/runner-production-presentation.js?v=1" -o wm-live-runner-production-presentation.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=10" -o wm-live-character-system.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=13" -o wm-live-character-system.js
           curl -fsSL --retry 5 "${BASE}src/combat/weapon-registry.js?v=2" -o wm-live-weapon-registry.js
           curl -fsSL --retry 5 "${BASE}src/combat/weapon-system.js?v=8" -o wm-live-weapon-system.js
           curl -fsSL --retry 5 "${BASE}src/combat/definitions/rivet-gun.js?v=2" -o wm-live-rivet-gun.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-card-art.js?v=7" -o wm-live-upgrade-card-art.js
           curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
+          grep -F "./src/telemetry/telemetry-runtime.js?v=16" wm-live-index.html
+          grep -F "./run-telemetry.js?v=7" wm-live-telemetry-runtime.js
+          grep -F "this.characterIdentity = resolveCharacterIdentity(scene)" wm-live-run-telemetry.js
+          grep -F "character: { ...this.characterIdentity }" wm-live-run-telemetry.js
+          grep -F "characterDownReason(this.characterIdentity)" wm-live-run-telemetry.js
           grep -F "./src/phase-b-runtime.js?v=6" wm-live-index.html
           grep -F "./src/phase-c-runtime.js?v=24" wm-live-index.html
-          grep -F "./src/phase-c1-runtime.js?v=19" wm-live-index.html
-          grep -F "./src/phase-c5-runtime.js?v=10&u7=1&wrecker=10" wm-live-index.html
-          grep -F "./src/phase-d1-runtime.js?v=29&u5=3&wrecker=10" wm-live-index.html
-          grep -F "./characters/character-runtime-presentation.js?v=9&wrecker=10" wm-live-phase-c5.js
-          grep -F "./characters/character-runtime-presentation.js?v=9&wrecker=10" wm-live-phase-d1.js
+          grep -F "./src/phase-c1-runtime.js?v=20&u7=1" wm-live-index.html
+          grep -F "./src/phase-c5-runtime.js?v=11&u7=1&wrecker=11" wm-live-index.html
+          grep -F "./src/phase-d1-runtime.js?v=30&u5=3&wrecker=11" wm-live-index.html
+          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11" wm-live-phase-c5.js
+          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11" wm-live-phase-d1.js
           grep -F "./shotgun-production-presentation.js?v=9&wrecker=10" wm-live-character-runtime-presentation.js
           grep -F "./shotgun-runtime-presentation.js?v=7" wm-live-shotgun-production-presentation.js
           grep -F "__shotgunTwoHandHold" wm-live-shotgun-production-presentation.js
@@ -492,6 +499,9 @@ jobs:
           grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-b.js
           grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-c.js
           grep -F "../combat/weapon-registry.js?v=2" wm-live-character-system.js
+          grep -F "this._resetHealthOnNextInstall=Boolean(scene?.hero)" wm-live-character-system.js
+          grep -F "const resetHealth=this._resetHealthOnNextInstall===true" wm-live-character-system.js
+          grep -F "this.applyGameplayDefaults({resetHealth})" wm-live-character-system.js
           grep -F "../combat/weapon-system.js?v=8" wm-live-enemy-system.js
           grep -F "./definitions/rivet-gun.js?v=2" wm-live-weapon-registry.js
           grep -F "id: 'rivet-gun'" wm-live-rivet-gun.js
@@ -507,7 +517,7 @@ jobs:
           grep -F "weaponVolley:s.primaryWeapon?.fireProfile?.projectileCount===1" wm-live-runner-production-presentation.js
           grep -F "weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'" wm-live-runner-production-presentation.js
           grep -F "./upgrades/upgrade-scene.js?v=1" wm-live-phase-c.js
-          grep -F "./upgrades/upgrade-scene.js?v=1" wm-live-phase-c1.js
+          grep -F "./upgrades/upgrade-scene.js?v=2" wm-live-phase-c1.js
           grep -F "./upgrade-offer-pool.js?v=1" wm-live-upgrade-scene.js
           grep -F "./upgrade-roll-service.js?v=2" wm-live-upgrade-scene.js
           grep -F "class UpgradeSceneV4 extends Phaser.Scene" wm-live-upgrade-scene.js
@@ -554,6 +564,8 @@ jobs:
             wm-live-index.html
             wm-live-mobile-hud.js
             wm-live-mobile-hud-loader.js
+            wm-live-telemetry-runtime.js
+            wm-live-run-telemetry.js
             wm-live-enemy-system.js
             wm-live-phase-b.js
             wm-live-phase-c.js
