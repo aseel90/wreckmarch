@@ -86,6 +86,8 @@ test('locked Shotgun can complete the production stack only through the explicit
         weaponRotation: scene.weaponV3Gun?.rotation,
         handOverlayRotation: scene.__shotgunHandOverlay?.rotation,
         weaponFlipX: scene.weaponV3Gun?.flipX,
+        weaponOriginX: scene.weaponV3Gun?.originX,
+        weaponOriginY: scene.weaponV3Gun?.originY,
         heroFlipX: scene.hero?.flipX,
         handOverlayFlipX: scene.__shotgunHandOverlay?.flipX,
         heroDepth: scene.hero?.depth,
@@ -107,6 +109,8 @@ test('locked Shotgun can complete the production stack only through the explicit
     expect(hold.weaponDepth).toBeLessThan(hold.handOverlayDepth);
     expect(hold.weaponFlipX).toBe(hold.heroFlipX);
     expect(hold.handOverlayFlipX).toBe(hold.heroFlipX);
+    expect(hold.weaponOriginY).toBeCloseTo(22 / 40, 8);
+    expect(hold.weaponOriginX).toBeCloseTo(hold.weaponFlipX ? 1 - (18 / 96) : 18 / 96, 8);
     expect(hold.hold).toMatchObject({
       mode: 'two-hand-fixed',
       layerMode: 'body-weapon-front-hands',
@@ -125,7 +129,7 @@ test('locked Shotgun can complete the production stack only through the explicit
 
   const frameLayers = await page.evaluate(async () => {
     const scene = (window as any).__WM_GAME__?.scene?.getScene?.('Wreckmarch');
-    const presentationPath = '/src/characters/shotgun-runtime-presentation.js?v=6';
+    const presentationPath = '/src/characters/shotgun-runtime-presentation.js?v=7';
     const { SHOTGUN_RUNTIME_PRESENTATION } = await import(presentationPath);
     const frames = [...SHOTGUN_RUNTIME_PRESENTATION.body.idle, ...SHOTGUN_RUNTIME_PRESENTATION.body.run];
     const results = frames.map((frame: any) => {
