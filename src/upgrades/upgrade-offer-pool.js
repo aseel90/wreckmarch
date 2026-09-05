@@ -1,4 +1,4 @@
-import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrade-runtime.js?v=14';
+import { createRegisteredStatUpgradeChoice, createRegisteredUpgradeChoice } from './upgrade-runtime.js?v=15';
 
 export const UPGRADE_OFFER_POOL_GROUPS = Object.freeze({
   HUNTER_INITIAL: 'HUNTER_INITIAL',
