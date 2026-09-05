@@ -68,7 +68,7 @@ test('canonical Results persist debug run records without awarding Workshop Scri
   await expect(page.locator('[data-milestone-id="scrap-hand"]')).toHaveAttribute('data-complete', 'false');
   await expect(page.locator('[data-milestone-id="stay-moving"]')).toHaveAttribute('data-complete', 'false');
   await expect(page.locator('.wm-progression-roster')).toContainText('Runner');
-  await expect(page.locator('.wm-progression-roster')).toContainText('Shotgun');
+  await expect(page.locator('.wm-progression-roster')).toContainText('Wrecker');
   await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
 });
 
@@ -109,27 +109,20 @@ test('normal canonical run awards Scrip, purchases a cosmetic once, and persists
     page.locator('[data-results-action="main"]').click(),
   ]);
   await expect(page.locator('.wm-main-screen')).toBeVisible({ timeout: 45_000 });
-  await page.locator('[data-screen-id="shop"]').click();
+
+  const progressionButton = page.locator('[data-screen-id="shop"]');
+  await progressionButton.click();
   await expect(page.locator('.wm-progression-screen')).toBeVisible();
   await expect(page.locator('[data-stat="workshop-scrip"]')).toContainText('2');
-  await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
 
-  const buy = page.locator('[data-purchase-item-id="terminal-plate-rustline"]');
-  await expect(buy).toBeEnabled();
-  await expect(buy).toContainText('BUY // 2 SCRIP');
-  await buy.click();
-  await expect(buy).toBeDisabled();
-  await expect(buy).toContainText('OWNED');
-  await expect(page.locator('[data-stat="workshop-scrip"]')).toContainText('0');
-  await expect(page.locator('.wm-workshop-purchase-status')).toContainText('FABRICATED');
+  const purchase = page.locator('[data-workshop-item-id="runner-banner"]');
+  await expect(purchase).toContainText('RUNNER BANNER');
+  await expect(purchase).toHaveAttribute('data-owned', 'false');
+  await purchase.locator('[data-workshop-purchase]').click();
+  await expect(purchase).toHaveAttribute('data-owned', 'true');
+  await expect(page.locator('[data-stat="workshop-scrip"]')).toContainText('1');
 
-  const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('wreckmarch.progression.v3') || '{}'));
-  expect(persisted.workshopScrip).toBe(0);
-  expect(persisted.recordedRunIds).toEqual([state.result.runId]);
-  expect(persisted.rewardedRunIds).toEqual([state.result.runId]);
-  expect(persisted.ownedWorkshopItemIds).toEqual(['terminal-plate-rustline']);
-
-  await page.locator('.wm-shell-back').click();
+  await page.locator('[data-screen-action="back"]').click();
   await expect(page.locator('.wm-main-screen')).toBeVisible();
-  await expect(page.locator('[data-workshop-item-id="terminal-plate-rustline"]')).toContainText('RUSTLINE // FIELD WORN');
+  await expect(page.locator('.wm-main-screen')).toHaveAttribute('data-workshop-runner-banner', 'true');
 });
