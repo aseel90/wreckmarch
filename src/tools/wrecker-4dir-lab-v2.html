@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WRECKMARCH — Wrecker 4Dir V2</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#08090b;color:#f3eee6}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#33271c 0,#111315 40%,#08090b 100%);padding:12px;overscroll-behavior:none}
+main{max-width:920px;margin:auto}.head{display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap}h1{font-size:clamp(22px,5vw,38px);margin:0}.version{font:800 12px/1 monospace;color:#ffbc65;border:1px solid #6c5031;border-radius:999px;padding:7px 10px;background:#1b1510}
+p{margin:8px 0 14px;color:#bcb5aa}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}button{min-height:44px;border:1px solid #565047;border-radius:10px;background:#171a1d;color:#f3eee6;font-weight:800;padding:0 15px;touch-action:none}button.on{background:#684a29;border-color:#bf8b4d}
+.stage{position:relative;height:min(72vh,650px);min-height:470px;overflow:hidden;border:1px solid #3a3b3d;border-radius:16px;background:linear-gradient(#17191b,#0e1012);box-shadow:0 16px 46px #0009;touch-action:none}
+.stage:before{content:"";position:absolute;inset:8%;border:1px dashed #3f403f;border-radius:24px}.axis-x,.axis-y{position:absolute;background:#ffffff12}.axis-x{left:8%;right:8%;top:50%;height:1px}.axis-y{top:8%;bottom:8%;left:50%;width:1px}.corner{position:absolute;color:#6e6a63;font:700 11px monospace}.c1{left:9%;top:9%}.c2{right:9%;top:9%}.c3{left:9%;bottom:9%}.c4{right:9%;bottom:9%}
+.actor{position:absolute;left:50%;top:50%;width:210px;height:280px;transform:translate(-50%,-50%);will-change:left,top,transform}.shadow{position:absolute;left:50%;bottom:3px;width:132px;height:27px;transform:translateX(-50%);border-radius:50%;background:#000a;filter:blur(3px)}.rig{position:absolute;left:50%;top:0;width:210px;height:250px;transform:translateX(-50%);transform-origin:50% 84%;will-change:transform}.layer{position:absolute;inset:0;background:url('../../assets/hero/shotgun/idle-0.svg') center/contain no-repeat;will-change:transform}.torso{clip-path:polygon(0 0,100% 0,100% 72%,71% 72%,65% 63%,35% 63%,28% 72%,0 72%);z-index:3;transform-origin:50% 78%}.legL{clip-path:polygon(0 55%,53% 55%,53% 100%,0 100%);z-index:2;transform-origin:38% 66%}.legR{clip-path:polygon(47% 55%,100% 55%,100% 100%,47% 100%);z-index:1;transform-origin:63% 66%}
+.hud{position:absolute;top:12px;left:12px;display:flex;gap:8px;z-index:8;direction:ltr}.pill{background:#0b0d0fdf;border:1px solid #3b3c3e;border-radius:10px;padding:7px 10px;font:700 12px monospace}.pill b{color:#ffbc65}.pad{position:absolute;left:14px;bottom:14px;display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px 56px;gap:5px;z-index:20;direction:ltr}.pad button{min-height:0;padding:0;font-size:22px;background:#101316e8}.pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}.pad button.active{background:#80572c;border-color:#d39756}.note{position:absolute;right:14px;bottom:14px;background:#0b0d0fdd;border:1px solid #3b3c3e;border-radius:10px;padding:8px 10px;color:#aaa39a;font-size:11px;direction:ltr}
+@media(max-width:650px){.actor,.rig{width:170px}.actor{height:225px}.rig{height:202px}.stage{min-height:460px}.note{display:none}}
+</style>
+</head>
+<body>
+<main>
+<div class="head"><div><h1>WRECKER — 4 DIR MOTION V2</h1><p>هذه نسخة جديدة بمسار مستقل. الحركة تبدأ تلقائيًا حتى يظهر الفرق فورًا.</p></div><div class="version">V2 • 1db8364+</div></div>
+<div class="toolbar"><button id="demo" class="on">AUTO DEMO</button><button id="manual">MANUAL</button><button id="slow">SLOW</button></div>
+<section id="stage" class="stage">
+<div class="axis-x"></div><div class="axis-y"></div><span class="corner c1">UP+LEFT</span><span class="corner c2">UP+RIGHT</span><span class="corner c3">DOWN+LEFT</span><span class="corner c4">DOWN+RIGHT</span>
+<div class="hud"><div class="pill">DIR <b id="dir">RIGHT</b></div><div class="pill">POSE <b id="pose">1/4</b></div><div class="pill">MODE <b id="mode">AUTO</b></div></div>
+<div id="actor" class="actor"><div id="shadow" class="shadow"></div><div id="rig" class="rig"><div id="legR" class="layer legR"></div><div id="legL" class="layer legL"></div><div id="torso" class="layer torso"></div></div></div>
+<div class="pad"><button class="up" data-dir="up">▲</button><button class="left" data-dir="left">◀</button><button class="down" data-dir="down">▼</button><button class="right" data-dir="right">▶</button></div><div class="note">WASD / ARROWS • hold to move</div>
+</section>
+</main>
+<script>
+const actor=document.getElementById('actor'),rig=document.getElementById('rig'),torso=document.getElementById('torso'),legL=document.getElementById('legL'),legR=document.getElementById('legR'),shadow=document.getElementById('shadow'),dirEl=document.getElementById('dir'),poseEl=document.getElementById('pose'),modeEl=document.getElementById('mode');
+const pad=[...document.querySelectorAll('.pad button')],held=new Set();
+const poses=[
+ {t:'translate(-1px,0) rotate(-.5deg)',l:'translate(-4px,2px) rotate(2.6deg)',r:'translate(2px,-1px) rotate(-1.4deg)',g:'translateX(-50%) rotate(-.3deg)',s:'translateX(-50%) scaleX(.97)'},
+ {t:'translate(0,2px)',l:'translate(-1px,0)',r:'translate(1px,0)',g:'translateX(-50%)',s:'translateX(-50%) scaleX(1.03)'},
+ {t:'translate(1px,0) rotate(.5deg)',l:'translate(2px,-1px) rotate(-1.4deg)',r:'translate(-4px,2px) rotate(2.6deg)',g:'translateX(-50%) rotate(.3deg)',s:'translateX(-50%) scaleX(.97)'},
+ {t:'translate(0,1px)',l:'translate(0,0)',r:'translate(0,0)',g:'translateX(-50%)',s:'translateX(-50%) scaleX(1.01)'}
+];
+let x=.28,y=.35,pose=0,last=performance.now(),poseClock=0,auto=true,slow=false,autoLeg=0;
+const route=[{x:.72,y:.35,d:'RIGHT'},{x:.72,y:.68,d:'DOWN'},{x:.28,y:.68,d:'LEFT'},{x:.28,y:.35,d:'UP'}];
+function drawPose(){const p=poses[pose];torso.style.transform=p.t;legL.style.transform=p.l;legR.style.transform=p.r;rig.style.transform=p.g;shadow.style.transform=p.s;poseEl.textContent=(pose+1)+'/4'}
+function face(dx,dy){let d='IDLE';if(Math.abs(dx)>Math.abs(dy))d=dx<0?'LEFT':'RIGHT';else if(Math.abs(dy)>.01)d=dy<0?'UP':'DOWN';dirEl.textContent=d;if(d==='LEFT')actor.style.transform='translate(-50%,-50%) scaleX(-1)';else actor.style.transform='translate(-50%,-50%) scaleX(1)';if(d==='UP')rig.style.filter='brightness(.86)';else if(d==='DOWN')rig.style.filter='brightness(1.06)';else rig.style.filter='none'}
+function setHeld(d,on){if(on)held.add(d);else held.delete(d);pad.forEach(b=>b.classList.toggle('active',held.has(b.dataset.dir)))}
+pad.forEach(b=>{const d=b.dataset.dir;b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);auto=false;document.getElementById('demo').classList.remove('on');document.getElementById('manual').classList.add('on');modeEl.textContent='MANUAL';setHeld(d,true)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,e=>{e.preventDefault();setHeld(d,false)}))});
+const keyMap={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};addEventListener('keydown',e=>{const d=keyMap[e.key];if(d){e.preventDefault();auto=false;modeEl.textContent='MANUAL';setHeld(d,true)}});addEventListener('keyup',e=>{const d=keyMap[e.key];if(d){e.preventDefault();setHeld(d,false)}});
+document.getElementById('demo').onclick=()=>{auto=true;modeEl.textContent='AUTO';document.getElementById('demo').classList.add('on');document.getElementById('manual').classList.remove('on')};document.getElementById('manual').onclick=()=>{auto=false;modeEl.textContent='MANUAL';document.getElementById('manual').classList.add('on');document.getElementById('demo').classList.remove('on')};document.getElementById('slow').onclick=e=>{slow=!slow;e.currentTarget.classList.toggle('on',slow)};
+function loop(now){const dt=Math.min(40,now-last);last=now;let dx=0,dy=0,moving=false;if(auto){const target=route[autoLeg],vx=target.x-x,vy=target.y-y,dist=Math.hypot(vx,vy);if(dist<.018){autoLeg=(autoLeg+1)%route.length}else{dx=vx/(dist||1);dy=vy/(dist||1);moving=true}}else{dx=(held.has('right')?1:0)-(held.has('left')?1:0);dy=(held.has('down')?1:0)-(held.has('up')?1:0);const len=Math.hypot(dx,dy);if(len){dx/=len;dy/=len;moving=true}}
+if(moving){const rate=.00024*(slow?.48:1);x=Math.max(.14,Math.min(.86,x+dx*rate*dt));y=Math.max(.18,Math.min(.80,y+dy*rate*dt));actor.style.left=(x*100)+'%';actor.style.top=(y*100)+'%';face(dx,dy);poseClock+=dt;if(poseClock>=(slow?230:115)){poseClock=0;pose=(pose+1)%4;drawPose()}}else{dirEl.textContent='IDLE'}requestAnimationFrame(loop)}
+drawPose();actor.style.left=(x*100)+'%';actor.style.top=(y*100)+'%';requestAnimationFrame(loop);
+</script>
+</body>
+</html>
