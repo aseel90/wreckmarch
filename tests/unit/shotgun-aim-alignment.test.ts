@@ -32,7 +32,9 @@ describe('WS14-C Shotgun two-hand hold alignment', () => {
     expect(SHOTGUN_AIM_ALIGNMENT.hold).toMatchObject({
       mode: 'two-hand-fixed',
       rotationRadians: 0,
-      runtimeRotation: false
+      runtimeRotation: false,
+      bodyRotationRadians: 0,
+      runtimeBodyRotation: false
     });
   });
 
