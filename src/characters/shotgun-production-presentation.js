@@ -7,8 +7,8 @@
  * foreground overlay. This keeps the gun visible over the torso while both hands
  * visibly close over it, without reintroducing runtime limb crops or a body-part rig.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey } from './shotgun-runtime-presentation.js?v=5';
-import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=3';
+import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey } from './shotgun-runtime-presentation.js?v=6';
+import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=4';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
   'weaponV3ArmA',
@@ -164,7 +164,8 @@ function installShotgunAimLayer(scene) {
     locked: false,
     errorPx: Number.POSITIVE_INFINITY,
     runtimeRotation: presentation.weapon.hold.runtimeRotation,
-    runtimeBodyRotation: presentation.weapon.hold.runtimeBodyRotation
+    runtimeBodyRotation: presentation.weapon.hold.runtimeBodyRotation,
+    contactSource: presentation.weapon.hold.contactSource
   };
   scene.updateWeaponPose = function updateShotgunWeaponPose() {
     const pose = resolveShotgunPresentationPose(this.hero.x, this.hero.y, this.weaponAim);
@@ -260,6 +261,7 @@ function c5Checks(scene) {
       twoHandHold?.mode === 'two-hand-fixed'
       && twoHandHold?.runtimeRotation === false
       && twoHandHold?.runtimeBodyRotation === false
+      && twoHandHold?.contactSource === 'authored-visible-hands'
       && twoHandHold?.locked === true,
     bodyRotationLocked: Math.abs(Number(scene.hero?.rotation) || 0) < 1e-8,
     weaponRotationLocked: Math.abs(Number(scene.weaponV3Gun?.rotation) || 0) < 1e-8,
