@@ -5,6 +5,11 @@
  */
 import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=2';
 import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=1';
+import {
+  installShotgunLayeredLocomotion,
+  setShotgunLayeredFacing,
+  updateShotgunLayeredLocomotion
+} from './shotgun-layered-locomotion.js?v=1';
 
 const HIDDEN_LEGACY_PARTS = Object.freeze([
   'weaponV3ArmA',
@@ -111,6 +116,7 @@ function installShotgunAimLayer(scene) {
   scene.updateWeaponPose = function updateShotgunWeaponPose() {
     const pose = resolveShotgunPresentationPose(this.hero.x, this.hero.y, this.weaponAim);
     this.hero.setFlipX(pose.facing === 'left');
+    setShotgunLayeredFacing(this, pose.facing);
     this.weaponV3Gun
       .setPosition(pose.grip.x, pose.grip.y)
       .setRotation(pose.angle)
@@ -170,7 +176,12 @@ function c5Checks(scene) {
     shotgunWeapon: scene.weaponV3Gun?.texture?.key === SHOTGUN_RUNTIME_PRESENTATION.weapon.key,
     separateWeaponLayer: scene.weaponModule === scene.weaponV3Gun && scene.weaponV3Gun !== scene.hero,
     noLegacyHands: HIDDEN_LEGACY_PARTS.every(key => !scene[key] || scene[key].visible === false),
-    muzzleAligned: Number.isFinite(scene.__shotgunMuzzle?.x) && Number.isFinite(scene.__shotgunMuzzle?.y)
+    muzzleAligned: Number.isFinite(scene.__shotgunMuzzle?.x) && Number.isFinite(scene.__shotgunMuzzle?.y),
+    layeredLocomotion: Boolean(
+      scene.__shotgunLayeredLocomotion?.torso
+      && scene.__shotgunLayeredLocomotion?.legLeft
+      && scene.__shotgunLayeredLocomotion?.legRight
+    )
   };
 }
 
@@ -200,6 +211,8 @@ function d1Checks(scene) {
 export async function installShotgunC5Presentation(scene) {
   await ensureShotgunRuntimeAssets(scene);
   installShotgunAimLayer(scene);
+  installShotgunLayeredLocomotion(scene);
+  scene.updateWeaponPose();
   return { checks: c5Checks(scene) };
 }
 
@@ -211,11 +224,13 @@ export async function installShotgunD1Presentation(scene, definition) {
   }
   scene.characterSystem.installProductionVisuals();
   installShotgunAimLayer(scene);
+  installShotgunLayeredLocomotion(scene);
+  scene.updateWeaponPose();
   const previousUpdateMovement = scene.updateMovement?.bind(scene);
   if (previousUpdateMovement && !scene.__shotgunLocomotionWrapped) {
     scene.updateMovement = function updateShotgunMovement(time) {
       previousUpdateMovement(time);
-      this.characterSystem.updateLocomotionVisuals();
+      updateShotgunLayeredLocomotion(this, time);
     };
     scene.__shotgunLocomotionWrapped = true;
   }
