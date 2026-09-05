@@ -14,16 +14,13 @@ describe('WS14-C Shotgun production art contract', () => {
     expect(SHOTGUN_ART_CONTRACT.locomotion).toEqual({ productionMode: 'baked-full-body', runtimeLimbSplit: false });
   });
 
-  it('matches live Runner render geometry instead of inventing a second coordinate system', () => {
+  it('matches live Runner render geometry without inheriting the Runner weapon socket', () => {
     expect(SHOTGUN_ART_CONTRACT.render).toEqual({
       originX: RUNNER_CHARACTER.render.originX,
       originY: RUNNER_CHARACTER.render.originY,
       scale: RUNNER_CHARACTER.render.scale
     });
-    expect(SHOTGUN_ART_CONTRACT.gripSocket).toEqual({
-      offsetX: RUNNER_CHARACTER.weapon.socketOffsetX,
-      offsetY: RUNNER_CHARACTER.weapon.socketOffsetY
-    });
+    expect(SHOTGUN_ART_CONTRACT).not.toHaveProperty('gripSocket');
   });
 
   it('keeps the weapon separate and the public character locked', () => {
