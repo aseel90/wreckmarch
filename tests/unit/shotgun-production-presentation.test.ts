@@ -25,10 +25,12 @@ class DisplayObject {
   flipY = true;
   cropped = true;
   rotation = 99;
+  originX = 0.5;
+  originY = 0.5;
   setVisible(value: boolean) { this.visible = value; return this; }
   setTexture(key: string) { this.texture = { key }; return this; }
   setCrop() { this.cropped = false; return this; }
-  setOrigin() { return this; }
+  setOrigin(x = 0.5, y = 0.5) { this.originX = x; this.originY = y; return this; }
   setScale() { return this; }
   setFlipX(value: boolean) { this.flipX = value; return this; }
   setFlipY(value: boolean) { this.flipY = value; return this; }
@@ -95,10 +97,13 @@ describe('locked Shotgun production presentation adapters', () => {
       if (pose.facing === 'right') {
         expect(pose.muzzle.x).toBeGreaterThan(pose.grip.x);
         expect(pose.weaponFlipX).toBe(false);
+        expect(pose.weaponOrigin.x).toBeCloseTo(18 / 96, 10);
       } else {
         expect(pose.muzzle.x).toBeLessThan(pose.grip.x);
         expect(pose.weaponFlipX).toBe(true);
+        expect(pose.weaponOrigin.x).toBeCloseTo(1 - (18 / 96), 10);
       }
+      expect(pose.weaponOrigin.y).toBeCloseTo(22 / 40, 10);
     }
   });
 
@@ -112,6 +117,8 @@ describe('locked Shotgun production presentation adapters', () => {
     expect(fixture.weaponV3Gun.cropped).toBe(false);
     expect(fixture.weaponV3Gun.flipY).toBe(false);
     expect(fixture.weaponV3Gun.flipX).toBe(false);
+    expect(fixture.weaponV3Gun.originX).toBeCloseTo(18 / 96, 10);
+    expect(fixture.weaponV3Gun.originY).toBeCloseTo(22 / 40, 10);
     expect(fixture.hero.rotation).toBe(0);
     expect(fixture.weaponV3Gun.rotation).toBe(0);
     expect(fixture.scene.__shotgunHandOverlay.texture.key).toBe(SHOTGUN_RUNTIME_PRESENTATION.body.idle[0].handOverlayKey);
@@ -142,6 +149,8 @@ describe('locked Shotgun production presentation adapters', () => {
     fixture.scene.updateWeaponPose();
     expect(fixture.hero.flipX).toBe(true);
     expect(fixture.weaponV3Gun.flipX).toBe(true);
+    expect(fixture.weaponV3Gun.originX).toBeCloseTo(1 - (18 / 96), 10);
+    expect(fixture.weaponV3Gun.originY).toBeCloseTo(22 / 40, 10);
     expect(fixture.weaponV3Gun.rotation).toBe(0);
     expect(fixture.hero.rotation).toBe(0);
     expect(fixture.scene.__shotgunHandOverlay.flipX).toBe(true);
