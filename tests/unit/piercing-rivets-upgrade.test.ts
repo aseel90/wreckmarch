@@ -21,7 +21,7 @@ describe('Upgrade System 2.0 Piercing Rivets', () => {
     if (!definition) throw new Error('Piercing Rivets definition is missing');
 
     expect(definition.name).toBe('PIERCING RIVETS');
-    expect(definition.description).toBe('Rivets pierce +1 additional enemy.');
+    expect(definition.description).toBe('Projectiles pierce +1 additional enemy.');
     expect(definition.rarity).toBe('COMMON');
     expect(definition.maxLevel).toBe(3);
     expect(definition.scope).toBe('WEAPON');

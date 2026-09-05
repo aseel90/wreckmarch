@@ -22,7 +22,7 @@ describe('Upgrade System 2.0 Heavy Rivets power-budget migration', () => {
     if (!definition) throw new Error('Heavy Rivets definition is missing');
 
     expect(definition.name).toBe('HEAVY RIVETS');
-    expect(definition.description).toBe('+12% Rivet Gun damage.');
+    expect(definition.description).toBe('+12% active weapon damage.');
     expect(definition.maxLevel).toBe(5);
     expect(definition.weight).toBe(1.25);
     expect(definition.modifiers[0]).toMatchObject({ type: 'ADDITIVE_PERCENT', value: 0.12 });
