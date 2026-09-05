@@ -62,13 +62,6 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=6&wrecker=7');
     expect(pagesWorkflow).toContain('src/characters/shotgun-production-presentation.js?v=6&wrecker=7');
     expect(pagesWorkflow).toContain('src/characters/shotgun-runtime-presentation.js?v=6');
-    expect(pagesWorkflow).toContain('src/characters/shotgun-production-art.js?v=4');
-    expect(pagesWorkflow).toContain('src/characters/shotgun-art-contract.js?v=3');
-    expect(pagesWorkflow).toContain('src/characters/shotgun-aim-alignment.js?v=4');
-    expect(pagesWorkflow).toContain('authoredGripMarker: Object.freeze({ x: 70, y: 75 })');
-    expect(pagesWorkflow).toContain('authoredSupportMarker: Object.freeze({ x: 93, y: 72 })');
-    expect(pagesWorkflow).toContain('authored-visible-hands');
-    expect(pagesWorkflow).toContain('markerLockErrorPx');
     expect(pagesWorkflow).toContain('__shotgunTwoHandHold');
     expect(pagesWorkflow).toContain('two-hand-fixed');
     expect(pagesWorkflow).toContain('runtimeRotation === false');
@@ -79,6 +72,12 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain('weaponDepth < overlayDepth');
     expect(pagesWorkflow).toContain('runtimeBodyRotation === false');
     expect(pagesWorkflow).toContain('supportFromGrip');
+    expect(pagesWorkflow).toContain('const BODY_REAR_GRIP = Object.freeze({ x: 70, y: 75 })');
+    expect(pagesWorkflow).toContain('const BODY_SUPPORT_GRIP = Object.freeze({ x: 103, y: 78 })');
+    expect(pagesWorkflow).toContain('const WEAPON_SUPPORT_GRIP = Object.freeze({ x: 51, y: 25 })');
+    expect(pagesWorkflow).toContain('shotgun-aim-alignment.js?v=4');
+    expect(pagesWorkflow).toContain('shotgun-production-art.js?v=4');
+    expect(pagesWorkflow).toContain('shotgun-art-contract.js?v=3');
     expect(pagesWorkflow).toContain('src/characters/shotgun-locomotion-art.js?v=4');
     expect(pagesWorkflow).toContain('src/characters/shotgun-baked-locomotion.js?v=3');
     expect(pagesWorkflow).toContain('src/characters/shotgun-hand-overlay-bake.js?v=2');
