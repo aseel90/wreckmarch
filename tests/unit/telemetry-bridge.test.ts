@@ -57,11 +57,11 @@ describe('balance run report bridge contract', () => {
     expect(html).toContain('./src/phase-d1-runtime.js?v=29&u5=3');
     expect(pagesWorkflow).toContain('src/phase-c1-runtime.js?v=19');
     expect(pagesWorkflow).toContain('src/phase-c5-runtime.js?v=10');
-    expect(pagesWorkflow).toContain('./src/phase-c5-runtime.js?v=10&u7=1&wrecker=7');
+    expect(pagesWorkflow).toContain('./src/phase-c5-runtime.js?v=10&u7=1&wrecker=8');
     expect(pagesWorkflow).toContain('src/phase-d1-runtime.js?v=29');
-    expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=6&wrecker=7');
-    expect(pagesWorkflow).toContain('src/characters/shotgun-production-presentation.js?v=6&wrecker=7');
-    expect(pagesWorkflow).toContain('src/characters/shotgun-runtime-presentation.js?v=6');
+    expect(pagesWorkflow).toContain('src/characters/character-runtime-presentation.js?v=7&wrecker=8');
+    expect(pagesWorkflow).toContain('src/characters/shotgun-production-presentation.js?v=7&wrecker=8');
+    expect(pagesWorkflow).toContain('src/characters/shotgun-runtime-presentation.js?v=7');
     expect(pagesWorkflow).toContain('__shotgunTwoHandHold');
     expect(pagesWorkflow).toContain('two-hand-fixed');
     expect(pagesWorkflow).toContain('runtimeRotation === false');
@@ -72,6 +72,9 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain('weaponDepth < overlayDepth');
     expect(pagesWorkflow).toContain('runtimeBodyRotation === false');
     expect(pagesWorkflow).toContain('supportFromGrip');
+    expect(pagesWorkflow).toContain('getShotgunWeaponOriginForFacing');
+    expect(pagesWorkflow).toContain("facing === 'left' ? 1 - origin.x : origin.x");
+    expect(pagesWorkflow).toContain('.setOrigin(pose.weaponOrigin.x, pose.weaponOrigin.y)');
     expect(pagesWorkflow).toContain('const BODY_REAR_GRIP = Object.freeze({ x: 70, y: 75 })');
     expect(pagesWorkflow).toContain('const BODY_SUPPORT_GRIP = Object.freeze({ x: 103, y: 78 })');
     expect(pagesWorkflow).toContain('const WEAPON_SUPPORT_GRIP = Object.freeze({ x: 51, y: 25 })');
