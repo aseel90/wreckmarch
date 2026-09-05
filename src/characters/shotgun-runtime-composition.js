@@ -2,7 +2,7 @@
  * Owns the canonical body -> weapon -> front-hands layer order, locomotion frame
  * selection and fixed two-hand hold only. It intentionally owns no gameplay input.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=6';
+import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunWeaponOriginForFacing } from './shotgun-runtime-presentation.js?v=7';
 
 const MOTIONS = Object.freeze({
   idle: SHOTGUN_RUNTIME_PRESENTATION.body.idle,
@@ -76,7 +76,9 @@ export function createShotgunRuntimeComposition(scene, options = {}) {
 
   function applyFacingAndHold() {
     const left = facing === 'left';
+    const weaponOrigin = getShotgunWeaponOriginForFacing(facing);
     body.setFlipX(left);
+    weapon.setOrigin(weaponOrigin.x, weaponOrigin.y);
     weapon.setFlipX(left);
     hands.setFlipX(left);
     weapon.x = left ? -gripSocket.offsetX : gripSocket.offsetX;
