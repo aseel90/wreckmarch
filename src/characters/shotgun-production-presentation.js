@@ -1,13 +1,13 @@
 /* WRECKMARCH — Shotgun production presentation adapter.
  * This module owns only Shotgun body/weapon presentation for C5/D1. Registration
- * is safe while the character is locked: CharacterRegistry still blocks gameplay
- * selection until an approved character definition and full-run gate exist.
+ * is consumed only after CharacterRegistry accepts Wrecker through canonical access.
+ * Production activation is therefore owned by the registry rather than this adapter.
  *
  * Canonical render order is: full baked body -> separate shotgun -> baked two-hand
  * foreground overlay. This keeps the gun visible over the torso while both hands
  * visibly close over it, without reintroducing runtime limb crops or a body-part rig.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey, getShotgunWeaponOriginForFacing } from './shotgun-runtime-presentation.js?v=7';
+import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey, getShotgunWeaponOriginForFacing } from './shotgun-runtime-presentation.js?v=7&wreckerActivation=1';
 import { loadShotgunLocomotionArt } from './shotgun-locomotion-art.js?v=4';
 
 export const WRECKER_SHOTGUN_PROJECTILE_VISUAL = Object.freeze({

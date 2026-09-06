@@ -2,7 +2,7 @@ import {
   listCharacterAccess,
   resolveCharacterAccess,
   resolveFirstAccessibleCharacter,
-} from '../characters/character-access.js?v=2';
+} from '../characters/character-access.js?v=2&wreckerActivation=1';
 
 function toSelection(access) {
   return Object.freeze({

@@ -173,8 +173,8 @@ test.describe('WS14-C Shotgun canonical three-layer composition gate', () => {
     }
   });
 
-  test('remains art-only and does not activate Shotgun runtime', () => {
-    expect(SHOTGUN_PRODUCTION_ART.activation.playableOnMain).toBe(false);
-    expect(SHOTGUN_AIM_ALIGNMENT.activation.playableOnMain).toBe(false);
+  test('keeps art composition constraints while Wrecker is production-active', () => {
+    expect(SHOTGUN_PRODUCTION_ART.activation.playableOnMain).toBe(true);
+    expect(SHOTGUN_AIM_ALIGNMENT.activation.playableOnMain).toBe(true);
   });
 });

@@ -1,11 +1,11 @@
-/* WRECKMARCH WS14-C/WS14-E — locked Shotgun runtime presentation boundary.
+/* WRECKMARCH WS14-C/WS14-E — active Wrecker runtime presentation boundary.
  * Body locomotion is full-frame baked art only; no runtime limb split is allowed.
  * The weapon is composited between the full body and a tiny baked two-hand overlay,
  * so hands can sit over the weapon without putting the weapon behind the whole torso.
  */
-import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=3';
-import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=4';
-import { SHOTGUN_AIM_ALIGNMENT } from './shotgun-aim-alignment.js?v=4';
+import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=3&wreckerActivation=1';
+import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=4&wreckerActivation=1';
+import { SHOTGUN_AIM_ALIGNMENT } from './shotgun-aim-alignment.js?v=4&wreckerActivation=1';
 
 const bodyIdle = SHOTGUN_PRODUCTION_ART.body.idle.map((path, index) => Object.freeze({
   key: `shotgun-body-idle-${index}`,
@@ -24,7 +24,7 @@ const bodyRun = SHOTGUN_PRODUCTION_ART.body.runBake.poses.map((pose, index) => O
 
 export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
   id: 'shotgun',
-  status: 'inactive-runtime-boundary',
+  status: 'active-runtime-boundary',
   layers: Object.freeze({
     mode: 'body-weapon-front-hands',
     bodyDepthOffset: 0,
@@ -64,7 +64,7 @@ export const SHOTGUN_RUNTIME_PRESENTATION = Object.freeze({
     hold: SHOTGUN_AIM_ALIGNMENT.hold
   }),
   activation: Object.freeze({
-    playableOnMain: false,
+    playableOnMain: true,
     previewRegistryEntryAllowed: true,
     playableRegistryDefinitionAllowed: true,
     gameplayDefinitionReady: true

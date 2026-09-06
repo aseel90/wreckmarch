@@ -1,24 +1,24 @@
-/* WRECKMARCH — canonical Shotgun production activation gate.
- * This is a readiness boundary, not an activation switch. Shotgun stays locked
- * until every gameplay/presentation/validation requirement is independently ready.
+/* WRECKMARCH — canonical Wrecker production activation evidence.
+ * This readiness boundary records the independent gameplay/presentation/validation
+ * requirements that justified exposing Wrecker through CharacterRegistry.
  */
 import {
   CHARACTER_AVAILABILITY,
   getCharacterEntry,
   isCharacterSelectable
-} from './character-registry.js?v=5';
-import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=9&wrecker=10';
-import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=7';
-import { SHOTGUN_RUNTIME_COMPOSITION } from './shotgun-runtime-composition.js?v=6';
+} from './character-registry.js?v=5&wreckerActivation=1';
+import { hasCharacterRuntimePresentation } from './character-runtime-presentation.js?v=11&wrecker=11&wreckerActivation=1';
+import { SHOTGUN_RUNTIME_PRESENTATION } from './shotgun-runtime-presentation.js?v=7&wreckerActivation=1';
+import { SHOTGUN_RUNTIME_COMPOSITION } from './shotgun-runtime-composition.js?v=6&wreckerActivation=1';
 import { getWeaponDefinition } from '../combat/weapon-registry.js?v=2';
 import { getUpgradeDefinition } from '../upgrades/upgrade-catalog.js?v=14';
 import { meetsUpgradeCompatibility } from '../upgrades/upgrade-compatibility.js?v=1';
 
-export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v8';
+export const SHOTGUN_PRODUCTION_GATE_VERSION = 'shotgun-production-gate-v10';
 
 export const SHOTGUN_FULL_RUN_VALIDATION = Object.freeze({
-  status: 'pending',
-  evidence: null
+  status: 'approved',
+  evidence: 'D1 run_reports.id=57; 309.379s; wave=6; Wrecker identity/110HP/shotgun/performance approved; telemetry baseline follow-up fixed in PR #366'
 });
 
 const RIVET_ONLY_UPGRADES = Object.freeze([
@@ -56,6 +56,8 @@ export function evaluateShotgunProductionGate() {
     canonicalWeapon: weapon.id === 'shotgun',
     runtimePresentation:
       SHOTGUN_RUNTIME_PRESENTATION.id === 'shotgun'
+      && SHOTGUN_RUNTIME_PRESENTATION.status === 'active-runtime-boundary'
+      && SHOTGUN_RUNTIME_PRESENTATION.activation.playableOnMain === true
       && SHOTGUN_RUNTIME_PRESENTATION.body.idle.length === 2
       && SHOTGUN_RUNTIME_PRESENTATION.body.run.length === 4
       && SHOTGUN_RUNTIME_PRESENTATION.body.run.every(frame => frame.generated === true)
@@ -79,7 +81,9 @@ export function evaluateShotgunProductionGate() {
       && SHOTGUN_RUNTIME_PRESENTATION.weapon.supportFromGrip?.y === 3
       && SHOTGUN_RUNTIME_PRESENTATION.activation.previewRegistryEntryAllowed === true,
     runtimeComposition:
-      SHOTGUN_RUNTIME_COMPOSITION.id === 'shotgun-inactive-composition'
+      SHOTGUN_RUNTIME_COMPOSITION.id === 'shotgun-production-composition'
+      && SHOTGUN_RUNTIME_COMPOSITION.status === 'active-phaser-composition'
+      && SHOTGUN_RUNTIME_COMPOSITION.activation.playableOnMain === true
       && SHOTGUN_RUNTIME_COMPOSITION.motions.idle === 2
       && SHOTGUN_RUNTIME_COMPOSITION.motions.run === 4
       && SHOTGUN_RUNTIME_COMPOSITION.hold?.mode === 'two-hand-fixed'
@@ -105,10 +109,7 @@ export function evaluateShotgunProductionGate() {
   );
   const readyForActivation = blockers.length === 0;
   const selectableNow = isCharacterSelectable('shotgun');
-  const lockedPreviewSafety =
-    entry.availability === CHARACTER_AVAILABILITY.LOCKED
-    && entry.lockReason === 'production-gate'
-    && !selectableNow;
+  const lockedPreviewSafety = entry.availability === CHARACTER_AVAILABILITY.LOCKED && !selectableNow;
 
   return Object.freeze({
     version: SHOTGUN_PRODUCTION_GATE_VERSION,

@@ -63,16 +63,16 @@ describe('WS14-C Shotgun two-hand hold alignment', () => {
     expect(SHOTGUN_AIM_ALIGNMENT.muzzleFromGrip).toEqual({ x: 72, y: -5 });
   });
 
-  it('mirrors both hand sockets symmetrically and remains non-playable', () => {
+  it('mirrors both hand sockets symmetrically for the active Wrecker runtime', () => {
     const right = getShotgunWeaponPlacement('right');
     const left = getShotgunWeaponPlacement('left');
     expect(left.grip.x).toBeCloseTo(SHOTGUN_ART_CONTRACT.canvas.width - right.grip.x, 8);
     expect(left.grip.y).toBeCloseTo(right.grip.y, 8);
     expect(left.support.x).toBeCloseTo(SHOTGUN_ART_CONTRACT.canvas.width - right.support.x, 8);
     expect(left.support.y).toBeCloseTo(right.support.y, 8);
-    expect(SHOTGUN_AIM_ALIGNMENT.activation.playableOnMain).toBe(false);
-    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: { id: 'shotgun' } });
-    expect(isCharacterSelectable('shotgun')).toBe(false);
-    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
+    expect(SHOTGUN_AIM_ALIGNMENT.activation.playableOnMain).toBe(true);
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'selectable', definition: { id: 'shotgun' } });
+    expect(isCharacterSelectable('shotgun')).toBe(true);
+    expect(getCharacterDefinition('shotgun')).toMatchObject({ id: 'shotgun', displayName: 'Wrecker' });
   });
 });

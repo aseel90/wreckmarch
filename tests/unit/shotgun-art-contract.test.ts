@@ -26,12 +26,12 @@ describe('WS14-C Shotgun production art contract', () => {
     expect(SHOTGUN_ART_CONTRACT.gripSocket.offsetY).toBeCloseTo(-1.5288, 8);
   });
 
-  it('keeps the weapon separate and the public character locked', () => {
+  it('keeps the weapon separate while Wrecker is publicly selectable', () => {
     expect(SHOTGUN_ART_CONTRACT.weaponLayer.separateFromBody).toBe(true);
-    expect(SHOTGUN_ART_CONTRACT.activation.playableOnMain).toBe(false);
-    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: { id: 'shotgun' } });
-    expect(isCharacterSelectable('shotgun')).toBe(false);
-    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
+    expect(SHOTGUN_ART_CONTRACT.activation.playableOnMain).toBe(true);
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'selectable', definition: { id: 'shotgun' } });
+    expect(isCharacterSelectable('shotgun')).toBe(true);
+    expect(getCharacterDefinition('shotgun')).toMatchObject({ id: 'shotgun', displayName: 'Wrecker' });
     expect(read('src/characters/character-registry.js')).not.toContain('SHOTGUN_ART_CONTRACT');
   });
 });

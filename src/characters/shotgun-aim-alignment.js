@@ -1,11 +1,11 @@
-/* WRECKMARCH WS14-C — locked Wrecker two-hand weapon hold geometry.
+/* WRECKMARCH WS14-C — production Wrecker two-hand weapon hold geometry.
  *
  * The approved Wrecker body is a full-body baked pose. Production runtime never
  * rotates the shotgun from aim input. Instead, the gun is pinned to two authored
  * palm contacts and mirrored with the full body when facing changes.
  */
-import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=3';
-import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=4';
+import { SHOTGUN_ART_CONTRACT } from './shotgun-art-contract.js?v=3&wreckerActivation=1';
+import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=4&wreckerActivation=1';
 
 const { width } = SHOTGUN_ART_CONTRACT.canvas;
 const weapon = SHOTGUN_PRODUCTION_ART.weapon;
@@ -48,7 +48,7 @@ export const SHOTGUN_AIM_ALIGNMENT = Object.freeze({
     runtimeBodyRotation: false,
     supportTolerancePx: 0.3
   }),
-  activation: Object.freeze({ playableOnMain: false })
+  activation: Object.freeze({ playableOnMain: true })
 });
 
 function signedVector(vector, facing) {

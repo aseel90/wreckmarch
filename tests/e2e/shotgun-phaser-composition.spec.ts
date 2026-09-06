@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
+test.describe('WS14-C active Wrecker real Phaser composition', () => {
   test('loads canonical assets and visibly renders every approved body frame plus mirrored aim', async ({ page }) => {
     await page.goto('./');
     await page.waitForFunction(() => Boolean((window as any).Phaser));
@@ -122,7 +122,7 @@ test.describe('WS14-C inactive Shotgun real Phaser composition', () => {
     expect(setup.idleCount).toBe(2);
     expect(setup.runCount).toBe(4);
     expect(setup.activation).toEqual({
-      playableOnMain: false,
+      playableOnMain: true,
       previewRegistryEntryAllowed: true,
       playableRegistryDefinitionAllowed: true
     });

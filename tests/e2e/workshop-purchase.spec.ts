@@ -40,7 +40,8 @@ test('Workshop purchases Rustline once and exposes the owned cosmetic on Main', 
   await expect(buy).toHaveText('OWNED');
   await expect(page.locator('[data-stat="workshop-scrip"]')).toContainText('0');
   await expect(page.locator('.wm-workshop-purchase-status')).toContainText('FABRICATED');
-  await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
+  await expect(page.locator('.wm-progression-roster')).toContainText('Wrecker');
+  await expect(page.locator('.wm-progression-roster')).toContainText('DEPLOYABLE');
 
   await page.locator('.wm-shell-back').click();
   await expect(page.locator('.wm-main-screen')).toBeVisible();

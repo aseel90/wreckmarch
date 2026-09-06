@@ -17,25 +17,23 @@ describe('canonical Wrecker character definition', () => {
     expect(SHOTGUN_CHARACTER.startingWeapon).not.toHaveProperty('damage');
   });
 
-  it('registers a real definition while preserving the production lock', () => {
+  it('registers the approved Wrecker definition as selectable', () => {
     const entry = getCharacterEntry('shotgun');
     expect(entry).toMatchObject({
       id: 'shotgun',
-      availability: 'locked',
-      definition: SHOTGUN_CHARACTER,
-      lockReason: 'production-gate'
+      availability: 'selectable',
+      definition: SHOTGUN_CHARACTER
     });
-    expect(isCharacterSelectable('shotgun')).toBe(false);
+    expect(isCharacterSelectable('shotgun')).toBe(true);
   });
 
-  it('closes only the definition blocker and leaves full-run validation blocked', () => {
+  it('records approved full-run evidence and exposes no activation blockers', () => {
     const gate = evaluateShotgunProductionGate();
     expect(gate.requirements.characterDefinition).toBe(true);
-    expect(gate.requirements.fullRunValidation).toBe(false);
-    expect(gate.readyForActivation).toBe(false);
-    expect(gate.selectableNow).toBe(false);
-    expect(gate.lockedPreviewSafety).toBe(true);
-    expect(gate.blockers).toContain('fullRunValidation');
-    expect(gate.blockers).not.toContain('characterDefinition');
+    expect(gate.requirements.fullRunValidation).toBe(true);
+    expect(gate.readyForActivation).toBe(true);
+    expect(gate.selectableNow).toBe(true);
+    expect(gate.lockedPreviewSafety).toBe(false);
+    expect(gate.blockers).toEqual([]);
   });
 });

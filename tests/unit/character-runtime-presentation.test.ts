@@ -6,13 +6,13 @@ import { getCharacterDefinition, isCharacterSelectable } from '../../src/charact
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
 describe('character runtime presentation registry', () => {
-  it('registers character-owned presenters without bypassing locked character access', () => {
+  it('registers character-owned presenters for both selectable launch characters', () => {
     expect(hasCharacterRuntimePresentation('runner', 'c5')).toBe(true);
     expect(hasCharacterRuntimePresentation('runner', 'd1')).toBe(true);
     expect(hasCharacterRuntimePresentation('shotgun', 'c5')).toBe(true);
     expect(hasCharacterRuntimePresentation('shotgun', 'd1')).toBe(true);
-    expect(isCharacterSelectable('shotgun')).toBe(false);
-    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
+    expect(isCharacterSelectable('shotgun')).toBe(true);
+    expect(getCharacterDefinition('shotgun')).toMatchObject({ id: 'shotgun', displayName: 'Wrecker' });
   });
 
   it('keeps phase layers free of character-specific selection branches', () => {

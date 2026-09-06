@@ -46,7 +46,7 @@ function sceneStub() {
   return { scene, body, weapon, hands, container };
 }
 
-describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
+describe('WS14-C/WS14-E active Wrecker Phaser composition', () => {
   it('creates canonical body -> weapon -> baked-front-hands ordering', () => {
     const { scene, body, weapon, hands, container } = sceneStub();
     const composition = createShotgunRuntimeComposition(scene as any, { x: 120, y: 90 });
@@ -161,15 +161,17 @@ describe('WS14-C/WS14-E locked Shotgun Phaser composition', () => {
     expect(weapon.setAngle).toHaveBeenLastCalledWith(0);
   });
 
-  it('allows a locked gameplay definition while keeping Shotgun outside live selection owners', () => {
+  it('keeps the composition character-owned while Wrecker is live-selectable', () => {
     expect(SHOTGUN_RUNTIME_COMPOSITION.activation).toEqual({
-      playableOnMain: false,
+      playableOnMain: true,
       previewRegistryEntryAllowed: true,
       playableRegistryDefinitionAllowed: true
     });
-    expect(getCharacterEntry('shotgun')).toMatchObject({ id: 'shotgun', availability: 'locked', definition: { id: 'shotgun' } });
-    expect(isCharacterSelectable('shotgun')).toBe(false);
-    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
+    expect(SHOTGUN_RUNTIME_COMPOSITION.id).toBe('shotgun-production-composition');
+    expect(SHOTGUN_RUNTIME_COMPOSITION.status).toBe('active-phaser-composition');
+    expect(getCharacterEntry('shotgun')).toMatchObject({ id: 'shotgun', availability: 'selectable', definition: { id: 'shotgun' } });
+    expect(isCharacterSelectable('shotgun')).toBe(true);
+    expect(getCharacterDefinition('shotgun')).toMatchObject({ id: 'shotgun', displayName: 'Wrecker' });
     expect(read('index.html')).not.toContain('shotgun-runtime-composition');
     expect(read('src/phase-d1-runtime.js')).not.toContain('shotgun-runtime-composition');
   });

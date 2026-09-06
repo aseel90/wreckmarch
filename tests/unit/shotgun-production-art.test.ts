@@ -37,11 +37,12 @@ describe('WS14-C Shotgun production art assets',()=>{
     expect(SHOTGUN_PRODUCTION_ART.weapon.muzzle).toEqual({x:90,y:17});
   });
 
-  it('stays art-only while allowing only a locked frontend preview entry',()=>{
-    expect(SHOTGUN_PRODUCTION_ART.activation.playableOnMain).toBe(false);
-    expect(getCharacterEntry('shotgun')).toMatchObject({availability:'locked',definition:{id:'shotgun'}});
-    expect(isCharacterSelectable('shotgun')).toBe(false);
-    expect(()=>getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
+  it('marks the committed art active for the selectable Wrecker entry',()=>{
+    expect(SHOTGUN_PRODUCTION_ART.status).toBe('production-active');
+    expect(SHOTGUN_PRODUCTION_ART.activation.playableOnMain).toBe(true);
+    expect(getCharacterEntry('shotgun')).toMatchObject({availability:'selectable',definition:{id:'shotgun'}});
+    expect(isCharacterSelectable('shotgun')).toBe(true);
+    expect(getCharacterDefinition('shotgun')).toMatchObject({id:'shotgun',displayName:'Wrecker'});
     expect(read('index.html')).not.toContain('shotgun-production-art');
   });
 });

@@ -1,7 +1,7 @@
 /* WRECKMARCH — canonical character identity, availability, and playable-definition registry */
 import { RUNNER_CHARACTER } from './definitions/runner.js?v=4';
 import { SHOTGUN_CHARACTER } from './definitions/shotgun.js?v=2';
-import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=1';
+import { SHOTGUN_PRODUCTION_ART } from './shotgun-production-art.js?v=1&wreckerActivation=1';
 
 export const CHARACTER_AVAILABILITY = Object.freeze({
   SELECTABLE: 'selectable',
@@ -25,9 +25,8 @@ const RUNNER_ENTRY = Object.freeze({
 const SHOTGUN_ENTRY = Object.freeze({
   id: SHOTGUN_CHARACTER.id,
   displayName: SHOTGUN_CHARACTER.displayName,
-  availability: CHARACTER_AVAILABILITY.LOCKED,
+  availability: CHARACTER_AVAILABILITY.SELECTABLE,
   definition: SHOTGUN_CHARACTER,
-  lockReason: 'production-gate',
   preview: Object.freeze({
     bodyAsset: SHOTGUN_PRODUCTION_ART.body.idle[0],
     weaponAsset: SHOTGUN_PRODUCTION_ART.weapon.path,

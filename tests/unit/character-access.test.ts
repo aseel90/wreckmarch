@@ -22,22 +22,23 @@ describe('canonical character access resolver', () => {
     });
   });
 
-  it('keeps a production-locked character blocked even when ownership is mocked true', () => {
-    expect(resolveCharacterAccess('shotgun', { ownedCharacterIds: ['shotgun'] })).toMatchObject({
-      productionReady: false,
+  it('allows the production-approved owned Wrecker', () => {
+    expect(resolveCharacterAccess('shotgun')).toMatchObject({
+      characterId: 'shotgun',
+      productionReady: true,
       playerOwned: true,
-      selectable: false,
-      availability: 'locked',
-      lockReason: 'production-gate',
+      selectable: true,
+      availability: 'selectable',
+      lockReason: null,
     });
   });
 
-  it('blocks a production-locked and unowned character at the production gate first', () => {
+  it('blocks Wrecker only when ownership is explicitly absent', () => {
     expect(resolveCharacterAccess('shotgun', { ownedCharacterIds: [] })).toMatchObject({
-      productionReady: false,
+      productionReady: true,
       playerOwned: false,
       selectable: false,
-      lockReason: 'production-gate',
+      lockReason: 'not-owned',
     });
   });
 

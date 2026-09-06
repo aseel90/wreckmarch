@@ -13,21 +13,21 @@ type CharacterSelectOption = {
 };
 
 describe('Character Select canonical model', () => {
-  it('renders Wrecker from canonical character access without creating screen-specific identity logic', () => {
+  it('renders both launch characters from canonical character access without screen-specific identity logic', () => {
     expect(listCharacterSelectOptions().map((option: CharacterSelectOption) => [option.id, option.displayName, option.availability])).toEqual([
       ['runner', 'Runner', 'selectable'],
-      ['shotgun', 'Wrecker', 'locked'],
+      ['shotgun', 'Wrecker', 'selectable'],
     ]);
     expect(resolveCharacterSelection('runner')).toMatchObject({
       characterId: 'runner', selectable: true, playerOwned: true, productionReady: true,
     });
     expect(resolveCharacterSelection('shotgun')).toMatchObject({
-      characterId: 'shotgun', selectable: false, availability: 'locked', productionReady: false,
+      characterId: 'shotgun', selectable: true, availability: 'selectable', productionReady: true, playerOwned: true,
     });
     expect(resolveFirstSelectableCharacter()).toMatchObject({ selectable: true, availability: 'selectable' });
   });
 
-  it('keeps ownership separate from production availability', () => {
+  it('keeps ownership separate from production readiness after activation', () => {
     expect(resolveCharacterSelection('runner', { ownedCharacterIds: [] })).toMatchObject({
       selectable: false,
       availability: 'locked',
@@ -36,11 +36,11 @@ describe('Character Select canonical model', () => {
       playerOwned: false,
       lockReason: 'not-owned',
     });
-    expect(resolveCharacterSelection('shotgun', { ownedCharacterIds: ['shotgun'] })).toMatchObject({
+    expect(resolveCharacterSelection('shotgun', { ownedCharacterIds: [] })).toMatchObject({
       selectable: false,
-      productionReady: false,
-      playerOwned: true,
-      lockReason: 'production-gate',
+      productionReady: true,
+      playerOwned: false,
+      lockReason: 'not-owned',
     });
   });
 
@@ -57,5 +57,6 @@ describe('Character Select canonical model', () => {
     expect(screenSource).toContain('option.selectable');
     expect(runtimeSource).toContain('resolveFirstSelectableCharacter');
     expect(runtimeSource).toContain('resolveCharacterAccess');
+    expect(runtimeSource).not.toContain('character-production-validation');
   });
 });

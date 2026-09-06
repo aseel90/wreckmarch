@@ -1,8 +1,8 @@
-/* WRECKMARCH WS14-C/WS14-E — locked Phaser composition for Shotgun presentation.
+/* WRECKMARCH WS14-C/WS14-E — active Phaser composition for Wrecker presentation.
  * Owns the canonical body -> weapon -> front-hands layer order, locomotion frame
  * selection and fixed two-hand hold only. It intentionally owns no gameplay input.
  */
-import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunWeaponOriginForFacing } from './shotgun-runtime-presentation.js?v=7';
+import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunWeaponOriginForFacing } from './shotgun-runtime-presentation.js?v=7&wreckerActivation=1';
 
 const MOTIONS = Object.freeze({
   idle: SHOTGUN_RUNTIME_PRESENTATION.body.idle,
@@ -10,13 +10,13 @@ const MOTIONS = Object.freeze({
 });
 
 export const SHOTGUN_RUNTIME_COMPOSITION = Object.freeze({
-  id: 'shotgun-inactive-composition',
-  status: 'inactive-phaser-composition',
+  id: 'shotgun-production-composition',
+  status: 'active-phaser-composition',
   motions: Object.freeze({ idle: SHOTGUN_RUNTIME_PRESENTATION.body.idle.length, run: SHOTGUN_RUNTIME_PRESENTATION.body.run.length }),
   hold: SHOTGUN_RUNTIME_PRESENTATION.weapon.hold,
   layers: SHOTGUN_RUNTIME_PRESENTATION.layers,
   activation: Object.freeze({
-    playableOnMain: false,
+    playableOnMain: true,
     previewRegistryEntryAllowed: true,
     playableRegistryDefinitionAllowed: true
   })

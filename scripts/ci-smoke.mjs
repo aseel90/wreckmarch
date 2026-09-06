@@ -2,6 +2,7 @@ import { chromium } from '@playwright/test';
 
 const URL = process.env.WM_SMOKE_URL || 'http://127.0.0.1:4173/?autotest=1&debug=1';
 const TELEMETRY_SMOKE = /(?:[?&])wmTelemetry=1(?:&|$)/.test(URL);
+const SMOKE_CHARACTER = process.env.WM_SMOKE_CHARACTER || null;
 const CHROME = process.env.WM_CHROME_PATH || null;
 const launchOptions = { headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] };
 if (CHROME) launchOptions.executablePath = CHROME;
@@ -28,11 +29,20 @@ try {
     });
   }
   await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+  if (SMOKE_CHARACTER) {
+    const characterButton = page.locator(`[data-character-id="${SMOKE_CHARACTER}"]`);
+    const mainCharacterSelect = page.locator('[data-screen-id="character-select"]');
+    if (await mainCharacterSelect.isVisible().catch(() => false)) await mainCharacterSelect.click();
+    await characterButton.waitFor({ state: 'visible', timeout: 15_000 });
+    const availability = await characterButton.getAttribute('data-availability');
+    if (availability !== 'selectable') throw new Error(`Smoke character is not selectable: ${SMOKE_CHARACTER} (${availability})`);
+    await characterButton.click();
+  }
   readinessStartedAt = Date.now();
   const readState = () => page.evaluate(() => {
     const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
     const fullBleed = !!rect && Math.abs(rect.left) < 1.5 && Math.abs(rect.top) < 1.5 && Math.abs(rect.width - window.innerWidth) < 1.5 && Math.abs(rect.height - window.innerHeight) < 1.5;
-    return { canvas: !!canvas, visualReady: document.body.classList.contains('visual-ready'), fullBleed, gameReady: !!game, sceneActive: !!scene?.sys?.isActive?.(), finalPolishReady: scene?.__finalPolishReady === true, finalPolish: document.documentElement.dataset.wreckmarchFinalPolish || null, mobileHud: document.documentElement.dataset.wreckmarchMobileHud || null, gameplayHud: document.documentElement.dataset.wreckmarchGameplayHud || null, phaseE1: document.documentElement.dataset.wreckmarchPhaseE1 || null, e1SelfTest: document.documentElement.dataset.wreckmarchE1SelfTest || null, e1Persistence: document.documentElement.dataset.wreckmarchE1Persistence || null, sawbugVisual: document.documentElement.dataset.wreckmarchSawbugVisual || null, bootStatus: document.querySelector('#boot-status')?.textContent || null, bootError: document.body.classList.contains('boot-error'), debugTail: document.querySelector('#log')?.textContent?.slice(-4000) || '', viewport: { width: window.innerWidth, height: window.innerHeight }, canvasRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null };
+    return { canvas: !!canvas, visualReady: document.body.classList.contains('visual-ready'), fullBleed, gameReady: !!game, sceneActive: !!scene?.sys?.isActive?.(), selectedCharacter: window.__WM_SELECTED_CHARACTER__ || null, sceneCharacter: scene?.characterId || null, activeWeaponId: scene?.activeWeaponId || null, heroHp: scene?.heroHp ?? null, heroMaxHp: scene?.heroMaxHp ?? null, telemetryCharacter: scene?.runTelemetry?.getReport?.()?.character || null, finalPolishReady: scene?.__finalPolishReady === true, finalPolish: document.documentElement.dataset.wreckmarchFinalPolish || null, mobileHud: document.documentElement.dataset.wreckmarchMobileHud || null, gameplayHud: document.documentElement.dataset.wreckmarchGameplayHud || null, phaseE1: document.documentElement.dataset.wreckmarchPhaseE1 || null, e1SelfTest: document.documentElement.dataset.wreckmarchE1SelfTest || null, e1Persistence: document.documentElement.dataset.wreckmarchE1Persistence || null, sawbugVisual: document.documentElement.dataset.wreckmarchSawbugVisual || null, bootStatus: document.querySelector('#boot-status')?.textContent || null, bootError: document.body.classList.contains('boot-error'), debugTail: document.querySelector('#log')?.textContent?.slice(-4000) || '', viewport: { width: window.innerWidth, height: window.innerHeight }, canvasRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null };
   });
   await page.waitForFunction(() => {
     const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
@@ -79,6 +89,10 @@ try {
   }
   const e1Persistence = { passed: true, before: e1PersistenceBefore, after: e1PersistenceAfter };
   const state = await readState();
+  if (SMOKE_CHARACTER) {
+    if (state.selectedCharacter !== SMOKE_CHARACTER || state.sceneCharacter !== SMOKE_CHARACTER) throw new Error(`Smoke character binding mismatch: ${JSON.stringify(state)}`);
+    if (SMOKE_CHARACTER === 'shotgun' && (state.activeWeaponId !== 'shotgun' || state.heroHp !== 110 || state.heroMaxHp !== 110 || state.telemetryCharacter?.id !== 'shotgun' || state.telemetryCharacter?.displayName !== 'Wrecker')) throw new Error(`Wrecker live activation contract failed: ${JSON.stringify(state)}`);
+  }
   let telemetryState = null;
   if (TELEMETRY_SMOKE) {
     telemetryState = await page.evaluate(async () => {

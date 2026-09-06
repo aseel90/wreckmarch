@@ -10,23 +10,24 @@ function memoryStorage(seed: Record<string, string> = {}) {
 }
 
 describe('character ownership store', () => {
-  it('keeps Runner owned by default', () => {
+  it('keeps both launch characters owned by default', () => {
     const store = new CharacterOwnershipStore({ storage: memoryStorage() as any, storageKey: 'test' });
-    expect(store.snapshot().ownedCharacterIds).toEqual(['runner']);
+    expect(store.snapshot().ownedCharacterIds).toEqual(['runner', 'shotgun']);
     expect(store.owns('runner')).toBe(true);
+    expect(store.owns('shotgun')).toBe(true);
   });
 
   it('persists explicit ownership independently of production readiness', () => {
     const storage = memoryStorage();
     const first = new CharacterOwnershipStore({ storage: storage as any, storageKey: 'test' });
-    first.grant('shotgun');
+    first.grant('future-character');
     const second = new CharacterOwnershipStore({ storage: storage as any, storageKey: 'test' });
-    expect(second.snapshot().ownedCharacterIds).toEqual(['runner', 'shotgun']);
+    expect(second.snapshot().ownedCharacterIds).toEqual(['runner', 'shotgun', 'future-character']);
   });
 
-  it('repairs a corrupt snapshot that omitted Runner', () => {
+  it('repairs a corrupt snapshot that omitted launch characters', () => {
     const storage = memoryStorage({ test: JSON.stringify({ version: 1, ownedCharacterIds: ['other'] }) });
     const store = new CharacterOwnershipStore({ storage: storage as any, storageKey: 'test' });
-    expect(store.snapshot().ownedCharacterIds).toEqual(['runner', 'other']);
+    expect(store.snapshot().ownedCharacterIds).toEqual(['runner', 'shotgun', 'other']);
   });
 });
