@@ -8,7 +8,7 @@ import { SHOTGUN_RUNTIME_PRESENTATION, getShotgunHandOverlayKey, getShotgunWeapo
 
 const read = (path: string) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
-describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
+describe('WS14-C/WS14-E active Wrecker runtime presentation boundary', () => {
   it('owns two source idle frames, four generated run frames, baked hand overlays and one separate weapon', () => {
     const assets = listShotgunRuntimeAssets();
     expect(SHOTGUN_RUNTIME_PRESENTATION.body.idle).toHaveLength(2);
@@ -59,11 +59,12 @@ describe('WS14-C/WS14-E locked Shotgun runtime presentation boundary', () => {
     expect(() => queueShotgunRuntimeAssets({} as any)).toThrow('Phaser-like scene.load.image boundary');
   });
 
-  it('allows a canonical definition while keeping main selection locked', () => {
-    expect(SHOTGUN_RUNTIME_PRESENTATION.status).toBe('inactive-runtime-boundary');
-    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'locked', definition: { id: 'shotgun' } });
-    expect(isCharacterSelectable('shotgun')).toBe(false);
-    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
+  it('exposes the canonical active runtime through main selection', () => {
+    expect(SHOTGUN_RUNTIME_PRESENTATION.status).toBe('active-runtime-boundary');
+    expect(SHOTGUN_RUNTIME_PRESENTATION.activation.playableOnMain).toBe(true);
+    expect(getCharacterEntry('shotgun')).toMatchObject({ availability: 'selectable', definition: { id: 'shotgun' } });
+    expect(isCharacterSelectable('shotgun')).toBe(true);
+    expect(getCharacterDefinition('shotgun')).toMatchObject({ id: 'shotgun', displayName: 'Wrecker' });
     expect(read('index.html')).not.toContain('shotgun-runtime-presentation');
   });
 });
