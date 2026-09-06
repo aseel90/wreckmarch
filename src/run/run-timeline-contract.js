@@ -6,6 +6,11 @@ export const FUTURE_STANDARD_RUN_TIMELINE_ID = 'future-standard-25m-v1';
 export const CURRENT_TEN_WAVE_REFERENCE_ID = 'current-10-wave-regression-v1';
 export const STANDARD_EVENT_POOL_ID = 'standard-event-pool-v1';
 
+/** @typedef {{ id: string, label: string, startSeconds: number, endSeconds: number, identity: string, endpointMilestoneId: string }} RunAct */
+/** @typedef {{ id: string, actId: string, atSeconds: number, kind: string, encounterId: string, purpose: string, locksTimeline: boolean, eventPoolId: string | null }} EncounterMilestone */
+/** @typedef {{ id: string, label: string, weight: number, roles: readonly string[], projectilePressure: string, notes: string }} EncounterEvent */
+/** @typedef {{ activeMilestoneId?: string | null, activeEncounterId?: string | null, completedMilestoneIds?: string[] }} RunTimelineDiagnosticOptions */
+/** @template T @param {T[]} items @returns {ReadonlyArray<Readonly<T>>} */
 const freezeList = items => Object.freeze(items.map(item => Object.freeze(item)));
 const text = (value, name) => {
   const result = String(value || '').trim();
@@ -20,7 +25,9 @@ const seconds = (value, name) => {
 const compactAct = act => act ? Object.freeze({ id: act.id, label: act.label, startSeconds: act.startSeconds, endSeconds: act.endSeconds, endpointMilestoneId: act.endpointMilestoneId }) : null;
 const compactMilestone = milestone => milestone ? Object.freeze({ id: milestone.id, actId: milestone.actId, atSeconds: milestone.atSeconds, kind: milestone.kind, encounterId: milestone.encounterId, locksTimeline: milestone.locksTimeline, purpose: milestone.purpose }) : null;
 
-export function defineRunAct({ id, label, startSeconds, endSeconds, identity, endpointMilestoneId }) {
+/** @param {RunAct} input @returns {Readonly<RunAct>} */
+export function defineRunAct(input) {
+  const { id, label, startSeconds, endSeconds, identity, endpointMilestoneId } = input;
   const start = seconds(startSeconds, 'RunAct.startSeconds');
   const end = seconds(endSeconds, 'RunAct.endSeconds');
   if (end <= start) throw new TypeError('RunAct.endSeconds must be greater than startSeconds');
@@ -34,7 +41,9 @@ export function defineRunAct({ id, label, startSeconds, endSeconds, identity, en
   });
 }
 
-export function defineEncounterMilestone({ id, actId, atSeconds, kind, encounterId, purpose, locksTimeline = false, eventPoolId = null }) {
+/** @param {{ id: string, actId: string, atSeconds: number, kind: string, encounterId: string, purpose: string, locksTimeline?: boolean, eventPoolId?: string | null }} input @returns {Readonly<EncounterMilestone>} */
+export function defineEncounterMilestone(input) {
+  const { id, actId, atSeconds, kind, encounterId, purpose, locksTimeline = false, eventPoolId = null } = input;
   return Object.freeze({
     id: text(id, 'EncounterMilestone.id'),
     actId: text(actId, 'EncounterMilestone.actId'),
@@ -47,7 +56,9 @@ export function defineEncounterMilestone({ id, actId, atSeconds, kind, encounter
   });
 }
 
-export function defineEncounterEvent({ id, label, weight = 1, roles = [], projectilePressure = 'normal', notes = '' }) {
+/** @param {{ id: string, label: string, weight?: number, roles?: string[], projectilePressure?: string, notes?: string }} input @returns {Readonly<EncounterEvent>} */
+export function defineEncounterEvent(input) {
+  const { id, label, weight = 1, roles = [], projectilePressure = 'normal', notes = '' } = input;
   const normalizedWeight = Number(weight);
   if (!Number.isFinite(normalizedWeight) || normalizedWeight <= 0) throw new TypeError('EncounterEvent.weight must be greater than zero');
   return Object.freeze({
@@ -60,6 +71,7 @@ export function defineEncounterEvent({ id, label, weight = 1, roles = [], projec
   });
 }
 
+/** @type {ReadonlyArray<Readonly<RunAct>>} */
 export const FUTURE_RUN_ACTS = freezeList([
   defineRunAct({ id: 'act-1-scavenge', label: 'Act I — Scavenge', startSeconds: 0, endSeconds: 300, identity: 'Learn movement, swarm, hunter and first ranged pressure.', endpointMilestoneId: 'm01-wreck-hound-alpha' }),
   defineRunAct({ id: 'act-2-escalation', label: 'Act II — Escalation', startSeconds: 300, endSeconds: 600, identity: 'Scavenger ranged, kamikaze, events and first control Elite.', endpointMilestoneId: 'm02-boilerback' }),
@@ -68,6 +80,7 @@ export const FUTURE_RUN_ACTS = freezeList([
   defineRunAct({ id: 'act-5-marshal-territory', label: 'Act V — Marshal Territory', startSeconds: 1200, endSeconds: 1500, identity: 'Late events, lane control, Final Surge and Final Boss transition.', endpointMilestoneId: 'b01-scrap-marshal' })
 ]);
 
+/** @type {ReadonlyArray<Readonly<EncounterMilestone>>} */
 export const FUTURE_ENCOUNTER_MILESTONES = freezeList([
   defineEncounterMilestone({ id: 'e01-scrap-rat', actId: 'act-1-scavenge', atSeconds: 0, kind: 'enemy-introduction', encounterId: 'enemy:scrap-rat', purpose: 'Readable start and basic movement/weapon loop.' }),
   defineEncounterMilestone({ id: 'e02-rust-hound', actId: 'act-1-scavenge', atSeconds: 75, kind: 'enemy-introduction', encounterId: 'enemy:rust-hound', purpose: 'Punish stationary play.' }),
@@ -94,6 +107,7 @@ export const FUTURE_ENCOUNTER_MILESTONES = freezeList([
   defineEncounterMilestone({ id: 'b01-scrap-marshal', actId: 'act-5-marshal-territory', atSeconds: 1500, kind: 'final-boss', encounterId: 'boss:b01-scrap-marshal', purpose: 'Final Boss; defeat completes the standard run.', locksTimeline: true })
 ]);
 
+/** @type {ReadonlyArray<Readonly<EncounterEvent>>} */
 export const FUTURE_ENCOUNTER_EVENTS = freezeList([
   defineEncounterEvent({ id: 'swarm-break', label: 'SWARM BREAK', roles: ['swarm'], projectilePressure: 'low', notes: 'Short Rat-heavy flood with very little ranged pressure.' }),
   defineEncounterEvent({ id: 'hunter-pack', label: 'HUNTER PACK', roles: ['hunter', 'displacement'], projectilePressure: 'low', notes: 'Lower raw count with higher movement demand.' }),
@@ -159,11 +173,13 @@ function resolveNominalAct(elapsedSeconds) {
     || null;
 }
 
-export function getRunTimelineDiagnostics(runTimeSeconds = 0, {
-  activeMilestoneId = null,
-  activeEncounterId = null,
-  completedMilestoneIds = []
-} = {}) {
+/** @param {number} [runTimeSeconds=0] @param {RunTimelineDiagnosticOptions} [options] */
+export function getRunTimelineDiagnostics(runTimeSeconds = 0, options = {}) {
+  const {
+    activeMilestoneId = null,
+    activeEncounterId = null,
+    completedMilestoneIds = []
+  } = options;
   const elapsedSeconds = Math.max(0, Number(runTimeSeconds) || 0);
   const completed = new Set(Array.isArray(completedMilestoneIds) ? completedMilestoneIds : []);
   const activeMilestone = activeMilestoneId ? findMilestoneById(activeMilestoneId) : null;
