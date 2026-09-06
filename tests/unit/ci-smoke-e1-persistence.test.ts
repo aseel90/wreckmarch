@@ -4,9 +4,10 @@ import fs from 'node:fs';
 const smoke = fs.readFileSync(new URL('../../scripts/ci-smoke.mjs', import.meta.url), 'utf8');
 
 describe('CI smoke E1 persistence ownership', () => {
-  it('does not block boot readiness on the runtime 12s autotest flag', () => {
+  it('does not block normal live readiness on the autotest-only E1 self-test marker', () => {
     const waitBlock = smoke.slice(smoke.indexOf('await page.waitForFunction'), smoke.indexOf('const readE1RoadState'));
-    expect(waitBlock).toContain("document.documentElement.dataset.wreckmarchE1SelfTest === 'passed'");
+    expect(waitBlock).toContain("document.documentElement.dataset.wreckmarchPhaseE1 === 'active'");
+    expect(waitBlock).not.toContain("document.documentElement.dataset.wreckmarchE1SelfTest === 'passed'");
     expect(waitBlock).not.toContain('wreckmarchE1Persistence');
   });
 
