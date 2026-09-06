@@ -39,6 +39,33 @@ describe('RunTelemetry', () => {
     expect(report.finishReason).toBe('WRECKER DOWN');
   });
 
+  it('does not count character bootstrap HP normalization as healing but preserves real healing afterward', () => {
+    const scene = baseScene();
+    scene.characterId = 'shotgun';
+    scene.characterDefinition = { id: 'shotgun', displayName: 'Wrecker', stats: { maxHp: 110 } };
+    scene.heroHp = 100;
+    scene.heroMaxHp = 100;
+    scene.__characterSystemReady = false;
+    const t = new RunTelemetry(scene, { reportIdFactory: () => 'wm-wrecker-health-baseline', now: () => 1000 });
+
+    t.update(16);
+    scene.heroHp = 110;
+    scene.heroMaxHp = 110;
+    scene.__characterSystemReady = true;
+    t.update(16);
+    expect((t.getReport() as any).combat.healingReceived).toBe(0);
+
+    scene.heroHp = 82.5;
+    t.update(16);
+    scene.heroHp = 110;
+    t.update(16);
+
+    const report: any = t.finalize();
+    expect(report.combat.damageTaken).toBe(27.5);
+    expect(report.combat.healingReceived).toBe(27.5);
+    expect(report.run.maxHp).toBe(110);
+  });
+
   it('observes gameplay state without becoming a combat owner', () => {
     const scene = baseScene();
     const submit = vi.fn(async () => ({ submitted: true }));

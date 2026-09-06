@@ -60,6 +60,8 @@ export class RunTelemetry {
     this.damageBuckets = new Map();
     this.projectileSpawnBuckets = new Map();
     this.previousHeroHp = n(scene?.heroHp);
+    this.expectedInitialHeroHp = n(scene?.characterDefinition?.stats?.maxHp, this.previousHeroHp);
+    this.healthBaselinePending = this.previousHeroHp !== this.expectedInitialHeroHp;
     this.previousLastShot = n(scene?.lastShot, -1);
     this.previousUpgradeLevels = { ...(scene?.upgradeLevels || {}) };
     this.characterIdentity = resolveCharacterIdentity(scene);
@@ -190,6 +192,13 @@ export class RunTelemetry {
 
   observePlayerDamage(enemies) {
     const hp = n(this.scene?.heroHp);
+    if (this.healthBaselinePending) {
+      this.previousHeroHp = hp;
+      const characterReady = this.scene?.__characterSystemReady === true;
+      const expectedHpReached = hp === this.expectedInitialHeroHp;
+      if (characterReady || expectedHpReached) this.healthBaselinePending = false;
+      return;
+    }
     if (hp > this.previousHeroHp) {
       this.report.combat.healingReceived += Math.max(0, hp - this.previousHeroHp);
     }
