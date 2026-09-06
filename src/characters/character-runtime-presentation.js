@@ -3,9 +3,9 @@
  * boundary and never select a concrete character or signature weapon themselves.
  */
 import { getCharacterDefinition } from './character-registry.js?v=5&wreckerActivation=1';
-import { CharacterSystem } from './character-system.js?v=13';
+import { CharacterSystem } from './character-system.js?v=13&wreckerActivation=1';
 import { installRunnerC5Presentation, installRunnerD1Presentation } from './runner-production-presentation.js?v=1';
-import { installShotgunC5Presentation, installShotgunD1Presentation } from './shotgun-production-presentation.js?v=9&wrecker=10';
+import { installShotgunC5Presentation, installShotgunD1Presentation } from './shotgun-production-presentation.js?v=9&wrecker=10&wreckerActivation=1';
 
 const PRESENTATION_PHASES = Object.freeze({
   c5: 'c5',
