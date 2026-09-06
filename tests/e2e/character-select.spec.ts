@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 960, height: 540 } });
 
-test('Main routes through Character Select; locked preview cannot launch gameplay', async ({ page }) => {
+test('Main routes through Character Select and launches officially activated Wrecker', async ({ page }) => {
   await page.goto('/?debug=1');
 
   const main = page.locator('.wm-main-screen');
@@ -21,19 +21,9 @@ test('Main routes through Character Select; locked preview cannot launch gamepla
   const screen = page.locator('.wm-character-select');
   await expect(screen).toBeVisible();
   await expect(page.locator('[data-character-id="runner"]')).toHaveAttribute('data-availability', 'selectable');
-  await expect(page.locator('[data-character-id="shotgun"]')).toHaveAttribute('data-availability', 'locked');
+  await expect(page.locator('[data-character-id="shotgun"]')).toHaveAttribute('data-availability', 'selectable');
 
   await page.locator('[data-character-id="shotgun"]').click();
-  await expect(page.locator('.wm-character-select-status')).toContainText('IS LOCKED');
-
-  const afterLocked = await page.evaluate(() => ({
-    gameReady: Boolean((window as any).__WM_GAME__),
-    shellScreen: (window as any).__WM_GAME_SHELL__?.currentScreenId || null,
-    selected: (window as any).__WM_SELECTED_CHARACTER__ || null,
-  }));
-  expect(afterLocked).toEqual({ gameReady: false, shellScreen: 'character-select', selected: null });
-
-  await page.locator('[data-availability="selectable"]').click();
   await expect(page.locator('canvas')).toBeVisible({ timeout: 30_000 });
   await expect.poll(
     () => page.evaluate(() => document.body.classList.contains('visual-ready')),
@@ -48,12 +38,24 @@ test('Main routes through Character Select; locked preview cannot launch gamepla
       shellScreen: (window as any).__WM_GAME_SHELL__?.currentScreenId || null,
       sceneCharacter: scene?.characterId || null,
       characterReady: scene?.__characterSystemReady === true,
+      heroHp: scene?.heroHp ?? null,
+      heroMaxHp: scene?.heroMaxHp ?? null,
+      activeWeaponId: scene?.activeWeaponId || null,
+      telemetryCharacter: scene?.runTelemetry?.getReport?.()?.character || null,
+      c5Ok: scene?.__characterPresentationC5?.ok === true,
+      d1Ok: scene?.__characterPresentationD1?.ok === true,
     };
   });
   expect(launched).toEqual({
-    selected: 'runner',
+    selected: 'shotgun',
     shellScreen: 'gameplay',
-    sceneCharacter: 'runner',
+    sceneCharacter: 'shotgun',
     characterReady: true,
+    heroHp: 110,
+    heroMaxHp: 110,
+    activeWeaponId: 'shotgun',
+    telemetryCharacter: { id: 'shotgun', displayName: 'Wrecker' },
+    c5Ok: true,
+    d1Ok: true,
   });
 });
