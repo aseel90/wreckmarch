@@ -259,10 +259,9 @@ jobs:
           HTTP_PID=$!
           cleanup() { kill "$HTTP_PID" 2>/dev/null || true; }
           trap cleanup EXIT
-          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
-          timeout 75s node scripts/ci-smoke.mjs 2>&1 | tee wm-smoke.log
+          WM_SMOKE_URL='http://127.0.0.1:4173/?autotest=1&debug=1' timeout 75s node scripts/ci-smoke.mjs 2>&1 | tee wm-smoke.log
       - name: Preserve smoke diagnostics
-        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: ci-smoke
@@ -273,38 +272,18 @@ jobs:
             wm-smoke-playwright-install.log
             wm-http.log
 
-  ci-bridge:
+  ci-issue-bridge:
     name: CI issue bridge
     needs: [quality, e2e, smoke]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Download quality diagnostics
-        if: needs.quality.result == 'failure'
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: ci-quality
-          path: /tmp/ci-quality
-      - name: Download E2E diagnostics
-        if: needs.e2e.result == 'failure'
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: ci-e2e
-          path: /tmp/ci-e2e
-      - name: Download smoke diagnostics
-        if: needs.smoke.result == 'failure'
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: ci-smoke
-          path: /tmp/ci-smoke
-      - name: Bridge main CI state to issue
+      - name: Open, update, or close CI failure issue
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
           QUALITY: ${{ needs.quality.result }}
           E2E: ${{ needs.e2e.result }}
           SMOKE: ${{ needs.smoke.result }}
@@ -314,49 +293,27 @@ jobs:
           ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[CI] main is failing") | .number' | head -n1)"
           if [ "$QUALITY" = success ] && [ "$E2E" = success ] && [ "$SMOKE" = success ]; then
             if [ -n "$ISSUE_NUMBER" ]; then
-              gh issue close "$ISSUE_NUMBER" --repo "$REPO" --comment "CI recovered on \`$SHA\`: quality=$QUALITY, e2e=$E2E, smoke=$SMOKE."
+              gh issue close "$ISSUE_NUMBER" --repo "$REPO" --comment "CI recovered on \`$SHA\`."
             fi
             exit 0
           fi
           {
-            printf 'CI failed on `%s`.\n\n' "$SHA"
-            printf -- '- quality: **%s**\n- e2e: **%s**\n- smoke: **%s**\n\n' "$QUALITY" "$E2E" "$SMOKE"
-            printf 'Run: https://github.com/%s/actions/runs/%s\n\n' "$REPO" "${{ github.run_id }}"
-            if [ "$QUALITY" = failure ]; then
-              for LOG in /tmp/ci-quality/wm-quality-check.log /tmp/ci-quality/wm-quality-install.log; do
-                [ -f "$LOG" ] || continue
-                printf '### %s\n```text\n' "$(basename "$LOG")"
-                tail -c 12000 "$LOG"
-                printf '\n```\n\n'
-              done
-            fi
-            if [ "$E2E" = failure ]; then
-              for LOG in /tmp/ci-e2e/wm-e2e-merged.log /tmp/ci-e2e/all-e2e-artifacts/wm-e2e-shard-*.log; do
-                [ -f "$LOG" ] || continue
-                printf '### %s\n```text\n' "$(basename "$LOG")"
-                tail -c 12000 "$LOG"
-                printf '\n```\n\n'
-              done
-            fi
-            if [ "$SMOKE" = failure ]; then
-              for LOG in /tmp/ci-smoke/wm-smoke.log /tmp/ci-smoke/wm-smoke-playwright-install.log /tmp/ci-smoke/wm-http.log; do
-                [ -f "$LOG" ] || continue
-                printf '### %s\n```text\n' "$(basename "$LOG")"
-                tail -c 12000 "$LOG"
-                printf '\n```\n\n'
-              done
-            fi
+            printf 'Main CI failed on `%s`.\n\n' "$SHA"
+            printf 'Run: https://github.com/%s/actions/runs/%s\n\n' "$REPO" "$RUN_ID"
+            printf -- '- Quality: `%s`\n- E2E: `%s`\n- Smoke: `%s`\n\n' "$QUALITY" "$E2E" "$SMOKE"
+            printf 'Artifacts with diagnostics are attached to the workflow run.\n'
           } > /tmp/wm-ci-issue.md
           if [ -n "$ISSUE_NUMBER" ]; then
             gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file /tmp/wm-ci-issue.md
           else
             gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/wm-ci-issue.md --label ci-failure
           fi
+          exit 1
 
   deploy:
     name: Deploy GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [quality, smoke]
+    needs: [quality, e2e, smoke]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -366,20 +323,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Pages
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install build dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Build static Pages artifact
+        run: pnpm exec vite build --outDir dist
+      - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Prepare artifact
-        run: |
-          mkdir -p _site
-          cp index.html style.css manifest.webmanifest _site/
-          cp -R src _site/src
-          cp -R assets _site/assets
-          mkdir -p _site/vendor
-          if [ -f vendor/phaser.min.js ]; then cp vendor/phaser.min.js _site/vendor/phaser.min.js; else curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o _site/vendor/phaser.min.js; fi
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: dist
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
@@ -416,19 +375,20 @@ jobs:
           curl -fsSL --retry 5 "${BASE}?build=${SHA}" -o wm-live-index.html
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-loader-canonical-v2.js" -o wm-live-mobile-hud-loader.js
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=canonical-hud-20260903-responsive-v2" -o wm-live-mobile-hud.js
-          curl -fsSL --retry 5 "${BASE}src/telemetry/telemetry-runtime.js?v=16" -o wm-live-telemetry-runtime.js
+          curl -fsSL --retry 5 "${BASE}src/telemetry/telemetry-runtime.js?v=16&wreckerHealth=1" -o wm-live-telemetry-runtime.js
           curl -fsSL --retry 5 "${BASE}src/telemetry/run-telemetry.js?v=7" -o wm-live-run-telemetry.js
           curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=29" -o wm-live-enemy-system.js
           curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=6" -o wm-live-phase-b.js
           curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=24" -o wm-live-phase-c.js
           curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=20&u7=1" -o wm-live-phase-c1.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c5-runtime.js?v=11&u7=1&wrecker=11" -o wm-live-phase-c5.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c5-runtime.js?v=11&u7=1&wrecker=11&wreckerActivation=1" -o wm-live-phase-c5.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=2" -o wm-live-upgrade-scene.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=2" -o wm-live-upgrade-offer-pool.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-roll-service.js?v=2" -o wm-live-upgrade-roll-service.js
-          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=30&u5=3&wrecker=11" -o wm-live-phase-d1.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=11&wrecker=11" -o wm-live-character-runtime-presentation.js
-          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-production-presentation.js?v=9&wrecker=10" -o wm-live-shotgun-production-presentation.js
+          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=30&u5=3&wrecker=11&wreckerActivation=1" -o wm-live-phase-d1.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=11&wrecker=11&wreckerActivation=1" -o wm-live-character-runtime-presentation.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-registry.js?v=5&wreckerActivation=1" -o wm-live-character-registry.js
+          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-production-presentation.js?v=9&wrecker=10&wreckerActivation=1" -o wm-live-shotgun-production-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-runtime-presentation.js?v=7" -o wm-live-shotgun-runtime-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-aim-alignment.js?v=4" -o wm-live-shotgun-aim-alignment.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-production-art.js?v=4" -o wm-live-shotgun-production-art.js
@@ -438,13 +398,13 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-baked-locomotion.js?v=3" -o wm-live-shotgun-baked-locomotion.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-hand-overlay-bake.js?v=2" -o wm-live-shotgun-hand-overlay-bake.js
           curl -fsSL --retry 5 "${BASE}src/characters/runner-production-presentation.js?v=1" -o wm-live-runner-production-presentation.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=13" -o wm-live-character-system.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=13&wreckerActivation=1" -o wm-live-character-system.js
           curl -fsSL --retry 5 "${BASE}src/combat/weapon-registry.js?v=2" -o wm-live-weapon-registry.js
           curl -fsSL --retry 5 "${BASE}src/combat/weapon-system.js?v=8" -o wm-live-weapon-system.js
           curl -fsSL --retry 5 "${BASE}src/combat/definitions/rivet-gun.js?v=2" -o wm-live-rivet-gun.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-card-art.js?v=7" -o wm-live-upgrade-card-art.js
           curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
-          grep -F "./src/telemetry/telemetry-runtime.js?v=16" wm-live-index.html
+          grep -F "./src/telemetry/telemetry-runtime.js?v=16&wreckerHealth=1" wm-live-index.html
           grep -F "./run-telemetry.js?v=7" wm-live-telemetry-runtime.js
           grep -F "this.characterIdentity = resolveCharacterIdentity(scene)" wm-live-run-telemetry.js
           grep -F "character: { ...this.characterIdentity }" wm-live-run-telemetry.js
@@ -452,11 +412,18 @@ jobs:
           grep -F "./src/phase-b-runtime.js?v=6" wm-live-index.html
           grep -F "./src/phase-c-runtime.js?v=24" wm-live-index.html
           grep -F "./src/phase-c1-runtime.js?v=20&u7=1" wm-live-index.html
-          grep -F "./src/phase-c5-runtime.js?v=11&u7=1&wrecker=11" wm-live-index.html
-          grep -F "./src/phase-d1-runtime.js?v=30&u5=3&wrecker=11" wm-live-index.html
-          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11" wm-live-phase-c5.js
-          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11" wm-live-phase-d1.js
-          grep -F "./shotgun-production-presentation.js?v=9&wrecker=10" wm-live-character-runtime-presentation.js
+          grep -F "./src/phase-c5-runtime.js?v=11&u7=1&wrecker=11&wreckerActivation=1" wm-live-index.html
+          grep -F "./src/phase-d1-runtime.js?v=30&u5=3&wrecker=11&wreckerActivation=1" wm-live-index.html
+          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11&wreckerActivation=1" wm-live-phase-c5.js
+          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11&wreckerActivation=1" wm-live-phase-d1.js
+          grep -F "./shotgun-production-presentation.js?v=9&wrecker=10&wreckerActivation=1" wm-live-character-runtime-presentation.js
+          grep -F "./character-registry.js?v=5&wreckerActivation=1" wm-live-character-runtime-presentation.js
+          grep -F "./character-system.js?v=13&wreckerActivation=1" wm-live-character-runtime-presentation.js
+          grep -F "availability: CHARACTER_AVAILABILITY.SELECTABLE" wm-live-character-registry.js
+          if grep -Fq "lockReason: 'production-gate'" wm-live-character-registry.js; then
+            echo "Wrecker production gate lock still present in deployed CharacterRegistry"
+            exit 1
+          fi
           grep -F "./shotgun-runtime-presentation.js?v=7" wm-live-shotgun-production-presentation.js
           grep -F "__shotgunTwoHandHold" wm-live-shotgun-production-presentation.js
           grep -F "two-hand-fixed" wm-live-shotgun-production-presentation.js
@@ -498,6 +465,7 @@ jobs:
           grep -F "./runner-production-presentation.js?v=1" wm-live-character-runtime-presentation.js
           grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-b.js
           grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-c.js
+          grep -F "./character-registry.js?v=5&wreckerActivation=1" wm-live-character-system.js
           grep -F "../combat/weapon-registry.js?v=2" wm-live-character-system.js
           grep -F "this._resetHealthOnNextInstall=Boolean(scene?.hero)" wm-live-character-system.js
           grep -F "const resetHealth=this._resetHealthOnNextInstall===true" wm-live-character-system.js
@@ -547,7 +515,8 @@ jobs:
         id: live_smoke
         continue-on-error: true
         env:
-          WM_SMOKE_URL: ${{ needs.deploy.outputs.page_url }}?autotest=1&debug=1&wmTelemetry=1&build=${{ github.sha }}
+          WM_SMOKE_URL: ${{ needs.deploy.outputs.page_url }}?debug=1&wmTelemetry=1&build=${{ github.sha }}
+          WM_SMOKE_CHARACTER: shotgun
         run: |
           set -o pipefail
           timeout 75s node scripts/ci-smoke.mjs 2>&1 | tee wm-live-smoke.log
@@ -576,6 +545,7 @@ jobs:
             wm-live-upgrade-roll-service.js
             wm-live-phase-d1.js
             wm-live-character-runtime-presentation.js
+            wm-live-character-registry.js
             wm-live-shotgun-production-presentation.js
             wm-live-shotgun-runtime-presentation.js
             wm-live-shotgun-aim-alignment.js
