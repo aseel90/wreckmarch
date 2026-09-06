@@ -32,5 +32,5 @@ export const SHOTGUN_ART_CONTRACT = Object.freeze({
   baseAnimationFrames: Object.freeze({ idle: 2, run: 4 }),
   locomotion: Object.freeze({ productionMode: 'baked-full-body', runtimeLimbSplit: false }),
   weaponLayer: Object.freeze({ separateFromBody: true }),
-  activation: Object.freeze({ playableOnMain: false })
+  activation: Object.freeze({ playableOnMain: true })
 });
