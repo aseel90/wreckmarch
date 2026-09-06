@@ -98,7 +98,7 @@ describe('balance run report bridge contract', () => {
     expect(pagesWorkflow).toContain('SHOTGUN_BAKED_RUN_POSES');
     expect(pagesWorkflow).toContain('bakeShotgunRunTextures');
     expect(pagesWorkflow).toContain('src/characters/runner-production-presentation.js?v=1');
-    expect(pagesWorkflow).toContain('src/phase-b-runtime.js?v=6');
+    expect(pagesWorkflow).toContain('src/phase-b-runtime.js?v=7');
     expect(pagesWorkflow).toContain('src/phase-c-runtime.js?v=24');
     expect(pagesWorkflow).toContain('src/characters/character-system.js?v=13&wreckerActivation=1');
     expect(pagesWorkflow).toContain('src/combat/weapon-registry.js?v=2');
