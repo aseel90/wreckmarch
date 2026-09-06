@@ -69,7 +69,7 @@ test('canonical Results persist debug run records without awarding Workshop Scri
   await expect(page.locator('[data-milestone-id="stay-moving"]')).toHaveAttribute('data-complete', 'false');
   await expect(page.locator('.wm-progression-roster')).toContainText('Runner');
   await expect(page.locator('.wm-progression-roster')).toContainText('Wrecker');
-  await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
+  await expect(page.locator('.wm-progression-roster')).toContainText('DEPLOYABLE');
 });
 
 test('normal canonical run awards Scrip, purchases a cosmetic once, and persists it into Main', async ({ page }) => {
@@ -112,7 +112,7 @@ test('normal canonical run awards Scrip, purchases a cosmetic once, and persists
   await page.locator('[data-screen-id="shop"]').click();
   await expect(page.locator('.wm-progression-screen')).toBeVisible();
   await expect(page.locator('[data-stat="workshop-scrip"]')).toContainText('2');
-  await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
+  await expect(page.locator('.wm-progression-roster')).toContainText('DEPLOYABLE');
 
   const buy = page.locator('[data-purchase-item-id="terminal-plate-rustline"]');
   await expect(buy).toBeEnabled();

@@ -109,7 +109,7 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
   await expectTouchTarget(page.locator('.wm-character-select .wm-shell-back'));
   await expectTouchTarget(page.locator('[data-character-id="runner"]'));
   await expectFullyInViewport(page, page.locator('[data-character-id="shotgun"]'));
-  await expect(page.locator('[data-character-id="shotgun"]')).toHaveAttribute('data-availability', 'locked');
+  await expect(page.locator('[data-character-id="shotgun"]')).toHaveAttribute('data-availability', 'selectable');
 
   await page.locator('[data-character-id="runner"]').click();
   await waitForGameplay(page);
@@ -173,7 +173,8 @@ test('core frontend flow stays usable across the canonical 844x390 mobile landsc
   await expectScreenFits(page, '.wm-progression-screen', { allowVerticalScroll: true });
   await expect(page.locator('.wm-progression-stats')).toContainText('95s');
   await expect(page.locator('.wm-progression-stats')).toContainText('63');
-  await expect(page.locator('.wm-progression-roster')).toContainText('PRODUCTION LOCKED');
+  await expect(page.locator('.wm-progression-roster')).toContainText('Wrecker');
+  await expect(page.locator('.wm-progression-roster')).toContainText('DEPLOYABLE');
 
   expect(pageErrors).toEqual([]);
 });
