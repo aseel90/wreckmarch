@@ -11,11 +11,16 @@ describe('Live smoke readiness ownership', () => {
     expect(smokeSource).not.toContain("{ timeout: 30_000 }");
   });
 
-  it('records readiness timing without weakening any playability condition', () => {
+  it('records readiness timing while validating E1 through direct road persistence checks', () => {
     expect(smokeSource).toContain('readinessMs = Date.now() - readinessStartedAt');
     expect(smokeSource).toContain('state.readinessElapsedMs = readinessStartedAt ? Date.now() - readinessStartedAt : null');
     expect(smokeSource).toContain("scene?.__finalPolishReady === true");
-    expect(smokeSource).toContain("document.documentElement.dataset.wreckmarchE1SelfTest === 'passed'");
+    expect(smokeSource).not.toContain("&& document.documentElement.dataset.wreckmarchE1SelfTest === 'passed'");
+    expect(smokeSource).toContain('const validateE1RoadState = state => state.roads > 180');
+    expect(smokeSource).toContain('state.visible === state.roads');
+    expect(smokeSource).toContain('state.legacyVisible === 0');
+    expect(smokeSource).toContain('state.nearest < 260');
+    expect(smokeSource).toContain('state.roadDepth > state.groundDepth');
     expect(smokeSource).toContain("document.documentElement.dataset.wreckmarchMobileHud === 'compact-v5-test'");
   });
 
