@@ -25,26 +25,26 @@ describe('canonical Shotgun production gate', () => {
     });
   });
 
-  it('keeps activation blocked only on real-run approval after the character definition lands', () => {
+  it('records the approved real-run evidence and clears every activation blocker', () => {
     const gate = evaluateShotgunProductionGate();
-    expect(gate.readyForActivation).toBe(false);
-    expect(gate.blockers).toEqual(['fullRunValidation']);
+    expect(gate.readyForActivation).toBe(true);
+    expect(gate.blockers).toEqual([]);
     expect(gate.requirements).toMatchObject({
       characterDefinition: true,
-      fullRunValidation: false
+      fullRunValidation: true
     });
-    expect(SHOTGUN_FULL_RUN_VALIDATION).toEqual({ status: 'pending', evidence: null });
+    expect(SHOTGUN_FULL_RUN_VALIDATION.status).toBe('approved');
+    expect(SHOTGUN_FULL_RUN_VALIDATION.evidence).toContain('run_reports.id=57');
   });
 
-  it('preserves the locked preview boundary until the production gate is complete', () => {
+  it('exposes Wrecker as canonically selectable after gate approval', () => {
     const gate = evaluateShotgunProductionGate();
-    expect(gate.lockedPreviewSafety).toBe(true);
-    expect(gate.selectableNow).toBe(false);
-    expect(isCharacterSelectable('shotgun')).toBe(false);
+    expect(gate.lockedPreviewSafety).toBe(false);
+    expect(gate.selectableNow).toBe(true);
+    expect(isCharacterSelectable('shotgun')).toBe(true);
     expect(getCharacterEntry('shotgun')).toMatchObject({
-      availability: 'locked',
-      definition: SHOTGUN_CHARACTER,
-      lockReason: 'production-gate'
+      availability: 'selectable',
+      definition: SHOTGUN_CHARACTER
     });
   });
 
