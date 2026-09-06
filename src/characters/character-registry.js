@@ -25,9 +25,8 @@ const RUNNER_ENTRY = Object.freeze({
 const SHOTGUN_ENTRY = Object.freeze({
   id: SHOTGUN_CHARACTER.id,
   displayName: SHOTGUN_CHARACTER.displayName,
-  availability: CHARACTER_AVAILABILITY.LOCKED,
+  availability: CHARACTER_AVAILABILITY.SELECTABLE,
   definition: SHOTGUN_CHARACTER,
-  lockReason: 'production-gate',
   preview: Object.freeze({
     bodyAsset: SHOTGUN_PRODUCTION_ART.body.idle[0],
     weaponAsset: SHOTGUN_PRODUCTION_ART.weapon.path,

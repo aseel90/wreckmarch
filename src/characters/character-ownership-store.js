@@ -2,7 +2,7 @@
 
 export const CHARACTER_OWNERSHIP_STORAGE_KEY = 'wreckmarch.character-ownership.v1';
 
-const DEFAULT_OWNED_CHARACTER_IDS = Object.freeze(['runner']);
+const DEFAULT_OWNED_CHARACTER_IDS = Object.freeze(['runner', 'shotgun']);
 
 function getDefaultStorage() {
   try { return globalThis.localStorage || null; }
