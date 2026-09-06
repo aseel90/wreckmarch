@@ -373,7 +373,7 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/telemetry/telemetry-runtime.js?v=16&wreckerHealth=1" -o wm-live-telemetry-runtime.js
           curl -fsSL --retry 5 "${BASE}src/telemetry/run-telemetry.js?v=7" -o wm-live-run-telemetry.js
           curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=29" -o wm-live-enemy-system.js
-          curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=6" -o wm-live-phase-b.js
+          curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=7" -o wm-live-phase-b.js
           curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=24" -o wm-live-phase-c.js
           curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=20&u7=1" -o wm-live-phase-c1.js
           curl -fsSL --retry 5 "${BASE}src/phase-c5-runtime.js?v=11&u7=1&wrecker=11&wreckerActivation=1" -o wm-live-phase-c5.js
@@ -404,7 +404,7 @@ jobs:
           grep -F "this.characterIdentity = resolveCharacterIdentity(scene)" wm-live-run-telemetry.js
           grep -F "character: { ...this.characterIdentity }" wm-live-run-telemetry.js
           grep -F "characterDownReason(this.characterIdentity)" wm-live-run-telemetry.js
-          grep -F "./src/phase-b-runtime.js?v=6" wm-live-index.html
+          grep -F "./src/phase-b-runtime.js?v=7" wm-live-index.html
           grep -F "./src/phase-c-runtime.js?v=24" wm-live-index.html
           grep -F "./src/phase-c1-runtime.js?v=20&u7=1" wm-live-index.html
           grep -F "./src/phase-c5-runtime.js?v=11&u7=1&wrecker=11&wreckerActivation=1" wm-live-index.html
