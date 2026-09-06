@@ -1,9 +1,8 @@
 import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=2';
-import { CURRENT_PRODUCTION_WORLD, R2_WORLD_CONTRACT_VERSION } from './world/world-contract.js?v=1';
+import { R2_WORLD_CONTRACT_VERSION, WORLD_SECTOR_POLICY } from './world/world-contract.js?v=1';
 import { WorldSectorActivationSystem } from './world/world-sector-system.js?v=1';
+import { R2_WORLD_SIZE_HARNESS_VERSION, WorldSizeHarnessTerrain, resolveWorldSizeHarnessFromLocation } from './world/world-size-harness.js?v=1';
 /* WRECKMARCH — Phase B runtime: large world + camera + visible swappable starter weapon */
-const WORLD_W = CURRENT_PRODUCTION_WORLD.width;
-const WORLD_H = CURRENT_PRODUCTION_WORLD.height;
 const BASE_HERO_SPEED = 285;
 const TAU = Math.PI * 2;
 
@@ -59,8 +58,9 @@ function addWreck(scene, x, y, rot = 0) {
   return c;
 }
 
-function buildExpandedWasteland(scene) {
+function buildExpandedWasteland(scene, harnessActive = false) {
   clearOldArena(scene);
+  if (harnessActive) return;
   addWreck(scene, 330, 790, -.18);
   addWreck(scene, 1550, 470, .11);
   addWreck(scene, 1780, 1520, -.28);
@@ -88,7 +88,12 @@ function pinHud(scene) {
   top.name = 'phase-b-hud-shade';
 }
 
-function installLargeWorld(scene) {
+function installLargeWorld(scene, worldHarness) {
+  const world = worldHarness.world;
+  const WORLD_W = world.width;
+  const WORLD_H = world.height;
+  scene.__runtimeWorld = world;
+  scene.__worldSizeHarness = worldHarness;
   scene.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
   scene.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
 
@@ -103,11 +108,17 @@ function installLargeWorld(scene) {
   scene.cameraLook = new Phaser.Math.Vector2();
 
   scene.worldSectorSystem?.reset?.();
-  scene.worldSectorSystem = new WorldSectorActivationSystem({ world: CURRENT_PRODUCTION_WORLD });
+  scene.worldSizeHarnessTerrain?.destroyAll?.();
+  scene.worldSizeHarnessTerrain = worldHarness.enabled ? new WorldSizeHarnessTerrain(scene, world) : null;
+  scene.worldSectorSystem = new WorldSectorActivationSystem({
+    world,
+    onActivate: sector => scene.worldSizeHarnessTerrain?.activateSector?.(sector),
+    onDeactivate: sector => scene.worldSizeHarnessTerrain?.deactivateSector?.(sector)
+  });
   scene.worldSectorDiagnostics = scene.worldSectorSystem.updateForPosition(scene.hero.x, scene.hero.y);
   scene.__worldSectorFoundationReady = true;
 
-  buildExpandedWasteland(scene);
+  buildExpandedWasteland(scene, worldHarness.enabled);
   pinHud(scene);
 }
 
@@ -163,10 +174,6 @@ function installMovementTuning(scene) {
     this.hero.setVelocity(vx, vy);
     this.worldSectorDiagnostics = this.worldSectorSystem?.updateForPosition?.(this.hero.x, this.hero.y) || this.worldSectorDiagnostics;
 
-    // Phase B owns movement physics, but only owns fallback character visuals
-    // until CharacterSystem installs the production Runner. Keeping these legacy
-    // hero-run/hero-idle calls active would restart the production animation
-    // every frame and pin it to its first frame.
     if (!this.__characterSystemReady) {
       this.hero.rotation = Phaser.Math.Linear(this.hero.rotation, moving ? this.move.x * .075 : 0, .15);
       this.hero.setFlipX(this.move.x < -.12);
@@ -190,7 +197,9 @@ function installMovementTuning(scene) {
   };
 }
 
-function installOutsideViewportSpawns(scene) {
+function installOutsideViewportSpawns(scene, world) {
+  const WORLD_W = world.width;
+  const WORLD_H = world.height;
   const baseSpawn = scene.spawnEnemy.bind(scene);
 
   scene.spawnEnemy = function(elite = false) {
@@ -220,7 +229,9 @@ function installOutsideViewportSpawns(scene) {
   };
 }
 
-function installVisibleStarterWeapon(scene) {
+function installVisibleStarterWeapon(scene, world) {
+  const WORLD_W = world.width;
+  const WORLD_H = world.height;
   makeRivetGunTexture(scene);
 
   scene.primaryWeapon = {
@@ -278,23 +289,64 @@ function installVisibleStarterWeapon(scene) {
   });
 }
 
+function installWorldSizeHarnessApi(scene, worldHarness) {
+  if (!worldHarness.enabled) {
+    try { delete window.__WM_WORLD_HARNESS__; } catch {}
+    return;
+  }
+  const world = worldHarness.world;
+  const clamp = (value, max) => Phaser.Math.Clamp(Number(value) || 0, 24, Math.max(24, max - 24));
+  const teleport = (x, y) => {
+    const nextX = clamp(x, world.width);
+    const nextY = clamp(y, world.height);
+    scene.hero.setPosition(nextX, nextY);
+    scene.hero.body?.reset?.(nextX, nextY);
+    scene.worldSectorDiagnostics = scene.worldSectorSystem?.updateForPosition?.(nextX, nextY) || scene.worldSectorDiagnostics;
+    scene.cameras.main.centerOn(nextX, nextY);
+    return window.__WM_WORLD_HARNESS__.diagnostics();
+  };
+  window.__WM_WORLD_HARNESS__ = {
+    active: true,
+    version: R2_WORLD_SIZE_HARNESS_VERSION,
+    worldId: world.id,
+    width: world.width,
+    height: world.height,
+    teleport,
+    teleportSector: (column, row) => teleport((Number(column) + .5) * WORLD_SECTOR_POLICY.sectorSize, (Number(row) + .5) * WORLD_SECTOR_POLICY.sectorSize),
+    diagnostics: () => ({
+      harness: { active: true, version: R2_WORLD_SIZE_HARNESS_VERSION, worldId: world.id, width: world.width, height: world.height },
+      sectors: scene.worldSectorSystem?.getDiagnostics?.() || null,
+      terrain: scene.worldSizeHarnessTerrain?.getDiagnostics?.() || null,
+      hero: { x: scene.hero.x, y: scene.hero.y },
+      physicsBounds: { width: scene.physics.world.bounds.width, height: scene.physics.world.bounds.height },
+      cameraBounds: { width: scene.cameras.main._bounds?.width ?? world.width, height: scene.cameras.main._bounds?.height ?? world.height }
+    })
+  };
+}
+
 export async function applyPhaseB() {
   const scene = await getScene();
-  installLargeWorld(scene);
+  const worldHarness = resolveWorldSizeHarnessFromLocation();
+  const world = worldHarness.world;
+  installLargeWorld(scene, worldHarness);
   installMovementTuning(scene);
-  installOutsideViewportSpawns(scene);
-  installVisibleStarterWeapon(scene);
+  installOutsideViewportSpawns(scene, world);
+  installVisibleStarterWeapon(scene, world);
+  installWorldSizeHarnessApi(scene, worldHarness);
 
   window.__WM_PHASE_B__ = true;
   window.__WM_WORLD_SECTORS__ = {
     active: true,
     contractVersion: R2_WORLD_CONTRACT_VERSION,
-    mode: 'logical-foundation',
-    worldId: CURRENT_PRODUCTION_WORLD.id,
-    diagnostics: () => scene.worldSectorSystem?.getDiagnostics?.() || null
+    mode: worldHarness.enabled ? 'candidate-harness' : 'logical-foundation',
+    worldId: world.id,
+    diagnostics: () => scene.worldSectorSystem?.getDiagnostics?.() || null,
+    terrainDiagnostics: () => scene.worldSizeHarnessTerrain?.getDiagnostics?.() || null
   };
   document.documentElement.dataset.wreckmarchPhase = 'b';
   document.documentElement.dataset.wreckmarchWorldSectors = R2_WORLD_CONTRACT_VERSION;
-  window.__WM_LOG__?.('Phase B applied: 2200x2200 world + tuned movement + visible Rivet Gun + R2 logical sectors');
+  document.documentElement.dataset.wreckmarchWorldSize = String(world.width);
+  document.documentElement.dataset.wreckmarchWorldHarness = worldHarness.enabled ? R2_WORLD_SIZE_HARNESS_VERSION : 'off';
+  window.__WM_LOG__?.(`Phase B applied: ${world.width}x${world.height} world + tuned movement + visible Rivet Gun + R2 ${worldHarness.enabled ? 'candidate harness' : 'logical sectors'}`);
   return true;
 }
