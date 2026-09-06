@@ -43,8 +43,9 @@ export const FUTURE_WORLD_CANDIDATES = Object.freeze([
 ]);
 
 export const PREFERRED_FUTURE_WORLD_ID = 'candidate-9600-v1';
-export const PREFERRED_FUTURE_WORLD = FUTURE_WORLD_CANDIDATES.find(candidate => candidate.id === PREFERRED_FUTURE_WORLD_ID);
-if (!PREFERRED_FUTURE_WORLD) throw new Error('Preferred future world candidate is missing');
+const preferredFutureWorld = FUTURE_WORLD_CANDIDATES.find(candidate => candidate.id === PREFERRED_FUTURE_WORLD_ID);
+if (!preferredFutureWorld) throw new Error('Preferred future world candidate is missing');
+export const PREFERRED_FUTURE_WORLD = preferredFutureWorld;
 
 /**
  * 1200 divides every approved R2 candidate exactly:
@@ -76,7 +77,7 @@ export function getWorldSectorGrid(world = CURRENT_PRODUCTION_WORLD) {
 const clampCoordinate = (value, max) => {
   const normalized = Number.isFinite(Number(value)) ? Number(value) : 0;
   if (normalized <= 0) return 0;
-  if (normalized >= max) return Math.max(0, max - Number.EPSILON);
+  if (normalized >= max) return Math.max(0, max - 1e-6);
   return normalized;
 };
 
