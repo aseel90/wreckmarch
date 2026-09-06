@@ -424,7 +424,7 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=20&u7=1" -o wm-live-phase-c1.js
           curl -fsSL --retry 5 "${BASE}src/phase-c5-runtime.js?v=11&u7=1&wrecker=11" -o wm-live-phase-c5.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=2" -o wm-live-upgrade-scene.js
-          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=1" -o wm-live-upgrade-offer-pool.js
+          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=2" -o wm-live-upgrade-offer-pool.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-roll-service.js?v=2" -o wm-live-upgrade-roll-service.js
           curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=30&u5=3&wrecker=11" -o wm-live-phase-d1.js
           curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=11&wrecker=11" -o wm-live-character-runtime-presentation.js
@@ -518,7 +518,7 @@ jobs:
           grep -F "weaponIdentity:s.characterSystem?.weaponDefinition?.id==='rivet-gun'" wm-live-runner-production-presentation.js
           grep -F "./upgrades/upgrade-scene.js?v=1" wm-live-phase-c.js
           grep -F "./upgrades/upgrade-scene.js?v=2" wm-live-phase-c1.js
-          grep -F "./upgrade-offer-pool.js?v=1" wm-live-upgrade-scene.js
+          grep -F "./upgrade-offer-pool.js?v=2" wm-live-upgrade-scene.js
           grep -F "./upgrade-roll-service.js?v=2" wm-live-upgrade-scene.js
           grep -F "class UpgradeSceneV4 extends Phaser.Scene" wm-live-upgrade-scene.js
           grep -F "gameScene.__upgradeSceneOwner = 'src/upgrades/upgrade-scene.js'" wm-live-upgrade-scene.js
