@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const smokeSource = readFileSync('scripts/ci-smoke.mjs', 'utf8');
+const pagesWorkflow = readFileSync('.github/workflows/pages.yml', 'utf8');
 
 describe('Live smoke readiness ownership', () => {
   it('passes interval polling options through Playwright’s third argument', () => {
@@ -16,5 +17,11 @@ describe('Live smoke readiness ownership', () => {
     expect(smokeSource).toContain("scene?.__finalPolishReady === true");
     expect(smokeSource).toContain("document.documentElement.dataset.wreckmarchE1SelfTest === 'passed'");
     expect(smokeSource).toContain("document.documentElement.dataset.wreckmarchMobileHud === 'compact-v5-test'");
+  });
+
+  it('tracks the canonical upgrade offer pool cache version in the deployed asset graph', () => {
+    expect(pagesWorkflow).toContain('src/upgrades/upgrade-offer-pool.js?v=2');
+    expect(pagesWorkflow).toContain('grep -F "./upgrade-offer-pool.js?v=2" wm-live-upgrade-scene.js');
+    expect(pagesWorkflow).not.toContain('grep -F "./upgrade-offer-pool.js?v=1" wm-live-upgrade-scene.js');
   });
 });
