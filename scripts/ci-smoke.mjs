@@ -32,7 +32,8 @@ try {
   if (SMOKE_CHARACTER) {
     const characterButton = page.locator(`[data-character-id="${SMOKE_CHARACTER}"]`);
     const mainCharacterSelect = page.locator('[data-screen-id="character-select"]');
-    if (await mainCharacterSelect.isVisible().catch(() => false)) await mainCharacterSelect.click();
+    await mainCharacterSelect.waitFor({ state: 'visible', timeout: 15_000 });
+    await mainCharacterSelect.click();
     await characterButton.waitFor({ state: 'visible', timeout: 15_000 });
     const availability = await characterButton.getAttribute('data-availability');
     if (availability !== 'selectable') throw new Error(`Smoke character is not selectable: ${SMOKE_CHARACTER} (${availability})`);
