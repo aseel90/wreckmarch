@@ -8,6 +8,9 @@ import {
   getWorldSectorGrid
 } from './world-contract.js?v=1';
 
+/** @typedef {ReturnType<typeof getWorldSectorForPosition>} WorldSectorDescriptor */
+/** @typedef {{ contractVersion: string, worldId: string, centerSector: WorldSectorDescriptor | null, activeSectorKeys: readonly string[], activeSectorCount: number, totalSectorCount: number, activated: readonly string[], deactivated: readonly string[], revision: number }} WorldSectorDiagnostics */
+
 const noop = () => {};
 
 export class WorldSectorActivationSystem {
@@ -21,9 +24,12 @@ export class WorldSectorActivationSystem {
     this.activeRadius = Math.max(0, Math.floor(Number(activeRadius) || 0));
     this.onActivate = typeof onActivate === 'function' ? onActivate : noop;
     this.onDeactivate = typeof onDeactivate === 'function' ? onDeactivate : noop;
+    /** @type {Map<string, WorldSectorDescriptor>} */
     this.activeSectors = new Map();
+    /** @type {string | null} */
     this.centerKey = null;
     this.revision = 0;
+    /** @type {Readonly<WorldSectorDiagnostics>} */
     this.lastDiagnostics = Object.freeze({
       contractVersion: R2_WORLD_CONTRACT_VERSION,
       worldId: world.id,
@@ -37,6 +43,7 @@ export class WorldSectorActivationSystem {
     });
   }
 
+  /** @returns {Readonly<WorldSectorDiagnostics>} */
   updateForPosition(x, y) {
     const center = getWorldSectorForPosition(x, y, this.world);
     if (center.key === this.centerKey) return this.lastDiagnostics;
@@ -75,10 +82,12 @@ export class WorldSectorActivationSystem {
     return this.lastDiagnostics;
   }
 
+  /** @returns {Readonly<WorldSectorDiagnostics>} */
   getDiagnostics() {
     return this.lastDiagnostics;
   }
 
+  /** @returns {Readonly<WorldSectorDiagnostics>} */
   reset() {
     for (const sector of this.activeSectors.values()) this.onDeactivate(sector);
     this.activeSectors = new Map();
