@@ -22,6 +22,9 @@ describe('Live smoke readiness ownership', () => {
   it('selects activated Wrecker through the normal Character Select path on live Pages', () => {
     expect(smokeSource).toContain('const SMOKE_CHARACTER = process.env.WM_SMOKE_CHARACTER || null');
     expect(smokeSource).toContain('page.locator(`[data-character-id="${SMOKE_CHARACTER}"]`)');
+    expect(smokeSource).toContain("await mainCharacterSelect.waitFor({ state: 'visible', timeout: 15_000 });");
+    expect(smokeSource).toContain('await mainCharacterSelect.click()');
+    expect(smokeSource).not.toContain('mainCharacterSelect.isVisible()');
     expect(smokeSource).toContain("availability !== 'selectable'");
     expect(smokeSource).toContain('await characterButton.click()');
     expect(smokeSource).toContain('state.selectedCharacter !== SMOKE_CHARACTER || state.sceneCharacter !== SMOKE_CHARACTER');
