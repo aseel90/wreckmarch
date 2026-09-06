@@ -36,6 +36,7 @@ for (const candidate of CANDIDATES) {
         height: candidate.size
       },
       physicsBounds: { width: candidate.size, height: candidate.size },
+      cameraBounds: { width: candidate.size, height: candidate.size },
       sectors: { activeSectorCount: 9, totalSectorCount: candidate.totalSectorCount },
       terrain: { activeSectorCount: 9, fullMapTerrainAllocated: false }
     });
