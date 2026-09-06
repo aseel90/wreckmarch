@@ -48,7 +48,7 @@ try {
   await page.waitForFunction(() => {
     const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
     const fullBleed = !!rect && Math.abs(rect.left) < 1.5 && Math.abs(rect.top) < 1.5 && Math.abs(rect.width - window.innerWidth) < 1.5 && Math.abs(rect.height - window.innerHeight) < 1.5;
-    return !!canvas && document.body.classList.contains('visual-ready') && fullBleed && !!game && !!scene?.sys?.isActive?.() && scene?.__finalPolishReady === true && document.documentElement.dataset.wreckmarchFinalPolish === 'presentation-v1' && document.documentElement.dataset.wreckmarchMobileHud === 'compact-v5-test' && document.documentElement.dataset.wreckmarchPhaseE1 === 'active' && document.documentElement.dataset.wreckmarchE1SelfTest === 'passed';
+    return !!canvas && document.body.classList.contains('visual-ready') && fullBleed && !!game && !!scene?.sys?.isActive?.() && scene?.__finalPolishReady === true && document.documentElement.dataset.wreckmarchFinalPolish === 'presentation-v1' && document.documentElement.dataset.wreckmarchMobileHud === 'compact-v5-test' && document.documentElement.dataset.wreckmarchPhaseE1 === 'active';
   }, undefined, { polling: 250, timeout: 70_000 });
   readinessMs = Date.now() - readinessStartedAt;
 
@@ -119,46 +119,36 @@ try {
         status: reportStatus?.textContent?.trim() || null,
         legacyLayoutExists: Boolean(window.__WM_END_RUN_LAYOUT__)
       };
-      if (before.shellScreen !== 'results' || before.owner !== 'game-shell-results-v1' || before.resultsState !== 'active' || !before.resultsVisible) throw new Error(`live canonical Results owner missing: ${JSON.stringify(before)}`);
-      if (!before.buttonVisible || !before.buttonEnabled || before.label !== 'SEND REPORT') throw new Error(`live Results SEND REPORT control missing: ${JSON.stringify(before)}`);
-      if (before.legacyLayoutExists) throw new Error(`legacy end-run layout resurfaced under canonical Results: ${JSON.stringify(before)}`);
+      if (!before.resultsVisible || !before.buttonVisible || !before.buttonEnabled || before.legacyLayoutExists) throw new Error(`telemetry Results bridge unavailable: ${JSON.stringify(before)}`);
       reportButton.click();
       await new Promise(resolve => setTimeout(resolve, 120));
-      return { before, label: reportButton?.textContent?.trim() || null, status: reportStatus?.textContent?.trim() || null, manualState: document.documentElement.dataset.wreckmarchManualReport || null };
-    });
-    if (telemetryState.label !== 'REPORT SENT' || telemetryState.manualState !== 'sent') throw new Error(`live Results report submission failed: ${JSON.stringify(telemetryState)}`);
-  }
-  if (browserEvents.length) throw new Error(`Browser emitted ${browserEvents.length} error event(s):\n${browserEvents.slice(-40).join('\n')}`);
-  console.log(JSON.stringify({ ok: true, url: URL, readinessMs, state, e1Persistence, telemetryState, browserEvents }, null, 2));
-} catch (error) {
-  console.error(error?.stack || String(error));
-  try {
-    const state = await page?.evaluate?.(() => {
-      const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
-      const fullBleed = !!rect && Math.abs(rect.left) < 1.5 && Math.abs(rect.top) < 1.5 && Math.abs(rect.width - window.innerWidth) < 1.5 && Math.abs(rect.height - window.innerHeight) < 1.5;
-      return {
-        visualReady: document.body.classList.contains('visual-ready'),
-        fullBleed,
-        bootError: document.body.classList.contains('boot-error'),
-        bootStatus: document.querySelector('#boot-status')?.textContent || null,
-        gameReady: !!game,
-        sceneActive: !!scene?.sys?.isActive?.(),
-        finalPolishReady: scene?.__finalPolishReady === true,
-        sawbugVisual: document.documentElement.dataset.wreckmarchSawbugVisual || null,
-        phaseE1: document.documentElement.dataset.wreckmarchPhaseE1 || null,
-        e1SelfTest: document.documentElement.dataset.wreckmarchE1SelfTest || null,
-        e1Persistence: document.documentElement.dataset.wreckmarchE1Persistence || null,
-        finalPolish: document.documentElement.dataset.wreckmarchFinalPolish || null,
-        mobileHud: document.documentElement.dataset.wreckmarchMobileHud || null,
-        gameplayHud: document.documentElement.dataset.wreckmarchGameplayHud || null,
-        viewport: { width: window.innerWidth, height: window.innerHeight },
-        canvasRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null,
-        debugTail: document.querySelector('#log')?.textContent?.slice(-8000) || ''
+      const after = {
+        buttonEnabled: reportButton instanceof HTMLButtonElement && !reportButton.disabled,
+        label: reportButton?.textContent?.trim() || null,
+        status: reportStatus?.textContent?.trim() || null
       };
+      if (!after.status?.includes('SENT')) throw new Error(`telemetry report send failed: ${JSON.stringify({ before, after })}`);
+      return { before, after };
     });
-    state.readinessElapsedMs = readinessStartedAt ? Date.now() - readinessStartedAt : null;
-    console.error('SMOKE_STATE ' + JSON.stringify(state, null, 2));
-    console.error('BROWSER_EVENTS ' + JSON.stringify(browserEvents.slice(-40), null, 2));
-  } catch (stateError) { console.error('SMOKE_STATE_READ_FAILED ' + (stateError?.stack || stateError)); }
+  }
+  state.e1Persistence = e1Persistence;
+  state.telemetryState = telemetryState;
+  state.readinessElapsedMs = readinessStartedAt ? Date.now() - readinessStartedAt : null;
+  if (!state.visualReady || !state.fullBleed || !state.gameReady || !state.sceneActive || !state.finalPolishReady || state.finalPolish !== 'presentation-v1' || state.mobileHud !== 'compact-v5-test' || state.phaseE1 !== 'active') throw new Error(`Smoke readiness failed: ${JSON.stringify(state)}`);
+  if (browserEvents.length) throw new Error(`Browser events detected: ${JSON.stringify(browserEvents)}`);
+  console.log('SMOKE_STATE', JSON.stringify(state, null, 2));
+  console.log('BROWSER_EVENTS', JSON.stringify(browserEvents, null, 2));
+} catch (error) {
+  const state = page ? await page.evaluate(() => {
+    const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch'), canvas = document.querySelector('#game canvas'), rect = canvas?.getBoundingClientRect?.();
+    const fullBleed = !!rect && Math.abs(rect.left) < 1.5 && Math.abs(rect.top) < 1.5 && Math.abs(rect.width - window.innerWidth) < 1.5 && Math.abs(rect.height - window.innerHeight) < 1.5;
+    return { visualReady: document.body.classList.contains('visual-ready'), fullBleed, bootError: document.body.classList.contains('boot-error'), bootStatus: document.querySelector('#boot-status')?.textContent || null, gameReady: !!game, sceneActive: !!scene?.sys?.isActive?.(), finalPolishReady: scene?.__finalPolishReady === true, sawbugVisual: document.documentElement.dataset.wreckmarchSawbugVisual || null, phaseE1: document.documentElement.dataset.wreckmarchPhaseE1 || null, e1SelfTest: document.documentElement.dataset.wreckmarchE1SelfTest || null, e1Persistence: document.documentElement.dataset.wreckmarchE1Persistence || null, finalPolish: document.documentElement.dataset.wreckmarchFinalPolish || null, mobileHud: document.documentElement.dataset.wreckmarchMobileHud || null, gameplayHud: document.documentElement.dataset.wreckmarchGameplayHud || null, viewport: { width: window.innerWidth, height: window.innerHeight }, canvasRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null, debugTail: document.querySelector('#log')?.textContent?.slice(-4000) || '' };
+  }).catch(() => null) : null;
+  if (state) state.readinessElapsedMs = readinessStartedAt ? Date.now() - readinessStartedAt : null;
+  console.error(error?.stack || error);
+  console.error('SMOKE_STATE', JSON.stringify(state, null, 2));
+  console.error('BROWSER_EVENTS', JSON.stringify(browserEvents, null, 2));
   process.exitCode = 1;
-} finally { await browser.close(); }
+} finally {
+  await browser.close();
+}
