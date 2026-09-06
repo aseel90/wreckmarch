@@ -18,11 +18,11 @@ describe('selected character runtime binding', () => {
     expect(scene.characterId).toBeUndefined();
   });
 
-  it('rejects locked Shotgun before touching the gameplay scene even when ownership is mocked', async () => {
+  it('binds the officially activated Wrecker before character runtime installation', async () => {
     const scene: any = {};
     const game: any = { scene: { getScene: () => scene } };
-    await expect(applySelectedCharacterToGame(game, 'shotgun', 50, { ownedCharacterIds: ['shotgun'] }))
-      .rejects.toThrow('Character is not selectable: shotgun (production-gate)');
-    expect(scene.characterId).toBeUndefined();
+    await expect(applySelectedCharacterToGame(game, 'shotgun', 50)).resolves.toMatchObject({ id: 'shotgun', displayName: 'Wrecker' });
+    expect(scene.characterId).toBe('shotgun');
+    expect(scene.characterDefinition?.id).toBe('shotgun');
   });
 });
