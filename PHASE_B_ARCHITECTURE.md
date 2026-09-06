@@ -20,5 +20,8 @@ Future world expansion is deferred until the current repair/character/upgrade ga
 - If `9600 × 9600` wins, a nominal `3 × 3` / `~3200 × 3200` district partition is a starting architecture, not a visual grid requirement.
 - Future districts should include memorable roads/landmarks and multiple broad Boss-capable clearings.
 - Major/Final Bosses use temporary locked arenas inside the same world rather than loading an unrelated separate Boss map.
+- R2 logical-sector foundation: `1200 × 1200` technical sectors with a `3 × 3` maximum active neighborhood around the player.
+- The `1200` size is deliberately independent from district layout and divides all approved future candidates exactly: `7200 → 6 × 6`, `9600 → 8 × 8`, `12000 → 10 × 10`.
+- Production remains `2200 × 2200`; the sector foundation is diagnostic/logical until terrain factories are migrated to activation callbacks and candidate sizes are tested.
 
 See `FUTURE_RUN_WORLD_ENCOUNTER_ROADMAP.md` for the ordered implementation path, district concepts and Boss Arena state machine.

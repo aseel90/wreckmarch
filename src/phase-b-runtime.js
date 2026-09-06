@@ -1,7 +1,9 @@
 import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=2';
+import { CURRENT_PRODUCTION_WORLD, R2_WORLD_CONTRACT_VERSION } from './world/world-contract.js?v=1';
+import { WorldSectorActivationSystem } from './world/world-sector-system.js?v=1';
 /* WRECKMARCH — Phase B runtime: large world + camera + visible swappable starter weapon */
-const WORLD_W = 2200;
-const WORLD_H = 2200;
+const WORLD_W = CURRENT_PRODUCTION_WORLD.width;
+const WORLD_H = CURRENT_PRODUCTION_WORLD.height;
 const BASE_HERO_SPEED = 285;
 const TAU = Math.PI * 2;
 
@@ -100,6 +102,11 @@ function installLargeWorld(scene) {
   scene.cameras.main.setDeadzone(86, 132);
   scene.cameraLook = new Phaser.Math.Vector2();
 
+  scene.worldSectorSystem?.reset?.();
+  scene.worldSectorSystem = new WorldSectorActivationSystem({ world: CURRENT_PRODUCTION_WORLD });
+  scene.worldSectorDiagnostics = scene.worldSectorSystem.updateForPosition(scene.hero.x, scene.hero.y);
+  scene.__worldSectorFoundationReady = true;
+
   buildExpandedWasteland(scene);
   pinHud(scene);
 }
@@ -154,6 +161,7 @@ function installMovementTuning(scene) {
       vy += this.heroKnockback.y * strength;
     }
     this.hero.setVelocity(vx, vy);
+    this.worldSectorDiagnostics = this.worldSectorSystem?.updateForPosition?.(this.hero.x, this.hero.y) || this.worldSectorDiagnostics;
 
     // Phase B owns movement physics, but only owns fallback character visuals
     // until CharacterSystem installs the production Runner. Keeping these legacy
@@ -278,7 +286,15 @@ export async function applyPhaseB() {
   installVisibleStarterWeapon(scene);
 
   window.__WM_PHASE_B__ = true;
+  window.__WM_WORLD_SECTORS__ = {
+    active: true,
+    contractVersion: R2_WORLD_CONTRACT_VERSION,
+    mode: 'logical-foundation',
+    worldId: CURRENT_PRODUCTION_WORLD.id,
+    diagnostics: () => scene.worldSectorSystem?.getDiagnostics?.() || null
+  };
   document.documentElement.dataset.wreckmarchPhase = 'b';
-  window.__WM_LOG__?.('Phase B applied: 2200x2200 world + tuned movement + visible Rivet Gun');
+  document.documentElement.dataset.wreckmarchWorldSectors = R2_WORLD_CONTRACT_VERSION;
+  window.__WM_LOG__?.('Phase B applied: 2200x2200 world + tuned movement + visible Rivet Gun + R2 logical sectors');
   return true;
 }
