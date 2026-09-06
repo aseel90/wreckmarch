@@ -6,8 +6,6 @@ import { getScrapXpNeeded } from './balance/progression-balance.js?v=1';
 /* WRECKMARCH — Phase C: combat correction + Scrap level/card loop + optional Rig */
 const W = 540;
 const H = 960;
-const WORLD_W = 2200;
-const WORLD_H = 2200;
 const TAU = Math.PI * 2;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -107,7 +105,8 @@ function installWeaponRig(scene) {
     this.weaponArm.setFlipY(facesLeft);
   };
 
-  scene.projectileSystem.configureBounds({ minX: -80, maxX: WORLD_W + 80, minY: -80, maxY: WORLD_H + 80 });
+  const runtimeWorld = scene.__runtimeWorld || { width: 2200, height: 2200 };
+  scene.projectileSystem.configureBounds({ minX: -80, maxX: runtimeWorld.width + 80, minY: -80, maxY: runtimeWorld.height + 80 });
   scene.weaponSystem.configureHero({
     aimYOffset: 6,
     targetTurnRate: .22,
