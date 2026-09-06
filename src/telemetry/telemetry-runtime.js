@@ -1,5 +1,5 @@
 /* WRECKMARCH — installs measurement-only telemetry without owning gameplay */
-import { installRunTelemetry } from './run-telemetry.js?v=8';
+import { installRunTelemetry } from './run-telemetry.js?v=7&wreckerHealth=1';
 import { isRemoteRunReportingEnabled, RunReportProvider } from './run-report-provider.js?v=3';
 
 function getScene(game) {
