@@ -323,22 +323,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install build dependencies
-        run: pnpm install --no-frozen-lockfile
-      - name: Build static Pages artifact
-        run: pnpm exec vite build --outDir dist
+      - name: Prepare static artifact
+        run: |
+          mkdir -p _site
+          cp index.html style.css manifest.webmanifest _site/
+          cp -R assets src _site/
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: _site
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
