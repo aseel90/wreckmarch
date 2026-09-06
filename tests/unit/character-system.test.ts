@@ -19,7 +19,7 @@ function makeScene() {
 describe('CharacterSystem', () => {
   it('registers Runner as the canonical playable character definition', () => {
     const runner = getCharacterDefinition('runner');
-    expect(listCharacterDefinitions().map(character => character.id)).toEqual(['runner']);
+    expect(listCharacterDefinitions().map(character => character.id)).toEqual(['runner', 'shotgun']);
     expect(runner.stats).toEqual({ maxHp: 100, moveSpeed: 255 });
     expect(runner.animations.idle.frames).toEqual(['hunter-idle-0', 'hunter-idle-1']);
     expect(runner.animations.run.frames).toEqual(['hunter-run-0', 'hunter-run-1', 'hunter-run-2']);
@@ -28,10 +28,10 @@ describe('CharacterSystem', () => {
     expect(() => getCharacterDefinition('missing')).toThrow('Unknown character: missing');
   });
 
-  it('exposes a canonical locked Shotgun definition without creating a selectable runtime', () => {
+  it('exposes Wrecker as a canonical selectable character definition', () => {
     expect(listCharacterEntries().map(character => [character.id, character.availability])).toEqual([
       ['runner', CHARACTER_AVAILABILITY.SELECTABLE],
-      ['shotgun', CHARACTER_AVAILABILITY.LOCKED],
+      ['shotgun', CHARACTER_AVAILABILITY.SELECTABLE],
     ]);
     const shotgun = getCharacterEntry('shotgun');
     expect(shotgun.definition).toMatchObject({
@@ -42,12 +42,12 @@ describe('CharacterSystem', () => {
     expect(shotgun.preview).toMatchObject({
       bodyAsset: 'assets/hero/shotgun/idle-0.svg',
       weaponAsset: 'assets/weapons/shotgun.svg',
-      artStatus: 'art-only',
+      artStatus: 'production-active',
     });
     expect(isCharacterSelectable('runner')).toBe(true);
-    expect(isCharacterSelectable('shotgun')).toBe(false);
-    expect(() => getCharacterDefinition('shotgun')).toThrow('Character is not selectable: shotgun');
-    expect(() => new CharacterSystem(makeScene(), 'shotgun')).toThrow('Character is not selectable: shotgun');
+    expect(isCharacterSelectable('shotgun')).toBe(true);
+    expect(getCharacterDefinition('shotgun')).toBe(shotgun.definition);
+    expect(new CharacterSystem(makeScene(), 'shotgun').characterId).toBe('shotgun');
   });
 
   it('applies gameplay stats through the selected definition', () => {
@@ -83,8 +83,7 @@ describe('CharacterSystem', () => {
       },
       anims: { exists: () => false, create() {} },
     };
-    const shotgun = getCharacterEntry('shotgun').definition;
-    const system = new CharacterSystem(scene, 'shotgun', { productionValidationDefinition: shotgun });
+    const system = new CharacterSystem(scene, 'shotgun');
     scene.characterSystem = system;
 
     system.installProductionVisuals();
