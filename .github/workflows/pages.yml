@@ -1,16 +1,18 @@
-name: Pages CI
+name: Test and Deploy Wreckmarch
 
 on:
   push:
     branches: [main]
   pull_request:
-  workflow_dispatch:
+    branches: [main]
 
 permissions:
   contents: read
+  actions: read
+  issues: write
+  pull-requests: write
   pages: write
   id-token: write
-  issues: write
 
 concurrency:
   group: pages-${{ github.ref }}
@@ -18,111 +20,262 @@ concurrency:
 
 jobs:
   quality:
+    name: Quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.34.5
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Check
-        run: pnpm check
-
-  smoke:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.34.5
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Smoke
-        env:
-          WM_SMOKE_URL: http://127.0.0.1:4173/?autotest=1&debug=1&wmTelemetry=1
+      - name: Install dependencies
         run: |
-          pnpm dev --host 127.0.0.1 > /tmp/wm-vite.log 2>&1 &
-          VITE_PID=$!
-          trap 'kill $VITE_PID || true' EXIT
-          for i in {1..40}; do
-            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
-            sleep 0.25
-          done
-          node scripts/ci-smoke.mjs
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee wm-quality-install.log
+      - name: Typecheck, unit tests and static build
+        run: |
+          set -o pipefail
+          pnpm check 2>&1 | tee wm-quality-check.log
+      - name: Comment quality diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo 'Quality checks failed.'
+            echo
+            for LOG in wm-quality-check.log wm-quality-install.log; do
+              [ -f "$LOG" ] || continue
+              echo "### $LOG"
+              echo '```text'
+              tail -c 12000 "$LOG"
+              echo
+              echo '```'
+            done
+          } > /tmp/wm-quality-comment.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-quality-comment.md
+      - name: Preserve quality diagnostics
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-quality
+          if-no-files-found: ignore
+          path: |
+            wm-quality-check.log
+            wm-quality-install.log
 
   e2e-shard:
+    name: E2E shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shardIndex: [1, 2, 3]
+        shardTotal: [3]
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.34.5
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-      - name: Install
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee "wm-e2e-install-${{ matrix.shardIndex }}.log"
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-      - name: E2E shard ${{ matrix.shard }}/3
-        run: pnpm exec playwright test --shard=${{ matrix.shard }}/3 --reporter=blob
-      - name: Upload blob report
-        if: always()
+        run: |
+          set -o pipefail
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee "wm-e2e-playwright-install-${{ matrix.shardIndex }}.log"
+      - name: Run Playwright shard
+        run: |
+          set -o pipefail
+          pnpm exec playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} 2>&1 | tee "wm-e2e-shard-${{ matrix.shardIndex }}.log"
+      - name: Comment shard failure diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          LOG="wm-e2e-shard-${{ matrix.shardIndex }}.log"
+          {
+            echo "Playwright **E2E shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}** failed."
+            echo
+            if [ -f "$LOG" ]; then
+              echo "### $LOG"
+              echo '```text'
+              tail -c 16000 "$LOG"
+              echo
+              echo '```'
+            fi
+          } > /tmp/wm-e2e-shard-comment.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-shard-comment.md
+      - name: Upload shard report and diagnostics
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: blob-report-${{ matrix.shard }}
-          path: blob-report
-          retention-days: 1
+          name: e2e-shard-${{ matrix.shardIndex }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            blob-report/**
+            wm-e2e-shard-${{ matrix.shardIndex }}.log
+            wm-e2e-install-${{ matrix.shardIndex }}.log
+            wm-e2e-playwright-install-${{ matrix.shardIndex }}.log
 
   e2e:
-    if: always()
-    needs: e2e-shard
+    name: E2E
+    needs: [e2e-shard]
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.34.5
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Download blob reports
+      - name: Install report dependencies
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee wm-e2e-report-install.log
+      - name: Download all E2E shard artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: blob-report-*
-          path: all-blob-reports
+          pattern: e2e-shard-*
+          path: all-e2e-artifacts
           merge-multiple: true
-      - name: Merge reports
+      - name: Merge Playwright shard reports
+        id: merge_e2e
         run: |
-          if ls all-blob-reports/*.zip >/dev/null 2>&1; then
-            pnpm exec playwright merge-reports --reporter=line all-blob-reports
-          else
-            echo "No blob reports found"
+          set -u
+          mkdir -p all-blob-reports
+          find all-e2e-artifacts -type f -name '*.zip' -exec cp {} all-blob-reports/ \;
+          if ! compgen -G 'all-blob-reports/*.zip' > /dev/null; then
+            echo 'No Playwright blob reports were produced.' | tee wm-e2e-merged.log
+            echo 'exit_code=1' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          set +e
+          set -o pipefail
+          pnpm exec playwright merge-reports --reporter=html,line ./all-blob-reports 2>&1 | tee wm-e2e-merged.log
+          MERGE_EXIT=${PIPESTATUS[0]}
+          set -e
+          echo "exit_code=$MERGE_EXIT" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Comment merged Playwright diagnostics
+        if: ${{ github.event_name == 'pull_request' && (needs.e2e-shard.result != 'success' || steps.merge_e2e.outputs.exit_code != '0') }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SHARD_RESULT: ${{ needs.e2e-shard.result }}
+        run: |
+          {
+            echo "Playwright E2E failed. Sharded result: **$SHARD_RESULT**."
+            echo
+            if [ -f wm-e2e-merged.log ]; then
+              echo '### merged Playwright report'
+              echo '```text'
+              tail -c 16000 wm-e2e-merged.log
+              echo
+              echo '```'
+            fi
+            for LOG in all-e2e-artifacts/wm-e2e-shard-*.log; do
+              [ -f "$LOG" ] || continue
+              echo "### $(basename "$LOG")"
+              echo '```text'
+              tail -c 6000 "$LOG"
+              echo
+              echo '```'
+            done
+          } > /tmp/wm-e2e-comment.md
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/wm-e2e-comment.md
+      - name: Enforce E2E gate
+        env:
+          SHARD_RESULT: ${{ needs.e2e-shard.result }}
+          MERGE_EXIT: ${{ steps.merge_e2e.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          if [ "$SHARD_RESULT" != success ]; then
+            echo "One or more E2E shards failed: $SHARD_RESULT"
             exit 1
           fi
+          if [ "${MERGE_EXIT:-1}" != 0 ]; then
+            echo "Merged Playwright report failed: ${MERGE_EXIT:-missing}"
+            exit 1
+          fi
+      - name: Preserve merged E2E diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-e2e
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            wm-e2e-merged.log
+            wm-e2e-report-install.log
+            all-e2e-artifacts/**
+            playwright-report/**
+
+  smoke:
+    name: Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install smoke dependencies
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee wm-smoke-install.log
+      - name: Install Playwright Chromium
+        run: |
+          set -o pipefail
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-smoke-playwright-install.log
+      - name: Vendor Phaser locally
+        run: |
+          mkdir -p vendor
+          curl -fsSL --retry 3 https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js -o vendor/phaser.min.js
+      - name: Browser smoke test
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >wm-http.log 2>&1 &
+          HTTP_PID=$!
+          cleanup() { kill "$HTTP_PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+          WM_SMOKE_URL='http://127.0.0.1:4173/?autotest=1&debug=1' timeout 75s node scripts/ci-smoke.mjs 2>&1 | tee wm-smoke.log
+      - name: Preserve smoke diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-smoke
+          if-no-files-found: ignore
+          path: |
+            wm-smoke.log
+            wm-smoke-install.log
+            wm-smoke-playwright-install.log
+            wm-http.log
 
   ci-issue-bridge:
+    name: CI issue bridge
+    needs: [quality, e2e, smoke]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [quality, smoke, e2e]
     runs-on: ubuntu-latest
     steps:
       - name: Open, update, or close CI failure issue
@@ -130,35 +283,37 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
           QUALITY: ${{ needs.quality.result }}
-          SMOKE: ${{ needs.smoke.result }}
           E2E: ${{ needs.e2e.result }}
+          SMOKE: ${{ needs.smoke.result }}
         run: |
           set -euo pipefail
-          TITLE='[CI] main quality/smoke/e2e failed'
-          ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[CI] main quality/smoke/e2e failed") | .number' | head -n1)"
-          if [ "$QUALITY" = success ] && [ "$SMOKE" = success ] && [ "$E2E" = success ]; then
+          TITLE='[CI] main is failing'
+          ISSUE_NUMBER="$(gh issue list --repo "$REPO" --state open --search "$TITLE in:title" --json number,title --jq '.[] | select(.title == "[CI] main is failing") | .number' | head -n1)"
+          if [ "$QUALITY" = success ] && [ "$E2E" = success ] && [ "$SMOKE" = success ]; then
             if [ -n "$ISSUE_NUMBER" ]; then
-              gh issue close "$ISSUE_NUMBER" --repo "$REPO" --comment "Main recovered on \`$SHA\`: quality=$QUALITY smoke=$SMOKE e2e=$E2E"
+              gh issue close "$ISSUE_NUMBER" --repo "$REPO" --comment "CI recovered on \`$SHA\`."
             fi
             exit 0
           fi
-          BODY="Main CI failed on \`$SHA\`.
-
-          - Quality: $QUALITY
-          - Smoke: $SMOKE
-          - E2E: $E2E
-          - Run: https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+          {
+            printf 'Main CI failed on `%s`.\n\n' "$SHA"
+            printf 'Run: https://github.com/%s/actions/runs/%s\n\n' "$REPO" "$RUN_ID"
+            printf -- '- Quality: `%s`\n- E2E: `%s`\n- Smoke: `%s`\n\n' "$QUALITY" "$E2E" "$SMOKE"
+            printf 'Artifacts with diagnostics are attached to the workflow run.\n'
+          } > /tmp/wm-ci-issue.md
           if [ -n "$ISSUE_NUMBER" ]; then
-            gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$BODY"
+            gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file /tmp/wm-ci-issue.md
           else
-            gh issue create --repo "$REPO" --title "$TITLE" --body "$BODY" --label ci-failure
+            gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/wm-ci-issue.md --label ci-failure
           fi
           exit 1
 
   deploy:
+    name: Deploy GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [quality, smoke, e2e]
+    needs: [quality, e2e, smoke]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -166,90 +321,104 @@ jobs:
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - name: Build Pages artifact
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare static artifact
         run: |
           mkdir -p _site
           cp index.html style.css manifest.webmanifest _site/
-          cp -R assets src vendor _site/
-          touch _site/.nojekyll
-      - uses: actions/upload-pages-artifact@v3
+          cp -R assets src _site/
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
 
-  live:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: deploy
+  live-smoke:
+    name: Live Chromium smoke
+    needs: [deploy]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.34.5
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-      - name: Install
-        run: pnpm install --frozen-lockfile 2>&1 | tee wm-live-install.log
+      - name: Install dependencies
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee wm-live-install.log
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-live-playwright-install.log
-      - name: Wait for Pages deployment to settle
-        run: sleep 15
-      - name: Fetch deployed cache graph
+        run: |
+          set -o pipefail
+          pnpm exec playwright install --with-deps chromium 2>&1 | tee wm-live-playwright-install.log
+      - name: Verify deployed telemetry UI asset graph
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           BASE="${PAGE_URL%/}/"
-          curl -fsSL --retry 5 "${BASE}index.html?live=${{ github.sha }}" -o wm-live-index.html
-          curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=canonical-hud-20260903-responsive-v2" -o wm-live-mobile-hud.js
+          curl -fsSL --retry 5 "${BASE}?build=${SHA}" -o wm-live-index.html
           curl -fsSL --retry 5 "${BASE}src/mobile-hud-loader-canonical-v2.js" -o wm-live-mobile-hud-loader.js
-          curl -fsSL --retry 5 "${BASE}src/telemetry/telemetry-runtime.js?v=9&wreckerHealth=1&wreckerIdentity=1" -o wm-live-telemetry-runtime.js
-          curl -fsSL --retry 5 "${BASE}src/telemetry/run-telemetry.js?v=7&wreckerHealth=1&wreckerIdentity=1" -o wm-live-run-telemetry.js
-          curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=29&wreckerHealth=1" -o wm-live-enemy-system.js
+          curl -fsSL --retry 5 "${BASE}src/mobile-hud-polish.js?asset=canonical-hud-20260903-responsive-v2" -o wm-live-mobile-hud.js
+          curl -fsSL --retry 5 "${BASE}src/telemetry/telemetry-runtime.js?v=16&wreckerHealth=1" -o wm-live-telemetry-runtime.js
+          curl -fsSL --retry 5 "${BASE}src/telemetry/run-telemetry.js?v=7" -o wm-live-run-telemetry.js
+          curl -fsSL --retry 5 "${BASE}src/enemies/enemy-system.js?v=29" -o wm-live-enemy-system.js
           curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=7" -o wm-live-phase-b.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=10&u7=1" -o wm-live-phase-c.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=18&u7=2" -o wm-live-phase-c1.js
-          curl -fsSL --retry 5 "${BASE}src/phase-c5-runtime.js?v=13&wrecker=11" -o wm-live-phase-c5.js
-          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=30&u5=3&wrecker=11" -o wm-live-phase-d1.js
-          curl -fsSL --retry 5 "${BASE}src/phase-e1-runtime.js?v=20" -o wm-live-phase-e1.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=11&wrecker=11" -o wm-live-character-runtime-presentation.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-registry.js?v=4&wrecker=2" -o wm-live-character-registry.js
-          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-production-presentation.js?v=9&wrecker=10" -o wm-live-shotgun-production-presentation.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=24" -o wm-live-phase-c.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=20&u7=1" -o wm-live-phase-c1.js
+          curl -fsSL --retry 5 "${BASE}src/phase-c5-runtime.js?v=11&u7=1&wrecker=11&wreckerActivation=1" -o wm-live-phase-c5.js
+          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=2" -o wm-live-upgrade-scene.js
+          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=2" -o wm-live-upgrade-offer-pool.js
+          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-roll-service.js?v=2" -o wm-live-upgrade-roll-service.js
+          curl -fsSL --retry 5 "${BASE}src/phase-d1-runtime.js?v=30&u5=3&wrecker=11&wreckerActivation=1" -o wm-live-phase-d1.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-runtime-presentation.js?v=11&wrecker=11&wreckerActivation=1" -o wm-live-character-runtime-presentation.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-registry.js?v=5&wreckerActivation=1" -o wm-live-character-registry.js
+          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-production-presentation.js?v=9&wrecker=10&wreckerActivation=1" -o wm-live-shotgun-production-presentation.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-runtime-presentation.js?v=7" -o wm-live-shotgun-runtime-presentation.js
-          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-aim-alignment.js?v=5" -o wm-live-shotgun-aim-alignment.js
+          curl -fsSL --retry 5 "${BASE}src/characters/shotgun-aim-alignment.js?v=4" -o wm-live-shotgun-aim-alignment.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-production-art.js?v=4" -o wm-live-shotgun-production-art.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-art-contract.js?v=3" -o wm-live-shotgun-art-contract.js
-          curl -fsSL --retry 5 "${BASE}assets/hero/shotgun-weapon.svg" -o wm-live-shotgun-weapon.svg
+          curl -fsSL --retry 5 "${BASE}assets/weapons/shotgun.svg?v=2" -o wm-live-shotgun-weapon.svg
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-locomotion-art.js?v=4" -o wm-live-shotgun-locomotion-art.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-baked-locomotion.js?v=3" -o wm-live-shotgun-baked-locomotion.js
           curl -fsSL --retry 5 "${BASE}src/characters/shotgun-hand-overlay-bake.js?v=2" -o wm-live-shotgun-hand-overlay-bake.js
           curl -fsSL --retry 5 "${BASE}src/characters/runner-production-presentation.js?v=1" -o wm-live-runner-production-presentation.js
-          curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=7&wreckerHealth=1" -o wm-live-character-system.js
+          curl -fsSL --retry 5 "${BASE}src/characters/character-system.js?v=13&wreckerActivation=1" -o wm-live-character-system.js
           curl -fsSL --retry 5 "${BASE}src/combat/weapon-registry.js?v=2" -o wm-live-weapon-registry.js
           curl -fsSL --retry 5 "${BASE}src/combat/weapon-system.js?v=8" -o wm-live-weapon-system.js
           curl -fsSL --retry 5 "${BASE}src/combat/definitions/rivet-gun.js?v=2" -o wm-live-rivet-gun.js
-          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=2" -o wm-live-upgrade-scene.js
-          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=2" -o wm-live-upgrade-offer-pool.js
-          curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-roll-service.js?v=2" -o wm-live-upgrade-roll-service.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-card-art.js?v=7" -o wm-live-upgrade-card-art.js
           curl -fsSL --retry 5 "${BASE}src/final-polish-runtime.js?v=2" -o wm-live-final-polish.js
-          curl -fsSL --retry 5 "${BASE}src/ui/game-shell.js?v=15&wrecker=2" -o wm-live-game-shell.js
-
+          grep -F "./src/telemetry/telemetry-runtime.js?v=16&wreckerHealth=1" wm-live-index.html
+          grep -F "./run-telemetry.js?v=7" wm-live-telemetry-runtime.js
+          grep -F "this.characterIdentity = resolveCharacterIdentity(scene)" wm-live-run-telemetry.js
+          grep -F "character: { ...this.characterIdentity }" wm-live-run-telemetry.js
+          grep -F "characterDownReason(this.characterIdentity)" wm-live-run-telemetry.js
           grep -F "./src/phase-b-runtime.js?v=7" wm-live-index.html
-          grep -F "./src/phase-c-runtime.js?v=10&u7=1" wm-live-index.html
-          grep -F "./src/phase-c1-runtime.js?v=18&u7=2" wm-live-index.html
-          grep -F "./src/phase-c5-runtime.js?v=13&wrecker=11" wm-live-index.html
-          grep -F "./src/phase-d1-runtime.js?v=30&u5=3&wrecker=11" wm-live-index.html
-          grep -F "./src/phase-e1-runtime.js?v=20" wm-live-index.html
-          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11" wm-live-phase-c5.js
-          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11" wm-live-phase-d1.js
-          grep -F "./shotgun-production-presentation.js?v=9&wrecker=10" wm-live-character-runtime-presentation.js
+          grep -F "./src/phase-c-runtime.js?v=24" wm-live-index.html
+          grep -F "./src/phase-c1-runtime.js?v=20&u7=1" wm-live-index.html
+          grep -F "./src/phase-c5-runtime.js?v=11&u7=1&wrecker=11&wreckerActivation=1" wm-live-index.html
+          grep -F "./src/phase-d1-runtime.js?v=30&u5=3&wrecker=11&wreckerActivation=1" wm-live-index.html
+          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11&wreckerActivation=1" wm-live-phase-c5.js
+          grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11&wreckerActivation=1" wm-live-phase-d1.js
+          grep -F "./shotgun-production-presentation.js?v=9&wrecker=10&wreckerActivation=1" wm-live-character-runtime-presentation.js
+          grep -F "./character-registry.js?v=5&wreckerActivation=1" wm-live-character-runtime-presentation.js
+          grep -F "./character-system.js?v=13&wreckerActivation=1" wm-live-character-runtime-presentation.js
+          grep -F "availability: CHARACTER_AVAILABILITY.SELECTABLE" wm-live-character-registry.js
+          if grep -Fq "lockReason: 'production-gate'" wm-live-character-registry.js; then
+            echo "Wrecker production gate lock still present in deployed CharacterRegistry"
+            exit 1
+          fi
           grep -F "./shotgun-runtime-presentation.js?v=7" wm-live-shotgun-production-presentation.js
           grep -F "__shotgunTwoHandHold" wm-live-shotgun-production-presentation.js
           grep -F "two-hand-fixed" wm-live-shotgun-production-presentation.js
@@ -291,6 +460,7 @@ jobs:
           grep -F "./runner-production-presentation.js?v=1" wm-live-character-runtime-presentation.js
           grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-b.js
           grep -F "./combat/weapon-registry.js?v=2" wm-live-phase-c.js
+          grep -F "./character-registry.js?v=5&wreckerActivation=1" wm-live-character-system.js
           grep -F "../combat/weapon-registry.js?v=2" wm-live-character-system.js
           grep -F "this._resetHealthOnNextInstall=Boolean(scene?.hero)" wm-live-character-system.js
           grep -F "const resetHealth=this._resetHealthOnNextInstall===true" wm-live-character-system.js
@@ -368,9 +538,7 @@ jobs:
             wm-live-upgrade-scene.js
             wm-live-upgrade-offer-pool.js
             wm-live-upgrade-roll-service.js
-            wm-live-upgrade-card-art.js
             wm-live-phase-d1.js
-            wm-live-phase-e1.js
             wm-live-character-runtime-presentation.js
             wm-live-character-registry.js
             wm-live-shotgun-production-presentation.js
@@ -388,7 +556,6 @@ jobs:
             wm-live-weapon-system.js
             wm-live-rivet-gun.js
             wm-live-final-polish.js
-            wm-live-game-shell.js
       - name: Open, update, or close live failure issue
         if: always()
         env:
