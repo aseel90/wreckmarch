@@ -64,7 +64,10 @@ describe('R1 run timeline diagnostics runtime', () => {
     expect(runtimeSource).not.toContain('scene.waveEvent =');
     expect(runtimeSource).not.toContain('threatBudget =');
     expect(runtimeSource).not.toContain('spawnIntervalMs =');
-    expect(phaseE1Source).toContain('applyRunDirector(s);installRunTimelineRuntime(s);');
+    const directorIndex = phaseE1Source.indexOf('applyRunDirector(scene);');
+    const timelineIndex = phaseE1Source.indexOf('installRunTimelineRuntime(scene);');
+    expect(directorIndex).toBeGreaterThan(-1);
+    expect(timelineIndex).toBeGreaterThan(directorIndex);
   });
 
   it('accepts future encounter context as read-only input for lock diagnostics', () => {

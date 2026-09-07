@@ -67,10 +67,10 @@ describe('production Rust Hound visuals', () => {
 
   it('installs the production Hound visuals after final legacy runtime setup', () => {
     const phase = source('src/phase-e1-runtime.js');
-    const hotfix = phase.indexOf('applyFinalHotfix(s)');
-    const companion = phase.indexOf('applyCompanionV3(s)');
-    const director = phase.indexOf('applyRunDirector(s)');
-    const visuals = phase.indexOf('await installRustHoundVisuals(s)');
+    const hotfix = phase.indexOf('applyFinalHotfix(scene)');
+    const companion = phase.indexOf('applyCompanionV3(scene)');
+    const director = phase.indexOf('applyRunDirector(scene)');
+    const visuals = phase.indexOf('await installRustHoundVisuals(scene)');
 
     expect(hotfix).toBeGreaterThan(-1);
     expect(companion).toBeGreaterThan(hotfix);
