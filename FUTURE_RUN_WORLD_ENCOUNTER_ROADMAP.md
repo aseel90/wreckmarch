@@ -50,37 +50,27 @@ This prevents cases such as E08 or a random Event spawning inside the Roadbreake
 
 ## 2. Future world-size contract
 
-### Current state
+### Current production state — R2 closed
 
-The current Phase B world is approximately:
+The selected production world is locked at:
 
-`2200 × 2200 world units`
+`9600 × 9600 world units`
 
-That remains the current production baseline, but it is **not the intended final world size** for a 25-minute run.
+R2 live QA selected this size after comparing the approved candidates. Normal Production contains one world only: `production-9600-v1`.
 
-With the Runner baseline near `285 world units/s`, the current world can feel like a small arena rather than a wasteland journey.
+- `7200 × 7200` — debug/comparison only.
+- `9600 × 9600` — selected Production size; the comparison candidate remains debug-only.
+- `12000 × 12000` — debug/comparison only.
 
-### Future target
-
-Provisional target:
-
-`~9600 × 9600 world units`
-
-Before final lock, test these candidates on real mobile hardware:
-
-- `7200 × 7200`
-- `9600 × 9600` — current preferred target
-- `12000 × 12000`
-
-Choose the smallest size that still creates a convincing journey and location memory without excessive empty travel or mobile cost.
+The canonical technical streaming contract is `1200` world units per sector, producing an `8 × 8 = 64` sector Production grid with at most `9` active sectors around the player. This technical partition is intentionally independent from R3 district semantics.
 
 ### World implementation rule
 
 Do **not** create one giant always-active map full of objects.
 
-Use world sectors/chunks and activate only nearby gameplay/environment work.
+R2 sectors own streaming/activation and `r2-world-sector-terrain` remains the single canonical terrain owner. R3 districts are semantic layout/art-direction metadata only; they must not create a competing full-map renderer or change sector ownership.
 
-If `9600 × 9600` wins the test, a useful first partition is a nominal `3 × 3` district grid of about `3200 × 3200` each. This is an architectural guide, not a requirement that every district be square or visually isolated.
+District metadata may span arbitrary sector shapes. District props and landmarks are instantiated only when their technical sector is active.
 
 ### Proposed districts / location identity
 
@@ -527,19 +517,27 @@ Reason: do not stack a major world/enemy expansion over unresolved ownership or 
 
 ---
 
-## R2 — Large-world streaming / activation foundation
+## R2 — Large-world streaming / activation foundation — CLOSED
 
-- [ ] test `7200 / 9600 / 12000` world candidates,
-- [ ] implement chunk/sector activation around the player,
-- [ ] keep enemy/projectile/world-coordinate ownership canonical,
-- [ ] prove no full-map object simulation is required,
-- [ ] mobile performance test during long cross-map travel.
+- [x] test `7200 / 9600 / 12000` world candidates,
+- [x] select `9600 × 9600` as the one Production world (`production-9600-v1`),
+- [x] implement `1200` technical sector activation (`8 × 8 = 64`, max active `9`) around the player,
+- [x] keep enemy/projectile/world-coordinate ownership canonical,
+- [x] keep `r2-world-sector-terrain` as the canonical terrain owner,
+- [x] prove no full-map object simulation/allocation is required,
+- [x] mobile Landscape live test during real Physics cross-sector travel,
+- [x] verify seam render continuity separately from the real movement proof,
+- [x] keep `7200` and `12000` debug/comparison-only.
 
-**Exit gate:** selected world size runs smoothly and the player cannot perceive chunk activation artifacts.
+**Exit gate: PASSED.** Live Production held `81` active terrain objects at peak (below the required `100` bound), kept `9` active sectors, crossed a real Physics seam without activation artifacts, and rendered continuous terrain/roads after the seam with `fullMapTerrainAllocated = false`.
 
 ---
 
 ## R3 — Districts, landmarks and Boss clearings
+
+**Architecture contract:** `src/world/world-district-contract.js` is the single canonical semantic owner for district layout. It maps the 64 Production sectors to 7 districts, defines active-sector landmarks and Boss-capable clearings, and is consumed by the existing `r2-world-sector-terrain` renderer. Technical sectors remain streaming/activation units; districts remain semantic/art-direction units. No full-map district prop allocation is allowed.
+
+**Foundation target:** 14 memorable landmarks and 5 Boss-capable open clearings are distributed across the Production world while roads/open ground retain navigation priority. These R3 boxes remain open until post-deploy Landscape `844×390` visual QA proves the Exit Gate.
 
 - [ ] Central Wreckroads,
 - [ ] Scrap Fields,
