@@ -376,6 +376,7 @@ jobs:
           curl -fsSL --retry 5 "${BASE}src/phase-b-runtime.js?v=7" -o wm-live-phase-b.js
           curl -fsSL --retry 5 "${BASE}src/phase-c-runtime.js?v=24" -o wm-live-phase-c.js
           curl -fsSL --retry 5 "${BASE}src/phase-c1-runtime.js?v=20&u7=1" -o wm-live-phase-c1.js
+          curl -fsSL --retry 5 "${BASE}src/phase-e1-runtime.js?v=20&r2Harness=1" -o wm-live-phase-e1.js
           curl -fsSL --retry 5 "${BASE}src/phase-c5-runtime.js?v=11&u7=1&wrecker=11&wreckerActivation=1" -o wm-live-phase-c5.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-scene.js?v=2" -o wm-live-upgrade-scene.js
           curl -fsSL --retry 5 "${BASE}src/upgrades/upgrade-offer-pool.js?v=2" -o wm-live-upgrade-offer-pool.js
@@ -407,6 +408,9 @@ jobs:
           grep -F "./src/phase-b-runtime.js?v=7" wm-live-index.html
           grep -F "./src/phase-c-runtime.js?v=24" wm-live-index.html
           grep -F "./src/phase-c1-runtime.js?v=20&u7=1" wm-live-index.html
+          grep -F "./src/phase-e1-runtime.js?v=20&r2Harness=1" wm-live-index.html
+          grep -F "document.documentElement.dataset.wreckmarchE1Persistence='candidate-skipped'" wm-live-phase-e1.js
+          grep -F "E1 persistence test skipped at 12s for R2 candidate harness" wm-live-phase-e1.js
           grep -F "./src/phase-c5-runtime.js?v=11&u7=1&wrecker=11&wreckerActivation=1" wm-live-index.html
           grep -F "./src/phase-d1-runtime.js?v=30&u5=3&wrecker=11&wreckerActivation=1" wm-live-index.html
           grep -F "./characters/character-runtime-presentation.js?v=11&wrecker=11&wreckerActivation=1" wm-live-phase-c5.js
@@ -534,6 +538,7 @@ jobs:
             wm-live-phase-b.js
             wm-live-phase-c.js
             wm-live-phase-c1.js
+            wm-live-phase-e1.js
             wm-live-phase-c5.js
             wm-live-upgrade-scene.js
             wm-live-upgrade-offer-pool.js
