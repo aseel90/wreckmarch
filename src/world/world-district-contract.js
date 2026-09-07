@@ -1,7 +1,7 @@
 /* WRECKMARCH R3 — canonical semantic district/layout contract. R2 technical sectors remain the streaming owner. */
-import { CURRENT_PRODUCTION_WORLD, WORLD_SECTOR_POLICY, getWorldSectorGrid } from './world-contract.js?v=1';
+import { CURRENT_PRODUCTION_WORLD, WORLD_SECTOR_POLICY, getWorldSectorGrid } from './world-contract.js?v=2';
 
-export const R3_WORLD_DISTRICT_CONTRACT_VERSION = 'r3-district-v1';
+export const R3_WORLD_DISTRICT_CONTRACT_VERSION = 'r3-district-v2';
 
 const DISTRICT_DEFINITIONS = Object.freeze([
   Object.freeze({ id: 'central-wreckroads', name: 'Central Wreckroads', tint: 0xb78963, washAlpha: 0.055, debrisTint: 0x241b15, visual: 'broken-junctions' }),

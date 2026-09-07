@@ -1,76 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { CURRENT_PRODUCTION_WORLD, getActiveWorldSectors } from '../../src/world/world-contract.js';
 import { WorldSectorTerrain } from '../../src/world/world-sector-terrain.js';
-
-function fakeDisplayObject() {
-  return {
-    destroyed: false,
-    active: true,
-    visible: true,
-    alpha: 1,
-    tilePositionX: 0,
-    tilePositionY: 0,
-    setDepth() { return this; },
-    setName() { return this; },
-    setAlpha(value: number) { this.alpha = value; return this; },
-    setTint() { return this; },
-    setRotation() { return this; },
-    setTileScale() { return this; },
-    setVisible(value: boolean) { this.visible = value; return this; },
-    destroy() { this.destroyed = true; this.active = false; }
-  };
-}
-
-describe('R2 canonical world-sector terrain', () => {
-  it('allocates only active sector tiles and never creates a full-map production tile', () => {
-    const tileSizes: Array<{ width: number; height: number }> = [];
-    const scene: any = {
-      textures: { exists: () => true },
-      add: {
-        tileSprite: vi.fn((_x: number, _y: number, width: number, height: number) => {
-          tileSizes.push({ width, height });
-          return fakeDisplayObject();
-        }),
-        ellipse: vi.fn(() => fakeDisplayObject())
-      }
-    };
-    const terrain = new WorldSectorTerrain(scene, CURRENT_PRODUCTION_WORLD);
-    const sectors = getActiveWorldSectors(4800, 4800, CURRENT_PRODUCTION_WORLD);
-    sectors.forEach(sector => terrain.activateSector(sector));
-
-    const diagnostics = terrain.getDiagnostics();
-    expect(diagnostics.owner).toBe('r2-world-sector-terrain');
-    expect(diagnostics.activeSectorCount).toBe(9);
-    expect(diagnostics.fullMapTerrainAllocated).toBe(false);
-    expect(diagnostics.activeObjectCount).toBeGreaterThan(0);
-    expect(diagnostics.activeObjectCount).toBeLessThanOrEqual(100);
-    expect(diagnostics.activeGroundObjectCount).toBe(18);
-    expect(diagnostics.activeRoadObjectCount).toBeGreaterThan(0);
-    expect(diagnostics.visibleRoadObjectCount).toBe(diagnostics.activeRoadObjectCount);
-    expect(tileSizes.length).toBeGreaterThan(0);
-    expect(Math.max(...tileSizes.map(size => size.width))).toBeLessThanOrEqual(1202);
-    expect(Math.max(...tileSizes.map(size => size.height))).toBeLessThanOrEqual(1202);
-    expect(tileSizes.some(size => size.width === 9600 || size.height === 9600)).toBe(false);
-  });
-
-  it('destroys sector-owned objects on deactivation and keeps accounting exact', () => {
-    const scene: any = {
-      textures: { exists: () => true },
-      add: {
-        tileSprite: vi.fn(() => fakeDisplayObject()),
-        ellipse: vi.fn(() => fakeDisplayObject())
-      }
-    };
-    const terrain = new WorldSectorTerrain(scene, CURRENT_PRODUCTION_WORLD);
-    const sector = getActiveWorldSectors(0, 0, CURRENT_PRODUCTION_WORLD)[0];
-    terrain.activateSector(sector);
-    const before = terrain.getDiagnostics();
-    terrain.deactivateSector(sector);
-    const after = terrain.getDiagnostics();
-    expect(before.activeSectorCount).toBe(1);
-    expect(after.activeSectorCount).toBe(0);
-    expect(after.deactivationCount).toBe(1);
-    expect(after.destroyedObjects).toBe(before.activeObjectCount);
-    expect(after.createdObjects - after.destroyedObjects).toBe(after.activeObjectCount);
-  });
-});
+function fakeDisplayObject(){return{destroyed:false,active:true,visible:true,alpha:1,name:'',tilePositionX:0,tilePositionY:0,setDepth(){return this},setName(value:string){this.name=value;return this},setAlpha(value:number){this.alpha=value;return this},setTint(){return this},setRotation(){return this},setTileScale(){return this},setVisible(value:boolean){this.visible=value;return this},destroy(){this.destroyed=true;this.active=false}}}
+function fakeGraphics(){return Object.assign(fakeDisplayObject(),{fillStyle(){return this},lineStyle(){return this},fillRect(){return this},strokeRect(){return this},fillCircle(){return this},strokeCircle(){return this},fillTriangle(){return this},strokeTriangle(){return this},strokeEllipse(){return this},lineBetween(){return this}})}
+function fakeScene(tileSizes:Array<{width:number;height:number}>=[]){return{textures:{exists:()=>true},add:{tileSprite:vi.fn((_x:number,_y:number,width:number,height:number)=>{tileSizes.push({width,height});return fakeDisplayObject()}),ellipse:vi.fn(()=>fakeDisplayObject()),graphics:vi.fn(()=>fakeGraphics())}} as any}
+describe('R2/R3 canonical world-sector terrain',()=>{
+it('allocates only active sector tiles and keeps R3 visuals below the R2 object bound',()=>{const tileSizes:Array<{width:number;height:number}>=[],terrain=new WorldSectorTerrain(fakeScene(tileSizes),CURRENT_PRODUCTION_WORLD),sectors=getActiveWorldSectors(4800,4800,CURRENT_PRODUCTION_WORLD);sectors.forEach(sector=>terrain.activateSector(sector));const d=terrain.getDiagnostics();expect(d.owner).toBe('r2-world-sector-terrain');expect(d.activeSectorCount).toBe(9);expect(d.fullMapTerrainAllocated).toBe(false);expect(d.districtMetadataFullMapAllocated).toBe(false);expect(d.activeObjectCount).toBeGreaterThan(0);expect(d.activeObjectCount).toBeLessThanOrEqual(100);expect(d.peakActiveObjects).toBeLessThanOrEqual(100);expect(d.activeGroundObjectCount).toBe(18);expect(d.activeDistrictMotifObjectCount).toBe(9);expect(d.activeRoadObjectCount).toBeGreaterThan(0);expect(d.visibleRoadObjectCount).toBe(d.activeRoadObjectCount);expect(d.activeDistrictIds).toContain('central-wreckroads');expect(Math.max(...tileSizes.map(s=>s.width))).toBeLessThanOrEqual(1202);expect(Math.max(...tileSizes.map(s=>s.height))).toBeLessThanOrEqual(1202);expect(tileSizes.some(s=>s.width===9600||s.height===9600)).toBe(false)});
+it('creates named active-sector landmark graphics instead of a full-map landmark allocation',()=>{const terrain=new WorldSectorTerrain(fakeScene(),CURRENT_PRODUCTION_WORLD);getActiveWorldSectors(1800,600,CURRENT_PRODUCTION_WORLD).forEach(s=>terrain.activateSector(s));const d=terrain.getDiagnostics();expect(d.activeLandmarkIds).toContain('scrap-crown');expect(d.activeLandmarkObjectCount).toBeGreaterThan(0);expect(d.activeObjectCount).toBeLessThanOrEqual(100);expect(d.fullMapTerrainAllocated).toBe(false)});
+it('creates Boss clearing outlines only while their sector is active',()=>{const terrain=new WorldSectorTerrain(fakeScene(),CURRENT_PRODUCTION_WORLD);getActiveWorldSectors(5400,4200,CURRENT_PRODUCTION_WORLD).forEach(s=>terrain.activateSector(s));const d=terrain.getDiagnostics();expect(d.activeBossClearingIds).toContain('wreckroad-circle');expect(d.activeBossClearingObjectCount).toBeGreaterThan(0);expect(d.activeObjectCount).toBeLessThanOrEqual(100)});
+it('destroys sector-owned district objects on deactivation and keeps accounting exact',()=>{const terrain=new WorldSectorTerrain(fakeScene(),CURRENT_PRODUCTION_WORLD),sector=getActiveWorldSectors(0,0,CURRENT_PRODUCTION_WORLD)[0];terrain.activateSector(sector);const before=terrain.getDiagnostics();terrain.deactivateSector(sector);const after=terrain.getDiagnostics();expect(before.activeSectorCount).toBe(1);expect(after.activeSectorCount).toBe(0);expect(after.deactivationCount).toBe(1);expect(after.destroyedObjects).toBe(before.activeObjectCount);expect(after.createdObjects-after.destroyedObjects).toBe(after.activeObjectCount)})});
