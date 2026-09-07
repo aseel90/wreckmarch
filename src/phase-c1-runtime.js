@@ -39,7 +39,8 @@ function installLandscapeCanvas(scene) {
   scene.scale.setGameSize(W, H);
   scene.cameras.main.setSize(W, H);
   scene.cameras.main.setViewport(0, 0, W, H);
-  scene.cameras.main.setBounds(0, 0, 2200, 2200);
+  const runtimeWorld = scene.__runtimeWorld || { width: 2200, height: 2200 };
+  scene.cameras.main.setBounds(0, 0, runtimeWorld.width, runtimeWorld.height);
   scene.cameras.main.centerOn(scene.hero.x, scene.hero.y);
 }
 

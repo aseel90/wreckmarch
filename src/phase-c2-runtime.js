@@ -94,7 +94,8 @@ function applyAdaptiveViewport(scene) {
     scene.scale.setGameSize(logicalW, logicalH);
     scene.cameras.main.setSize(logicalW, logicalH);
     scene.cameras.main.setViewport(0, 0, logicalW, logicalH);
-    scene.cameras.main.setBounds(0, 0, 2200, 2200);
+    const runtimeWorld = scene.__runtimeWorld || { width: 2200, height: 2200 };
+    scene.cameras.main.setBounds(0, 0, runtimeWorld.width, runtimeWorld.height);
     scene.cameras.main.setZoom(.90);
     repositionHud(scene, logicalW, logicalH);
     document.documentElement.style.setProperty('--wm-logical-ratio', String(logicalW / logicalH));
