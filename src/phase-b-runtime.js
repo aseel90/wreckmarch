@@ -2,7 +2,7 @@ import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=2';
 import { R2_WORLD_CONTRACT_VERSION, WORLD_SECTOR_POLICY } from './world/world-contract.js?v=2';
 import { WorldSectorActivationSystem } from './world/world-sector-system.js?v=1';
 import { R2_WORLD_SIZE_HARNESS_VERSION, resolveWorldSizeHarnessFromLocation } from './world/world-size-harness.js?v=2';
-import { WorldSectorTerrain } from './world/world-sector-terrain.js?v=1';
+import { WorldSectorTerrain } from './world/world-sector-terrain.js?v=2&r3District=1';
 /* WRECKMARCH — Phase B runtime: large world + camera + visible swappable starter weapon */
 const BASE_HERO_SPEED = 285;
 const TAU = Math.PI * 2;
