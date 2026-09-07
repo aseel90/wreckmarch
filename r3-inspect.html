@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>WRECKMARCH R3 Visual Inspector</title>
+<style>
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:monospace}
+  #game{position:fixed;inset:0;width:100%;height:100%;border:0;background:#000}
+  #hud{position:fixed;left:8px;bottom:8px;z-index:20;background:rgba(8,8,8,.78);color:#f2dfb1;border:1px solid rgba(242,223,177,.45);padding:6px 8px;font-size:11px;line-height:1.25;max-width:min(92vw,520px);pointer-events:none}
+  #title{font-weight:700;color:#fff0bc}
+  #meta{opacity:.88}
+  #nav{position:fixed;top:6px;left:6px;right:6px;z-index:21;display:flex;gap:4px;flex-wrap:wrap}
+  #nav button{font:10px monospace;padding:4px 6px;background:rgba(12,12,12,.72);color:#eee0b8;border:1px solid rgba(238,224,184,.35)}
+  #nav button.active{background:rgba(110,72,38,.86);border-color:#e6c28e;color:white}
+</style>
+</head>
+<body>
+<iframe id="game" src="./?debug=1&autotest=1" title="WRECKMARCH live game"></iframe>
+<div id="nav"></div>
+<div id="hud"><div id="title">R3 VISUAL INSPECTOR</div><div id="meta">booting…</div></div>
+<script>
+const STOPS={
+  'scrap-fields':{x:1800,y:600,label:'Scrap Fields'},
+  'collapsed-highway':{x:6600,y:600,label:'Collapsed Highway'},
+  'rust-depot':{x:600,y:3000,label:'Rust Depot'},
+  'central-wreckroads':{x:4200,y:4200,label:'Central Wreckroads'},
+  'chemical-yard':{x:7800,y:3000,label:'Chemical Yard'},
+  'burned-convoy-zone':{x:1800,y:6600,label:'Burned Convoy Zone'},
+  'marshal-territory':{x:7800,y:6600,label:'Marshal Territory'}
+};
+const frame=document.getElementById('game'),nav=document.getElementById('nav'),meta=document.getElementById('meta');
+let activeId=null;
+for(const [id,stop] of Object.entries(STOPS)){
+  const b=document.createElement('button'); b.textContent=stop.label; b.dataset.id=id;
+  b.onclick=()=>inspect(id); nav.appendChild(b);
+}
+function setActive(id){for(const b of nav.querySelectorAll('button')) b.classList.toggle('active',b.dataset.id===id)}
+function getScene(){try{return frame.contentWindow.__WM_GAME__?.scene?.getScene?.('Wreckmarch')||null}catch{return null}}
+function inspect(id){
+  const stop=STOPS[id]; if(!stop)return;
+  const scene=getScene(); if(!scene?.hero||!scene?.worldSectorSystem||!scene?.worldSectorTerrain){meta.textContent='scene not ready';return}
+  scene.hero.setPosition(stop.x,stop.y); scene.hero.body?.reset?.(stop.x,stop.y); scene.heroHp=scene.heroMaxHp||100;
+  scene.worldSectorDiagnostics=scene.worldSectorSystem.updateForPosition(stop.x,stop.y);
+  scene.cameras.main.stopFollow?.(); scene.cameras.main.centerOn(stop.x,stop.y); scene.physics.world.pause?.();
+  const terrain=scene.worldSectorTerrain.getDiagnostics(); activeId=id; setActive(id);
+  window.__R3_INSPECT_STATE__={districtId:id,x:stop.x,y:stop.y,terrain,worldId:scene.__runtimeWorld?.id||terrain.worldId};
+  meta.textContent=`${stop.label} • ${terrain.worldId} • sectors ${terrain.activeSectorCount} • objects ${terrain.activeObjectCount} • roads ${terrain.visibleRoadObjectCount}/${terrain.activeRoadObjectCount} • landmarks ${(terrain.activeLandmarkIds||[]).join(',')||'none'} • boss ${(terrain.activeBossClearingIds||[]).join(',')||'none'}`;
+}
+function requested(){const id=new URLSearchParams(location.search).get('district');return STOPS[id]?id:'central-wreckroads'}
+async function boot(){
+  const deadline=Date.now()+25000;
+  while(Date.now()<deadline){
+    const scene=getScene(); let ready=false; try{ready=frame.contentDocument?.body?.classList?.contains('visual-ready')}catch{}
+    if(scene?.hero&&ready){inspect(requested());return}
+    await new Promise(r=>setTimeout(r,100));
+  }
+  meta.textContent='timed out waiting for visual-ready';
+}
+frame.addEventListener('load',boot);
+</script>
+</body>
+</html>
