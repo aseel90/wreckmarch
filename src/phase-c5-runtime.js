@@ -1,6 +1,5 @@
 /* WRECKMARCH Phase C.5 — character-driven presentation + crisp HD cards + visible road network */
 import { installCharacterPresentationPhase } from './characters/character-runtime-presentation.js?v=11&wrecker=11&wreckerActivation=1';
-const WORLD_W=2200,WORLD_H=2200;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const CARD_IDS=['heavy-rivets','overclock','long-barrel','twin-riveter','fleet-feet','scrap-magnet','armor-plate','call-rig','rig-overdrive','twin-cannon'];
 async function getScene(timeout=9000){const t=performance.now();while(performance.now()-t<timeout){const g=window.Phaser?.GAMES?.find(Boolean)||window.Phaser?.GAMES?.[0],s=g?.scene?.getScene?.('Wreckmarch');if(s?.sys?.isActive?.()&&s.hero&&s.weaponV3Gun&&s.upgradeLevels&&window.__WM_PHASE_C4__)return s;await wait(50)}throw Error('Phase C.5 scene timeout')}
@@ -15,8 +14,8 @@ function selfTest(s){
  if(new URLSearchParams(location.search).get('autotest')!=='1')return;
  const presentation=s.__characterPresentationC5;
  const sheet=s.textures.get('c5-upgrade-sheet'),cards=CARD_IDS.every((id,i)=>sheet?.has(`c5-card-${id}`)&&sheet.get(`c5-card-${id}`).realWidth>=480);
- const roads=(s.__e0FastRoadSegments||[]).filter(o=>o?.active!==false),near=roads.some(im=>Phaser.Math.Distance.Between(im.x,im.y,WORLD_W/2,WORLD_H/2)<190);
- const checks={characterPresentation:presentation?.characterId===s.characterDefinition?.id&&presentation?.ok===true,...(presentation?.checks||{}),cardArtVectorHD:cards,roadNetwork:roads.length>200&&near,roadsVisible:roads.every(im=>im.visible&&im.alpha>.9&&im.displayHeight>=145),groundVisible:!!s.children.list.find(o=>o?.name==='e0-ground-base'&&o.visible&&o.__terrainSystemObject)};
+ const terrain=s.worldSectorTerrain?.getDiagnostics?.();
+ const checks={characterPresentation:presentation?.characterId===s.characterDefinition?.id&&presentation?.ok===true,...(presentation?.checks||{}),cardArtVectorHD:cards,roadNetwork:(terrain?.activeRoadObjectCount||0)>0&&(terrain?.activeSectorCount||0)<=9&&terrain?.fullMapTerrainAllocated===false,roadsVisible:terrain?.visibleRoadObjectCount===terrain?.activeRoadObjectCount,groundVisible:(terrain?.activeGroundObjectCount||0)>0};
  const ok=Object.values(checks).every(Boolean),detail=Object.entries(checks).map(([k,v])=>`${k}=${v?'ok':'FAIL'}`).join(' ');
  window.__WM_C5_SELF_TEST__={ok,...checks};document.documentElement.dataset.wreckmarchC5SelfTest=ok?'passed':'failed';window.__WM_LOG__?.(`C5 browser self-test ${ok?'PASSED':'FAILED'}: ${detail}`);if(!ok)throw Error('Phase C.5 self-test failed: '+detail)
 }

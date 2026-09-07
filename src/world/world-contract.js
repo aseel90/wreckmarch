@@ -30,15 +30,15 @@ export function defineWorldGeometry(input) {
 }
 
 export const CURRENT_PRODUCTION_WORLD = defineWorldGeometry({
-  id: 'production-2200-v1',
-  width: 2200,
-  height: 2200,
-  role: 'current-production-reference'
+  id: 'production-9600-v1',
+  width: 9600,
+  height: 9600,
+  role: 'selected-production-world'
 });
 
 export const FUTURE_WORLD_CANDIDATES = Object.freeze([
   defineWorldGeometry({ id: 'candidate-7200-v1', width: 7200, role: 'future-size-candidate' }),
-  defineWorldGeometry({ id: 'candidate-9600-v1', width: 9600, role: 'future-size-preferred-candidate' }),
+  defineWorldGeometry({ id: 'candidate-9600-v1', width: 9600, role: 'selected-size-comparison-candidate' }),
   defineWorldGeometry({ id: 'candidate-12000-v1', width: 12000, role: 'future-size-candidate' })
 ]);
 
@@ -121,11 +121,11 @@ export function getActiveWorldSectors(x, y, world = CURRENT_PRODUCTION_WORLD, ra
 
 export function validateWorldContract() {
   const errors = [];
-  if (CURRENT_PRODUCTION_WORLD.width !== 2200 || CURRENT_PRODUCTION_WORLD.height !== 2200) {
-    errors.push('Current production world must remain 2200x2200 during the R2 foundation');
+  if (CURRENT_PRODUCTION_WORLD.width !== 9600 || CURRENT_PRODUCTION_WORLD.height !== 9600) {
+    errors.push('Selected R2 production world must remain 9600x9600');
   }
-  if (PREFERRED_FUTURE_WORLD.width !== 9600 || PREFERRED_FUTURE_WORLD.height !== 9600) {
-    errors.push('Preferred future candidate must remain 9600x9600 until real-device comparison');
+  if (PREFERRED_FUTURE_WORLD.width !== CURRENT_PRODUCTION_WORLD.width || PREFERRED_FUTURE_WORLD.height !== CURRENT_PRODUCTION_WORLD.height) {
+    errors.push('Selected R2 comparison reference must remain 9600x9600');
   }
   if (WORLD_SECTOR_POLICY.activeRadius !== 1 || WORLD_SECTOR_POLICY.maxActiveSectors !== 9) {
     errors.push('R2 sector policy must keep a 3x3 maximum active neighborhood');

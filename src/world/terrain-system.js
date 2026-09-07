@@ -1,9 +1,9 @@
 /* WRECKMARCH F0 — permanent terrain/road construction primitives */
 import { C4_GROUND, C4_ROAD } from '../c4-assets.js?v=1';
-import { CURRENT_PRODUCTION_WORLD } from './world-contract.js?v=1';
-
-export const WORLD_W = CURRENT_PRODUCTION_WORLD.width;
-export const WORLD_H = CURRENT_PRODUCTION_WORLD.height;
+// Legacy 2200 reference builder retained for old visual tooling/tests only.
+// Production terrain ownership moved to WorldSectorTerrain in R2.
+export const WORLD_W = 2200;
+export const WORLD_H = 2200;
 
 export const FINAL_ROUTES = Object.freeze([
   { w: 210, p: [[-180,1100],[280,1040],[650,1120],[960,1080],[1100,1100],[1420,1030],[1810,1120],[2380,1060]] },

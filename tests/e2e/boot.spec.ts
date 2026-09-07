@@ -51,7 +51,7 @@ test('boots the current game, routes movement through InputManager, and keeps as
     d1: true,
     e1: true,
     visualReady: 'current',
-    terrainOwner: 'e1',
+    terrainOwner: 'r2-world-sector-terrain',
     characterId: 'runner',
     characterReady: true,
     characterAnimation: 'character-runner-idle',
@@ -66,12 +66,20 @@ test('boots the current game, routes movement through InputManager, and keeps as
     return {
       owner: scene.__terrainSystemState?.owner,
       activeBootstrapRoads: scene.children.list.filter((object: any) => object?.__e0Road && object?.active !== false).length,
-      finalRoads: (scene.__e1RoadSegments || []).filter((object: any) => object?.active !== false).length
+      terrain: scene.worldSectorTerrain?.getDiagnostics?.() || null
     };
   });
-  expect(terrainOwnership.owner).toBe('e1');
+  expect(terrainOwnership.owner).toBe('r2-world-sector-terrain');
   expect(terrainOwnership.activeBootstrapRoads).toBe(0);
-  expect(terrainOwnership.finalRoads).toBeGreaterThan(180);
+  expect(terrainOwnership.terrain).toMatchObject({
+    owner: 'r2-world-sector-terrain',
+    worldId: 'production-9600-v1',
+    activeSectorCount: 9,
+    fullMapTerrainAllocated: false
+  });
+  expect(terrainOwnership.terrain.activeRoadObjectCount).toBeGreaterThan(0);
+  expect(terrainOwnership.terrain.visibleRoadObjectCount).toBe(terrainOwnership.terrain.activeRoadObjectCount);
+  expect(terrainOwnership.terrain.activeObjectCount).toBeLessThanOrEqual(100);
 
   await expect.poll(
     () => page.evaluate(() => {

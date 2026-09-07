@@ -16,10 +16,14 @@ describe('Live smoke readiness ownership', () => {
     expect(smokeSource).toContain('state.readinessElapsedMs = readinessStartedAt ? Date.now() - readinessStartedAt : null');
     expect(smokeSource).toContain("scene?.__finalPolishReady === true");
     expect(smokeSource).not.toContain("&& document.documentElement.dataset.wreckmarchE1SelfTest === 'passed'");
-    expect(smokeSource).toContain('const validateE1RoadState = state => state.roads > 180');
+    expect(smokeSource).toContain('const validateE1RoadState = state => state.roads > 0');
     expect(smokeSource).toContain('state.visible === state.roads');
     expect(smokeSource).toContain('state.legacyVisible === 0');
-    expect(smokeSource).toContain('state.nearest < 260');
+    expect(smokeSource).toContain('state.activeSectors <= 9');
+    expect(smokeSource).toContain('state.totalSectors === 64');
+    expect(smokeSource).toContain('state.activeObjects <= 100');
+    expect(smokeSource).toContain('state.fullMapTerrainAllocated === false');
+    expect(smokeSource).toContain('state.worldWidth === 9600');
     expect(smokeSource).toContain('state.roadDepth > state.groundDepth');
     expect(smokeSource).toContain("document.documentElement.dataset.wreckmarchMobileHud === 'compact-v5-test'");
   });

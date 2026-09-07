@@ -1,7 +1,8 @@
 import { createWeaponRuntimeState } from './combat/weapon-registry.js?v=2';
-import { R2_WORLD_CONTRACT_VERSION, WORLD_SECTOR_POLICY } from './world/world-contract.js?v=1';
+import { R2_WORLD_CONTRACT_VERSION, WORLD_SECTOR_POLICY } from './world/world-contract.js?v=2';
 import { WorldSectorActivationSystem } from './world/world-sector-system.js?v=1';
-import { R2_WORLD_SIZE_HARNESS_VERSION, WorldSizeHarnessTerrain, resolveWorldSizeHarnessFromLocation } from './world/world-size-harness.js?v=1';
+import { R2_WORLD_SIZE_HARNESS_VERSION, resolveWorldSizeHarnessFromLocation } from './world/world-size-harness.js?v=2';
+import { WorldSectorTerrain } from './world/world-sector-terrain.js?v=1';
 /* WRECKMARCH — Phase B runtime: large world + camera + visible swappable starter weapon */
 const BASE_HERO_SPEED = 285;
 const TAU = Math.PI * 2;
@@ -46,39 +47,6 @@ function clearOldArena(scene) {
   });
 }
 
-function addWreck(scene, x, y, rot = 0) {
-  const c = scene.add.container(x, y).setDepth(3).setRotation(rot);
-  const shadow = scene.add.ellipse(0, 16, 128, 28, 0x000000, .22);
-  const shell = scene.add.rectangle(0, 0, 112, 42, 0x49392e, 1).setStrokeStyle(3, 0x1d1a18, 1);
-  const hood = scene.add.rectangle(42, -8, 42, 24, 0x596165, 1).setStrokeStyle(2, 0x25292b, 1);
-  const wheelA = scene.add.circle(-37, 24, 15, 0x141719, 1).setStrokeStyle(3, 0x4d5558, 1);
-  const wheelB = scene.add.circle(38, 24, 15, 0x141719, 1).setStrokeStyle(3, 0x4d5558, 1);
-  const rust = scene.add.rectangle(-16, -5, 25, 7, 0xa35d34, .8).setRotation(-.18);
-  c.add([shadow, shell, hood, wheelA, wheelB, rust]);
-  return c;
-}
-
-function buildExpandedWasteland(scene, harnessActive = false) {
-  clearOldArena(scene);
-  if (harnessActive) return;
-  addWreck(scene, 330, 790, -.18);
-  addWreck(scene, 1550, 470, .11);
-  addWreck(scene, 1780, 1520, -.28);
-  addWreck(scene, 510, 1720, .22);
-
-  if (scene.textures.exists('art-scrap-pile') && scene.textures.exists('art-barrel')) {
-    [
-      [240,190,'art-scrap-pile',.62,.08],[520,690,'art-barrel',.56,-.12],
-      [860,340,'art-scrap-pile',.58,-.08],[1180,760,'art-barrel',.54,.12],
-      [1490,260,'art-barrel',.62,-.16],[1830,610,'art-scrap-pile',.64,.1],
-      [330,1280,'art-barrel',.56,.18],[740,1510,'art-scrap-pile',.62,-.12],
-      [1120,1190,'art-barrel',.5,.08],[1450,1660,'art-scrap-pile',.66,.16],
-      [1900,1320,'art-barrel',.58,-.1],[1740,1980,'art-scrap-pile',.62,.06],
-      [980,1940,'art-barrel',.54,.15],[260,1980,'art-scrap-pile',.6,-.14]
-    ].forEach(([x,y,key,scale,rot]) => scene.add.image(x,y,key).setDepth(3).setScale(scale).setRotation(rot).setAlpha(.76));
-  }
-}
-
 function pinHud(scene) {
   [scene.titleText, scene.timerText, scene.waveText, scene.scrapText, scene.hint, scene.joyBase, scene.joyKnob]
     .forEach(obj => obj?.setScrollFactor?.(0));
@@ -107,18 +75,23 @@ function installLargeWorld(scene, worldHarness) {
   scene.cameras.main.setDeadzone(86, 132);
   scene.cameraLook = new Phaser.Math.Vector2();
 
+  clearOldArena(scene);
   scene.worldSectorSystem?.reset?.();
-  scene.worldSizeHarnessTerrain?.destroyAll?.();
-  scene.worldSizeHarnessTerrain = worldHarness.enabled ? new WorldSizeHarnessTerrain(scene, world) : null;
+  scene.worldSectorTerrain?.destroyAll?.();
+  scene.worldSectorTerrain = new WorldSectorTerrain(scene, world);
   scene.worldSectorSystem = new WorldSectorActivationSystem({
     world,
-    onActivate: sector => scene.worldSizeHarnessTerrain?.activateSector?.(sector),
-    onDeactivate: sector => scene.worldSizeHarnessTerrain?.deactivateSector?.(sector)
+    onActivate: sector => scene.worldSectorTerrain.activateSector(sector),
+    onDeactivate: sector => scene.worldSectorTerrain.deactivateSector(sector)
   });
   scene.worldSectorDiagnostics = scene.worldSectorSystem.updateForPosition(scene.hero.x, scene.hero.y);
   scene.__worldSectorFoundationReady = true;
+  scene.__terrainSystemState = {
+    owner: 'r2-world-sector-terrain',
+    worldId: world.id,
+    fullMapTerrainAllocated: false
+  };
 
-  buildExpandedWasteland(scene, worldHarness.enabled);
   pinHud(scene);
 }
 
@@ -316,7 +289,7 @@ function installWorldSizeHarnessApi(scene, worldHarness) {
     diagnostics: () => ({
       harness: { active: true, version: R2_WORLD_SIZE_HARNESS_VERSION, worldId: world.id, width: world.width, height: world.height },
       sectors: scene.worldSectorSystem?.getDiagnostics?.() || null,
-      terrain: scene.worldSizeHarnessTerrain?.getDiagnostics?.() || null,
+      terrain: scene.worldSectorTerrain?.getDiagnostics?.() || null,
       hero: { x: scene.hero.x, y: scene.hero.y },
       physicsBounds: { width: scene.physics.world.bounds.width, height: scene.physics.world.bounds.height },
       cameraBounds: { width: scene.cameras.main._bounds?.width ?? world.width, height: scene.cameras.main._bounds?.height ?? world.height }
@@ -338,15 +311,15 @@ export async function applyPhaseB() {
   window.__WM_WORLD_SECTORS__ = {
     active: true,
     contractVersion: R2_WORLD_CONTRACT_VERSION,
-    mode: worldHarness.enabled ? 'candidate-harness' : 'logical-foundation',
+    mode: worldHarness.enabled ? 'candidate-harness' : 'production-streaming',
     worldId: world.id,
     diagnostics: () => scene.worldSectorSystem?.getDiagnostics?.() || null,
-    terrainDiagnostics: () => scene.worldSizeHarnessTerrain?.getDiagnostics?.() || null
+    terrainDiagnostics: () => scene.worldSectorTerrain?.getDiagnostics?.() || null
   };
   document.documentElement.dataset.wreckmarchPhase = 'b';
   document.documentElement.dataset.wreckmarchWorldSectors = R2_WORLD_CONTRACT_VERSION;
   document.documentElement.dataset.wreckmarchWorldSize = String(world.width);
   document.documentElement.dataset.wreckmarchWorldHarness = worldHarness.enabled ? R2_WORLD_SIZE_HARNESS_VERSION : 'off';
-  window.__WM_LOG__?.(`Phase B applied: ${world.width}x${world.height} world + tuned movement + visible Rivet Gun + R2 ${worldHarness.enabled ? 'candidate harness' : 'logical sectors'}`);
+  window.__WM_LOG__?.(`Phase B applied: ${world.width}x${world.height} world + tuned movement + visible Rivet Gun + R2 ${worldHarness.enabled ? 'candidate harness' : 'production streaming'}`);
   return true;
 }
