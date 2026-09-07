@@ -54,38 +54,51 @@ try {
 
   const readE1RoadState = () => page.evaluate(() => {
     const game = window.__WM_GAME__, scene = game?.scene?.getScene?.('Wreckmarch');
-    const roads = (scene?.__e1RoadSegments || []).filter(item => item?.active !== false);
-    const visible = roads.filter(item => item.visible && item.alpha > .9);
-    const hero = scene?.hero;
-    const nearest = hero && roads.length
-      ? roads.reduce((best, item) => {
-          const bestDistance = Phaser.Math.Distance.Between(hero.x, hero.y, best.x, best.y);
-          const itemDistance = Phaser.Math.Distance.Between(hero.x, hero.y, item.x, item.y);
-          return itemDistance < bestDistance ? item : best;
-        }, roads[0])
-      : null;
+    const terrain = scene?.worldSectorTerrain?.getDiagnostics?.() || null;
+    const sectors = scene?.worldSectorSystem?.getDiagnostics?.() || null;
     const legacyVisible = scene?.children?.list?.filter(item => item?.visible && item.__e1SuppressedLegacy).length || 0;
-    const groundDepth = scene?.__e1Terrain?.find(item => item?.name === 'e1-ground-base')?.depth ?? null;
-    const roadDepth = nearest?.depth ?? null;
+    const worldWidth = scene?.__runtimeWorld?.width ?? null;
+    const worldHeight = scene?.__runtimeWorld?.height ?? null;
     return {
-      roads: roads.length,
-      visible: visible.length,
+      roads: terrain?.activeRoadObjectCount ?? 0,
+      visible: terrain?.visibleRoadObjectCount ?? 0,
       legacyVisible,
-      nearest: nearest && hero ? Math.round(Phaser.Math.Distance.Between(hero.x, hero.y, nearest.x, nearest.y)) : null,
-      roadDepth,
-      groundDepth
+      activeSectors: terrain?.activeSectorCount ?? sectors?.activeSectorCount ?? 0,
+      totalSectors: sectors?.totalSectorCount ?? 0,
+      activeObjects: terrain?.activeObjectCount ?? 0,
+      peakActiveObjects: terrain?.peakActiveObjects ?? 0,
+      fullMapTerrainAllocated: terrain?.fullMapTerrainAllocated ?? null,
+      worldWidth,
+      worldHeight,
+      physicsWidth: scene?.physics?.world?.bounds?.width ?? null,
+      physicsHeight: scene?.physics?.world?.bounds?.height ?? null,
+      cameraWidth: scene?.cameras?.main?._bounds?.width ?? null,
+      cameraHeight: scene?.cameras?.main?._bounds?.height ?? null,
+      roadDepth: terrain?.roadDepth ?? null,
+      groundDepth: terrain?.groundDepth ?? null
     };
   });
-  const validateE1RoadState = state => state.roads > 180
+  const validateE1RoadState = state => state.roads > 0
     && state.visible === state.roads
     && state.legacyVisible === 0
-    && state.nearest !== null
-    && state.nearest < 260
+    && state.activeSectors >= 4
+    && state.activeSectors <= 9
+    && state.totalSectors === 64
+    && state.activeObjects > 0
+    && state.activeObjects <= 100
+    && state.peakActiveObjects <= 100
+    && state.fullMapTerrainAllocated === false
+    && state.worldWidth === 9600
+    && state.worldHeight === 9600
+    && state.physicsWidth === 9600
+    && state.physicsHeight === 9600
+    && state.cameraWidth === 9600
+    && state.cameraHeight === 9600
     && state.roadDepth > state.groundDepth;
   const e1PersistenceBefore = await readE1RoadState();
   await page.waitForTimeout(2_000);
   const e1PersistenceAfter = await readE1RoadState();
-  if (!validateE1RoadState(e1PersistenceBefore) || !validateE1RoadState(e1PersistenceAfter) || e1PersistenceAfter.roads !== e1PersistenceBefore.roads) {
+  if (!validateE1RoadState(e1PersistenceBefore) || !validateE1RoadState(e1PersistenceAfter)) {
     throw new Error(`E1 road persistence failed: ${JSON.stringify({ before: e1PersistenceBefore, after: e1PersistenceAfter })}`);
   }
   const e1Persistence = { passed: true, before: e1PersistenceBefore, after: e1PersistenceAfter };
