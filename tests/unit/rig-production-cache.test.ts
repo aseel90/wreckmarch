@@ -9,6 +9,6 @@ describe('WS18 Rig production cache ownership', () => {
     const index = read('index.html');
 
     expect(phaseC4).toContain("import { RigSystem } from './rig/rig-system.js?v=2';");
-    expect(index).toContain("import('./src/phase-c4-runtime.js?v=5')");
+    expect(index).toContain("import('./src/phase-c4-runtime.js?v=5&r2Production=1')");
   });
 });

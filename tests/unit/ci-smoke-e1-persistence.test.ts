@@ -11,13 +11,19 @@ describe('CI smoke E1 persistence ownership', () => {
     expect(waitBlock).not.toContain('wreckmarchE1Persistence');
   });
 
-  it('owns persistence by sampling canonical E1 roads twice with real Playwright time', () => {
+  it('owns persistence by sampling canonical streamed terrain twice with real Playwright time', () => {
     expect(smoke).toContain('const e1PersistenceBefore = await readE1RoadState()');
     expect(smoke).toContain('await page.waitForTimeout(2_000)');
     expect(smoke).toContain('const e1PersistenceAfter = await readE1RoadState()');
-    expect(smoke).toContain('e1PersistenceAfter.roads !== e1PersistenceBefore.roads');
+    expect(smoke).toContain('scene?.worldSectorTerrain?.getDiagnostics?.()');
     expect(smoke).toContain('state.visible === state.roads');
     expect(smoke).toContain('state.legacyVisible === 0');
+    expect(smoke).toContain('state.activeSectors <= 9');
+    expect(smoke).toContain('state.totalSectors === 64');
+    expect(smoke).toContain('state.activeObjects <= 100');
+    expect(smoke).toContain('state.fullMapTerrainAllocated === false');
+    expect(smoke).toContain('state.worldWidth === 9600');
+    expect(smoke).toContain('state.cameraWidth === 9600');
     expect(smoke).toContain('state.roadDepth > state.groundDepth');
   });
 });
