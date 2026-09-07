@@ -78,3 +78,21 @@ for (const candidate of CANDIDATES) {
     expect(returnedToCenter.terrain.fullMapTerrainAllocated).toBe(false);
   });
 }
+
+test('R2 candidate travel does not trip the legacy E1 12s persistence assertion', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', error => pageErrors.push(String(error)));
+  await page.goto('/?debug=1&autotest=1&wmWorldHarness=1&wmWorld=9600');
+  await expect(page.locator('canvas')).toBeVisible({ timeout: 20_000 });
+  await expect.poll(
+    () => page.evaluate(() => document.body.classList.contains('visual-ready')),
+    { timeout: 20_000 }
+  ).toBe(true);
+
+  await page.evaluate(() => (window as any).__WM_WORLD_HARNESS__.teleport(9200, 4800));
+  await page.waitForTimeout(12_500);
+
+  expect(await page.evaluate(() => document.documentElement.dataset.wreckmarchE1Persistence))
+    .toBe('candidate-skipped');
+  expect(pageErrors.filter(message => message.includes('Phase E.1 persistence failed'))).toEqual([]);
+});
